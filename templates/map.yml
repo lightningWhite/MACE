@@ -1,0 +1,39 @@
+# World Map
+# Links between locations, and sublocations
+map:
+  # Name of the world map
+  name: ""
+  # Locations throughout the world map
+  locations:
+    # A list of locations
+      # The unique id of the location for referencing it
+    - id: ""
+      # The name of the location that will be displayed to the player
+      name: ""
+      # Whether the location will be presented to the player/if it's enabled
+      visible: <boolean>
+      # The unique IDs of the interactive elements at the location
+      interactiveElements:
+        - "<interactiveElementId>"
+      # The environmental condition or sequence specified here will override
+      # the normal gameplay environmental condition or sequence.
+      # Example: Snowy on the top of a mountain
+      envOverrides:
+        # Either the condition or the conditionSequence can be populated
+        # If the condition is populated, it overrides the sequence
+        condition:
+          - "<environmentConditionIdName>"
+        conditionSequence:
+          - "<environmentConditionSequence>"
+        lightLevel:
+          - "<lightLevel>"
+      # What locations can be accessed from this location
+      # These will be presented to the user for navigation
+      links:
+        - locationId: ""
+          # A location that won't be presented to the player, but that will be
+          # encountered while en route to the selected location
+          subLocation:
+            # A subLocations is defined in the map as its own location
+            # These are location IDs
+            - "<locationId>"

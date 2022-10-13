@@ -1,0 +1,80 @@
+# The main player
+player:
+  id: "<uniqueId>"
+  attributes:
+    # The displayed name
+    name: ""
+    # How many points are available to be distributed accross the customizble
+    # attributes when the person playing starts the game
+    creationPoints: <number>
+    # How much life the element has left
+    hitpoints:
+      # The maximum that it can have at present
+      max: <number>
+      # The amount it currently has
+      current: <number>
+      # The amount reported after applying effects/spells/etc.
+      # The value will return to the current value after the turn ends.
+      # This might be less relevent for hitpoints
+      temp: <number>
+      # Whether the person playing can allocate creation points when
+      # starting the game
+      customizable: <boolean>
+    # How much strength it has; ranges from 0 to 100
+    # Factors into the probability of a hit during melee combat
+    strength:
+      max: <number>
+      temp: <number>
+      customizable: <boolean>
+    # How fast it is; ranges from 0 to 100
+    # Factors into escape, attack, etc. probability
+    speed:
+      max: <number>
+      temp: <number>
+      customizable: <boolean>
+    # Magical ability it has; ranges from 0 to 100
+    # Affects spells and effectiveness of them
+    wisdom:
+      max: <number>
+      temp: <number>
+      customizable: <boolean>
+    # Endurance of the element; ranges from 0 to 100
+    # Affects melee/magic combat; may decrease and increase depending on activity
+    energy:
+      max: <number>
+      temp: <number>
+      customizable: <boolean>
+    # How well the element/character can inspire devotion in others; ranges from 0 to 100
+    # May affect acquiring friends or support from others
+    charisma:
+      max: <number>
+      temp: <number>
+      customizable: <boolean>
+    # How stealthy the element/character is; ranges from 0 to 100
+    # Affects probability of not being caught when sneaking around
+    stealth:
+      max: <number>
+      temp: <number>
+      customizable: <boolean>
+    possessions:
+      # Can be anything, along with a count
+      <item>: <count>
+    skills:
+      # A weapon is an interactive element with attributes and combatActions
+      # that can be invoked in combat mode
+      <weapon/item>: <number>
+    # The default combat actions the player has
+    combatActions:
+      # Combat action and max hitpoint damage (decreased/increased by combat factor engine)
+      <actionName>: <maxDamage>
+    # The location of the player in the map
+    location: ""
+  # How the player is affected by the environment
+  envResponses:
+      # The condition that has an effect on the element
+    - conditionId: ""
+      # Whether the change should be reverted at the end of the turn
+      temporary: <boolean>
+      # How the element is affected
+      modifiers:
+       - "<componentId.attribute>: <value> or '<reference>'"

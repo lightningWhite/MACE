@@ -1,0 +1,147 @@
+# Somewhat populated examples. They may not conform correctly to
+# the templates, which trump these examples. These just give some
+# ideas of how they could be used, along with some additional comments.
+
+# Interactive Element
+interactiveElement:
+  id: peddler1 # Unique id
+  attributes:
+    # What is displayed when interacting with it
+    name: "peddler"
+    # How much life the element has left
+    hitpoints:
+      # The maximum that it can have at present
+      max: 50
+      # The amount it currently has
+      current: 45
+      # The amount reported after applying effects/spells/etc.
+      # The value will return to the current value after the turn ends.
+      # This might be less relevant for hitpoints
+      temp: 45
+    # How much strength it has; ranges from 0 to 100
+    # Factors into the probability of a hit during melee combat
+    strength:
+      max: 10
+      temp: 10
+    # How fast it is; ranges from 0 to 100
+    # Factors into escape, attack, etc. probability
+    speed:
+      max: 25
+      temp: 10 # Maybe it's snowing so traction is less which decreases speed
+    # Magical ability it has; ranges from 0 to 100
+    # Affects spells and effectiveness of them
+    wisdom:
+      max: 5
+      temp: 5
+    # Endurance of the element; ranges from 0 to 100
+    # Affects melee/magic combat; may decrease and increase depending on activity
+    energy:
+      max: 30
+      temp: 30
+    # How well the element/character can inspire devotion in others; ranges from 0 to 100
+    # May affect acquiring friends or support from others
+    charisma:
+      max: 60
+      temp: 60
+    # How stealthy the element/character is; ranges from 0 to 100
+    # Affects probability of not being caught when sneaking around
+    stealth:
+      max: 5
+      temp: 5
+    # Indicates whether the element is visible to the player in the location
+    visible: true
+    # What the element has
+    possessions:
+      # Can be anything, along with a count
+      gold: 15
+      magicBeans: 15
+      dagger: 1
+      sheild: 1
+    skills:
+      # A weapon is an interactive element with attributes and combatActions
+      # that can be invoked in combat mode
+      dagger: 25
+      shield: 5
+    # The combat actions available when using this element in combat
+    combatActions:
+      # Combat action and max hitpoint damage (decreased/increased by combat factor engine)
+      punch: 3
+    # Other custom attributes can be added as desired
+    locked: true # for a chest or something
+  # How the interactive element is affected by the environment
+  envResponses:
+    # The condition that has an effect on the element
+    blizzard:
+      # Whether the change should be reverted at the end of the turn
+      temporary: true
+      # How the element is affected
+      modifiers:
+        - "player.speed: -5"
+  # List of actions that can be performed on or with the element
+  actions:
+      # Option 1
+      # Whether the option has been enabled or not. Sometimes other things
+      # need to happen in the game before something becomes an option.
+    - visible: true
+      # What is presented to the player as the option, or general info about the element
+      # Can be left empty to simply execute the action, rather than ask the player if they want to
+      description: "Talk to the peddler?"
+      # States that must be true for the dialog, modifiers, and subsequent actions to be performed
+      # If false, the fallback will be invoked
+      # Conditions take the form of <elementId.attribute> <boolean operator> <value>
+      # Can be left empty if the action should just be performed
+      conditions: "peddler1.stance != 'enemy'"
+      # List of what is presented to the player after the conditions are met
+      # Can be left empty
+      dialog:
+        # Each sentence will be presented after enter is pressed in the order listed
+        - "Hello traveller!"
+        - "Here is a piece of gold for taking the time to visit!"
+      # List of elements and their attributes to modify
+      # Can be left empty
+      modifiers:
+        # componentId.attribute.subattribute: how to modify it (Can be '+<amount>', '-<amount>', '<value>')
+        # If the modifer is not in single quotes, then it is a reference to another value
+        # For example: player.hitpoints.max -> this would set the value to whatever the player's max hitpoints can be
+        - "player.possessions.gold: '+1'"
+      # List of actions to present after this one is complete; allows action chaining
+      nextActions:
+        - visible: ...
+          description: ...
+          conditions: ...
+          dialog: ...
+          modifiers: ...
+          nextActions: ...
+          fallback:
+        - visible: ...
+          description: ...
+          conditions: ...
+          dialog: ...
+          modifiers: ...
+          nextActions: ...
+          fallback: ...
+      # List of fallback actions to present if the conditions aren't met
+      fallbacks:
+        - visible:
+          description:
+          conditions:
+          dialog:
+          modifiers:
+          nextActions:
+          fallback:
+        - visible:
+          description:
+          conditions:
+          dialog:
+          modifiers:
+          nextActions:
+          fallback:
+    - visible: true
+      description: "Attack"
+      conditions:
+      dialog:
+        - "You are attacking the peddler!"
+      modifiers:
+        - "_attack_" # Reserved keyword to invoke combat mode
+      nextActions:
+      fallback:

@@ -1,0 +1,25 @@
+# Environmental Factors
+environment:
+  # Various conditions that can be encountered throughout the game
+  # The player and other interactive elements can have
+  # conditionReactions where they are affected/enhanced based on
+  # the current condition (e.g. orcs have greater strength in the dark,
+  # abominable snowmen have greater strength in the snow)
+  conditions:
+    idName: "<description>"
+  # Sequences of weather conditions
+  # Each sequence will be chosen randomly, and then rotated through on each turn
+  # By having sequences, the logic of their transitions can be maintained
+  # It makes sense to start and end with a 'clear' so the sequences when
+  # randomly selected can blend together seamlessly
+  conditionSequences:
+    1:
+      - "<conditionDefinedAbove>"
+  # Light levels rotate to simulate a day cycle
+  # Specified as a list to ensure order
+  lightLevels:
+    # The light levels that will be rotated through during game play
+    - light:
+        # How many turns this light level should last for
+        # If empty, it will just remain this light level forever
+        duration: <numTurns>

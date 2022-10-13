@@ -1,0 +1,45 @@
+# Overarching game settings
+game:
+  # Name of the game that will be displayed as a game to select for play
+  name: ""
+  # Sentences that will be displayed in order after pressing enter for each one
+  introduction:
+    - ""
+  # Modifiers to get the game set up if needed
+  initializers:
+    - "componentId.attribute>: <value> or '<reference>'"
+  # Attribute values that result in game over
+  loseConditions:
+    - "<componentId.attribute> <booleanOperator> <value>"
+  # Attribute values that result in a won game
+  winConditions:
+    - "<componentId.attribute> <booleanOperator> <value>"
+  attributes:
+    over: <boolean>
+  # What gets done when the player wins
+  winSequence:
+  # This is a standard action sequence
+   - visible: <boolean>
+     description: ""
+     conditions:
+       - "<componentId.attribute> <booleanOperator> <value>"
+     dialog:
+       - ""
+     modifiers:
+       - "<componentId.attribute>: <value> or '<reference>'"
+     nextActions:
+     fallbacks:
+  # What gets done when the player loses
+  loseSequence:
+   # Allows for settings the attributes so the player restarts somewhere or has some extra hitpoints or something
+   # This is a standard action sequence
+   - visible: <boolean>
+     description: ""
+     conditions:
+       - "<componentId.attribute> <booleanOperator> <value>"
+     dialog:
+       - ""
+     modifiers:
+       - "<componentId.attribute>: <value> or '<reference>'"
+     nextActions:
+     fallbacks:

@@ -1,0 +1,110 @@
+# Interactive Element
+interactiveElement:
+  # Unique ID
+  id: ""
+  attributes:
+    # The name displayed when interacting with it
+    name: ""
+    # How much life the element has left
+    hitpoints:
+      # The maximum that it can have at present
+      max: <number>
+      # The amount it currently has
+      current: <number>
+      # The amount reported after applying effects/spells/etc.
+      # The value will return to the current value after the turn ends.
+      # This might be less relevant for hitpoints
+      temp: <number>
+    # How much strength it has; ranges from 0 to 100
+    # Factors into the probability of a hit during melee combat
+    strength:
+      max: <number>
+      temp: <number>
+    # How fast it is; ranges from 0 to 100
+    # Factors into escape, attack, etc. probability
+    speed:
+      max: <number>
+      temp: <number>
+    # Magical ability it has; ranges from 0 to 100
+    # Affects spells and effectiveness of them
+    wisdom:
+      max: <number>
+      temp: <number>
+    # Endurance of the element; ranges from 0 to 100
+    # Affects melee/magic combat; may decrease and increase depending on activity
+    energy:
+      max: <number>
+      temp: <number>
+    # How well the element/character can inspire devotion in others; ranges from 0 to 100
+    # May affect acquiring friends or support from others
+    charisma:
+      max: <number>
+      temp: <number>
+    # How stealthy the element/character is; ranges from 0 to 100
+    # Affects probability of not being caught when sneaking around
+    stealth:
+      max: <number>
+      temp: <number>
+    # What the element has
+    possessions:
+      # Can be anything, along with a count
+      <item>: <count>
+    skills:
+      # A weapon is an interactive element with attributes and combatActions
+      # that can be invoked in combat mode
+      <weapon/item>: <number>
+    # The combat actions available when using this element in combat
+    combatActions:
+      <actionName>: <maxDamage>
+    # Indicates whether the element is visible to the player in the location
+    visible: <boolean>
+    # Whether the element is locked
+    locked: <boolean>
+    # Other custom attributes can be added as desired
+  # How the interactive element is affected by the environment
+  envResponses:
+    # List of conditions that have an effect on the element
+      # The id of the condition that affects the element
+    - conditionId: ""
+      # Whether the change should be reverted at the end of the turn
+      temporary: <boolean>
+      # How the element is affected
+      modifiers:
+       - "<componentId.attribute>: <value> or '<reference>'"
+  # List of actions that can be performed on or with the element
+  actions:
+     # Whether the option has been enabled or not. Sometimes other things
+     # need to happen in the game before something becomes an option.
+   - visible: <boolean>
+     # What is presented to the player as the option, or general info about the element
+     # Can be left empty to simply execute the action, rather than ask the player if they want to
+     description: ""
+     # States that must be true for the dialog, modifiers, and subsequent actions to be performed
+     # If false, the fallback will be invoked
+     # Can be left empty if the action should just be performed
+     conditions:
+       - "<componentId.attribute> <booleanOperator> <value>"
+     # List of what is presented to the player after the conditions are met
+     # Can be left empty
+     dialog:
+       - ""
+     # List of elements and their attributes to modify
+     # Can be left empty
+     modifiers:
+         # componentId.attribute.subattribute: how to modify it (Can be '+<amount>', '-<amount>', '<value>')
+         # If the modifer is not in single quotes, then it is a reference to another value
+         # For example: player.hitpoints.max -> this would set the value to whatever the player's max hitpoints can be
+       - "<componentId.attribute>: <value> or '<reference>'"
+     # List of actions to present after this one is complete; allows action chaining
+     nextActions:
+     # List of fallback actions to present if the conditions aren't met
+     fallbacks:
+       # Another action sequence
+       - visible: <boolean>
+         description:
+         conditions:
+         dialog:
+         modifiers:
+           - "_attack_" # Reserved keyword to invoke combat mode
+         nextActions:
+         fallbacks:

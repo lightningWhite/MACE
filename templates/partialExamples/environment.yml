@@ -1,0 +1,56 @@
+# Somewhat populated examples. They may not conform correctly to
+# the templates, which trump these examples. These just give some
+# ideas of how they could be used, along with some additional comments.
+
+# Environmental Factors
+environment:
+  # Various conditions that can be encountered throughout the game
+  # The player and other interactive elements can have
+  # conditionReactions where they are affected/enhanced based on
+  # the current condition (e.g. orcs have greater strength in the dark,
+  # abominable snowmen have greater strength in the snow)
+  conditions:
+    - "clear"
+    - "partly cloudy"
+    - "windy"
+    - "rainy"
+    - "fog"
+    - "volcanic ash"
+    - "hurricane"
+    - "tornado"
+    - "meteor shower"
+    - "light snow"
+    - "blizzard"
+  # Sequences of weather conditions
+  # Each sequence will be chosen randomly, and then rotated through on each turn
+  # By having sequences, the logic of their transitions can be maintained
+  # It makes sense to start and end with a 'clear' so the sequences when
+  # randomly selected can blend together seamlessly
+  conditionSequences:
+    1:
+      - "clear"
+      - "partly cloudy"
+      - "windy"
+      - "rainy"
+      - "rainy"
+      - "rainy"
+      - "partly cloudy"
+      - "clear"
+    2:
+      - "clear"
+      - "windy"
+      - "windy"
+      - "clear"
+  # Light levels rotate to simulate a day cycle
+  # Specified as a list to ensure order
+  lightLevels:
+    # The time of day
+    - light:
+        # How many turns it should last for
+        duration: 4
+    - lowlight:
+        duration: 1
+    - dark:
+        duration: 3
+    - lowlight:
+        duration: 1

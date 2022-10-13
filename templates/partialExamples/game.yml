@@ -1,0 +1,80 @@
+# Somewhat populated examples. They may not conform correctly to
+# the templates, which trump these examples. These just give some
+# ideas of how they could be used, along with some additional comments.
+
+# Overarching game settings
+game:
+  # Name of the game that will be displayed as a game to select for play
+  name: "A Peasant's Quest"
+  # Sentences that will be displayed in order after pressing enter for each one
+  introduction:
+    - "You are a peasant who has worked on your old friend's farm for 25 years."
+    - "One day, as you're working in the field, a host of the king's guard rides through the field toward you!"
+    - "When they arrive, they tell you that the king has ordered all men between the ages of 22 and 35 that they must join the king's forces and journey to the Dark Mountain."
+    - "You've heard tales that those who go to the Dark Mountain never return."
+    - "But you have no choice. You've been ordered to arrive at Hagan's Castle within the next 7 days."
+  # Attribute values that result in game over
+  loseConditions:
+    - "player.hitpoints == 0"
+  # Attribute values that result in a won game
+  winConditions:
+    - "player.possessions.magicSword == 1"
+    - "player.location == 'hagansCastle'"
+  attributes:
+    over: false
+  # What gets done when the player wins
+  winSequence:
+  # This is a standard action sequence
+   - visible: <boolean>
+     description: ""
+     conditions:
+     dialog:
+       - "Congratulations! You completed the quest successfully!"
+     modifiers:
+     nextActions:
+     fallbacks:
+  # What gets done when the player loses
+  loseSequence:
+     # Maybe set the attributes so the player restarts somewhere or has some extra hitpoints or something
+     # This is a standard action sequence
+    - visible: true
+      description: ""
+      conditions:
+      dialog:
+        - "You lose."
+      modifiers:
+      nextActions:
+      fallbacks:
+        - visible:
+          description: "Retry?"
+          conditions:
+            - "player.possessions.magicSword"
+          dialog:
+            - "You are starting back where you received the magic sword."
+          modifiers:
+            # Maybe do modifiers this way, but it will require more parsing...
+            - "player.location: 'trollBridge1'" # Quotes around value indicates 'use this exact value'
+            - "player.hitpoints.current: player.hitpoints.max" # No quotes around value indicates value lookup
+          nextActions:
+          fallback:
+            - visible: true
+              description:
+              conditions:
+              dialog:
+                - "You are starting back at the very beginning."
+              modifiers:
+                # Maybe do modifiers this way, but it will require more parsing...
+                - "player.location: 'beginningLocation'" # Quotes around value indicates 'use this exact value'
+                - "player.hitpoints.current: player.hitpoints.max" # No quotes around value indicates value lookup
+              nextActions:
+              fallbacks:
+    - visible: true
+      description: "Quit?"
+      conditions:
+      dialog:
+        - "Play again soon!"
+      modifiers:
+        # This signals the engine to stop the game loop
+        - "game.over: true"
+      nextActions:
+      fallbacks:
