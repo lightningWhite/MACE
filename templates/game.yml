@@ -5,9 +5,6 @@ game:
   # Sentences that will be displayed in order after pressing enter for each one
   introduction:
     - ""
-  # Modifiers to get the game set up if needed
-  initializers:
-    - "componentId.attribute>: <value> or '<reference>'"
   # Attribute values that result in game over
   loseConditions:
     - "<componentId.attribute> <booleanOperator> <value>"
