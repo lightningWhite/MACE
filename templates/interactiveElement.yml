@@ -11,48 +11,78 @@ interactiveElement:
       max: <number>
       # The amount it currently has
       current: <number>
-      # The amount reported after applying effects/spells/etc.
-      # The value will return to the current value after the turn ends.
-      # This might be less relevant for hitpoints
-      temp: <number>
+      # How the current value should be reported after applying effects/spells/etc.
+      # The value will return to the current value after the duration expires.
+      modifier:
+        # How to modify the 'current' value
+        amount: <pos/neg number>
+        # How many turns the modifier should last
+        duration: <number>
+      # Whether the person playing can allocate creation points when
+      # starting the game
+      customizable: <boolean>
     # How much strength it has; ranges from 0 to 100
     # Factors into the probability of a hit during melee combat
     strength:
       max: <number>
+      current: <number>
+      modifier:
+        amount: <pos/neg number>
+        duration: <number>
       temp: <number>
+      customizable: <boolean>
     # How fast it is; ranges from 0 to 100
     # Factors into escape, attack, etc. probability
     speed:
       max: <number>
-      temp: <number>
+      current: <number>
+      modifier:
+        amount: <pos/neg number>
+        duration: <number>
+      customizable: <boolean>
     # Magical ability it has; ranges from 0 to 100
     # Affects spells and effectiveness of them
     wisdom:
       max: <number>
-      temp: <number>
+      current: <number>
+      modifier:
+        amount: <pos/neg number>
+        duration: <number>
+      customizable: <boolean>
     # Endurance of the element; ranges from 0 to 100
     # Affects melee/magic combat; may decrease and increase depending on activity
     energy:
       max: <number>
-      temp: <number>
+      current: <number>
+      modifier:
+        amount: <pos/neg number>
+        duration: <number>
+      customizable: <boolean>
     # How well the element/character can inspire devotion in others; ranges from 0 to 100
     # May affect acquiring friends or support from others
     charisma:
       max: <number>
-      temp: <number>
+      current: <number>
+      modifier:
+        amount: <pos/neg number>
+        duration: <number>
+      customizable: <boolean>
     # How stealthy the element/character is; ranges from 0 to 100
     # Affects probability of not being caught when sneaking around
     stealth:
       max: <number>
-      temp: <number>
-    # What the element has
+      current: <number>
+      modifier:
+        amount: <pos/neg number>
+        duration: <number>
+      customizable: <boolean>    # What the element has
     possessions:
       # Can be anything, along with a count
-      <item>: <count>
+      <interactiveElementId>: <count>
     skills:
       # A weapon is an interactive element with attributes and combatActions
       # that can be invoked in combat mode
-      <weapon/item>: <number>
+      <interactiveElementId>: <number>
     # The combat actions available when using this element in combat
     combatActions:
       <actionName>: <maxDamage>

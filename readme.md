@@ -104,3 +104,27 @@ This may include things like the following:
   * Snow, rain, wind, daytime, nighttime, etc. These may affect the abilities of objects or characters.
 * Other
   * Volcanic erruptions, earthquakes, etc.
+
+## TODO Development Notes
+
+This section is used to keep track of things that are in progress or that need to be done.
+
+### Creation Wizard
+
+- [ ] Write classes to represent each of the game components
+- [ ] Add YAML support to write out the classes to files
+- [ ] Determine individual game config file organization structure
+- [ ] Save files to the determined structure when creating a game
+- [ ] Load all of the game elements into the Wizard
+- [ ] Write a function to allow users to select attributes from the components loaded into the wizard
+- [ ] Edit previously created games
+- [ ] Finish writing the wizard function to create a game action
+- [ ] Implement the wizard section for creating the map
+- [ ] Implement the wizard section for creating the environment conditions
+- [ ] Implement the wizard section for creating the interactive elements
+- [ ] Implement the wizard section for configuring the main character
+- [ ] Implement some sort of validation to make sure referenced items exist
+
+### Game Engine
+
+- [ ] Design how this will work

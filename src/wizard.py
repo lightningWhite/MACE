@@ -5,28 +5,36 @@
 # Objects in a game are then validated to make sure all referenced objects
 # exist.
 
+import os
+
 
 def presentOptions(options):
     """
     Prints out an indexed list of provided options
     and obtains the user's selection
-    param: options - List of options
-    return: The index of the selected option in the list
+    param: options - List of tuples containing the option and function
+                     to call for that option. e.g. [("option", function())]
     """
     index = 1
     for option in options:
-        print(f"\t{index}. {option}")
+        print(f"\t{index}. {option[0]}")
         index += 1
 
     invalid = True
     while invalid == True:
         selection = input("\nEnter the number of your choice: ")
-        if (
-            selection.isdigit()
-            and int(selection) > 0
-            and int(selection) <= len(options)
-        ):
-            selection = int(selection)
+
+        if not selection.isdigit():
+            invalid = False
+            continue
+        selection = int(selection) - 1
+
+        if selection > -1 and selection < len(options):
+            # Make sure the option tuple has two elements
+            if len(options[int(selection)]) == 2:
+                if options[int(selection)][1] is not None:
+                    # Invoke the option's function
+                    options[int(selection)][1]()
             invalid = False
         else:
             print(
@@ -34,7 +42,12 @@ def presentOptions(options):
             )
             continue
 
-    return selection - 1
+
+def clear():
+    """
+    Cross-platform method for clearing the terminal window.
+    """
+    os.system("cls" if os.name == "nt" else "clear")
 
 
 def printBreak():
@@ -82,6 +95,16 @@ Multiple conditions can be specified by pressing enter between each one.
     # TODO: Present the user with a list of
     # components that they can choose from, and then select the
     # attribute of that component and what the value should be
+
+    # Ask if main character, interactive element, game, or environment
+
+    # If character, list the attributes
+    # Allow an attribute to be selected
+    # Repeat (drill down) until they select the one they want
+    # Ask for a desired value
+
+    # Do similar things for the other game components
+
     return getInputList()
 
 
@@ -97,7 +120,7 @@ def getYesNo():
         answer = input("> ")
         if len(answer) > 0:
             # Allow the user to enter 'yes' or 'no' in various forms
-            lower_ans = answer.lower
+            lower_ans = answer.lower()
             if lower_ans[0] == "y":
                 return True
             elif lower_ans[0] == "n":
@@ -131,7 +154,7 @@ def createAction(winLoseAction=False):
             )
             # visible will be true if the answer was 'yes' or 'y' or 'Y' etc.
             visible = getYesNo()
-        printBreak()
+        clear()
 
         print(
             """
@@ -143,7 +166,7 @@ you can leave this blank to just execute the action.
         """
         )
         description = input("> ")
-        printBreak()
+        clear()
 
         print(
             """
@@ -152,11 +175,10 @@ if selected.
         """
         )
         conditions = defineConditions()
-        printBreak()
+        clear()
 
     print(
-        """
-Now, write up the dialog sentences that should be displayed to the player when this
+        """Now, write up the dialog sentences that should be displayed to the player when this
 sequence is encountered. If you want a pause between sentences displayed to the
 player, simply hit enter after a sentence or sentences. This will allow the
 player to press enter to continue to the next sentence.
@@ -164,7 +186,7 @@ When you're done writing the dialog, press enter with an empty sentence.
 """
     )
     dialog = getInputList()
-    printBreak()
+    clear()
 
     print(
         """
@@ -183,26 +205,29 @@ def createSummary():
     """
     Sequence to help user create game objectives and summary.
     """
-    printBreak()
+    clear()
     print("Overarching Game Setting Creation\n")
-    name = input("What would you like your game to be named?\n> ")
-    printBreak()
 
+    # Get the game name
+    name = input("What would you like your game to be named?\n> ")
+    clear()
+
+    # Get the list of introduction sentences
     print(
         """
-Now, write up the sentences that should be displayed to the player when
-beginning the game. If you want a pause between sentences displayed to the
+Now, write up the introduction sentences that should be displayed to the player
+when beginning the game. If you want a pause between sentences displayed to the
 player, simply hit enter after a sentence or sentences. This will allow the
-player to press enter to continue to the next introduction portion.
+player to press enter to continue to the next portion of the introduction.
 When you're done writing the introduction, press enter with an empty sentence.
     """
     )
     introduction = getInputList()
-    printBreak()
+    clear()
 
+    # Get the list of conditions defining a loss
     print(
-        """
-Great work!
+        """Great work!
 
 Now it's time to specify what conditions will result in a lost game.
 Specify any attribute values that you want checked between each turn
@@ -211,36 +236,32 @@ to determine if the game was lost.
     )
 
     loseConditions = defineConditions()
-    printBreak()
+    clear()
 
-    print(
-        """
-
-Now the win conditions need to be specified in the same way.
-        """
-    )
+    # Get the list of conditions defining a win
+    print("Now the win conditions need to be specified in the same way.")
     winConditions = defineConditions()
-    printBreak()
+    clear()
 
     # TODO: Configure the win sequence
     # This will probably best be done by creating an 'action' creation function
     winSequence = createAction(winLoseAction=True)
-    printBreak()
+    clear()
 
     # TODO: Configure the lose sequence
     # This will probably best be done by creating an 'action' creation function
     loseSequence = createAction(winLoseAction=True)
-    printBreak()
+    clear()
 
 
 def createGame():
     """
     Aids the user in creating a MACE compatible game.
     """
-    print(
-        """
 
-This wizard will help you create the necessary components for a full MACE game.
+    clear()
+    print(
+        """This wizard will help you create the necessary components for a full MACE game.
 You will be presented with a series of questions for which you will provide the answers.
 You will be able to go back and edit any component at any time during the creation process.
 
@@ -254,35 +275,28 @@ The following component types will be created/configured as part of this wizard:
 
 Keep in mind that as you go through the creation of each component, if you aren't sure
 about something, you can just come back to it later once more of the game is built out.
-
     """
     )
+
+    wizOptions = [
+        ("The game summary and win/lose conditions", createSummary),
+        ("The game map", None),
+        ("Environment conditions", None),
+        ("Interactive elements", None),
+        ("Which attributes of the player are customizable", None),
+        ("Save and Quit", None),
+    ]
 
     done = False
     while not done:
         print("What would you like to work on now?\n")
-        wizOptions = [
-            "The game summary and win/lose conditions",
-            "The game map",
-            "Environment conditions",
-            "Interactive elements",
-            "Which attributes of the player are customizable",
-            "Save and Quit",
-        ]
-        selection = presentOptions(wizOptions)
 
-        if wizOptions[selection] == wizOptions[0]:
-            createSummary()
-        elif wizOptions[selection] == wizOptions[1]:
-            continue
-        elif wizOptions[selection] == wizOptions[2]:
-            continue
-        elif wizOptions[selection] == wizOptions[3]:
-            continue
-        elif wizOptions[selection] == wizOptions[4]:
-            continue
-        elif wizOptions[selection] == wizOptions[5]:
-            done = True
+        presentOptions(wizOptions)
+
+        print("Do you want to continue editing this game?")
+        answer = getYesNo()
+        done = not answer
+        clear()
 
 
 def editGame():
@@ -295,16 +309,19 @@ def startWizard():
     """
     print("Welcome to the MACE Wizard!")
     print("This tool will help you create or edit a MACE compatible game.")
-    print("\nWhat would you like to do?\n")
 
-    options = ["Create a new game", "Edit an existing game"]
+    options = [
+        ("Create a new game", createGame),
+        ("Edit an existing game", editGame),
+    ]
 
-    selection = options[presentOptions(options)]
+    done = False
+    while not done:
+        print("\nWhat would you like to do?\n")
+        presentOptions(options)
 
-    if selection == options[0]:
-        createGame()
-    else:
-        editGame()
+        print("Do you want to exit the wizard?")
+        done = getYesNo()
 
 
 def main():
