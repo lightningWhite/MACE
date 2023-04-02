@@ -6,6 +6,9 @@
 # exist.
 
 import os
+import yaml
+import modules.objects.game as game
+import modules.objects.interaction as interaction
 
 
 def presentOptions(options):
@@ -87,9 +90,12 @@ Conditions should be specified in the following form:
 
 For example:
 
-player.hitpoints.current == 0
+player.location == castle
 
 Multiple conditions can be specified by pressing enter between each one.
+
+Note: This will be made easier for the user in the future by
+presenting a list of available attributes the user can select.
 """
     )
     # TODO: Present the user with a list of
@@ -131,74 +137,208 @@ def getYesNo():
             print("Invalid response. Please enter 'y' for yes, or 'n' for no.")
 
 
-def createAction(winLoseAction=False):
+def createWinLoseInteraction():
     """
-    Aids the user in creating action sequences.
-    param: winLoseAction - if the action is being created
-           for a win/lose action sequence. If True, the visible
-           field won't be presented as an option, and it will
-           default to a value of 'True'.
-    ret: An action sequence object
+    Aids the user in creating win/lose interaction sequences.
+    The instructions for creating a win/lose interaction are a bit different
+    than those for regular interactions, so this makes it more specific.
+
+    return : Interaction
+        The populated Interaction object
     """
-    if winLoseAction:
-        # For win/lose sequences, we always want the action to be visible
-        visible = True
-        # The action and conditions will just be executed, so leave blank
-        description = ""
-        conditions = ""
-    else:
-        valid = False
-        while not invalid:
-            print(
-                "Do you want this action to be visible to the user at the beginning of the game (y/n)?\n> "
-            )
-            # visible will be true if the answer was 'yes' or 'y' or 'Y' etc.
-            visible = getYesNo()
-        clear()
-
-        print(
-            """
-Enter a word or sentence that presents this action as an option.
-For example, "Talk to the blacksmith?", or "Open the door?".
-Note that if this will be the only available action for the interactive element,
-you can leave this blank to just execute the action.
-
-        """
-        )
-        description = input("> ")
-        clear()
-
-        print(
-            """
-Now define the conditions that must be met for this action to proceed
-if selected.
-        """
-        )
-        conditions = defineConditions()
-        clear()
+    # We want to skip right to the dialog when winning or losing
+    visible = True
+    description = ""
+    conditions = ""
 
     print(
-        """Now, write up the dialog sentences that should be displayed to the player when this
-sequence is encountered. If you want a pause between sentences displayed to the
-player, simply hit enter after a sentence or sentences. This will allow the
-player to press enter to continue to the next sentence.
-When you're done writing the dialog, press enter with an empty sentence.
+        """Write up the dialog sentences that should be displayed to the player.
+If you want a pause between blocks of text displayed to the player, simply hit
+enter. This will allow the player to press enter to continue to the next
+sentence. When you're done writing the dialog, press enter with an empty
+sentence.
 """
     )
     dialog = getInputList()
     clear()
 
-    print(
-        """
+    # Skip the modifiers for win/lose
+    modifiers = []
 
+    # Get the nextInteractions if the conditions were met
+    print(
+        """Once the player has finished the game, if you want to present
+some additional options, such as "Play again?" or something, we can
+create those now. The next set of instructions from the wizard will
+direct you through creating one or more standard options. As you follow
+the instructions for creating a standard option, keep in mind you can
+leave some of the fields blank if they don't apply.
 """
     )
+    nextInteractions = []
+    another = True
+    while another:
+        print(
+            f"Do you want to present another option after the user has finished the game?"
+        )
+        another = getYesNo()
+        if another:
+            newInteraction = createInteraction()
+            nextInteractions.append(newInteraction)
+    clear()
 
-    # TODO:
-    # Modifiers
-    # nextActions
-    # fallbacks
-    return ""
+    # Fallbacks aren't used for win/lose
+    fallbacks = []
+
+    createdInteraction = interaction.Interaction(
+        visible, description, conditions, dialog, modifiers, nextInteractions, fallbacks
+    )
+
+    return createdInteraction
+
+
+def createInteraction():
+    """
+    Aids the user in creating interactions.
+    An interaction can be a simple option, or it can directly
+    modify the game state.
+    return : Interaction
+        The populated Interaction object
+    """
+    print("Do you want this option to start out as visible to the user? (y/n)?\n> ")
+    # visible will be true if the answer was 'yes' or 'y' or 'Y' etc.
+    visible = getYesNo()
+    clear()
+
+    # Get the description
+    print(
+        """ Write the option
+
+Enter a word or sentence that presents this interaction as an option.
+For example, "Talk to the blacksmith?", or "Open the door?".
+Note that if this will be the only available action for the interactive element,
+you can leave this blank to just execute the action.
+
+    """
+    )
+    description = input("> ")
+    clear()
+
+    # Get the conditions
+    print(
+        """Define the conditions to execute the action
+
+Now define the conditions that must be met for the changes defined in this
+action to take place. These conditions must also be met for the next
+options to be presented. Otherwise, the fallback actions, if any, will be
+presented instead.
+      """
+    )
+    conditions = defineConditions()
+    clear()
+
+    # Get the dialog
+    print(
+        """Write the dialog
+
+Now, write up the dialog sentences that should be displayed to the player when
+this option is selected and the conditions ARE met. If you want a pause between
+blocks of text displayed to the player, simply hit enter. This will allow the
+player to press enter to continue to the next sentence. When you're done writing
+the dialog, press enter with an empty sentence. You can leave this blank if dialog
+doesn't make sense here.
+"""
+    )
+    dialog = getInputList()
+    clear()
+
+    # Get the modifiers
+    print(
+        """Define the modifiers
+
+Now it's time to establish what should happen when this action
+is selected and the conditions are met. This involves changing
+attributes of elements in the game to change the game state.
+For example, if the option was "Open the chest?", then the chest
+likely has an attribute named 'isOpen' that needs to be set
+to True once this action is performed.
+
+Specify the attributes that need to be modified in one of the
+following ways:
+
+- Set an attribute to a value:
+  <componentId.attribute>: <value>
+
+- Increment an attribute by an amount:
+  <componentId.attribute>: +<amount>
+
+- Decrement an attribute by an amount:
+  <componentId.attribute>: -<amount>
+
+- Set the value of an attribute to the value of another attribute:
+  <componentId.attribute>: <componentId.attribute>
+"""
+    )
+    modifiers = getInputList()
+    clear()
+
+    # Get the nextInteractions if the conditions were met
+    print(
+        """Create the next interactions
+
+Now we need to define any additional options that should be
+presented to the user that should follow the previous action.
+For example, if you opened a chest, maybe you now want to ask
+the user if they want to pick up the potion inside. To create
+a subsequent action, we'll repeat the same steps, once for each
+additional option you want to present.
+"""
+    )
+    nextInteractions = []
+    another = True
+    while another:
+        print(
+            f"Do you want to present a subsequent action to the '{description}' option?"
+        )
+        another = getYesNo()
+        if another:
+            newInteraction = createInteraction()
+            nextInteractions.append(newInteraction)
+    clear()
+
+    # Get the fallback actions for if the conditions weren't met
+    print(
+        """Define the fallback interactions
+
+We're almost done with this interaction! Now that we've defined what should
+happen if the conditions were met for the '{description}' option, we
+need to define any subsequent options that should be presented to the
+user if the conditions weren't met. For example, maybe they selected
+"Open the chest", but one of the required conditions was that the
+chest must be unlocked. Perhaps in this case, you'd want to present
+an option to "Try picking the lock". To create a subsequent fallback
+option, we'll again repeat the same steps, once for each additional
+fallback option you want to present.
+"""
+    )
+    fallbacks = []
+    another = True
+    while another:
+        print(
+            f"Do you want to present a subsequent action to the '{description}' option?"
+        )
+        another = getYesNo()
+        if another:
+            newInteraction = createInteraction()
+            fallbacks.append(newInteraction)
+
+    print("About to construct the action")
+    createdInteraction = interaction.Interaction(
+        visible, description, conditions, dialog, modifiers, nextInteractions, fallbacks
+    )
+    clear()
+
+    return createdInteraction
 
 
 def createSummary():
@@ -214,7 +354,8 @@ def createSummary():
 
     # Get the list of introduction sentences
     print(
-        """
+        """Write the introduction
+
 Now, write up the introduction sentences that should be displayed to the player
 when beginning the game. If you want a pause between sentences displayed to the
 player, simply hit enter after a sentence or sentences. This will allow the
@@ -227,14 +368,15 @@ When you're done writing the introduction, press enter with an empty sentence.
 
     # Get the list of conditions defining a loss
     print(
-        """Great work!
+        """Define the lose conditions
+
+Great work!
 
 Now it's time to specify what conditions will result in a lost game.
 Specify any attribute values that you want checked between each turn
 to determine if the game was lost.
         """
     )
-
     loseConditions = defineConditions()
     clear()
 
@@ -243,15 +385,26 @@ to determine if the game was lost.
     winConditions = defineConditions()
     clear()
 
-    # TODO: Configure the win sequence
-    # This will probably best be done by creating an 'action' creation function
-    winSequence = createAction(winLoseAction=True)
+    # Configure the win action
+    print("Now we're going to create the sequence for when the player wins the game.")
+    winInteraction = createWinLoseInteraction()
     clear()
 
-    # TODO: Configure the lose sequence
-    # This will probably best be done by creating an 'action' creation function
-    loseSequence = createAction(winLoseAction=True)
+    # Configure the lose action
+    print("Now we're going to create the sequence for when the player loses the game.")
+    loseInteraction = createWinLoseInteraction()
     clear()
+
+    newGame = game.Game(
+        name,
+        introduction,
+        loseConditions,
+        winConditions,
+        winInteraction,
+        loseInteraction,
+    )
+
+    return
 
 
 def createGame():

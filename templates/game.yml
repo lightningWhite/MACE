@@ -5,17 +5,20 @@ game:
   # Sentences that will be displayed in order after pressing enter for each one
   introduction:
     - ""
-  # Attribute values that result in game over
-  loseConditions:
-    - "<componentId.attribute> <booleanOperator> <value>"
+  # Attributes of the game
+  attributes:
+    # Whether the game is over or not
+    over: <boolean>
   # Attribute values that result in a won game
   winConditions:
     - "<componentId.attribute> <booleanOperator> <value>"
-  attributes:
-    over: <boolean>
+  # Attribute values that result in game over
+  loseConditions:
+    - "<componentId.attribute> <booleanOperator> <value>"
   # What gets done when the player wins
   winSequence:
-  # This is a standard action sequence
+   # Allows for setting the attributes so the player restarts somewhere or has some extra hitpoints or something
+   # This is a standard action sequence
    - visible: <boolean>
      description: ""
      conditions:
@@ -28,7 +31,6 @@ game:
      fallbacks:
   # What gets done when the player loses
   loseSequence:
-   # Allows for settings the attributes so the player restarts somewhere or has some extra hitpoints or something
    # This is a standard action sequence
    - visible: <boolean>
      description: ""
