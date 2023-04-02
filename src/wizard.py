@@ -15,35 +15,27 @@ def presentOptions(options):
     """
     Prints out an indexed list of provided options
     and obtains the user's selection
-    param: options - List of tuples containing the option and function
-                     to call for that option. e.g. [("option", function())]
+    param: options - List of option strings
+                     e.g. ["option"]
     """
     index = 1
     for option in options:
-        print(f"\t{index}. {option[0]}")
+        print(f"\t{index}. {option}")
         index += 1
 
-    invalid = True
-    while invalid == True:
+    while True:
         selection = input("\nEnter the number of your choice: ")
 
-        if not selection.isdigit():
-            invalid = False
-            continue
-        selection = int(selection) - 1
-
-        if selection > -1 and selection < len(options):
-            # Make sure the option tuple has two elements
-            if len(options[int(selection)]) == 2:
-                if options[int(selection)][1] is not None:
-                    # Invoke the option's function
-                    options[int(selection)][1]()
-            invalid = False
+        if (
+            selection.isdigit()
+            and int(selection) > 0
+            and int(selection) <= len(options)
+        ):
+            return int(selection)
         else:
             print(
                 f"\nInvalid selection. Please enter a number from 1 to {len(options)}."
             )
-            continue
 
 
 def clear():
@@ -167,7 +159,9 @@ sentence.
 
     # Get the nextInteractions if the conditions were met
     print(
-        """Once the player has finished the game, if you want to present
+        """Additional options?
+
+Once the player has finished the game, if you want to present
 some additional options, such as "Play again?" or something, we can
 create those now. The next set of instructions from the wizard will
 direct you through creating one or more standard options. As you follow
@@ -381,21 +375,24 @@ to determine if the game was lost.
     clear()
 
     # Get the list of conditions defining a win
+    print("Define the win conditions\n")
     print("Now the win conditions need to be specified in the same way.")
     winConditions = defineConditions()
     clear()
 
     # Configure the win action
+    print("Write the win dialog\n")
     print("Now we're going to create the sequence for when the player wins the game.")
     winInteraction = createWinLoseInteraction()
     clear()
 
     # Configure the lose action
+    print("Write the lose dialog\n")
     print("Now we're going to create the sequence for when the player loses the game.")
     loseInteraction = createWinLoseInteraction()
     clear()
 
-    newGame = game.Game(
+    gameObj = game.Game(
         name,
         introduction,
         loseConditions,
@@ -403,8 +400,7 @@ to determine if the game was lost.
         winInteraction,
         loseInteraction,
     )
-
-    return
+    return gameObj
 
 
 def createGame():
@@ -431,20 +427,40 @@ about something, you can just come back to it later once more of the game is bui
     """
     )
 
+    gameObj = game.Game()
+
     wizOptions = [
-        ("The game summary and win/lose conditions", createSummary),
-        ("The game map", None),
-        ("Environment conditions", None),
-        ("Interactive elements", None),
-        ("Which attributes of the player are customizable", None),
-        ("Save and Quit", None),
+        "The game summary and win/lose conditions",
+        "The game map",
+        "Environment conditions",
+        "Interactive elements",
+        "Which attributes of the player are customizable",
+        "Save and Quit",
     ]
 
     done = False
     while not done:
         print("What would you like to work on now?\n")
 
-        presentOptions(wizOptions)
+        selection = presentOptions(wizOptions)
+        if selection == 1:
+            gameObj = createSummary()
+            # TODO: Write the game object to a file
+            # and establish/follow the directory structure
+            # for the game files
+            print(f"Here's the Game Summary:\n {yaml.dump(gameObj)}")
+        elif selection == 2:
+            pass
+        elif selection == 3:
+            pass
+        elif selection == 4:
+            pass
+        elif selection == 5:
+            pass
+        elif selection == 6:
+            pass
+        else:
+            print("Unknown selection")
 
         print("Do you want to continue editing this game?")
         answer = getYesNo()
@@ -460,21 +476,29 @@ def startWizard():
     """
     Presents the MACE wizard to the user.
     """
+    clear()
     print("Welcome to the MACE Wizard!")
     print("This tool will help you create or edit a MACE compatible game.")
 
     options = [
-        ("Create a new game", createGame),
-        ("Edit an existing game", editGame),
+        "Create a new game",
+        "Edit an existing game",
     ]
 
     done = False
     while not done:
         print("\nWhat would you like to do?\n")
-        presentOptions(options)
+        selection = presentOptions(options)
+        if selection == 1:
+            createGame()
+        elif selection == 2:
+            editGame()
+        else:
+            print("Unknown selection")
 
         print("Do you want to exit the wizard?")
         done = getYesNo()
+    clear()
 
 
 def main():

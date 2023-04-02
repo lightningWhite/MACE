@@ -8,14 +8,14 @@ class Game:
     # functionality may be added later
     def __init__(
         self,
-        name,
-        introduction,
-        loseConditions,
-        winConditions,
-        winInteraction,
-        loseInteraction,
+        name="New Game",
+        introduction="Default introduction",
+        loseConditions=[],
+        winConditions=[],
+        winInteraction=[],
+        loseInteraction=[],
     ):
-        """Constructor
+        """Constructor with Parameters
 
         Parameters
         ----------
