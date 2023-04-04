@@ -9,6 +9,7 @@ import os
 import yaml
 import modules.objects.game as game
 import modules.objects.interaction as interaction
+from pathlib import Path
 
 
 def presentOptions(options):
@@ -342,10 +343,6 @@ def createSummary():
     clear()
     print("Overarching Game Setting Creation\n")
 
-    # Get the game name
-    name = input("What would you like your game to be named?\n> ")
-    clear()
-
     # Get the list of introduction sentences
     print(
         """Write the introduction
@@ -393,7 +390,7 @@ to determine if the game was lost.
     clear()
 
     gameObj = game.Game(
-        name,
+        "DefaultName",
         introduction,
         loseConditions,
         winConditions,
@@ -427,7 +424,12 @@ about something, you can just come back to it later once more of the game is bui
     """
     )
 
-    gameObj = game.Game()
+    # Get the game name so the game's directory can be created
+    name = input("What would you like your game to be named?\n> ")
+    gameObj = game.Game(name=name)
+    gameDir = Path.cwd() / "games" / gameObj.name.replace(" ", "")
+    os.makedirs(gameDir, exist_ok=True)
+    clear()
 
     wizOptions = [
         "The game summary and win/lose conditions",
@@ -444,11 +446,17 @@ about something, you can just come back to it later once more of the game is bui
 
         selection = presentOptions(wizOptions)
         if selection == 1:
-            gameObj = createSummary()
-            # TODO: Write the game object to a file
-            # and establish/follow the directory structure
-            # for the game files
-            print(f"Here's the Game Summary:\n {yaml.dump(gameObj)}")
+            if not os.path.exists(gameDir / "game.yml"):
+                gameObj = createSummary()
+                with open(gameDir / "game.yml", "w") as file:
+                    yaml.dump(gameObj, file)
+                print("Great job! Here's the YAML for the overarching game settings:\n")
+                print(yaml.dump(gameObj))
+            else:
+                print("Looks like you've already done this step. But don't worry!")
+                print(
+                    f"You can edit the generated YAML at for this step at {gameDir / 'game.yml'}."
+                )
         elif selection == 2:
             pass
         elif selection == 3:
