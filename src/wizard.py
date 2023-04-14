@@ -299,6 +299,7 @@ additional option you want to present.
         if another:
             newInteraction = createInteraction()
             nextInteractions.append(newInteraction)
+            print(f"Great, now you're done creating the subaction for {description}.")
     clear()
 
     # Get the fallback actions for if the conditions weren't met
@@ -426,8 +427,9 @@ about something, you can just come back to it later once more of the game is bui
 
     # Get the game name so the game's directory can be created
     name = input("What would you like your game to be named?\n> ")
-    gameObj = game.Game(name=name)
-    gameDir = Path.cwd() / "games" / gameObj.name.replace(" ", "")
+    gameObj = game.Game()
+    # Get the path to the current file being executed, plus the games path
+    gameDir = Path(__file__).parent.resolve() / "games" / name.replace(" ", "")
     os.makedirs(gameDir, exist_ok=True)
     clear()
 
@@ -448,6 +450,7 @@ about something, you can just come back to it later once more of the game is bui
         if selection == 1:
             if not os.path.exists(gameDir / "game.yml"):
                 gameObj = createSummary()
+                gameObj.name = name
                 with open(gameDir / "game.yml", "w") as file:
                     yaml.dump(gameObj, file)
                 print("Great job! Here's the YAML for the overarching game settings:\n")
