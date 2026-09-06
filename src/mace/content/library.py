@@ -14,7 +14,19 @@ from typing import Any
 
 from mace.content.errors import ContentError
 from mace.content.ids import qualify, split
-from mace.model import Calendar, Entity, Game, Location, Pack, Quest, Route, Scene
+from mace.model import (
+    Calendar,
+    Climate,
+    Entity,
+    Game,
+    Location,
+    Pack,
+    Quest,
+    Region,
+    Route,
+    Scene,
+    WeatherCondition,
+)
 from mace.model.base import ContentModel
 
 __all__ = ["COLLECTION_MODELS", "SINGULAR", "LoadedPack", "Library"]
@@ -24,9 +36,12 @@ __all__ = ["COLLECTION_MODELS", "SINGULAR", "LoadedPack", "Library"]
 #: a field on `LoadedPack`.
 COLLECTION_MODELS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
+    "climates": Climate,
     "entities": Entity,
     "locations": Location,
+    "regions": Region,
     "routes": Route,
+    "weatherConditions": WeatherCondition,
     "scenes": Scene,
     "quests": Quest,
 }
@@ -37,12 +52,21 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
 #: undermines everything else the message is trying to do.
 SINGULAR: dict[str, str] = {
     "calendars": "calendar",
+    "climates": "climate",
     "entities": "entity",
     "locations": "location",
+    "regions": "region",
     "routes": "route",
+    "weatherConditions": "weather condition",
     "scenes": "scene",
     "quests": "quest",
 }
+
+
+#: Collections whose Python field name differs from their content key, so
+#: `weatherConditions:` in YAML stays camelCase and the attribute stays
+#: snake_case like every other attribute in the codebase.
+_FIELDS: dict[str, str] = {"weatherConditions": "weather_conditions"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,7 +79,8 @@ class LoadedPack:
         The pack's `pack.yml`.
     root : Path
         The directory it was read from.
-    calendars, entities, locations, routes, scenes, quests : mapping
+    calendars, climates, entities, locations, regions, routes, scenes, quests,
+    weatherConditions : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
         The game manifest, for `kind: game` packs.
@@ -67,11 +92,14 @@ class LoadedPack:
     manifest: Pack
     root: Path
     calendars: Mapping[str, Calendar]
+    climates: Mapping[str, Climate]
     entities: Mapping[str, Entity]
     locations: Mapping[str, Location]
+    regions: Mapping[str, Region]
     routes: Mapping[str, Route]
     scenes: Mapping[str, Scene]
     quests: Mapping[str, Quest]
+    weather_conditions: Mapping[str, WeatherCondition]
     game: Game | None
     unmodelled: Mapping[str, tuple[Any, ...]]
 
@@ -106,7 +134,7 @@ class LoadedPack:
         """
         if name not in COLLECTION_MODELS:
             raise KeyError(f"no such collection: {name}")
-        collected: Mapping[str, ContentModel] = getattr(self, name)
+        collected: Mapping[str, ContentModel] = getattr(self, _FIELDS.get(name, name))
         return collected
 
 

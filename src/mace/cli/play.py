@@ -89,6 +89,16 @@ class Renderer:
             self.line("")
             return
 
+        if event.kind == "weather.changed":
+            if payload["text"]:
+                self.line("")
+                self.line(str(payload["text"]))
+            return
+
+        if event.kind == "world.status":
+            self.status(payload)
+            return
+
         if event.kind == "game.over":
             self.line("")
             self.line(RULE)
@@ -118,6 +128,29 @@ class Renderer:
             else:
                 hint = f"  {option['hint']}" if option["hint"] else ""
                 self.line(f"  {index}. {option['prompt']}  (unavailable){hint}")
+
+    def status(self, payload: dict[str, Any]) -> None:
+        """Print the standing line: when it is, where you are, what the sky is doing.
+
+        This is the whole visible payoff of the world simulation. A player who
+        never sees `Day 3 · dusk · Fenmoor · light rain` has no way to know
+        that waiting a day was a decision they could have made.
+
+        Parameters
+        ----------
+        payload : dict
+            The fields of a `world.status` event.
+        """
+        parts = [f"Day {payload['day']}", str(payload["dayPart"])]
+        if payload["place"]:
+            parts.append(str(payload["place"]))
+        if payload["sky"]:
+            sky = str(payload["sky"])
+            if payload["indoors"]:
+                sky += ", outside"
+            parts.append(sky)
+        self.line("")
+        self.line(f"  {' · '.join(parts)}")
 
     def line(self, text: str) -> None:
         """Write one line.

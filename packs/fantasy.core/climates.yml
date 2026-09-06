@@ -1,0 +1,56 @@
+# A climate is two things multiplied. The seasonal `weights` say what a place
+# is *like* — an autumn lowland is mostly overcast, with some drizzle in it.
+# The `transitions` matrix says how the sky actually *moves* — clear does not
+# become blizzard, it becomes overcast, then drizzle, then rain.
+#
+# The frozen conditions borrow the rows of their unfrozen twins: `light-snow`
+# transitions exactly as `rain` does, and `freezesTo` turns the result back
+# into snow if it is still cold. That is why one matrix covers a whole year.
+climates:
+
+  - id: temperate
+    name: "Temperate Lowlands"
+    # One step an hour, at the default thirty minutes a tick. Stepping every
+    # tick makes the sky twitch; an hour reads like weather.
+    stepTicks: 2
+    freezingPoint: 0.0
+    lapseRate: 0.65
+
+    seasons:
+      spring:
+        temperature: {min: 4, max: 18}
+        weights: {clear: 30, overcast: 30, drizzle: 20, rain: 14, fog: 5, storm: 1}
+      summer:
+        temperature: {min: 12, max: 28}
+        weights: {clear: 50, overcast: 22, drizzle: 10, rain: 12, fog: 3, storm: 3}
+      autumn:
+        temperature: {min: 2, max: 16}
+        weights: {clear: 25, overcast: 30, drizzle: 20, rain: 15, fog: 8, storm: 2}
+      winter:
+        temperature: {min: -12, max: 3}
+        weights: {clear: 20, overcast: 32, drizzle: 18, rain: 20, fog: 8, storm: 2}
+
+    transitions:
+      clear:      {clear: 88, overcast: 11, fog: 1}
+      fog:        {fog: 80, overcast: 15, clear: 5}
+      overcast:   {overcast: 82, clear: 9, drizzle: 7, rain: 2}
+      drizzle:    {drizzle: 70, rain: 10, overcast: 20}
+      rain:       {rain: 74, storm: 3, drizzle: 13, overcast: 10}
+      storm:      {storm: 60, rain: 32, overcast: 8}
+      sleet:      {drizzle: 70, rain: 10, overcast: 20}
+      light-snow: {rain: 74, storm: 3, drizzle: 13, overcast: 10}
+      blizzard:   {storm: 60, rain: 32, overcast: 8}
+
+  - id: upland
+    name: "The High Country"
+    # The same weather, a thousand feet up: colder, so far more of it falls as
+    # snow, and fog sits in the passes. Nothing here is a new condition — the
+    # elevation on the region does the work.
+    extends: temperate
+    seasons:
+      autumn:
+        temperature: {min: -2, max: 11}
+        weights: {clear: 20, overcast: 30, drizzle: 18, rain: 18, fog: 12, storm: 2}
+      winter:
+        temperature: {min: -20, max: -2}
+        weights: {clear: 15, overcast: 30, drizzle: 15, rain: 22, fog: 10, storm: 8}

@@ -11,6 +11,12 @@
         "$ref": "#/$defs/Calendar"
       }
     },
+    "climates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Climate"
+      }
+    },
     "entities": {
       "type": "array",
       "items": {
@@ -23,10 +29,22 @@
         "$ref": "#/$defs/Location"
       }
     },
+    "regions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Region"
+      }
+    },
     "routes": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/Route"
+      }
+    },
+    "weatherConditions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WeatherCondition"
       }
     },
     "scenes": {
@@ -43,18 +61,6 @@
     },
     "game": {
       "$ref": "#/$defs/Game"
-    },
-    "regions": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
-    },
-    "climates": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
-    },
-    "weatherConditions": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
     },
     "terrains": {
       "type": "array",
@@ -315,12 +321,25 @@
     },
     "Calendar": {
       "additionalProperties": false,
-      "description": "A world's division of time into days, parts of days, and seasons.\n\nAttributes\n----------\nid, name : str\n    Identity.\nticks_per_day : int\n    How many ticks a day holds.\nday_parts : tuple of DayPart\n    The parts of the day, in ascending `startTick` order.\nseasons : tuple of Season\n    The seasons, in the order the year runs through them.\nday_names : tuple of str\n    A repeating cycle of weekday names, for the journal and status line.\nmonth_names : tuple of str\n    Month names. The year is split evenly between them; months are naming\n    only, and nothing in the simulation reads them.",
+      "description": "A world's division of time into days, parts of days, and seasons.\n\nAttributes\n----------\nid, name : str\n    Identity.\nticks_per_day : int\n    How many ticks a day holds.\nday_parts : tuple of DayPart\n    The parts of the day, in ascending `startTick` order.\nseasons : tuple of Season\n    The seasons, in the order the year runs through them.\nday_names : tuple of str\n    A repeating cycle of weekday names, for the journal and status line.\nmonth_names : tuple of str\n    Month names. The year is split evenly between them; months are naming\n    only, and nothing in the simulation reads them.\n\nExtending another definition makes dayParts, seasons optional here \u2014 the parent supplies them.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
           "title": "Id",
           "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
         },
         "name": {
           "anyOf": [
@@ -342,7 +361,14 @@
         },
         "dayParts": {
           "items": {
-            "$ref": "#/$defs/DayPart"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DayPart"
+              },
+              {
+                "const": "$append"
+              }
+            ]
           },
           "minItems": 1,
           "title": "Dayparts",
@@ -350,7 +376,14 @@
         },
         "seasons": {
           "items": {
-            "$ref": "#/$defs/Season"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Season"
+              },
+              {
+                "const": "$append"
+              }
+            ]
           },
           "minItems": 1,
           "title": "Seasons",
@@ -359,7 +392,14 @@
         "dayNames": {
           "default": [],
           "items": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
           },
           "title": "Daynames",
           "type": "array"
@@ -367,19 +407,44 @@
         "monthNames": {
           "default": [],
           "items": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
           },
           "title": "Monthnames",
           "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
         }
       },
       "required": [
-        "id",
-        "dayParts",
-        "seasons"
+        "id"
       ],
       "title": "Calendar",
-      "type": "object"
+      "type": "object",
+      "if": {
+        "not": {
+          "required": [
+            "extends"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "dayParts",
+          "seasons"
+        ]
+      }
     },
     "Chance": {
       "maximum": 1.0,
@@ -458,6 +523,115 @@
       "title": "Choice",
       "type": "object"
     },
+    "Climate": {
+      "additionalProperties": false,
+      "description": "How weather behaves in the regions that use it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nseasons : mapping\n    Season id to what that season is like here. A season the calendar has\n    and the climate does not falls back to the transition matrix alone.\ntransitions : mapping\n    Condition to the relative weight of each condition it can become.\n    A condition absent from the matrix holds until something else moves\n    it, which is a reasonable reading of \"the author forgot\".\nstep_ticks : int\n    How many ticks pass between chain steps. One means the sky is\n    reconsidered every tick, which is twitchy at thirty minutes a tick;\n    two is an hour and reads much better.\nsequences : tuple of ClimateSequence\n    Authored progressions that override the chain while they run.\nfront_frequency : float\n    The chance per tick that a front spawns in a region with this\n    climate. Fronts arrive with layer 3.\nfreezing_point : float\n    The temperature below which a condition becomes its `freezesTo`.\nlapse_rate : float\n    Degrees lost per hundred units of a region's `elevation`. 0.65 is the\n    real world's; a game whose elevations are in feet, or whose\n    temperatures are in Fahrenheit, sets its own.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "seasons": {
+          "patternProperties": {
+            "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "$ref": "#/$defs/SeasonProfile"
+            }
+          },
+          "title": "Seasons",
+          "type": "object"
+        },
+        "transitions": {
+          "patternProperties": {
+            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "patternProperties": {
+                "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "title": "Transitions",
+          "type": "object"
+        },
+        "stepTicks": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Stepticks",
+          "type": "integer"
+        },
+        "sequences": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ClimateSequence"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Sequences",
+          "type": "array"
+        },
+        "frontFrequency": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Frontfrequency",
+          "type": "number"
+        },
+        "freezingPoint": {
+          "default": 0.0,
+          "title": "Freezingpoint",
+          "type": "number"
+        },
+        "lapseRate": {
+          "default": 0.65,
+          "title": "Lapserate",
+          "type": "number"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Climate",
+      "type": "object"
+    },
     "ClimateOverride": {
       "additionalProperties": false,
       "description": "A hard weather override for one place.\n\nIt is always winter on the Dark Mountain, whatever the season is doing in\nthe lowlands. This bypasses the climate model rather than biasing it.\n\nAttributes\n----------\ncondition : str or None\n    The weather condition that always holds here.\nday_part : str or None\n    A day part that always holds here \u2014 for caves and deep forest.\nlocked : bool\n    Whether the override resists weather fronts moving through.",
@@ -495,6 +669,77 @@
         }
       },
       "title": "ClimateOverride",
+      "type": "object"
+    },
+    "ClimateSequence": {
+      "additionalProperties": false,
+      "description": "A hand-authored progression of conditions, played straight through.\n\nThe v0 `conditionSequences` idea, kept: a three-day storm that breaks on\nthe morning of the fourth is a story beat, and a Markov chain will not\nreliably produce one. Once chosen, a sequence runs to its end without the\nchain interfering.\n\nAttributes\n----------\nid : str\n    Names it, so an effect can call for it directly.\nweight : float\n    How likely the chain is to enter this sequence rather than take an\n    ordinary step. Zero means only an effect can start it.\nwhen : tuple of Condition or None\n    Extra gating \u2014 a sequence that only happens in winter, or once the\n    player has crossed the range.\nsteps : tuple of ClimateStep\n    The conditions, in order, with how long each holds.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "weight": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/ClimateStep"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "steps"
+      ],
+      "title": "ClimateSequence",
+      "type": "object"
+    },
+    "ClimateStep": {
+      "additionalProperties": false,
+      "description": "One condition in a sequence, and how long it lasts.\n\nAttributes\n----------\ncondition : str\n    The weather condition.\nticks : int\n    How many ticks it holds before the sequence moves on.",
+      "properties": {
+        "condition": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Condition",
+          "type": "string"
+        },
+        "ticks": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Ticks",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "title": "ClimateStep",
       "type": "object"
     },
     "CombatAssignment": {
@@ -2540,6 +2785,132 @@
       "title": "QuestStage",
       "type": "object"
     },
+    "Region": {
+      "additionalProperties": false,
+      "description": "A stretch of the map that shares its weather.\n\nAttributes\n----------\nid, name : str\n    Identity.\ndescription : Description or None\n    How the region reads when it is named at distance \u2014 a front seen from\n    the next valley over.\nclimate : str or None\n    The climate governing it. Without one the region has no weather, which\n    is the right answer for an undercity or a station interior.\nneighbors : tuple of str\n    Adjacent regions, for front propagation. Adjacency is not made\n    symmetric automatically: a front that crosses a range one way and not\n    the other is a thing an author may want.\nelevation : float\n    Height above the map's baseline. Colder with altitude, which is what\n    turns the same rain into snow up the mountain.\nbiome : str or None\n    The region's default biome, which a location may override.\nencounters : str or None\n    A table rolled anywhere in the region, on top of the route's or the\n    location's. Region-wide flavor: you hear wolves.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "climate": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Climate"
+        },
+        "neighbors": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Neighbors",
+          "type": "array"
+        },
+        "elevation": {
+          "default": 0.0,
+          "title": "Elevation",
+          "type": "number"
+        },
+        "biome": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Biome"
+        },
+        "encounters": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Encounters"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Region",
+      "type": "object"
+    },
     "Reveal": {
       "additionalProperties": false,
       "description": "Make a location known, so it appears on the map and in travel menus.",
@@ -2921,6 +3292,34 @@
       "title": "Season",
       "type": "object"
     },
+    "SeasonProfile": {
+      "additionalProperties": false,
+      "description": "What one season is like in one climate.\n\nAttributes\n----------\ntemperature : TemperatureRange or None\n    The daily band. Without one, nothing ever freezes here.\nweights : mapping\n    Relative preference for each weather condition this season. These\n    multiply the transition matrix, so a condition weighted 0 cannot\n    happen this season however the chain gets there.",
+      "properties": {
+        "temperature": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TemperatureRange"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "weights": {
+          "patternProperties": {
+            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "type": "number"
+            }
+          },
+          "title": "Weights",
+          "type": "object"
+        }
+      },
+      "title": "SeasonProfile",
+      "type": "object"
+    },
     "SetDisposition": {
       "additionalProperties": false,
       "description": "Change how an entity feels about the player.",
@@ -3217,6 +3616,26 @@
       "title": "StatModifier",
       "type": "object"
     },
+    "TemperatureRange": {
+      "additionalProperties": false,
+      "description": "The band a season's daily temperatures are drawn from.\n\nUnits are the author's business \u2014 the engine only ever compares against\n`freezingPoint`, so a pack may work in degrees Celsius, Fahrenheit, or\nsomething a sci-fi world made up.\n\nAttributes\n----------\nmin, max : float\n    The coldest and warmest a day gets, before elevation.",
+      "properties": {
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ],
+      "title": "TemperatureRange",
+      "type": "object"
+    },
     "TransferContents": {
       "additionalProperties": false,
       "description": "Move everything in one container or actor into another.",
@@ -3297,6 +3716,152 @@
         "location"
       ],
       "title": "Waypoint",
+      "type": "object"
+    },
+    "WeatherCondition": {
+      "additionalProperties": false,
+      "description": "One state of the sky, and its consequences.\n\nAttributes\n----------\nid, name : str\n    Identity. `name` is what the player reads; it defaults to the id.\ndescription : Description or None\n    Lines narrated when this condition begins. Conditional, so the same\n    rain can read differently at night.\nintensity_range : tuple of float\n    The band this condition's intensity is drawn within, 0 to 1.\n    Intensity scales `modify` and how the front-end phrases it.\nvisibility : float\n    0 to 1, multiplied into the day part's light. Fog at noon is dimmer\n    than clear weather at dusk, and both are one number by the time\n    anything reads it.\ntravel_multiplier : float\n    Route ticks scale by this. A storm turns a three-tick road into a\n    five-tick slog.\nblocks_travel : bool\n    Whether the roads close entirely and the player must shelter.\nmodify : tuple of StatModifier\n    Blanket adjustments to anyone exposed to it.\ntags : tuple of str\n    `wet`, `cold`, `dark`, `windy`, `severe`. What `weatherTag`\n    conditions, `env` responses, and encounter tables match on.\nfreezes_to : str or None\n    The condition this becomes below freezing. The same \"wet\" draw is\n    rain above zero and light snow below, which is how a climate gets\n    winter without a second transition matrix.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "intensityRange": {
+          "default": [
+            0.0,
+            1.0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Intensityrange",
+          "type": "array"
+        },
+        "visibility": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Visibility",
+          "type": "number"
+        },
+        "travelMultiplier": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Travelmultiplier",
+          "type": "number"
+        },
+        "blocksTravel": {
+          "default": false,
+          "title": "Blockstravel",
+          "type": "boolean"
+        },
+        "modify": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/StatModifier"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Modify",
+          "type": "array"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "freezesTo": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Freezesto"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "WeatherCondition",
       "type": "object"
     },
     "WeatherIs": {

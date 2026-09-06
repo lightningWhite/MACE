@@ -32,6 +32,13 @@ from mace.model.base import (
     authored_value,
 )
 from mace.model.calendar import STANDARD_YEAR, Calendar, DayPart, Season
+from mace.model.climate import (
+    Climate,
+    ClimateSequence,
+    ClimateStep,
+    SeasonProfile,
+    TemperatureRange,
+)
 from mace.model.conditions import (
     Condition,
     ConditionPayload,
@@ -63,16 +70,21 @@ from mace.model.game import (
 from mace.model.location import ClimateOverride, Exit, Location, MapPosition
 from mace.model.pack import Pack, PackKind, PackRequirement
 from mace.model.quest import Quest, QuestStage
+from mace.model.region import Region
 from mace.model.route import Route, Waypoint
 from mace.model.scene import Choice, Scene
 from mace.model.text import Description, DescriptionLine, Say, SayLine
+from mace.model.weather import WeatherCondition
 
 __all__ = [
     "AuthoredValue",
     "STANDARD_YEAR",
     "Calendar",
     "Choice",
+    "Climate",
     "ClimateOverride",
+    "ClimateSequence",
+    "ClimateStep",
     "CombatAssignment",
     "CombatMode",
     "Condition",
@@ -112,18 +124,22 @@ __all__ = [
     "Quest",
     "QuestStage",
     "Ref",
+    "Region",
     "Route",
     "Say",
     "SayLine",
     "Scene",
     "Season",
+    "SeasonProfile",
     "SlotName",
     "Stat",
     "StatModifier",
     "Tag",
+    "TemperatureRange",
     "Version",
     "VersionRange",
     "Waypoint",
+    "WeatherCondition",
     "WorldSetup",
     "authored_value",
 ]

@@ -414,16 +414,14 @@ def reference_fields() -> list[tuple[str, str, bool]]:
 UNTARGETED_REFERENCES = {
     ("CombatAssignment", "profile"),  # phase 3 — combat profiles
     ("ItemProps", "moves"),  # phase 3 — moves
-    ("Location", "region"),  # phase 2 — regions
     ("Location", "biome"),  # phase 2 — biomes
+    ("Region", "biome"),  # phase 2 — biomes
+    ("Region", "encounters"),  # phase 2 — encounter tables
     ("Location", "encounters"),  # phase 2 — encounter tables
-    ("ClimateOverride", "condition"),  # phase 2 — weather conditions
     ("Route", "terrain"),  # phase 2 — terrain
     ("Route", "encounters"),  # phase 2 — encounter tables
     ("Waypoint", "encounters"),  # phase 2 — encounter tables
-    ("WorldSetup", "start_region"),  # phase 2 — regions
     ("PlayerSetup", "backgrounds"),  # phase 4 — backgrounds
-    ("WeatherIs", "conditions"),  # phase 2 — weather conditions
 }
 
 

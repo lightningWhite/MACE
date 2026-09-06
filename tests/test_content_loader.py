@@ -68,13 +68,11 @@ def test_collections_no_model_covers_yet_are_kept_as_they_were(tmp_path: Path) -
     """A phase-2 collection must survive a phase-1 load untouched."""
     write_pack(
         tmp_path,
-        "weather",
-        files={"regions.yml": {"regions": [{"id": "the-lowlands", "elevation": 40}]}},
+        "arms",
+        files={"moves.yml": {"moves": [{"id": "overhand", "tempo": 3}]}},
     )
-    library = load_library(tmp_path / "weather")
-    assert library.pack("weather").unmodelled["regions"] == (
-        {"id": "the-lowlands", "elevation": 40},
-    )
+    library = load_library(tmp_path / "arms")
+    assert library.pack("arms").unmodelled["moves"] == ({"id": "overhand", "tempo": 3},)
 
 
 # ── Dependency ordering ───────────────────────────────────────────────────────

@@ -56,6 +56,27 @@ def kinds(result: StepResult) -> list[str]:
     return [event.kind for event in result.events]
 
 
+def offered(result: StepResult) -> list[str]:
+    """The kinds one step produced, with the trailing status projection cut.
+
+    Every step ends in `world.status` — it is a projection for the front-end's
+    status line, not something that happened — so tests that care about what
+    the step *did* read this instead.
+
+    Parameters
+    ----------
+    result : StepResult
+        A step's result.
+
+    Returns
+    -------
+    list of str
+        Event kinds, in order, without a trailing `world.status`.
+    """
+    without = kinds(result)
+    return without[:-1] if without and without[-1] == "world.status" else without
+
+
 def options(result: StepResult) -> list[str]:
     """The prompts the engine is currently waiting on.
 
@@ -100,7 +121,7 @@ def test_beginning_places_the_player_and_offers_options(tmp_path: Path) -> None:
     result = begin(library, "tiny")
 
     assert "A short road." in narration(result)
-    assert kinds(result)[-1] == "choices"
+    assert offered(result)[-1] == "choices"
     assert result.state.location == "tiny:home"
     assert result.state.protagonist.inventory == {"tiny:gold": 5}
 
@@ -375,7 +396,7 @@ def test_choices_wait_for_an_answer(tmp_path: Path) -> None:
     )
     result = begin(library, "tiny")
     result = step(result.state, Choose(0), library)
-    assert kinds(result)[-1] == "choices"
+    assert offered(result)[-1] == "choices"
     assert result.state.pending is not None
     assert result.state.pending.scene == "tiny:fork"
 

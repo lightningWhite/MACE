@@ -102,7 +102,8 @@ Selected event types (the full list lives with the code):
 | `moved` | `from`, `to`, `viaRoute` | Map update, journey framing |
 | `travel.leg` | `waypoint`, `ticksElapsed` | "You ford the shallows at midday." |
 | `world.time` | `tick`, `dayPart`, `day`, `season` | Clock / sky in the UI chrome |
-| `world.weather` | `region`, `from`, `to`, `intensity` | "The rain thickens into sleet." |
+| `weather.changed` | `region`, `condition`, `intensity`, `tags`, `visibility` | "The rain thickens into sleet." |
+| `world.status` | `day`, `dayPart`, `season`, `place`, `sky`, `light` | The standing status line, above the prompt |
 | `world.event` | `kind`, `region`, `severity` | Earthquake, eruption, meteor shower |
 | `stat.changed` | `actor`, `stat`, `delta`, `reason` | Health bar animation, "(-8 hp)" |
 | `inventory.changed` | `actor`, `item`, `delta` | Inventory panel |
@@ -115,6 +116,12 @@ Selected event types (the full list lives with the code):
 
 The CLI renders `combat.tell` as a line of text with a keypress deadline; the PWA
 renders it as a shrinking timing bar. Same event, same engine, same fairness.
+
+`world.status` is the one event that is a projection rather than a happening.
+A status line has to be *standing* — `Day 3 · dusk · Fenmoor · light rain` —
+and the alternative to emitting it is letting the UI reach into engine state
+for it, which is the boundary this protocol exists to hold. It is emitted last
+in every step, so it describes the world the offered choices belong to.
 
 ## Determinism and randomness
 

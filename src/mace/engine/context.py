@@ -18,8 +18,8 @@ from mace.content import ContentError, Library
 from mace.content.ids import split
 from mace.engine.state import EntityState, GameState
 from mace.engine.stats import effective, pool_bounds
-from mace.engine.world import Clock
-from mace.model import Entity, Game
+from mace.engine.world import Clock, Observation, observe
+from mace.model import Entity, Game, Location
 from mace.model.base import RESERVED_ACTORS
 
 __all__ = ["RuleContext"]
@@ -124,6 +124,43 @@ class RuleContext:
         here = self.state.location
         return next((e for e in matches if e.location == here), matches[0])
 
+    def here(self) -> Location | None:
+        """The location definition the player is standing in.
+
+        Returns
+        -------
+        Location or None
+            The definition, or None when the player is nowhere yet.
+        """
+        where = self.state.location
+        if where is None:
+            return None
+        pack_id, local_id = split(where)
+        assert pack_id is not None
+        return self.library.pack(pack_id).locations.get(local_id)
+
+    def weather(self) -> Observation:
+        """What the sky is doing where the player is standing.
+
+        Reading never advances the chain — `mace.engine.world.sync` does that,
+        at the points where time moves — so a condition asked twice in one
+        step gives the same answer both times.
+
+        Returns
+        -------
+        Observation
+            The weather, with the location's override and its roof already
+            taken into account.
+        """
+        return observe(
+            self.library,
+            self.state,
+            self.clock,
+            self.state.pack,
+            self.here(),
+            self.game.world.start_region,
+        )
+
     def item_id(self, reference: str) -> str | None:
         """Qualify an item reference for inventory keys.
 
@@ -184,6 +221,7 @@ class RuleContext:
             once there is any to report.
         """
         tick = self.state.tick
+        weather = self.weather()
         return {
             "tick": tick,
             "day": self.clock.day(tick),
@@ -195,13 +233,19 @@ class RuleContext:
             "dayOfYear": self.clock.day_of_year(tick) + 1,
             "dayName": self.clock.day_name(tick) or "",
             "monthName": self.clock.month_name(tick) or "",
-            # The sky's own light. Weather multiplies it once there is weather;
-            # until then the day part is the whole story.
-            "light": self.clock.light(tick),
-            # Weather arrives in phase 2. An empty list reads as false and
-            # `'rain' in world.weather` answers false rather than erroring.
-            "weather": [],
-            "weatherTags": [],
+            # The day part's light, cut by what the sky is doing. One number
+            # for stealth, ranged accuracy, encounter detection, and which
+            # description variant is shown.
+            "light": self.clock.light(tick) * weather.visibility,
+            "skyLight": self.clock.light(tick),
+            # A list, so `'rain' in world.weather` reads naturally and a place
+            # with no weather answers false rather than erroring.
+            "weather": [weather.id] if weather.id else [],
+            "weatherTags": list(weather.tags),
+            "temperature": weather.temperature,
+            "visibility": weather.visibility,
+            "region": _local(weather.region),
+            "indoors": weather.sheltered,
         }
 
     def entity_view(self, entity: EntityState) -> dict[str, Any]:

@@ -33,6 +33,8 @@ __all__ = [
     "TimePassed",
     "Unsupported",
     "VariableChanged",
+    "WeatherChanged",
+    "WorldStatus",
     "records",
 ]
 
@@ -218,6 +220,130 @@ class TimePassed(Event):
             "dayPart": self.day_part,
             "season": self.season,
             "elapsed": self.elapsed,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class WeatherChanged(Event):
+    """The sky over a region started doing something else.
+
+    Emitted when the condition changes, never every tick. Weather that is
+    doing what it was doing is not news, and a front-end that had to filter
+    a message a tick would end up inventing this rule for itself.
+
+    Attributes
+    ----------
+    region : str
+        The region's qualified id.
+    condition : str
+        The new condition's qualified id.
+    name : str
+        What to call it — "light snow".
+    intensity : float
+        0 to 1.
+    tags : tuple of str
+        `wet`, `cold`, `dark`.
+    visibility : float
+        0 to 1, the multiplier on the day part's light.
+    temperature : float or None
+        Now, at this region's elevation.
+    text : str or None
+        The condition's own line, when the author wrote one.
+    """
+
+    kind: ClassVar[str] = "weather.changed"
+    region: str
+    condition: str
+    name: str = ""
+    intensity: float = 0.0
+    tags: tuple[str, ...] = ()
+    visibility: float = 1.0
+    temperature: float | None = None
+    text: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "region": self.region,
+            "condition": self.condition,
+            "name": self.name,
+            "intensity": self.intensity,
+            "tags": list(self.tags),
+            "visibility": self.visibility,
+            "temperature": self.temperature,
+            "text": self.text,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class WorldStatus(Event):
+    """Where and when the player is, for a status line.
+
+    The one event that is a projection rather than a happening. A front-end
+    needs to render `Day 3 · dusk · Fenmoor · light rain` somewhere permanent,
+    and the alternative — letting the UI reach into engine state for it — is
+    the boundary this whole event protocol exists to hold. It is emitted after
+    every action, so the line is never stale.
+
+    Attributes
+    ----------
+    tick : int
+        World time.
+    day : int
+        Which day.
+    day_part : str
+        Which part of it.
+    season : str
+        Which season.
+    time : str
+        The wall-clock reading.
+    location : str or None
+        Qualified id of where the player is.
+    place : str
+        What that place is called.
+    region : str or None
+        Qualified id of the region it is in.
+    weather : str or None
+        Qualified id of the condition in force.
+    sky : str
+        What to call the weather. Empty where there is none.
+    temperature : float or None
+        Now.
+    light : float
+        The day part's light after the weather has had its share, 0 to 1.
+    indoors : bool
+        Whether the player is under a roof.
+    """
+
+    kind: ClassVar[str] = "world.status"
+    tick: int
+    day: int
+    day_part: str
+    season: str
+    time: str
+    location: str | None = None
+    place: str = ""
+    region: str | None = None
+    weather: str | None = None
+    sky: str = ""
+    temperature: float | None = None
+    light: float = 1.0
+    indoors: bool = False
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "tick": self.tick,
+            "day": self.day,
+            "dayPart": self.day_part,
+            "season": self.season,
+            "time": self.time,
+            "location": self.location,
+            "place": self.place,
+            "region": self.region,
+            "weather": self.weather,
+            "sky": self.sky,
+            "temperature": self.temperature,
+            "light": self.light,
+            "indoors": self.indoors,
         }
 
 

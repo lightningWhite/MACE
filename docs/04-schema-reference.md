@@ -193,35 +193,96 @@ Detailed in [World Simulation](05-world-simulation.md). Schema summary:
 
 ### Region
 
+Files under `regions/`. Weather runs per region, so a world with one region has
+one sky and a world with five has five.
+
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | | |
-| `climate` | Ref | The climate model governing it. |
-| `neighbors` | [Ref]? | Adjacency for weather-front propagation. |
-| `elevation` | int? | Modifies temperature and precipitation type. |
+| `extends` | Ref? | |
+| `description` | str \| [Descr]? | How the region reads when named at distance. |
+| `climate` | Ref? | The climate governing it. Without one the region has no weather — right for an undercity or a station interior. |
+| `neighbors` | [Ref]? | Adjacency for weather-front propagation. Not made symmetric automatically: a front that crosses a range one way and not the other is a thing an author may want. |
+| `elevation` | number? | Height above the map's baseline. Colder with altitude, at the climate's `lapseRate`. |
+| `biome` | Ref? | The region's default biome, which a location may override. |
+| `encounters` | Ref? | A table rolled anywhere in the region, on top of the route's or the location's. |
+
+A location with no `region` falls back to `game.world.startRegion`, so a small
+game gets one sky everywhere without saying so four times.
 
 ### Climate
 
+Files under `climates/`. Two halves multiplied: `seasons` says what a place is
+*like*, `transitions` says how the sky *moves*.
+
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | | |
-| `seasons` | {season: SeasonProfile} | Per-season weather weights and temperature range. |
-| `transitions` | {weather: {weather: weight}} | Markov transition weights between conditions. |
-| `sequences` | [[Ref]]? | Optional hand-authored condition sequences, for scripted feel. |
-| `frontFrequency` | number? | How often weather fronts spawn in this climate. |
+| `extends` | Ref? | The high country is the lowlands with colder seasons. |
+| `seasons` | {season: SeasonProfile} | Per-season weather weights and temperature band. |
+| `transitions` | {weather: {weather: weight}} | Markov transition weights between conditions. A condition with no row holds until something else moves it. |
+| `stepTicks` | int? | Ticks between chain steps. Default 1; at thirty minutes a tick that twitches, and 2 reads like weather. |
+| `sequences` | [ClimateSequence]? | Hand-authored progressions, for drama a chain will not reliably produce. |
+| `frontFrequency` | number? | Chance per tick that a front spawns in a region with this climate. |
+| `freezingPoint` | number? | Below this, a condition becomes its `freezesTo`. Default 0. |
+| `lapseRate` | number? | Degrees lost per hundred units of a region's `elevation`. Default 0.65. |
 
-### WeatherCondition
+**How a step resolves.** The transition row from the current condition is
+multiplied by the season's weights and one entry is drawn. A season that lists
+*any* weights is a whitelist — a condition it does not mention weighs nothing —
+which is how a lowland climate keeps blizzards out of summer without a second
+matrix. If the season rules out everything the current condition could become,
+the sky stays as it is. The draw is then frozen if the hour's temperature is
+below `freezingPoint` and the condition has a `freezesTo`.
+
+The frozen conditions usually borrow the transition rows of their unfrozen
+twins — `light-snow` transitions exactly as `rain` does — so one matrix covers
+a whole year and a thaw turns snow back into rain on its own.
+
+#### SeasonProfile
 
 | Field | Type | Notes |
 |---|---|---|
-| `id`, `name` | | e.g. `blizzard`, `ash-fall`, `ion-storm` |
-| `description` | [Descr]? | Emitted when it begins. |
-| `intensityRange` | [min, max]? | 0–1. Scales all effects. |
-| `visibility` | number? | 0–1 multiplier. Affects stealth, ranged combat, encounter detection. |
+| `temperature` | {min, max}? | The band days are drawn from. Without one, nothing here ever freezes. |
+| `weights` | {weather: number}? | Relative preference this season. |
+
+Each day, per region, a floor and a ceiling are drawn within the band and
+lowered by elevation; the temperature *now* interpolates between them by the
+day part's `light`. Coldest before dawn, warmest at noon, no sun model.
+
+#### ClimateSequence
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | str | So an effect can call for it directly. |
+| `weight` | number? | Its chance **per step**, not a share of anything. `0.002` is roughly one step in five hundred. Default 0 — only an effect can start it. |
+| `when` | [Condition]? | Extra gating. |
+| `steps` | [{condition, ticks}] | The conditions, in order, with how long each holds. |
+
+While a sequence runs, the chain does not interfere. When it ends, the chain
+resumes from wherever the sequence left the sky.
+
+### WeatherCondition
+
+Files under `weatherConditions/`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id`, `name` | | e.g. `blizzard`, `ash-fall`, `ion-storm`. `name` is what the player reads and defaults to the id. |
+| `extends` | Ref? | |
+| `description` | str \| [Descr]? | Narrated when it begins — conditional, so the same rain reads differently at night. |
+| `intensityRange` | [min, max]? | 0–1, default the whole range. Drawn when the condition starts; scales all effects. |
+| `visibility` | number? | 0–1 multiplier on the day part's light. Feeds stealth, ranged accuracy, encounter detection, and description selection. |
 | `travelMultiplier` | number? | >1 slows travel. |
 | `modify` | [{stat, add?, mult?}]? | Blanket stat effects on everyone exposed. |
 | `blocksTravel` | bool? | Hurricanes close the roads. |
-| `tags` | [str]? | `wet`, `cold`, `dark` — for entity `env` responses by group. |
+| `tags` | [str]? | `wet`, `cold`, `dark`, `windy`, `severe` — what `weatherTag`, entity `env` responses, and encounter tables match on. |
+| `freezesTo` | Ref? | What this becomes below the climate's `freezingPoint`. |
+
+`location.indoors: true` suppresses the tags, the `modify`, and the visibility
+cut — but not the fact of the weather. You can still hear the rain on the inn
+roof, and `travelMultiplier` still applies because you cannot be indoors and
+on the road.
 
 ### CelestialEvent
 

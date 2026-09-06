@@ -19,6 +19,7 @@ game:
     calendar: mace.core:standard-year
     startTick: 20          # mid-morning, day 1
     startSeason: autumn
+    startRegion: the-lowlands
 
   rules:
     vitalPool: hitpoints

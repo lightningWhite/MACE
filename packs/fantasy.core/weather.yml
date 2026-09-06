@@ -1,0 +1,101 @@
+# The weather a temperate medieval world has. Every field here is something
+# the engine acts on, so adding a condition is adding a consequence:
+# `visibility` cuts the light, `travelMultiplier` lengthens the road,
+# `blocksTravel` closes it, `modify` reaches anyone standing out in it, and
+# `tags` are what entities and encounter tables actually match on.
+#
+# The `freezesTo` pairs are how one transition matrix covers a whole year: the
+# same wet draw is rain above freezing and light snow below it.
+weatherConditions:
+
+  - id: clear
+    name: "clear"
+    description:
+      - {text: "The sky has gone clear, and cold with it.", when: {dayPart: [night]}}
+      - "The cloud breaks up and the sky comes through behind it."
+
+  - id: overcast
+    name: "overcast"
+    visibility: 0.85
+    description:
+      - "The sky closes over, flat and grey, with no weather in it yet."
+
+  - id: fog
+    name: "fog"
+    visibility: 0.35
+    travelMultiplier: 1.3
+    tags: [dark]
+    modify:
+      - {stat: stealth, add: 12}
+    description:
+      - "Fog comes up off the low ground and takes the world down to twenty paces."
+
+  - id: drizzle
+    name: "drizzle"
+    intensityRange: [0.1, 0.5]
+    visibility: 0.8
+    travelMultiplier: 1.1
+    tags: [wet]
+    freezesTo: sleet
+    description:
+      - "A thin rain starts — not enough to shelter from, enough to soak you."
+
+  - id: rain
+    name: "rain"
+    intensityRange: [0.3, 0.8]
+    visibility: 0.65
+    travelMultiplier: 1.3
+    tags: [wet]
+    freezesTo: light-snow
+    modify:
+      - {stat: speed, add: -3}
+    description:
+      - "The rain sets in properly, straight down and steady."
+
+  - id: storm
+    name: "storm"
+    intensityRange: [0.5, 1.0]
+    visibility: 0.4
+    travelMultiplier: 1.8
+    tags: [wet, windy, dark, severe]
+    freezesTo: blizzard
+    modify:
+      - {stat: speed, add: -8}
+      - {stat: stealth, add: 8}
+    description:
+      - "The wind turns and the rain comes sideways. This is going to be a bad one."
+
+  - id: sleet
+    name: "sleet"
+    intensityRange: [0.2, 0.7]
+    visibility: 0.55
+    travelMultiplier: 1.4
+    tags: [wet, cold]
+    modify:
+      - {stat: speed, add: -5}
+    description:
+      - "Half rain, half something worse, and all of it finding your collar."
+
+  - id: light-snow
+    name: "light snow"
+    intensityRange: [0.2, 0.7]
+    visibility: 0.6
+    travelMultiplier: 1.5
+    tags: [cold, wet]
+    modify:
+      - {stat: speed, add: -6}
+    description:
+      - "Snow begins, in flakes big enough to watch individually."
+
+  - id: blizzard
+    name: "blizzard"
+    intensityRange: [0.6, 1.0]
+    visibility: 0.15
+    travelMultiplier: 2.5
+    blocksTravel: true
+    tags: [cold, wet, windy, dark, severe]
+    modify:
+      - {stat: speed, add: -15}
+      - {stat: stealth, add: 15}
+    description:
+      - "The snow stops falling and starts travelling. You cannot see the far side of the road."

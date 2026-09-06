@@ -30,8 +30,8 @@ from mace.model.base import (
     LocationRef,
     Name,
     QuestRef,
-    Ref,
     Tag,
+    WeatherRef,
     one_or_many_schema,
     unwrap_tagged,
 )
@@ -140,7 +140,7 @@ class WeatherIs(ConditionPayload):
 
     shorthand_field: ClassVar[str] = "conditions"
 
-    conditions: tuple[Ref, ...] = Field(min_length=1)
+    conditions: tuple[WeatherRef, ...] = Field(min_length=1)
 
 
 class WeatherTagIs(ConditionPayload):

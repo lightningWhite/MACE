@@ -33,6 +33,8 @@ from mace.engine.events import (
     RuleFailed,
     SceneEntered,
     TimePassed,
+    WeatherChanged,
+    WorldStatus,
 )
 from mace.engine.rng import RandomSource
 from mace.engine.state import (
@@ -45,7 +47,7 @@ from mace.engine.state import (
     QuestStatus,
 )
 from mace.engine.stats import starting_pools
-from mace.engine.world import Clock
+from mace.engine.world import Clock, region_of, sync
 from mace.model import Calendar, Entity, Game, Location, Quest, Route, Scene
 from mace.model.calendar import STANDARD_YEAR
 from mace.model.text import DescriptionLine, SayLine
@@ -363,6 +365,7 @@ def _arrive(location_id: str, context: RuleContext, events: list[Event]) -> bool
     bool
         Whether the game should restart.
     """
+    _sync_weather(context, events)
     _describe_here(context, events)
     here = _location(location_id, context)
     if here is not None and here.on_arrive is not None:
@@ -547,7 +550,8 @@ def _after_action(context: RuleContext, events: list[Event]) -> None:
 
     The order is fixed and part of the contract: quests settle before win and
     lose conditions are judged, so a quest completing on this action can be the
-    thing that wins the game.
+    thing that wins the game, and the status projection comes last so it
+    describes the world the offered choices belong to.
 
     Parameters
     ----------
@@ -566,6 +570,46 @@ def _after_action(context: RuleContext, events: list[Event]) -> None:
         return
     if state.pending is None:
         _offer_options(context, events)
+    # Last, always: the status line sits above the prompt, and computing it
+    # after the menu means it describes the world the menu belongs to.
+    events.append(_status(context))
+
+
+def _status(context: RuleContext) -> WorldStatus:
+    """Project where and when the player is, for the front-end's status line.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    WorldStatus
+        The projection.
+    """
+    state = context.state
+    clock = context.clock
+    here = context.here()
+    observed = context.weather()
+
+    return WorldStatus(
+        tick=state.tick,
+        day=clock.day(state.tick),
+        day_part=clock.day_part(state.tick),
+        season=clock.season(state.tick).id,
+        time=clock.clock_time(state.tick),
+        location=state.location,
+        place=here.name if here is not None else "",
+        region=observed.region,
+        weather=observed.qualified,
+        sky=observed.label,
+        temperature=(
+            None if observed.temperature is None else round(observed.temperature, 2)
+        ),
+        light=round(clock.light(state.tick) * observed.visibility, 4),
+        indoors=observed.sheltered,
+    )
 
 
 def _expire_modifiers(context: RuleContext) -> None:
@@ -795,6 +839,7 @@ def _initial_state(library: Library, pack_id: str, game: Game, seed: str) -> Gam
         rng=RandomSource(seed),
         player=_instance_id(protagonist_id),
         tick=game.world.start_tick,
+        start_tick=game.world.start_tick,
     )
 
     state.entities[state.player] = _instantiate(library, protagonist_id, start, pack_id)
@@ -990,6 +1035,56 @@ def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
             day_part=context.clock.day_part(state.tick),
             season=context.clock.season(state.tick).id,
             elapsed=ticks,
+        )
+    )
+    _sync_weather(context, events)
+
+
+def _sync_weather(context: RuleContext, events: list[Event]) -> None:
+    """Bring the player's region up to now, and narrate a change in the sky.
+
+    The one place the weather chain is stepped. Conditions and descriptions
+    only ever read, so a question about the world cannot change it — which is
+    what lets the same action log replay to the same events.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    """
+    state = context.state
+    region = region_of(
+        context.library,
+        state.pack,
+        context.here(),
+        context.game.world.start_region,
+    )
+    if region is None:
+        return
+
+    changed = sync(context.library, state, context.clock, state.pack, region)
+    if not changed:
+        return
+
+    observed = context.weather()
+    if observed.condition is None:
+        return
+
+    line = _first_matching(observed.condition.description, context)
+    events.append(
+        WeatherChanged(
+            region=region,
+            condition=observed.qualified or state.weather[region].condition,
+            name=observed.condition.label,
+            intensity=round(observed.intensity, 4),
+            tags=tuple(observed.condition.tags),
+            visibility=observed.condition.visibility,
+            temperature=(
+                None if observed.temperature is None else round(observed.temperature, 2)
+            ),
+            text=line.text if line is not None else None,
         )
     )
 

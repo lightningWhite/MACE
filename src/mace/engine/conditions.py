@@ -146,11 +146,18 @@ def holds(condition: Condition, context: RuleContext) -> bool:
     if isinstance(payload, Chance):
         return context.state.rng.stream("ambient").chance(payload.probability)
 
-    if isinstance(payload, WeatherIs | WeatherTagIs):
-        # Weather arrives with the world simulation in phase 2. Until then
-        # there is none, so no weather condition holds — which is the honest
-        # answer rather than a guess, and content still loads and plays.
-        return False
+    if isinstance(payload, WeatherIs):
+        observed = context.weather()
+        if observed.id is None:
+            return False
+        return any(
+            _weather(reference, context) == observed.id
+            for reference in payload.conditions
+        )
+
+    if isinstance(payload, WeatherTagIs):
+        tags = context.weather().tags
+        return any(tag in tags for tag in payload.tags)
 
     raise RuleError(f"condition `{condition.tag}` is not answerable yet")
 
@@ -233,6 +240,33 @@ def _location(reference: str, context: RuleContext) -> str:
         return context.qualify(reference, "locations")
     except ContentError as error:
         raise RuleError(error.message) from error
+
+
+def _weather(reference: str, context: RuleContext) -> str:
+    """Reduce a weather-condition reference to the local id weather reports.
+
+    Parameters
+    ----------
+    reference : str
+        As the author wrote it.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    str
+        The local id.
+
+    Raises
+    ------
+    RuleError
+        If it names nothing.
+    """
+    try:
+        qualified = context.qualify(reference, "weatherConditions")
+    except ContentError as error:
+        raise RuleError(error.message) from error
+    return qualified.split(":", 1)[1]
 
 
 def _quest(reference: str, context: RuleContext) -> str:

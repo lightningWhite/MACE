@@ -6,6 +6,7 @@ locations:
   - id: fenmoor
     name: "Fenmoor"
     type: settlement
+    region: the-lowlands
     safe: true
     description:
       - "Six houses, a well, and more geese than people. The barley stands unfinished in the low field."
@@ -19,6 +20,7 @@ locations:
   - id: traders-post
     name: "Trader's Post"
     type: settlement
+    region: the-lowlands
     safe: true
     description:
       - "A crossroads with ambitions. Three stalls, a shuttered inn, and a peddler who has been here longer than the stalls."
@@ -31,6 +33,7 @@ locations:
   - id: troll-bridge
     name: "The Old Bridge"
     type: wilderness
+    region: the-northwood
     description:
       - {text: "A stone span over black water, older than the road it carries.",
          when: {dayPart: [dawn, day]}}
@@ -46,6 +49,7 @@ locations:
   - id: hagans-castle
     name: "Hagan's Castle"
     type: settlement
+    region: the-marches
     safe: true
     discovered: true
     description:

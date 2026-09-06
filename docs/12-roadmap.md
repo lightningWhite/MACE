@@ -48,8 +48,9 @@ terminal, with scenes, choices, items, and win/lose.
 through, and the road between towns is dangerous.
 
 - [x] Clock, calendar, day parts, seasons
-- [ ] Climate model: seasonal weights + Markov transitions
-- [ ] Regions and weather fronts propagating across the region graph
+- [x] Climate model: seasonal weights + Markov transitions
+- [x] Regions, per-region weather chains, lazily fast-forwarded
+- [ ] Weather fronts propagating across the region graph
 - [ ] Weather effects: visibility, travel multiplier, stat modifiers, tags
 - [ ] Entity `env` responses
 - [ ] World events: celestial (scheduled), pressure (building, with omens), triggered
@@ -58,7 +59,7 @@ through, and the road between towns is dangerous.
 - [ ] Encounter tables: two-stage resolution, cooldowns, anti-clumping pressure
 - [ ] Exposure and rest — the mechanics that make weather bite
 - [ ] Conditional descriptions driven by weather and time
-- [ ] Status line in the CLI
+- [x] Status line in the CLI
 - [ ] `packs/fantasy.core` — first real library pack
 
 ---

@@ -36,6 +36,7 @@ from pydantic.json_schema import models_json_schema
 
 from mace.model.base import ContentModel
 from mace.model.calendar import Calendar
+from mace.model.climate import Climate
 from mace.model.conditions import CONDITION_PAYLOADS, Condition
 from mace.model.effects import EFFECT_PAYLOADS, Effect
 from mace.model.entity import Entity
@@ -43,9 +44,11 @@ from mace.model.game import Game
 from mace.model.location import Location
 from mace.model.pack import Pack
 from mace.model.quest import Quest
+from mace.model.region import Region
 from mace.model.route import Route
 from mace.model.scene import Scene
 from mace.model.text import DescriptionLine, SayLine
+from mace.model.weather import WeatherCondition
 
 __all__ = [
     "CONTENT_COLLECTIONS",
@@ -62,9 +65,12 @@ DIALECT = "https://json-schema.org/draft/2020-12/schema"
 #: The top-level key each modelled content type lives under in a pack file.
 CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
+    "climates": Climate,
     "entities": Entity,
     "locations": Location,
+    "regions": Region,
     "routes": Route,
+    "weatherConditions": WeatherCondition,
     "scenes": Scene,
     "quests": Quest,
 }
@@ -73,9 +79,6 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
 #: misspelled collection key an error while leaving room for the phase that
 #: models them — see docs/12-roadmap.md.
 UNMODELLED_COLLECTIONS: dict[str, str] = {
-    "regions": "phase 2 — world simulation",
-    "climates": "phase 2 — world simulation",
-    "weatherConditions": "phase 2 — world simulation",
     "terrains": "phase 2 — travel",
     "celestialEvents": "phase 2 — world events",
     "pressureEvents": "phase 2 — world events",

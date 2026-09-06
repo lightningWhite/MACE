@@ -20,6 +20,7 @@ from mace.model.base import (
     Name,
     QuestRef,
     Ref,
+    RegionRef,
     SceneRef,
 )
 from mace.model.conditions import Conditions
@@ -80,7 +81,7 @@ class WorldSetup(ContentModel):
     calendar: CalendarRef | None = None
     start_tick: int = Field(default=0, ge=0)
     start_season: Id | None = None
-    start_region: Ref | None = None
+    start_region: RegionRef | None = None
 
 
 class GameRules(ContentModel):

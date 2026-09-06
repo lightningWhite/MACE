@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from pydantic import Field, model_validator
 
-from mace.model.base import ContentModel, Id
+from mace.model.base import CalendarRef, ContentModel, Id
 
 __all__ = [
     "Calendar",
@@ -117,6 +117,7 @@ class Calendar(ContentModel):
     """
 
     id: Id
+    extends: CalendarRef | None = None
     name: str | None = None
     ticks_per_day: int = Field(default=48, gt=0)
     day_parts: tuple[DayPart, ...] = Field(min_length=1)

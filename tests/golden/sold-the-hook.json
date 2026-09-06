@@ -89,6 +89,19 @@
           "ticks": 0
         },
         {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-lowlands",
+          "condition": "fantasy.core:drizzle",
+          "name": "drizzle",
+          "intensity": 0.3806,
+          "tags": [
+            "wet"
+          ],
+          "visibility": 0.8,
+          "temperature": 11.31,
+          "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
+        },
+        {
           "kind": "narrate",
           "text": "Fenmoor",
           "pause": false
@@ -127,6 +140,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 20,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "10:00",
+          "location": "peasants-quest:fenmoor",
+          "place": "Fenmoor",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:drizzle",
+          "sky": "drizzle",
+          "temperature": 11.31,
+          "light": 0.8,
+          "indoors": false
         }
       ]
     },
@@ -178,6 +207,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 20,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "10:00",
+          "location": "peasants-quest:fenmoor",
+          "place": "Fenmoor",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:drizzle",
+          "sky": "drizzle",
+          "temperature": 11.31,
+          "light": 0.8,
+          "indoors": false
         }
       ]
     },
@@ -252,6 +297,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 22,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "11:00",
+          "location": "peasants-quest:traders-post",
+          "place": "Trader's Post",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:drizzle",
+          "sky": "drizzle",
+          "temperature": 11.31,
+          "light": 0.8,
+          "indoors": false
         }
       ]
     },
@@ -321,6 +382,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 22,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "11:00",
+          "location": "peasants-quest:traders-post",
+          "place": "Trader's Post",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:drizzle",
+          "sky": "drizzle",
+          "temperature": 11.31,
+          "light": 0.8,
+          "indoors": false
         }
       ]
     },
@@ -405,6 +482,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 22,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "11:00",
+          "location": "peasants-quest:traders-post",
+          "place": "Trader's Post",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:drizzle",
+          "sky": "drizzle",
+          "temperature": 11.31,
+          "light": 0.8,
+          "indoors": false
         }
       ]
     },
@@ -491,6 +584,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 22,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "11:00",
+          "location": "peasants-quest:traders-post",
+          "place": "Trader's Post",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:drizzle",
+          "sky": "drizzle",
+          "temperature": 11.31,
+          "light": 0.8,
+          "indoors": false
         }
       ]
     },
@@ -540,6 +649,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:fenmoor",
+          "place": "Fenmoor",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:drizzle",
+          "sky": "drizzle",
+          "temperature": 11.31,
+          "light": 0.8,
+          "indoors": false
         }
       ]
     },
@@ -556,6 +681,17 @@
           "dayPart": "day",
           "season": "autumn",
           "elapsed": 6
+        },
+        {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-northwood",
+          "condition": "fantasy.core:clear",
+          "name": "clear",
+          "intensity": 0.7492,
+          "tags": [],
+          "visibility": 1.0,
+          "temperature": 2.92,
+          "text": "The cloud breaks up and the sky comes through behind it."
         },
         {
           "kind": "moved",
@@ -594,6 +730,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 30,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "15:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 2.92,
+          "light": 1.0,
+          "indoors": false
         }
       ]
     },
@@ -648,6 +800,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 30,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "15:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 2.92,
+          "light": 1.0,
+          "indoors": false
         }
       ]
     },
@@ -691,6 +859,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 30,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "15:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 2.92,
+          "light": 1.0,
+          "indoors": false
         }
       ]
     },
@@ -745,6 +929,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 30,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "15:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 2.92,
+          "light": 1.0,
+          "indoors": false
         }
       ]
     },
@@ -806,6 +1006,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 30,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "15:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 2.92,
+          "light": 1.0,
+          "indoors": false
         }
       ]
     },
@@ -822,6 +1038,17 @@
           "dayPart": "dusk",
           "season": "autumn",
           "elapsed": 6
+        },
+        {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-marches",
+          "condition": "fantasy.core:clear",
+          "name": "clear",
+          "intensity": 0.5391,
+          "tags": [],
+          "visibility": 1.0,
+          "temperature": 1.97,
+          "text": "The cloud breaks up and the sky comes through behind it."
         },
         {
           "kind": "moved",
@@ -871,6 +1098,22 @@
               "hint": null
             }
           ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 36,
+          "day": 1,
+          "dayPart": "dusk",
+          "season": "autumn",
+          "time": "18:00",
+          "location": "peasants-quest:hagans-castle",
+          "place": "Hagan's Castle",
+          "region": "peasants-quest:the-marches",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 1.97,
+          "light": 0.5,
+          "indoors": false
         }
       ]
     },

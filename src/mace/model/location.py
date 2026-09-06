@@ -14,8 +14,10 @@ from mace.model.base import (
     Id,
     LocationRef,
     Ref,
+    RegionRef,
     RouteRef,
     SceneRef,
+    WeatherRef,
 )
 from mace.model.conditions import Conditions
 from mace.model.text import Description
@@ -44,7 +46,7 @@ class ClimateOverride(ContentModel):
         Whether the override resists weather fronts moving through.
     """
 
-    condition: Ref | None = None
+    condition: WeatherRef | None = None
     day_part: Id | None = None
     locked: bool = False
 
@@ -95,7 +97,7 @@ class Location(ContentModel):
     type: Id | None = None
     description: Description | None = None
 
-    region: Ref | None = None
+    region: RegionRef | None = None
     biome: Ref | None = None
     climate: ClimateOverride | None = None
     indoors: bool = False

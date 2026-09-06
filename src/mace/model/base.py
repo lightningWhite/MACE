@@ -34,11 +34,13 @@ from mace.engine.expr import Expression, ExprSyntaxError, parse
 __all__ = [
     "AuthoredValue",
     "CalendarRef",
+    "ClimateRef",
     "EntityRef",
     "LocationRef",
     "QuestRef",
     "RESERVED_ACTORS",
     "Reference",
+    "RegionRef",
     "RouteRef",
     "SceneRef",
     "ContentModel",
@@ -51,6 +53,7 @@ __all__ = [
     "SlotName",
     "Tag",
     "VersionRange",
+    "WeatherRef",
     "Version",
     "authored_value",
     "one_or_many_schema",
@@ -111,11 +114,14 @@ class Reference:
 #: covers yet — a terrain, an encounter table — stays a plain `Ref` until the
 #: phase that models it can check it.
 CalendarRef = Annotated[Ref, Reference("calendars")]
+ClimateRef = Annotated[Ref, Reference("climates")]
 EntityRef = Annotated[Ref, Reference("entities")]
 LocationRef = Annotated[Ref, Reference("locations")]
 RouteRef = Annotated[Ref, Reference("routes")]
 SceneRef = Annotated[Ref, Reference("scenes")]
 QuestRef = Annotated[Ref, Reference("quests")]
+RegionRef = Annotated[Ref, Reference("regions")]
+WeatherRef = Annotated[Ref, Reference("weatherConditions")]
 
 #: Names that stand for something the game supplies rather than an id an author
 #: defined. `player` is whichever entity `game.player.entity` names, so content

@@ -27,6 +27,7 @@ __all__ = [
     "PendingChoices",
     "QuestState",
     "QuestStatus",
+    "RegionWeather",
 ]
 
 
@@ -110,6 +111,57 @@ class EntityState:
     flags: set[str] = field(default_factory=set)
     modifiers: list[Modifier] = field(default_factory=list)
     disposition: str | None = None
+
+
+@dataclass(slots=True)
+class RegionWeather:
+    """What the sky is doing over one region, and where its chain has got to.
+
+    Weather is per region because a world where it rains everywhere at once is
+    a world with one place in it. Each region walks its own Markov chain on its
+    own random stream, so a storm crossing the mountains does not shift what
+    the lowlands were going to get.
+
+    A region the player is not in is not stepped every tick: it is fast
+    forwarded from `stepped_to` when something needs to look at it. That is an
+    optimization and not a change of behavior — replaying the same number of
+    steps from the same stream position gives the same weather either way.
+
+    Attributes
+    ----------
+    region : str
+        Qualified region id.
+    condition : str
+        Qualified id of the weather condition in force.
+    intensity : float
+        0 to 1, drawn within the condition's band when it began.
+    low, high : float
+        Today's temperature floor and ceiling, after elevation.
+    temperature_day : int
+        The day `low` and `high` were drawn for.
+    stepped_to : int
+        The tick the chain has been advanced to.
+    began_at_tick : int
+        When the current condition started, for "easing" and "settling in".
+    sequence : str or None
+        The authored sequence running, if one is.
+    sequence_step : int
+        Which step of it is in force.
+    sequence_until : int
+        The tick that step ends on.
+    """
+
+    region: str
+    condition: str
+    intensity: float = 0.0
+    low: float = 0.0
+    high: float = 0.0
+    temperature_day: int = 0
+    stepped_to: int = 0
+    began_at_tick: int = 0
+    sequence: str | None = None
+    sequence_step: int = 0
+    sequence_until: int = 0
 
 
 @dataclass(slots=True)
@@ -198,6 +250,11 @@ class GameState:
         Named random streams, positioned wherever play has taken them.
     tick : int
         World time. Its real-world meaning is `game.world.minutesPerTick`.
+    start_tick : int
+        The tick the playthrough opened on. A region the player has never
+        visited begins its weather here and is fast-forwarded to now, so
+        looking at a place late gives the weather it would have had all
+        along rather than weather that started when you looked.
     player : str
         The protagonist's instance id.
     entities : dict
@@ -210,6 +267,8 @@ class GameState:
         Qualified ids of locations the player knows about.
     played : set of str
         Qualified ids of scenes that have run, for `once`.
+    weather : dict
+        Qualified region id to what the sky is doing there.
     pending : PendingChoices or None
         Choices awaiting an answer.
     outcome : Outcome
@@ -223,11 +282,13 @@ class GameState:
     rng: RandomSource
     player: str
     tick: int = 0
+    start_tick: int = 0
     entities: dict[str, EntityState] = field(default_factory=dict)
     quests: dict[str, QuestState] = field(default_factory=dict)
     variables: dict[str, Any] = field(default_factory=dict)
     revealed: set[str] = field(default_factory=set)
     played: set[str] = field(default_factory=set)
+    weather: dict[str, RegionWeather] = field(default_factory=dict)
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING
     ended_because: str | None = None

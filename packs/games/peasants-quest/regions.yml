@@ -1,0 +1,28 @@
+# Three regions and the road between them. Weather runs per region, so the rain
+# that has Fenmoor's barley rotting is not automatically the rain on the pass —
+# and once fronts arrive, `neighbors` is the graph a storm walks across.
+regions:
+
+  - id: the-lowlands
+    name: "The Lowlands"
+    climate: fantasy.core:temperate
+    neighbors: [the-northwood]
+    elevation: 40
+    description:
+      - "Flat barley country, and a horizon you can see weather coming across."
+
+  - id: the-northwood
+    name: "The Northwood"
+    climate: fantasy.core:temperate
+    neighbors: [the-lowlands, the-marches]
+    elevation: 120
+    description:
+      - "Oak and beech, and a river running fast under it all."
+
+  - id: the-marches
+    name: "The Marches"
+    climate: fantasy.core:upland
+    neighbors: [the-northwood]
+    elevation: 460
+    description:
+      - "The ground stops pretending to be farmland and starts climbing."
