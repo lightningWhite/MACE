@@ -54,7 +54,8 @@ The `expr` language is a **restricted, non-Turing-complete grammar**:
 comparisons, arithmetic, boolean operators, dotted paths, and a whitelist of
 functions (`min`, `max`, `abs`, `count`). It is parsed by a hand-written parser
 in `mace.engine.expr`. **`eval` and `exec` are never used on content** — packs
-are untrusted community input.
+are untrusted community input. The grammar as built is specified in
+[Schema Reference § Expressions](../04-schema-reference.md#expressions-expr).
 
 ## Alternatives considered
 

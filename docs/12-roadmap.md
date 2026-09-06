@@ -27,7 +27,7 @@ terminal, with scenes, choices, items, and win/lose.
 - [ ] JSON Schemas in `schemas/`, generated from the models
 - [ ] Pack loader: discovery, id resolution, `extends` inheritance, dependency order
 - [ ] Validator with error/warning/note severities and file+id reporting
-- [ ] `mace.engine.expr` — the safe expression parser and evaluator
+- [x] `mace.engine.expr` — the safe expression parser and evaluator
 - [ ] Structured condition and effect evaluation
 - [ ] `GameState`, `Action`, `Event`, and the `step()` function
 - [ ] Seeded named RNG streams

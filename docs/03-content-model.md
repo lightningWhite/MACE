@@ -339,8 +339,10 @@ effects:
 The `expr` mini-language is a **restricted, non-Turing-complete expression
 grammar** — comparisons, arithmetic, boolean logic, dotted attribute paths, and a
 short whitelist of functions (`min`, `max`, `abs`, `count`). It is parsed by hand
-in `mace.engine.expr`, never by `eval`. See
-[ADR-0003](decisions/0003-structured-conditions-and-effects.md).
+in `mace.engine.expr`, never by `eval`. The grammar, the truthiness rules, and
+what is deliberately left out are specified in
+[Schema Reference § Expressions](04-schema-reference.md#expressions-expr); the
+reasoning is in [ADR-0003](decisions/0003-structured-conditions-and-effects.md).
 
 ## Quests
 

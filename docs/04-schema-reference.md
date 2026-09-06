@@ -443,3 +443,136 @@ Detailed in [Combat](07-combat.md).
 | `damage` | {min, max} | |
 | `cost` | int | Effort-pool cost. |
 | `effects` | [Effect]? | Status effects on hit. |
+
+---
+
+## Expressions (`expr`)
+
+Conditions and effects are structured (see
+[Content Model](03-content-model.md#conditions-and-effects)). Where the
+structured vocabulary doesn't reach, an author writes `{expr: "..."}` — and this
+section is the whole of what may go inside those quotes.
+
+It is parsed by a hand-written parser in `mace.engine.expr`. **`eval` and `exec`
+are never used**: packs are untrusted community input.
+
+```yaml
+when:
+  - {expr: "player.stats.hitpoints < player.pools.hitpoints.max * 0.25"}
+  - {expr: "world.day > 7 and 'rain' in world.weather"}
+effects:
+  - {setStat: {actor: player, stat: hitpoints, value: {expr: "player.pools.hitpoints.max"}}}
+```
+
+### Values
+
+| Kind | Written | Notes |
+|---|---|---|
+| Number | `3`, `1.5`, `2.5e-2` | Integers and decimals. `/` always produces a decimal. |
+| String | `'rain'`, `"rain"` | Escapes: `\\`, `\'`, `\"`, `\n`, `\t`. |
+| Boolean | `true`, `false` | YAML's spelling, not Python's. |
+| Nothing | `null` | |
+| List | `['rain', 'storm']` | Used with `in`, `count`, `min`, `max`. |
+| Path | `player.stats.speed` | A dotted lookup into the world (see below). |
+
+### Operators
+
+Loosest binding first. Everything on a row binds equally and reads left to right.
+
+| Precedence | Operators | Notes |
+|---|---|---|
+| 1 | `or` | Short-circuits; the right side is not evaluated if the left is true. |
+| 2 | `and` | Short-circuits. |
+| 3 | `not` | |
+| 4 | `==` `!=` `<` `<=` `>` `>=` `in` `not in` | Cannot be chained — write `a < b and b < c`. |
+| 5 | `+` `-` | Numbers only. |
+| 6 | `*` `/` `%` | Numbers only. Dividing by zero is an error. |
+| 7 | `-x` `+x` | |
+
+- `<` `<=` `>` `>=` compare **numbers only**. Comparing a string to a number is
+  an error, not `false` — it is always a content mistake.
+- `==` and `!=` work on any two values, and **types do not cross**: `true == 1`
+  is `false`, because an author who wrote that meant something else.
+- `in` tests membership of a **list**, or of a **mapping's keys**. It does not do
+  substring search: "is this an element" and "is this inside this text" are
+  different questions and should not share a spelling.
+- `and`, `or`, and `not` return `true`/`false`, never one of their operands.
+
+### Truthiness
+
+`and`, `or`, `not`, and any expression used as a condition reduce their value to
+a boolean this way:
+
+| Value | Truth |
+|---|---|
+| `true` / `false` | itself |
+| `null` | false |
+| number | true when non-zero |
+| string | true when non-empty |
+| list, mapping | true when non-empty |
+
+### Paths
+
+A path is one or more names joined by dots: `player.stats.hitpoints`,
+`world.day`, `troll.disposition`. The first name is a **root** the engine puts in
+scope for that evaluation — `player`, `world`, and the entities the surrounding
+content refers to.
+
+- A name that isn't there is an **error**, not `null`. A condition that cannot be
+  answered is a content bug; silently answering `false` is how a game ends up
+  quietly unplayable three hours in.
+- Names may not start with `_`, and a path may not end on a function or an engine
+  object — only on a number, string, boolean, `null`, list, or mapping. Together
+  these mean content cannot reach engine internals through a path.
+- Every path an expression reads is available as `Expression.references`, which
+  is how the validator catches `player.hitponts` at author time rather than at
+  play time.
+
+### Functions
+
+The complete list. There are no author-defined functions, and no way to call
+anything a path reaches.
+
+| Function | Takes | Gives |
+|---|---|---|
+| `abs(n)` | a number | its magnitude |
+| `count(x)` | a list, mapping, or string | how many entries (or characters) |
+| `min(a, b, ...)` / `min(list)` | numbers | the smallest |
+| `max(a, b, ...)` / `max(list)` | numbers | the largest |
+
+Growing this list is a deliberate, reviewable act — see
+[ADR-0003](decisions/0003-structured-conditions-and-effects.md).
+
+### Deliberately absent
+
+Not oversights. Each one is either an ambiguity, a determinism risk, or an
+attack surface:
+
+- No assignment, loops, or function definitions. An expression asks a question
+  about a world it is handed; it never changes one. Changes are `effects`.
+- No `**`. `9 ** 9 ** 9` is a denial-of-service in three characters.
+- No string concatenation. `+` means arithmetic and nothing else; text with
+  values in it belongs in `say` templates, not in expressions.
+- No indexing (`list[0]`) and no method calls. Both are ways to reach further
+  than an author needs to.
+- No `&&`, `||`, `!`, or `=`. Writing one gets an error naming the word to use
+  instead.
+
+Two limits keep untrusted content bounded: an expression may be at most **2000
+characters** long and **32 levels** deep. Depth is measured on the parsed shape,
+so a long chain counts too — `a + b + c + ...` nests one level per step. If you
+hit either limit, the expression is doing work that belongs in several
+conditions, or in the structured vocabulary.
+
+### Errors
+
+Every failure names the problem and points at the character, because the person
+reading it is an author, not a programmer:
+
+```
+`player.stats` has no `hitponts`; available: hitpoints, speed, strength
+  player.stats.hitponts < 10
+  ^
+```
+
+Syntax errors are raised when a pack loads, so a typo never waits until play.

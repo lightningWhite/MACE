@@ -11,7 +11,7 @@ Read in order if you're new:
 | 1 | [Vision & Principles](01-vision.md) | What MACE is, who it's for, the design values that settle arguments |
 | 2 | [Architecture](02-architecture.md) | Layers, the deterministic core, the event protocol, repo layout |
 | 3 | [Content Model](03-content-model.md) | Packs, ids, inheritance, the content/state split, conditions & effects |
-| 4 | [Schema Reference](04-schema-reference.md) | Field-by-field reference for every content type |
+| 4 | [Schema Reference](04-schema-reference.md) | Field-by-field reference for every content type, and the `expr` grammar |
 | 5 | [World Simulation](05-world-simulation.md) | Clock, calendar, climate, weather fronts, world events |
 | 6 | [Travel & Encounters](06-travel-and-encounters.md) | Routes, journeys, encounter tables, probability tuning |
 | 7 | [Combat](07-combat.md) | Tempo combat — skill-based, learnable, three play modes |
