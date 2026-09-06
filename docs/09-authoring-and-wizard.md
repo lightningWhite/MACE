@@ -126,9 +126,11 @@ Three rules shape it:
 - **The YAML is canonical.** Objects are held as the mappings the author wrote,
   not as validated models, so an object the models would reject is still
   something the wizard can hold, show, and let you fix.
-- **Every object remembers its file.** An author who split their world into
-  `locations.yml` and `people.yml` keeps that arrangement, and objects keep the
-  position they were read in. Saving rewrites only files that actually changed.
+- **Every object stays in its file, in its place, with its comments.** The
+  project holds the loaded *documents*, not detached copies of the objects in
+  them, so an edit mutates the document and everything around it is untouched.
+  Saving rewrites only files that actually changed, and a new object joins its
+  collection wherever the author already keeps it.
 - **Compiling never touches the disk**, so "playtest with unsaved changes" is
   true rather than approximately true.
 
@@ -141,14 +143,25 @@ objects that caused them, and carries on. `mace validate` uses the collecting
 form too, since reporting one error and hiding the rest is no better for CI than
 it is for an author.
 
-**A known cost.** Saved files are written with `yaml.safe_dump`, which does not
-preserve comments or an author's chosen layout: a file the wizard rewrites comes
-back tidy and uncommented. Only rewriting changed files keeps that blast radius
-small, and a pack the wizard created has no comments to lose — but editing a
-hand-written pack like `fantasy.core` in the wizard *will* flatten the file it
-touches. Fixing it properly means a round-tripping YAML library, which is a
-dependency decision rather than an implementation detail;
-`mace.content.writing` is the one-function seam where that change would happen.
+**Comments survive.** A content pack is mostly *explanation* —
+`fantasy.core/combat.yml` opens with nine lines on why the counter matrix is
+content rather than engine code — and a tool that ate that the first time it
+touched a file would be a tool people stopped opening. So reading and writing
+both go through `ruamel.yaml` in round-trip mode (`mace.content.writing`), and
+the objects the wizard holds are the same objects it read, comments attached.
+Editing one in place and dumping its document leaves the rest of the file
+exactly as it was, down to the byte.
+
+Three things do normalise, all cosmetic: hand-aligned columns collapse to one
+space, redundant braces inside a flow sequence go away (`[{hasItem: ...}]`
+becomes `[hasItem: ...]`), and a flow mapping the author wrapped by hand comes
+back on one line. Across every file in `packs/` that is about a tenth of the
+lines, no comments, and — checked by a test — no change of meaning anywhere.
+
+This is the one place MACE takes a dependency it could have done without.
+Neither `mace.engine` nor `mace.model` imports a YAML library at all, so the
+Pyodide constraint is untouched; `ruamel.yaml` sits in the content layer beside
+the `pyyaml` that was already there.
 
 ## Validation
 

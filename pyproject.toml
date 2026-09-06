@@ -19,11 +19,17 @@ classifiers = [
 ]
 
 # The engine core must stay importable under Pyodide, so runtime deps are
-# stdlib + pydantic only. pyyaml is a content-layer dependency (pack loading);
-# it does not get imported from mace.engine.
+# stdlib + pydantic only. Neither `mace.engine` nor `mace.model` imports a YAML
+# library at all; both of these are content-layer dependencies.
+#
+# pyyaml reads packs. ruamel.yaml writes them, in round-trip mode, because the
+# wizard has to be able to edit somebody's hand-written world without
+# flattening the comments that explain it — and a pack whose comments the tool
+# eats is a tool people stop using. See mace/content/writing.py.
 dependencies = [
     "pydantic>=2.7",
     "pyyaml>=6.0",
+    "ruamel.yaml>=0.18",
 ]
 
 [project.optional-dependencies]

@@ -13,12 +13,14 @@ something the wizard can hold, show, and let you fix. Compiling is something
 that happens *to* the raw content, repeatedly, and never something the raw
 content has to survive.
 
-**Every object remembers its file.** An author who organised their world into
-`locations.yml` and `people.yml` keeps that arrangement; the wizard writes each
-object back where it came from and creates a file named for the collection only
-when there is nowhere to put a new one. Saving rewrites only files that
-actually changed, which is what keeps a hand-written pack's comments alive
-everywhere the wizard has not been.
+**Every object stays in its file, in its place, with its comments.** The
+project holds the *loaded documents*, not detached copies of the objects in
+them, and an edit mutates the document. So an author who organised their world
+into `locations.yml` and `people.yml` keeps that arrangement, objects keep the
+order they were written in, and the paragraph of explanation at the top of the
+file is still there afterwards. Rebuilding a file from its objects — the
+obvious implementation — is precisely what loses that paragraph, because it
+belongs to the document rather than to anything in it.
 
 **Compiling never touches the disk.** `compile()` builds from what is in
 memory, so "playtest from anywhere, unsaved changes included" is true rather
@@ -29,7 +31,7 @@ See docs/09-authoring-and-wizard.md and open question 8.
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -37,12 +39,12 @@ from typing import Any
 import yaml
 
 from mace.content import ContentError, Library, load_pack_manifest
-from mace.content.discovery import MANIFEST_NAME, content_files, find_packs, read_yaml
+from mace.content.discovery import MANIFEST_NAME, content_files, find_packs
 from mace.content.library import COLLECTION_MODELS
 from mace.content.loader import Loaded, compile_pack, load_library
 from mace.content.tolerance import collecting
 from mace.content.validation import Report, as_problem, validate_library
-from mace.content.writing import write_document
+from mace.content.writing import document, load_document, write_document
 from mace.model import Pack
 from mace.model.jsonschema import UNMODELLED_COLLECTIONS
 from mace.wizard.notes import ProjectNotes
@@ -63,6 +65,9 @@ GAME_KEY = "game"
 class Held:
     """One authored object, and the file it belongs in.
 
+    `data` is the object *inside* its document rather than a copy of it, so
+    editing it and dumping the document is how a change reaches disk.
+
     Attributes
     ----------
     data : mapping
@@ -71,7 +76,7 @@ class Held:
         The file it is written to, relative to the pack root.
     """
 
-    data: Mapping[str, Any]
+    data: MutableMapping[str, Any]
     home: Path
 
 
@@ -85,13 +90,17 @@ class Project:
         The pack directory.
     manifest : Pack
         The pack's `pack.yml`.
+    documents : dict
+        File, relative to the pack root, to the document read from it —
+        comments, key order, and quoting included. This is what gets written
+        back; `objects` indexes into it.
     objects : dict
         Collection name to local id to the object held there.
     unmodelled : dict
         Collections no model covers yet, kept exactly as written so a later
         phase can model them without an author losing work in the meantime.
     game : mapping or None
-        The `game:` manifest's raw body.
+        The `game:` manifest's raw body, read from and written to its document.
     game_home : Path
         Which file the game manifest is written to.
     notes : ProjectNotes
@@ -109,9 +118,9 @@ class Project:
 
     root: Path
     manifest: Pack
+    documents: dict[Path, MutableMapping[str, Any]] = field(default_factory=dict)
     objects: dict[str, dict[str, Held]] = field(default_factory=dict)
     unmodelled: dict[str, tuple[Any, ...]] = field(default_factory=dict)
-    game: Mapping[str, Any] | None = None
     game_home: Path = Path("game.yml")
     notes: ProjectNotes = field(default_factory=ProjectNotes)
     dependencies: Library = field(default_factory=lambda: Library(()))
@@ -221,7 +230,7 @@ class Project:
             if path.is_relative_to(self.root / NOTES_PATH.parent):
                 continue
             try:
-                document = read_yaml(path)
+                body = load_document(path)
             except ContentError as error:
                 # A file that will not parse is a file the wizard cannot edit.
                 # It stays on disk untouched and is reported on every compile,
@@ -230,17 +239,18 @@ class Project:
                 # why the locations they wrote do not exist.
                 self.unreadable.append(error)
                 continue
-            if not isinstance(document, Mapping):
+            if not isinstance(body, MutableMapping):
                 continue
             home = path.relative_to(self.root)
-            for collection, body in document.items():
+            self.documents[home] = body
+            for collection, entries in body.items():
                 if collection == GAME_KEY:
-                    self.game, self.game_home = body, home
+                    self.game_home = home
                 elif collection in UNMODELLED_COLLECTIONS:
                     kept = self.unmodelled.get(collection, ())
-                    self.unmodelled[collection] = (*kept, *(body or ()))
+                    self.unmodelled[collection] = (*kept, *(entries or ()))
                 elif collection in COLLECTION_MODELS:
-                    self._hold(str(collection), body, home)
+                    self._hold(str(collection), entries, home)
         self.notes = _read_notes(self.root)
 
     def _hold(self, collection: str, body: Any, home: Path) -> None:
@@ -259,7 +269,10 @@ class Project:
             return
         held = self.objects.setdefault(collection, {})
         for entry in body:
-            if isinstance(entry, Mapping) and "id" in entry:
+            # Mutable, because editing an object means editing the one sitting
+            # in its document. A read-only mapping in a content file would be
+            # something the wizard could show and never change.
+            if isinstance(entry, MutableMapping) and "id" in entry:
                 held.setdefault(str(entry["id"]), Held(entry, home))
 
     # ── Editing ───────────────────────────────────────────────────────────
@@ -292,8 +305,20 @@ class Project:
         local_id = str(authored["id"])
         held = self.objects.setdefault(collection, {})
         existing = held.get(local_id)
-        home = existing.home if existing is not None else Path(f"{collection}.yml")
-        held[local_id] = Held(dict(authored), home)
+
+        if existing is not None:
+            # Mutate the object that is already in the document, so a comment
+            # on a key the author did not touch is still there afterwards.
+            _overwrite(existing.data, authored)
+            self.dirty.add(existing.home)
+            return local_id
+
+        home = self._home_for(collection)
+        entries = self._collection(home, collection)
+        fresh = document(authored)
+        entries.append(fresh)
+        _space_before(entries)
+        held[local_id] = Held(fresh, home)
         self.dirty.add(home)
         return local_id
 
@@ -316,6 +341,9 @@ class Project:
         gone = held.pop(local_id, None)
         if gone is None:
             return False
+        entries = self.documents.get(gone.home, {}).get(collection)
+        if isinstance(entries, list):
+            entries[:] = [entry for entry in entries if entry is not gone.data]
         self.dirty.add(gone.home)
         return True
 
@@ -353,6 +381,19 @@ class Project:
         """
         return sorted(self.objects.get(collection, {}))
 
+    @property
+    def game(self) -> Mapping[str, Any] | None:
+        """The `game:` manifest, as it was authored.
+
+        Returns
+        -------
+        mapping or None
+            The manifest body, or None for a pack that has none yet.
+        """
+        held = self.documents.get(self.game_home)
+        found = None if held is None else held.get(GAME_KEY)
+        return found if isinstance(found, Mapping) else None
+
     def set_game(self, authored: Mapping[str, Any]) -> None:
         """Replace the `game:` manifest.
 
@@ -361,7 +402,12 @@ class Project:
         authored : mapping
             The manifest, as it would be written.
         """
-        self.game = dict(authored)
+        body = self._file(self.game_home)
+        existing = body.get(GAME_KEY)
+        if isinstance(existing, MutableMapping):
+            _overwrite(existing, authored)
+        else:
+            body[GAME_KEY] = dict(authored)
         self.dirty.add(self.game_home)
 
     def remember(self, notes: ProjectNotes) -> None:
@@ -448,13 +494,37 @@ class Project:
                     self.root / NOTES_PATH, {NOTES_KEY: self.notes.authored()}
                 )
             else:
-                write_document(self.root / home, self._document(home))
+                write_document(self.root / home, self.documents[home])
             written.append(home)
         self.dirty.clear()
         return written
 
-    def _document(self, home: Path) -> dict[str, Any]:
-        """Rebuild one file from everything that lives in it.
+    def _home_for(self, collection: str) -> Path:
+        """Which file a new object of some collection should join.
+
+        Wherever the author already keeps that collection, when they keep it in
+        one place — a pack whose scenes live in `story.yml` should not sprout a
+        `scenes.yml` the first time the wizard adds one. Split across several
+        files, there is no right answer and a file named for the collection is
+        the least surprising one.
+
+        Parameters
+        ----------
+        collection : str
+            The collection.
+
+        Returns
+        -------
+        Path
+            The file, relative to the pack root.
+        """
+        homes = {held.home for held in self.objects.get(collection, {}).values()}
+        if len(homes) == 1:
+            return homes.pop()
+        return Path(f"{collection}.yml")
+
+    def _file(self, home: Path) -> MutableMapping[str, Any]:
+        """The document for one file, started if there is not one yet.
 
         Parameters
         ----------
@@ -463,28 +533,37 @@ class Project:
 
         Returns
         -------
-        dict
-            Collection name to its objects, in the order the author had them:
-            objects keep the position they were read in and new ones go on the
-            end. Sorting would be tidier and would reorder somebody's
-            carefully grouped file the first time the wizard touched it, which
-            turns one small edit into an unreadable diff.
+        mutable mapping
+            The document.
         """
-        document: dict[str, Any] = {}
-        if self.game is not None and home == self.game_home:
-            document[GAME_KEY] = dict(self.game)
-        for collection in COLLECTION_MODELS:
-            living = [
-                held.data
-                for held in self.objects.get(collection, {}).values()
-                if held.home == home
-            ]
-            if living:
-                document[collection] = living
-        for collection, entries in sorted(self.unmodelled.items()):
-            if entries and home == Path(f"{collection}.yml"):
-                document[collection] = list(entries)
-        return document
+        found = self.documents.get(home)
+        if found is None:
+            found = document()
+            self.documents[home] = found
+        return found
+
+    def _collection(self, home: Path, collection: str) -> list[Any]:
+        """The list one collection's objects live in, started if it is absent.
+
+        Parameters
+        ----------
+        home : Path
+            The file, relative to the pack root.
+        collection : str
+            The collection.
+
+        Returns
+        -------
+        list
+            The list inside the document, which new objects are appended to so
+            they land after what the author already wrote.
+        """
+        body = self._file(home)
+        entries = body.get(collection)
+        if not isinstance(entries, list):
+            entries = []
+            body[collection] = entries
+        return entries
 
     def each(self) -> Iterator[tuple[str, str, Mapping[str, Any]]]:
         """Every object in the project.
@@ -497,6 +576,46 @@ class Project:
         for collection in COLLECTION_MODELS:
             for local_id, held in sorted(self.objects.get(collection, {}).items()):
                 yield collection, local_id, held.data
+
+
+def _space_before(entries: list[Any]) -> None:
+    """Put a blank line before the entry just appended.
+
+    Cosmetic, and worth it: every pack in the repo separates its definitions
+    with a blank line, and a wizard whose additions are visibly the tool's
+    rather than the author's is a wizard people write around.
+
+    Parameters
+    ----------
+    entries : list
+        The collection's list, with the new entry already on the end.
+    """
+    spacer = getattr(entries, "yaml_set_comment_before_after_key", None)
+    if spacer is not None and len(entries) > 1:
+        spacer(len(entries) - 1, before="\n")
+
+
+def _overwrite(target: MutableMapping[str, Any], incoming: Mapping[str, Any]) -> None:
+    """Make one mapping hold exactly what another does, in place.
+
+    In place rather than by replacement, because the object being edited is the
+    one sitting in its document with its comments attached. A key the author
+    did not touch keeps the note they wrote beside it; a key they removed takes
+    its note with it, which is the right thing for a note about something that
+    is no longer there.
+
+    Parameters
+    ----------
+    target : mutable mapping
+        The object in the document.
+    incoming : mapping
+        What it should hold now.
+    """
+    for key in [key for key in target if key not in incoming]:
+        del target[key]
+    for key, value in incoming.items():
+        if target.get(key) != value:
+            target[key] = value
 
 
 def _dependencies(manifest: Pack, root: Path, search: tuple[Path, ...]) -> Library:

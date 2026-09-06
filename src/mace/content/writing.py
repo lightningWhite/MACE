@@ -1,81 +1,156 @@
-"""Writing authored content back out as YAML.
+"""Reading and writing authored content without eating the comments.
 
-Everything the wizard saves goes through here, so that how MACE renders a pack
-is one decision in one place rather than a habit spread across a dozen flows.
+Everything the wizard saves goes through here, so how MACE renders a pack is
+one decision in one place rather than a habit spread across a dozen flows.
 
-**A known cost, stated rather than discovered.** This writes with
-`yaml.safe_dump`, which does not preserve comments or an author's chosen
-layout. A file the wizard rewrites comes back tidy and uncommented. That is
-fine for a pack the wizard created and wrong for one like `fantasy.core`, whose
-comments carry most of what a reader needs — so the wizard only ever rewrites
-files it has actually changed, and a hand-written pack keeps everything the
-wizard did not touch.
+The whole reason this is not two lines of `yaml.safe_dump` is that a content
+pack is mostly *explanation*. `fantasy.core/combat.yml` opens with nine lines
+saying why the counter matrix is content rather than engine code, and
+`peasants-quest/encounters.yml` explains why `$append` keeps the atmosphere
+entries. A tool that ate those the first time it touched a file would be a tool
+people stopped opening — and the wizard is meant to be the primary way games
+get made, not a thing you use once and then go back to a text editor.
 
-Fixing it properly means a round-tripping YAML library (`ruamel.yaml`), which
-is a dependency decision rather than an implementation detail. This module is
-the seam where that change would happen: one function, one import.
+So reading and writing both go through `ruamel.yaml` in round-trip mode, and
+the objects the wizard holds are the *same objects* it read, comments attached.
+Editing one in place and dumping its document back leaves everything else in
+the file exactly as it was.
+
+What does not survive is cosmetic and small: hand-aligned columns collapse to
+one space, redundant braces inside a flow sequence go away
+(`[{hasItem: ...}]` becomes `[hasItem: ...]`), and a flow mapping the author
+wrapped by hand comes back on one line. Across every file in `packs/` that is
+about a tenth of the lines, no comments, and — checked by a test — no change of
+meaning anywhere.
 """
 
 from __future__ import annotations
 
+import io
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.error import YAMLError
 
-__all__ = ["dump", "write_document"]
+from mace.content.errors import ContentError
 
-#: How wide a line may get before the dumper folds it. Generous: prose is the
-#: bulk of a content file, and a wrapped sentence is much harder to read and to
-#: diff than a long one.
-WIDTH = 100
+__all__ = ["document", "dump", "load_document", "write_document"]
+
+#: How wide a line may get before the dumper folds it. Effectively unlimited:
+#: prose is the bulk of a content file, and a sentence wrapped mid-word is much
+#: harder to read and to diff than a long one.
+WIDTH = 4096
+
+#: Indentation matching how the shipped packs are written — a sequence item
+#: sits two spaces in from its key. Chosen by measuring: it is what makes a
+#: re-dump of `packs/` come back as nearly the same bytes.
+INDENT = {"mapping": 2, "sequence": 4, "offset": 2}
 
 
-def dump(document: Mapping[str, Any]) -> str:
+def _writer() -> YAML:
+    """Build a round-tripping YAML handler.
+
+    Fresh each time rather than shared: `YAML` carries mutable state, and a
+    handler used from two places at once is a bug nobody would find.
+
+    Returns
+    -------
+    YAML
+        A handler that preserves comments, quoting, and key order.
+    """
+    handler = YAML()
+    handler.preserve_quotes = True
+    handler.width = WIDTH
+    handler.indent(**INDENT)
+    return handler
+
+
+def load_document(path: Path) -> Any:
+    """Read one content file, keeping its comments attached.
+
+    Parameters
+    ----------
+    path : Path
+        The file to read.
+
+    Returns
+    -------
+    object
+        The parsed document — mappings come back as `CommentedMap`, which is a
+        `dict` and validates like one. `None` for an empty file.
+
+    Raises
+    ------
+    ContentError
+        If the file is not readable or not valid YAML.
+    """
+    try:
+        return _writer().load(path.read_text())
+    except YAMLError as error:
+        raise ContentError(f"is not valid YAML: {error}", path=path) from error
+    except OSError as error:
+        raise ContentError(f"could not be read: {error}", path=path) from error
+
+
+def document(body: Mapping[str, Any] | None = None) -> CommentedMap:
+    """Start a new content document.
+
+    Parameters
+    ----------
+    body : mapping or None
+        Initial contents.
+
+    Returns
+    -------
+    CommentedMap
+        An empty document that can carry comments once it has any.
+    """
+    return CommentedMap(body or {})
+
+
+def dump(body: Mapping[str, Any]) -> str:
     """Render one content file.
 
     Parameters
     ----------
-    document : mapping
-        Collection name to its list of authored objects.
+    body : mapping
+        Collection name to its list of authored objects. A document that came
+        from `load_document` keeps its comments; a plain dict has none to keep.
 
     Returns
     -------
     str
         YAML text, ready to write.
     """
-    return str(
-        yaml.safe_dump(
-            _plain(document),
-            sort_keys=False,
-            allow_unicode=True,
-            default_flow_style=False,
-            width=WIDTH,
-        )
-    )
+    out = io.StringIO()
+    _writer().dump(_plain(body), out)
+    return out.getvalue()
 
 
-def write_document(path: Path, document: Mapping[str, Any]) -> None:
+def write_document(path: Path, body: Mapping[str, Any]) -> None:
     """Write one content file, making its directory if it is not there.
 
     Parameters
     ----------
     path : Path
         Where to write.
-    document : mapping
-        Collection name to its list of authored objects.
+    body : mapping
+        The document.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(dump(document))
+    path.write_text(dump(body))
 
 
 def _plain(value: Any) -> Any:
-    """Reduce a value to the primitives the dumper can render.
+    """Reduce a value to something the dumper can render.
 
-    Authored objects come back from the models as ordinary dicts and lists, but
-    a tuple or a set slipped in by hand would be dumped as a Python object tag
-    and stop being content. This flattens them instead.
+    Anything ruamel produced is left strictly alone — that is where the
+    comments live. Only foreign shapes are converted, because a tuple or a set
+    reaching the dumper comes out as a Python object tag and stops being
+    content.
 
     Parameters
     ----------
@@ -85,14 +160,16 @@ def _plain(value: Any) -> Any:
     Returns
     -------
     object
-        The same thing, made of dicts, lists, and scalars.
+        The same thing, made of things YAML has a spelling for.
     """
+    if value.__class__.__module__.startswith("ruamel.yaml"):
+        return value
     if isinstance(value, Mapping):
         return {str(key): _plain(item) for key, item in value.items()}
     if isinstance(value, str | bytes):
         return value
-    if isinstance(value, Sequence):
-        return [_plain(item) for item in value]
     if isinstance(value, set | frozenset):
         return sorted(_plain(item) for item in value)
+    if isinstance(value, Sequence):
+        return [_plain(item) for item in value]
     return value

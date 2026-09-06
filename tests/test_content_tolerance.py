@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from conftest import write_pack
 
+from conftest import write_pack
 from mace.content import ContentError, load_library, validate_paths
 from mace.content.loader import load_best_effort
 from mace.content.tolerance import collecting

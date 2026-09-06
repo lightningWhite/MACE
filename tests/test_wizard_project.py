@@ -8,14 +8,15 @@ because "playtest with unsaved changes" is the feature that keeps people
 iterating.
 """
 
+import difflib
 import shutil
 from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
-from conftest import write_pack
 
+from conftest import write_pack
 from mace.content import ContentError
 from mace.wizard.notes import Note, ProjectNotes
 from mace.wizard.project import NOTES_PATH, Project
@@ -166,6 +167,31 @@ def test_a_new_object_goes_to_a_file_named_for_its_collection(tmp_path: Path) ->
     assert (root / "scenes.yml").is_file()
 
 
+def test_a_new_object_joins_its_collection_where_it_already_lives(
+    tmp_path: Path,
+) -> None:
+    """A pack whose scenes live in `story.yml` should not sprout a `scenes.yml`."""
+    root = world(tmp_path, story={"scenes": [{"id": "wake", "say": "You wake."}]})
+    project = Project.open(root)
+    project.put("scenes", {"id": "sleep", "say": "You sleep."})
+    assert project.save() == [Path("story.yml")]
+    assert not (root / "scenes.yml").exists()
+
+
+def test_a_collection_split_across_files_gets_a_file_of_its_own(
+    tmp_path: Path,
+) -> None:
+    """No right answer, so pick the least surprising one."""
+    root = world(
+        tmp_path,
+        here={"scenes": [{"id": "wake", "say": "You wake."}]},
+        there={"scenes": [{"id": "sleep", "say": "You sleep."}]},
+    )
+    project = Project.open(root)
+    project.put("scenes", {"id": "dream", "say": "You dream."})
+    assert project.save() == [Path("scenes.yml")]
+
+
 def test_dropping_an_object_removes_it(tmp_path: Path) -> None:
     root = world(tmp_path)
     project = Project.open(root)
@@ -254,6 +280,117 @@ def test_content_no_model_covers_yet_survives_a_round_trip(tmp_path: Path) -> No
     assert Project.open(root).unmodelled["goods"] == ({"id": "iron", "density": 3},)
 
 
+# ── Comments ──────────────────────────────────────────────────────────────────
+#
+# The reason `mace.content.writing` round-trips instead of dumping. A content
+# pack is mostly explanation, and a tool that ate the explanation the first time
+# it touched a file would be a tool people stopped opening.
+
+
+def commented(root: Path) -> Path:
+    """A pack whose file carries comments in all three positions.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write it.
+
+    Returns
+    -------
+    Path
+        The pack directory.
+    """
+    pack = world(root)
+    (pack / "locations.yml").write_text(
+        "# Two places and the road between them.\n"
+        "locations:\n"
+        "\n"
+        "  # Where it starts.\n"
+        "  - id: home\n"
+        '    name: "Home"\n'
+        "    exits:\n"
+        "      - {to: castle}   # the only way out\n"
+        "\n"
+        "  - id: castle\n"
+        '    name: "The Castle"\n'
+        "    exits:\n"
+        "      - {to: home}\n"
+    )
+    return pack
+
+
+def test_a_files_own_comments_survive_an_edit_elsewhere_in_it(
+    tmp_path: Path,
+) -> None:
+    root = commented(tmp_path)
+    project = Project.open(root)
+    project.put("locations", {"id": "mill", "name": "The Mill"})
+    project.save()
+
+    written = (root / "locations.yml").read_text()
+    assert "# Two places and the road between them." in written
+    assert "# Where it starts." in written
+    assert "# the only way out" in written
+
+
+def test_an_edited_objects_untouched_keys_keep_their_comments(
+    tmp_path: Path,
+) -> None:
+    """The edit is in place, so a note beside a key you did not touch stays."""
+    root = commented(tmp_path)
+    project = Project.open(root)
+    home = dict(project.get("locations", "home") or {})
+    home["name"] = "Somewhere Else"
+    project.put("locations", home)
+    project.save()
+
+    written = (root / "locations.yml").read_text()
+    assert "Somewhere Else" in written
+    assert "# the only way out" in written
+    assert "# Where it starts." in written
+
+
+def test_quoting_and_key_order_survive(tmp_path: Path) -> None:
+    root = commented(tmp_path)
+    project = Project.open(root)
+    project.put("locations", {"id": "mill", "name": "The Mill"})
+    project.save()
+    written = (root / "locations.yml").read_text()
+    assert 'name: "Home"' in written
+    assert written.index("id: home") < written.index("name:")
+
+
+def test_an_appended_object_matches_the_files_spacing(tmp_path: Path) -> None:
+    root = commented(tmp_path)
+    project = Project.open(root)
+    project.put("locations", {"id": "mill", "name": "The Mill"})
+    project.save()
+    assert "\n\n  - id: mill\n" in (root / "locations.yml").read_text()
+
+
+def test_a_file_the_wizard_never_touched_is_byte_identical(tmp_path: Path) -> None:
+    root = commented(tmp_path)
+    before = (root / "people.yml").read_text()
+    project = Project.open(root)
+    project.put("locations", {"id": "mill", "name": "The Mill"})
+    project.save()
+    assert (root / "people.yml").read_text() == before
+
+
+def test_dropping_an_object_leaves_the_rest_of_the_file_alone(
+    tmp_path: Path,
+) -> None:
+    root = commented(tmp_path)
+    project = Project.open(root)
+    project.drop("locations", "castle")
+    project.save()
+    written = (root / "locations.yml").read_text()
+    assert "# Two places and the road between them." in written
+    assert "# Where it starts." in written
+    remaining = yaml.safe_load(written)["locations"]
+    assert [place["id"] for place in remaining] == ["home"]
+
+
 # ── The sidecar ───────────────────────────────────────────────────────────────
 
 
@@ -303,9 +440,7 @@ def test_an_unreadable_sidecar_starts_fresh_rather_than_failing(
 
 
 def test_a_new_project_is_written_and_reopens(tmp_path: Path) -> None:
-    project = Project.create(
-        tmp_path / "fresh", pack_id="fresh", name="Something Fresh"
-    )
+    Project.create(tmp_path / "fresh", pack_id="fresh", name="Something Fresh")
     assert (tmp_path / "fresh" / "pack.yml").is_file()
     assert Project.open(tmp_path / "fresh").manifest.name == "Something Fresh"
 
@@ -343,7 +478,6 @@ def test_the_shipped_game_opens_and_reports_nothing(tmp_path: Path) -> None:
 
 
 def test_editing_the_shipped_game_loses_no_content(tmp_path: Path) -> None:
-    """Comments and layout do not survive a rewrite. Content must."""
     packs = tmp_path / "packs"
     shutil.copytree(REPO_ROOT / "packs", packs)
     root = packs / "games" / "peasants-quest"
@@ -356,3 +490,49 @@ def test_editing_the_shipped_game_loses_no_content(tmp_path: Path) -> None:
     after = yaml.safe_load((root / "locations.yml").read_text())
     assert after["locations"][:-1] == before["locations"]
     assert after["locations"][-1] == {"id": "mill", "name": "The Mill"}
+
+
+def test_editing_the_shipped_game_loses_none_of_its_prose(tmp_path: Path) -> None:
+    """`packs/` is mostly explanation. Losing it would be losing the pack."""
+    packs = tmp_path / "packs"
+    shutil.copytree(REPO_ROOT / "packs", packs)
+    root = packs / "games" / "peasants-quest"
+
+    def comments(path: Path) -> list[str]:
+        return [
+            line.strip()
+            for line in path.read_text().splitlines()
+            if line.strip().startswith("#")
+        ]
+
+    before = comments(root / "locations.yml")
+    assert before, "this test needs a commented file to be about anything"
+
+    project = Project.open(root, packs)
+    project.put("locations", {"id": "mill", "name": "The Mill"})
+    project.save()
+    assert comments(root / "locations.yml") == before
+
+
+def test_editing_the_shipped_game_stays_a_small_diff(tmp_path: Path) -> None:
+    """A one-object change should read as a one-object change."""
+    packs = tmp_path / "packs"
+    shutil.copytree(REPO_ROOT / "packs", packs)
+    root = packs / "games" / "peasants-quest"
+
+    before = (REPO_ROOT / "packs/games/peasants-quest/locations.yml").read_text()
+    project = Project.open(root, packs)
+    project.put("locations", {"id": "mill", "name": "The Mill"})
+    project.save()
+
+    changed = [
+        line
+        for line in difflib.unified_diff(
+            before.splitlines(),
+            (root / "locations.yml").read_text().splitlines(),
+            lineterm="",
+            n=0,
+        )
+        if line[:1] in "+-" and not line.startswith(("+++", "---"))
+    ]
+    assert len(changed) <= 6, "\n".join(changed)
