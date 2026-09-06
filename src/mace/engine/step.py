@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from mace.content import ContentError, Library
+from mace.engine import environment
 from mace.engine.actions import Action, Choose, Interact, Look, Travel, Wait
 from mace.engine.conditions import RuleError, all_hold, holds
 from mace.engine.context import RuleContext
@@ -35,6 +36,7 @@ from mace.engine.events import (
     QuestUpdated,
     RuleFailed,
     SceneEntered,
+    StatChanged,
     TimePassed,
     TravelInterrupted,
     TravelLeg,
@@ -53,7 +55,7 @@ from mace.engine.state import (
     QuestState,
     QuestStatus,
 )
-from mace.engine.stats import starting_pools
+from mace.engine.stats import pool_bounds, starting_pools
 from mace.engine.world import Clock, advance, region_of
 from mace.model import (
     Calendar,
@@ -66,6 +68,7 @@ from mace.model import (
     WeatherFront,
 )
 from mace.model.calendar import STANDARD_YEAR
+from mace.model.effects import Rest
 from mace.model.text import DescriptionLine, SayLine
 
 __all__ = ["StepResult", "begin", "step"]
@@ -76,6 +79,10 @@ MAX_SCENE_CHAIN = 128
 
 #: The menu that is offered when nothing else is pending.
 OPTIONS_MENU = ""
+
+#: How much of a rest's exposure relief a player gets with no roof over
+#: them. Sleeping in a blizzard is still sleeping in a blizzard.
+OPEN_REST_RELIEF = 0.25
 
 
 @dataclass(frozen=True, slots=True)
@@ -1005,7 +1012,12 @@ def _run_scene(scene_id: str, context: RuleContext, events: list[Event]) -> bool
 
 
 def _settle(outcome: EffectOutcome, context: RuleContext, events: list[Event]) -> bool:
-    """Act on an effect outcome that ends or restarts the game.
+    """Act on an effect outcome: the time it asked for, and the game it ended.
+
+    Effects request time rather than take it, because moving the clock means
+    moving the *world* — weather, fronts, encounters — and an effect that bumped
+    the tick counter itself would skip all of that. Time is spent here, once,
+    after the effects in a block have all run.
 
     Parameters
     ----------
@@ -1026,7 +1038,56 @@ def _settle(outcome: EffectOutcome, context: RuleContext, events: list[Event]) -
     if outcome.ended is not None:
         _end(context, outcome.ended, "the story ended", events)
         return True
-    return False
+
+    if outcome.elapsed:
+        _advance(context, outcome.elapsed, events)
+    if outcome.rest is not None:
+        _recover(outcome.rest, context, events)
+    return context.state.outcome is not Outcome.PLAYING
+
+
+def _recover(rest: Rest, context: RuleContext, events: list[Event]) -> None:
+    """Refill what a rest was for, once its hours have actually passed.
+
+    After the time, not before, so a player who sits out a blizzard in the
+    open finds it has not helped very much: the hours they slept through are
+    hours they spent in the blizzard, and only a roof lets a rest shed all of
+    the exposure it took. Pools come back either way — sleep is sleep — which
+    is what makes the inn worth the detour rather than the only option.
+
+    Parameters
+    ----------
+    rest : Rest
+        What was asked for.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    """
+    player = context.state.protagonist
+    definition = context.definition(player)
+    shelter = 1.0 if context.weather().sheltered else OPEN_REST_RELIEF
+    player.exposure = max(0.0, player.exposure - rest.fraction * shelter)
+
+    wanted = rest.pools or tuple(definition.stats or {})
+    for name in wanted:
+        low, high = pool_bounds(definition, name)
+        if high is None:
+            continue
+        current = player.pools.get(name)
+        if current is None or current >= high:
+            continue
+        restored = min(high, current + (high - low) * rest.fraction)
+        player.pools[name] = restored
+        events.append(
+            StatChanged(
+                actor=player.instance_id,
+                stat=name,
+                delta=round(restored - current, 3),
+                value=round(restored, 3),
+                reason="rest",
+            )
+        )
 
 
 def _offer_scene_choices(
@@ -1102,6 +1163,7 @@ def _after_action(context: RuleContext, events: list[Event]) -> None:
     if state.outcome is not Outcome.PLAYING:
         return
 
+    _sync_weather(context, events)
     _expire_modifiers(context)
     _advance_quests(context, events)
     if _judge(context, events):
@@ -1147,6 +1209,7 @@ def _status(context: RuleContext) -> WorldStatus:
         ),
         light=round(clock.light(state.tick) * observed.visibility, 4),
         indoors=observed.sheltered,
+        exposure=round(state.protagonist.exposure, 4),
     )
 
 
@@ -1193,6 +1256,8 @@ def _advance_quests(context: RuleContext, events: list[Event]) -> None:
             events.append(QuestUpdated(quest_id, "failed", progress.stage))
             outcome = apply_all(quest.on_fail, context, source=quest_id)
             events.extend(outcome.events)
+            if _settle(outcome, context, events):
+                return
             for queued in outcome.play:
                 _run_scene(queued, context, events)
             continue
@@ -1210,11 +1275,15 @@ def _advance_quests(context: RuleContext, events: list[Event]) -> None:
                 stages[progress.stage].on_enter, context, source=quest_id
             )
             events.extend(entered.events)
+            if _settle(entered, context, events):
+                return
         else:
             progress.status = QuestStatus.COMPLETE
             events.append(QuestUpdated(quest_id, "complete", progress.stage))
             outcome = apply_all(quest.on_complete, context, source=quest_id)
             events.extend(outcome.events)
+            if _settle(outcome, context, events):
+                return
             for queued in outcome.play:
                 _run_scene(queued, context, events)
 
@@ -1672,6 +1741,8 @@ def _sync_weather(context: RuleContext, events: list[Event]) -> None:
     """
     state = context.state
     changes = advance(context.library, state, context.clock, state.pack)
+    _expire_modifiers(context)
+    environment.apply(context, events, ticks=changes.ticks)
 
     region = region_of(
         context.library,

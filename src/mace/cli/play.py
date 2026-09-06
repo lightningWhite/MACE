@@ -158,6 +158,9 @@ class Renderer:
             if payload["indoors"]:
                 sky += ", outside"
             parts.append(sky)
+        cold = _exposure(float(payload.get("exposure") or 0.0))
+        if cold:
+            parts.append(cold)
         self.line("")
         self.line(f"  {' · '.join(parts)}")
 
@@ -177,6 +180,36 @@ class Renderer:
             input("")
         except EOFError:  # pragma: no cover — piped input ends
             self.interactive = False
+
+
+#: How the status line says what standing out in it has cost. The engine
+#: reports a number; putting a word to it is a front-end's job, and the player
+#: never sees the number.
+EXPOSURE_WORDS: tuple[tuple[float, str], ...] = (
+    (0.85, "in a bad way"),
+    (0.60, "badly chilled"),
+    (0.35, "cold through"),
+    (0.15, "feeling it"),
+)
+
+
+def _exposure(level: float) -> str:
+    """Put a word to how much the weather has taken out of the player.
+
+    Parameters
+    ----------
+    level : float
+        0 to 1, from a `world.status` event.
+
+    Returns
+    -------
+    str
+        The word, or an empty string while it does not matter yet.
+    """
+    for threshold, word in EXPOSURE_WORDS:
+        if level >= threshold:
+            return word
+    return ""
 
 
 def _describe(kind: str, payload: dict[str, Any]) -> str:

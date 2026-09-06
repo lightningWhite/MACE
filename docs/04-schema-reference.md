@@ -495,6 +495,28 @@ not build up a debt it pays off all at once later.
 
 ---
 
+## Effects, and the ones that cost time
+
+Two effects ask the runner for time rather than taking it themselves, because
+moving the clock means moving the *world* — weather, fronts, encounters — and
+an effect that bumped the tick counter on its own would skip all of it. The
+time is spent after every effect in the block has run.
+
+| Effect | Body | Notes |
+|---|---|---|
+| `advanceTime` | `{ticks}` | A long conversation, a detour, a wait. |
+| `rest` | `{ticks?, pools?, fraction?}` | Clears exposure and refills pools, and costs the hours. `ticks` defaults to 8, `pools` to every pool the actor has a maximum for, `fraction` to 1. |
+
+Rest recovery happens *after* the hours pass, not before, so a player who
+sits out a blizzard in the open finds the hours they slept through were hours
+they spent in the blizzard. Only a roof lets a rest shed all the exposure it
+took; in the open it sheds a quarter. Pools come back either way — sleep is
+sleep — which is what makes the inn worth the detour rather than the only
+option. `rest` needs `rest` in `game.rules.survival`, and reports
+`engine.unsupported` when a game has turned it off.
+
+---
+
 ## Scene
 
 | Field | Type | Notes |

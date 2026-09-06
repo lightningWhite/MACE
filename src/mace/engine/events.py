@@ -466,6 +466,10 @@ class WorldStatus(Event):
         The day part's light after the weather has had its share, 0 to 1.
     indoors : bool
         Whether the player is under a roof.
+    exposure : float
+        0 to 1. What standing out in it has cost the player so far. A number
+        here rather than a word on purpose: how to say it is the front-end's
+        business, and the player should never see the number itself.
     """
 
     kind: ClassVar[str] = "world.status"
@@ -482,6 +486,7 @@ class WorldStatus(Event):
     temperature: float | None = None
     light: float = 1.0
     indoors: bool = False
+    exposure: float = 0.0
 
     def payload(self) -> dict[str, Any]:
         return {
@@ -498,6 +503,7 @@ class WorldStatus(Event):
             "temperature": self.temperature,
             "light": self.light,
             "indoors": self.indoors,
+            "exposure": self.exposure,
         }
 
 

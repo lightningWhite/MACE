@@ -25,7 +25,10 @@ locations:
     description:
       - "A crossroads with ambitions. Three stalls, a shuttered inn, and a peddler who has been here longer than the stalls."
     entities: [peddler]
-    scenes: [mace.core:rest-a-while]
+    # Indoors, so the inn is worth the detour when the weather turns: shelter
+    # suppresses what the sky is doing to you, and sleeping clears it.
+    indoors: true
+    scenes: [mace.core:rest-a-while, mace.core:sleep-until-morning]
     mapPosition: {x: -60, y: 160}
     exits:
       - {to: fenmoor, route: south-track}
@@ -39,7 +42,7 @@ locations:
          when: {dayPart: [dawn, day]}}
       - "You hear the river well before you see the bridge."
     entities: [gorm]
-    scenes: [mace.core:rest-a-while]
+    scenes: [mace.core:rest-a-while, mace.core:sleep-until-morning]
     mapPosition: {x: 10, y: 60}
     # No exits of its own: the middle of a bridge is not a place with roads
     # leading off it. The journey you are on is the way out, in either

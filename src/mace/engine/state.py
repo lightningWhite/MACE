@@ -141,6 +141,11 @@ class EntityState:
         Temporary stat adjustments.
     disposition : str or None
         Current stance toward the player.
+    exposure : float
+        0 to 1. How much the weather has taken out of this entity. Only the
+        player accumulates it — it exists for the decision a player makes, and
+        a wandering NPC's cold-weather death spiral is simulation for its own
+        sake.
     """
 
     instance_id: str
@@ -152,6 +157,7 @@ class EntityState:
     flags: set[str] = field(default_factory=set)
     modifiers: list[Modifier] = field(default_factory=list)
     disposition: str | None = None
+    exposure: float = 0.0
 
 
 @dataclass(slots=True)

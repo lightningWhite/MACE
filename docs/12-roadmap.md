@@ -51,13 +51,13 @@ through, and the road between towns is dangerous.
 - [x] Climate model: seasonal weights + Markov transitions
 - [x] Regions, per-region weather chains, lazily fast-forwarded
 - [x] Weather fronts propagating across the region graph, with omens
-- [ ] Weather effects: visibility, travel multiplier, stat modifiers, tags
-- [ ] Entity `env` responses
+- [x] Weather effects: visibility, travel multiplier, stat modifiers, tags
+- [x] Entity `env` responses
 - [ ] World events: celestial (scheduled), pressure (building, with omens), triggered
 - [ ] Event phases, aftermath world changes, and the news queue
 - [x] Routes, waypoints, leg-by-leg travel resolution, interruption and resumption
 - [x] Encounter tables: two-stage resolution, cooldowns, anti-clumping pressure
-- [ ] Exposure and rest — the mechanics that make weather bite
+- [x] Exposure and rest — the mechanics that make weather bite
 - [x] Conditional descriptions driven by weather and time
 - [x] Status line in the CLI
 - [ ] `packs/fantasy.core` — first real library pack

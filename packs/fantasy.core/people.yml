@@ -49,3 +49,35 @@ entities:
       strength:  {base: 70}
       speed:     {base: 25}
       charisma:  {base: 10}
+    # Responses match on weather *tags*, not on named conditions, so a snow
+    # type invented in some other pack three years from now will make this
+    # troll harder to see without anyone editing this file.
+    env:
+      - when: {weatherTag: [dark]}
+        modify:
+          - {stat: strength, add: 10}
+          - {stat: stealth, add: 20}
+      - when: {weatherTag: [wet]}
+        modify:
+          - {stat: strength, add: 8}
+
+  - id: wolf
+    kind: actor
+    name: "Wolf"
+    description: "Long-legged, unhurried, and looking at you the way you look at bread."
+    tags: [beast, wolf]
+    disposition: hostile
+    stats:
+      hitpoints: {base: 22, max: 22}
+      stamina:   {base: 30, max: 30}
+      strength:  {base: 30}
+      speed:     {base: 65}
+      stealth:   {base: 45}
+    env:
+      - when: {weatherTag: [cold]}
+        modify:
+          - {stat: strength, add: 12}
+          - {stat: speed, add: 8}
+      - when: {dayPart: [dusk, night]}
+        modify:
+          - {stat: stealth, add: 20}

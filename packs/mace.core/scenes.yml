@@ -14,6 +14,20 @@ scenes:
       - {advanceTime: {ticks: 2}}
       - {adjustStat: {actor: player, stat: stamina, delta: 10, reason: "rest"}}
 
+  - id: sleep-until-morning
+    prompt: "Sleep until morning"
+    say:
+      - {text: "You get what sleep you can, and wake stiff and glad of it.",
+         when: {not: {weatherTag: [wet, cold, severe]}}}
+      - {text: "You do not so much sleep as wait for it to be light again.",
+         when: {weatherTag: [wet, cold, severe]}}
+    effects:
+      # Rest is the counterpart to exposure, and its cost is hours: eight of
+      # them run quest deadlines down, move weather fronts across the map, and
+      # let event pressure keep rising. That is what makes "shelter here until
+      # it passes, or push on cold" a decision with stakes on both sides.
+      - {rest: {ticks: 16}}
+
   - id: wait-here
     prompt: "Wait"
     say:

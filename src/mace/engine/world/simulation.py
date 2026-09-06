@@ -45,11 +45,17 @@ class WorldChanges:
         Fronts that came into being.
     faded : list of FrontState
         Fronts that died.
+    ticks : int
+        How many ticks the world actually moved. Zero when the caller was
+        only making sure it was current, which is the difference between
+        rebuilding what the weather is doing to people and charging them
+        another hour of standing in it.
     """
 
     weather: set[str] = field(default_factory=set)
     formed: list[FrontState] = field(default_factory=list)
     faded: list[FrontState] = field(default_factory=list)
+    ticks: int = 0
 
 
 def prepare(library: Library) -> dict[str, Prepared]:
@@ -119,6 +125,7 @@ def advance(
 
     while state.world_tick < state.tick:
         state.world_tick += 1
+        changes.ticks += 1
         standing = state.tick
         state.tick = state.world_tick
         try:

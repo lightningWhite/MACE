@@ -1320,6 +1320,18 @@
         {
           "type": "object",
           "properties": {
+            "rest": {
+              "$ref": "#/$defs/Rest"
+            }
+          },
+          "required": [
+            "rest"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "restart": {
               "$ref": "#/$defs/NoArguments"
             }
@@ -2215,7 +2227,7 @@
     },
     "GameRules": {
       "additionalProperties": false,
-      "description": "The structural choices a game makes about its own simulation.\n\nAttributes\n----------\nvital_pool : str\n    The pool whose exhaustion means death.\neffort_pool : str\n    The pool combat actions are paid from.\ncombat_mode : {'reflex', 'tactical', 'auto'}\n    The default combat presentation. The player may override it.\ndeath_is_permanent : bool\n    Whether death ends the playthrough or returns to a scene.\nsurvival : tuple of str\n    Which survival systems are on: `exposure`, `rest`, `hunger`, `thirst`.\n    Empty disables them all.\neconomy : {'simple', 'market'}\n    `simple` prices from each item's `value`; `market` runs the full\n    supply-and-demand model.",
+      "description": "The structural choices a game makes about its own simulation.\n\nAttributes\n----------\nvital_pool : str\n    The pool whose exhaustion means death.\neffort_pool : str\n    The pool combat actions are paid from.\ncombat_mode : {'reflex', 'tactical', 'auto'}\n    The default combat presentation. The player may override it.\ndeath_is_permanent : bool\n    Whether death ends the playthrough or returns to a scene.\nsurvival : tuple of str\n    Which survival systems are on: `exposure`, `rest`, `hunger`, `thirst`.\n    Exposure and rest are on by default because they are what give the\n    weather model teeth; hunger and thirst are not, because not every\n    world wants to be about rations. `[]` disables them all.\neconomy : {'simple', 'market'}\n    `simple` prices from each item's `value`; `market` runs the full\n    supply-and-demand model.",
       "properties": {
         "vitalPool": {
           "default": "hitpoints",
@@ -2245,7 +2257,10 @@
           "type": "boolean"
         },
         "survival": {
-          "default": [],
+          "default": [
+            "exposure",
+            "rest"
+          ],
           "items": {
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
             "type": "string"
@@ -3137,6 +3152,36 @@
         "id"
       ],
       "title": "Region",
+      "type": "object"
+    },
+    "Rest": {
+      "additionalProperties": false,
+      "description": "Sit out the weather: clear exposure, refill pools, and lose the hours.\n\nThe cost of rest is time, and time is not free \u2014 it runs down quest\ndeadlines, moves weather fronts, and lets event pressure keep rising. That\nis what makes \"shelter here until it passes, or push on cold\" a real\ndecision rather than a button.\n\nAttributes\n----------\nticks : int\n    How long it takes. The clock advances by this, one tick at a time, so\n    the world happens around the sleeper.\npools : tuple of str\n    Which pools to refill. Empty refills every pool the actor has a\n    maximum for, which is what an author usually means.\nfraction : float\n    How much of each pool's range a full rest restores.",
+      "properties": {
+        "ticks": {
+          "default": 8,
+          "exclusiveMinimum": 0,
+          "title": "Ticks",
+          "type": "integer"
+        },
+        "pools": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Pools",
+          "type": "array"
+        },
+        "fraction": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Fraction",
+          "type": "number"
+        }
+      },
+      "title": "Rest",
       "type": "object"
     },
     "Reveal": {

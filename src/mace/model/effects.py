@@ -52,6 +52,7 @@ EffectTag = Literal[
     "giveItem",
     "move",
     "playScene",
+    "rest",
     "restart",
     "reveal",
     "setDisposition",
@@ -195,6 +196,31 @@ class AdvanceTime(EffectPayload):
     ticks: int = Field(gt=0)
 
 
+class Rest(EffectPayload):
+    """Sit out the weather: clear exposure, refill pools, and lose the hours.
+
+    The cost of rest is time, and time is not free — it runs down quest
+    deadlines, moves weather fronts, and lets event pressure keep rising. That
+    is what makes "shelter here until it passes, or push on cold" a real
+    decision rather than a button.
+
+    Attributes
+    ----------
+    ticks : int
+        How long it takes. The clock advances by this, one tick at a time, so
+        the world happens around the sleeper.
+    pools : tuple of str
+        Which pools to refill. Empty refills every pool the actor has a
+        maximum for, which is what an author usually means.
+    fraction : float
+        How much of each pool's range a full rest restores.
+    """
+
+    ticks: int = Field(default=8, gt=0)
+    pools: tuple[Name, ...] = ()
+    fraction: float = Field(default=1.0, ge=0.0, le=1.0)
+
+
 class PlayScene(EffectPayload):
     """Run another scene."""
 
@@ -225,6 +251,7 @@ EFFECT_PAYLOADS: dict[EffectTag, type[EffectPayload]] = {
     "giveItem": ItemTransfer,
     "move": Move,
     "playScene": PlayScene,
+    "rest": Rest,
     "restart": NoArguments,
     "reveal": Reveal,
     "setDisposition": SetDisposition,

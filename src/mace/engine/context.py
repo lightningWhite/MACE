@@ -280,6 +280,7 @@ class RuleContext:
             "kind": definition.kind,
             "tags": list(definition.tags),
             "flags": sorted(entity.flags),
+            "exposure": entity.exposure,
             "disposition": entity.disposition,
             "location": _local(entity.location),
             "stats": {name: effective(definition, entity, name) for name in declared},

@@ -438,7 +438,7 @@ game:
     effortPool: stamina
     combatMode: reflex            # reflex | tactical | auto — player may override
     deathIsPermanent: false
-    survival: [exposure, rest]    # + hunger, thirst for a survival game; [] to disable
+    survival: [exposure, rest]    # the default; + hunger, thirst for a survival game, [] to disable
     economy: market               # market | simple
   quests: [reach-the-castle]
   winConditions:

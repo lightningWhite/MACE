@@ -103,7 +103,7 @@ def scripted(monkeypatch: pytest.MonkeyPatch, answers: list[str]) -> None:
 def test_play_walks_a_pack_to_its_ending(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    scripted(monkeypatch, ["1", "2", "2", "3", "3", "1"])
+    scripted(monkeypatch, ["1", "2", "3", "3", "4", "1"])
     assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
     printed = capsys.readouterr().out
     assert "You are a peasant." in printed

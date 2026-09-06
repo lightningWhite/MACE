@@ -19,15 +19,15 @@
     },
     {
       "kind": "choose",
-      "option": 1
-    },
-    {
-      "kind": "choose",
       "option": 2
     },
     {
       "kind": "choose",
       "option": 2
+    },
+    {
+      "kind": "choose",
+      "option": 3
     },
     {
       "kind": "choose",
@@ -125,7 +125,8 @@
           "sky": "clear",
           "temperature": 15.6,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -192,7 +193,8 @@
           "sky": "clear",
           "temperature": 15.6,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -275,6 +277,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Speak to the troll",
               "available": true,
               "hint": null
@@ -305,14 +312,15 @@
           "sky": "rain",
           "temperature": 12.55,
           "light": 0.65,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 1
+        "option": 2
       },
       "events": [
         {
@@ -375,7 +383,8 @@
           "sky": "rain",
           "temperature": 12.55,
           "light": 0.65,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -422,6 +431,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Speak to the troll",
               "available": true,
               "hint": null
@@ -452,14 +466,15 @@
           "sky": "rain",
           "temperature": 12.55,
           "light": 0.65,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 2
+        "option": 3
       },
       "events": [
         {
@@ -568,7 +583,8 @@
           "sky": "overcast",
           "temperature": 0.83,
           "light": 0.85,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },

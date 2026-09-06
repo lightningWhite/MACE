@@ -99,7 +99,9 @@ class GameRules(ContentModel):
         Whether death ends the playthrough or returns to a scene.
     survival : tuple of str
         Which survival systems are on: `exposure`, `rest`, `hunger`, `thirst`.
-        Empty disables them all.
+        Exposure and rest are on by default because they are what give the
+        weather model teeth; hunger and thirst are not, because not every
+        world wants to be about rations. `[]` disables them all.
     economy : {'simple', 'market'}
         `simple` prices from each item's `value`; `market` runs the full
         supply-and-demand model.
@@ -109,7 +111,7 @@ class GameRules(ContentModel):
     effort_pool: Name = "stamina"
     combat_mode: CombatMode = "tactical"
     death_is_permanent: bool = False
-    survival: tuple[Id, ...] = ()
+    survival: tuple[Id, ...] = ("exposure", "rest")
     economy: EconomyMode = "simple"
 
 

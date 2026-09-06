@@ -233,11 +233,17 @@ def test_moving_puts_the_player_somewhere_else(tmp_path: Path) -> None:
     assert "tiny:castle" in state.revealed
 
 
-def test_advancing_time_moves_the_clock(tmp_path: Path) -> None:
+def test_advancing_time_is_a_request_to_the_runner(tmp_path: Path) -> None:
+    """Effects ask for time; the step runner spends it.
+
+    Moving the clock means moving the world — weather, fronts, encounters —
+    and an effect that bumped the tick counter itself would skip all of that.
+    """
     context, state, _library = playthrough(tmp_path)
     outcome = do(context, {"advanceTime": {"ticks": 4}})
-    assert state.tick == 4
-    assert outcome.events[-1].payload()["elapsed"] == 4
+    assert outcome.elapsed == 4
+    assert state.tick == 0
+    assert outcome.events == []
 
 
 def test_a_modifier_changes_a_stat_until_it_expires(tmp_path: Path) -> None:

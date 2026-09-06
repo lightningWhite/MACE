@@ -27,7 +27,6 @@ from mace.engine.events import (
     Moved,
     QuestUpdated,
     StatChanged,
-    TimePassed,
     Unsupported,
     VariableChanged,
 )
@@ -46,6 +45,7 @@ from mace.model.effects import (
     Move,
     NoArguments,
     PlayScene,
+    Rest,
     Reveal,
     SetDisposition,
     SetFlag,
@@ -80,12 +80,23 @@ class EffectOutcome:
         `won` or `lost`, if an effect ended the game.
     restart : bool
         Whether an effect asked for a new playthrough.
+    elapsed : int
+        Ticks the effects asked the clock to move. Requested rather than done
+        here, because moving the clock means moving the *world* — weather,
+        fronts, encounters — and that machinery lives in the step runner. An
+        effect that advanced the tick counter on its own would skip all of it.
+    rest : Rest or None
+        A rest to carry out once the time has passed. After, not before: a
+        player who sits out a blizzard in the open should find it has not
+        helped very much.
     """
 
     events: list[Event] = field(default_factory=list)
     play: list[str] = field(default_factory=list)
     ended: str | None = None
     restart: bool = False
+    elapsed: int = 0
+    rest: Rest | None = None
 
 
 def apply_all(
@@ -237,16 +248,15 @@ def apply(
         return
 
     if isinstance(payload, AdvanceTime):
-        state.tick += payload.ticks
-        outcome.events.append(
-            TimePassed(
-                tick=state.tick,
-                day=context.clock.day(state.tick),
-                day_part=context.clock.day_part(state.tick),
-                season=context.clock.season(state.tick).id,
-                elapsed=payload.ticks,
-            )
-        )
+        outcome.elapsed += payload.ticks
+        return
+
+    if isinstance(payload, Rest):
+        if "rest" not in context.game.rules.survival:
+            outcome.events.append(Unsupported("resting", "this game has it off"))
+            return
+        outcome.elapsed += payload.ticks
+        outcome.rest = payload
         return
 
     if isinstance(payload, PlayScene):

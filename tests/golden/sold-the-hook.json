@@ -19,15 +19,7 @@
     },
     {
       "kind": "choose",
-      "option": 1
-    },
-    {
-      "kind": "choose",
-      "option": 5
-    },
-    {
-      "kind": "choose",
-      "option": 3
+      "option": 2
     },
     {
       "kind": "choose",
@@ -35,7 +27,11 @@
     },
     {
       "kind": "choose",
-      "option": 1
+      "option": 4
+    },
+    {
+      "kind": "choose",
+      "option": 7
     },
     {
       "kind": "choose",
@@ -43,7 +39,7 @@
     },
     {
       "kind": "choose",
-      "option": 1
+      "option": 2
     },
     {
       "kind": "choose",
@@ -56,6 +52,10 @@
     {
       "kind": "choose",
       "option": 2
+    },
+    {
+      "kind": "choose",
+      "option": 3
     },
     {
       "kind": "choose",
@@ -155,7 +155,8 @@
           "sky": "drizzle",
           "temperature": 11.31,
           "light": 0.8,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -222,7 +223,8 @@
           "sky": "drizzle",
           "temperature": 11.31,
           "light": 0.8,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -283,6 +285,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Talk to the peddler",
               "available": true,
               "hint": null
@@ -327,15 +334,16 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
-          "light": 0.8,
-          "indoors": false
+          "light": 1.0,
+          "indoors": true,
+          "exposure": 0.0843
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 1
+        "option": 2
       },
       "events": [
         {
@@ -368,6 +376,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Talk to the peddler",
               "available": true,
               "hint": null
@@ -412,15 +425,16 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
-          "light": 0.8,
-          "indoors": false
+          "light": 1.0,
+          "indoors": true,
+          "exposure": 0.0843
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 5
+        "option": 6
       },
       "events": [
         {
@@ -468,6 +482,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Talk to the peddler",
               "available": true,
               "hint": null
@@ -512,15 +531,16 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
-          "light": 0.8,
-          "indoors": false
+          "light": 1.0,
+          "indoors": true,
+          "exposure": 0.0843
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 3
+        "option": 4
       },
       "events": [
         {
@@ -570,6 +590,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Talk to the peddler",
               "available": true,
               "hint": null
@@ -614,15 +639,16 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
-          "light": 0.8,
-          "indoors": false
+          "light": 1.0,
+          "indoors": true,
+          "exposure": 0.0843
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 6
+        "option": 7
       },
       "events": [
         {
@@ -696,7 +722,8 @@
           "sky": "drizzle",
           "temperature": 11.31,
           "light": 0.8,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -790,6 +817,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Speak to the troll",
               "available": true,
               "hint": null
@@ -820,14 +852,15 @@
           "sky": "clear",
           "temperature": 2.92,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 1
+        "option": 2
       },
       "events": [
         {
@@ -890,7 +923,8 @@
           "sky": "clear",
           "temperature": 2.92,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -924,6 +958,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Speak to the troll",
               "available": true,
               "hint": null
@@ -954,14 +993,15 @@
           "sky": "clear",
           "temperature": 2.92,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 1
+        "option": 2
       },
       "events": [
         {
@@ -1024,7 +1064,8 @@
           "sky": "clear",
           "temperature": 2.92,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
@@ -1071,6 +1112,11 @@
               "hint": null
             },
             {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Speak to the troll",
               "available": true,
               "hint": null
@@ -1101,14 +1147,15 @@
           "sky": "clear",
           "temperature": 2.92,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
     {
       "action": {
         "kind": "choose",
-        "option": 2
+        "option": 3
       },
       "events": [
         {
@@ -1206,7 +1253,8 @@
           "sky": "clear",
           "temperature": 3.76,
           "light": 1.0,
-          "indoors": false
+          "indoors": false,
+          "exposure": 0.0
         }
       ]
     },
