@@ -37,7 +37,7 @@ scenes:
     effects:
       - {takeItem: {actor: player, item: fantasy.core:gold, qty: 10}}
       - {setFlag: {entity: gorm, flag: has-been-paid, value: true}}
-      - {adjustStat: {actor: gorm, stat: disposition, value: friendly}}
+      - {setDisposition: {actor: gorm, to: friendly}}
 
   - id: haggle-with-gorm
     when:
@@ -75,7 +75,7 @@ scenes:
     say:
       - "You raise the hook. The troll seems almost pleased."
     effects:
-      - {adjustStat: {actor: gorm, stat: disposition, value: hostile}}
+      - {setDisposition: {actor: gorm, to: hostile}}
       - {startCombat: {against: [gorm], canFlee: true, onFlee: fled-from-gorm}}
 
   - id: fled-from-gorm

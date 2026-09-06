@@ -23,7 +23,7 @@ Design settled and written down. This document set.
 **Playable at the end:** a linear, three-location game you can walk through in a
 terminal, with scenes, choices, items, and win/lose.
 
-- [ ] Pydantic content models for pack, entity, location, route, scene, quest, game
+- [x] Pydantic content models for pack, entity, location, route, scene, quest, game
 - [ ] JSON Schemas in `schemas/`, generated from the models
 - [ ] Pack loader: discovery, id resolution, `extends` inheritance, dependency order
 - [ ] Validator with error/warning/note severities and file+id reporting

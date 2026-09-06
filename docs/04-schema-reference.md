@@ -113,6 +113,7 @@ Files under `locations/`.
 | `region` | Ref? | Which region (and therefore climate) this belongs to. |
 | `biome` | Ref? | Overrides the region's biome for this spot. |
 | `climate` | ClimateOverride? | Hard override — always snowing on Dark Mountain. |
+| `indoors` | bool? | Shelters the player from weather and exposure. Default false. |
 | `visible` | bool? | Undiscovered locations aren't shown on the map. Default true. |
 | `discovered` | bool? | Whether the player starts knowing about it. Default follows `visible`. |
 | `entities` | [Ref]? | What's here at game start. |
@@ -133,6 +134,17 @@ Files under `locations/`.
 | `label` | str? | Overrides the default "Travel to X". |
 | `when` | [Condition]? | Gate the exit — a locked gate, a quest requirement. |
 | `hiddenUntil` | [Condition]? | Secret passages. |
+
+### ClimateOverride
+
+Bypasses the climate model for one place rather than biasing it. Every field is
+optional; the ones you set are the ones that stop moving.
+
+| Field | Type | Notes |
+|---|---|---|
+| `condition` | Ref? | The weather condition that always holds here. |
+| `dayPart` | Ref? | A day part that always holds here — caves, deep forest. |
+| `locked` | bool? | Whether the override resists fronts moving through. Default false. |
 
 ---
 

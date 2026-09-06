@@ -127,6 +127,13 @@ Rules:
 - `extends` chains are allowed; cycles are a validation error.
 - A pack may extend from any pack it `requires`.
 - Inheritance is resolved at load time. The engine never sees an `extends`.
+- Merging happens on the **raw mappings**, before content is validated. So a
+  child entity may leave out a `name` its parent supplies, and the `$append` and
+  `$remove` sentinels never reach a model — by the time an `Entity` exists,
+  inheritance is something that already happened. This is why the pydantic
+  models in `mace.model` require the fields a *compiled* object must have, and
+  why validating a hand-written file against them means resolving its
+  inheritance first.
 
 ## The content/state split
 
@@ -305,15 +312,29 @@ when:
   - {atLocation: {actor: player, location: hagans-castle}}
   - {flag: {entity: troll, flag: has-been-paid, is: false}}
   - {statAtLeast: {actor: player, stat: charisma, value: 40}}
+  - {statAtMost: {actor: player, stat: stamina, value: 10}}
   - {weather: [rain, storm]}
+  - {weatherTag: [wet, cold]}                       # matches a condition's tags
   - {dayPart: [dusk, night]}
   - {questStage: {quest: reach-the-castle, stage: travel}}
+  - {questComplete: reach-the-castle}
+  - {questFailed: reach-the-castle}
   - {chance: 0.15}                                  # rolls on a scene-local stream
   - {expr: "player.stats.hitpoints < player.stats.hitpoints.max * 0.25"}
 ```
 
 A list of conditions is ANDed. Use `{any: [...]}`, `{all: [...]}`, `{not: {...}}`
 for other logic.
+
+That list is the whole vocabulary. It is enforced by
+`mace.model.conditions.CONDITION_PAYLOADS`, which is also where each condition's
+arguments are typed, so a misspelled tag or field is a load-time error naming
+the nearest thing you might have meant.
+
+Several conditions take a bare value rather than a mapping, because the field
+name would add nothing: `{chance: 0.15}`, `{weather: [rain]}`,
+`{questComplete: some-quest}`, `{not: {...}}`. Where an `actor` is expected and
+omitted, it is the player.
 
 ### Effects
 
@@ -325,16 +346,25 @@ effects:
   - {takeItem: {actor: player, item: gold, qty: 10}}
   - {move: {actor: player, to: hagans-castle}}
   - {setFlag: {entity: chest, flag: locked, value: false}}
+  - {setDisposition: {actor: troll, to: hostile}}
   - {setVar: {name: kingWarned, value: true}}
   - {reveal: {location: secret-cave}}
   - {advanceQuest: {quest: reach-the-castle, stage: deliver}}
-  - {startCombat: {against: [troll], canFlee: true}}
+  - {startCombat: {against: [troll], canFlee: true, onFlee: you-ran}}
+  - {transferContents: {from: treasure-chest, to: player}}
   - {attachAlly: {entity: caravan-guard, until: {atLocation: {actor: player, location: hagans-castle}}}}
   - {dismissAlly: {entity: caravan-guard}}
   - {applyModifier: {actor: player, stat: speed, add: 10, ticks: 6, label: "Elixir of Haste"}}
   - {advanceTime: {ticks: 4}}
   - {playScene: fantasy.core:generic-shop}
+  - {restart: {}}
+  - {endGame: {}}
 ```
+
+As with conditions, that is the whole vocabulary, enforced by
+`mace.model.effects.EFFECT_PAYLOADS`. Disposition is its own effect rather than
+a stat: `friendly`, `neutral`, and `hostile` are not numbers, and pretending
+otherwise was the kind of ambiguity ADR-0003 exists to remove.
 
 The `expr` mini-language is a **restricted, non-Turing-complete expression
 grammar** — comparisons, arithmetic, boolean logic, dotted attribute paths, and a
