@@ -31,6 +31,7 @@ from mace.model.base import (
     VersionRange,
     authored_value,
 )
+from mace.model.calendar import STANDARD_YEAR, Calendar, DayPart, Season
 from mace.model.conditions import (
     Condition,
     ConditionPayload,
@@ -68,6 +69,8 @@ from mace.model.text import Description, DescriptionLine, Say, SayLine
 
 __all__ = [
     "AuthoredValue",
+    "STANDARD_YEAR",
+    "Calendar",
     "Choice",
     "ClimateOverride",
     "CombatAssignment",
@@ -79,6 +82,7 @@ __all__ = [
     "ContainerProps",
     "ContentModel",
     "Damage",
+    "DayPart",
     "Description",
     "DescriptionLine",
     "Effect",
@@ -112,6 +116,7 @@ __all__ = [
     "Say",
     "SayLine",
     "Scene",
+    "Season",
     "SlotName",
     "Stat",
     "StatModifier",

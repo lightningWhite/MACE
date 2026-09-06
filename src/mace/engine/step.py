@@ -46,7 +46,8 @@ from mace.engine.state import (
 )
 from mace.engine.stats import starting_pools
 from mace.engine.world import Clock
-from mace.model import Entity, Game, Location, Quest, Route, Scene
+from mace.model import Calendar, Entity, Game, Location, Quest, Route, Scene
+from mace.model.calendar import STANDARD_YEAR
 from mace.model.text import DescriptionLine, SayLine
 
 __all__ = ["StepResult", "begin", "step"]
@@ -926,8 +927,39 @@ def _context(library: Library, state: GameState, game: Game) -> RuleContext:
     return RuleContext(
         library=library,
         state=state,
-        clock=Clock(game.world.minutes_per_tick),
+        clock=_clock(library, state.pack, game),
         game=game,
+    )
+
+
+def _clock(library: Library, pack_id: str, game: Game) -> Clock:
+    """Build the world clock a game runs on.
+
+    A game that names no calendar gets `standard-year`: twenty-four hours,
+    four seasons, and long summer evenings. That is the same calendar
+    `mace.core` ships, so naming it explicitly changes nothing.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    pack_id : str
+        The game pack, for resolving the calendar reference.
+    game : Game
+        The game manifest.
+
+    Returns
+    -------
+    Clock
+        The clock.
+    """
+    calendar = STANDARD_YEAR
+    if game.world.calendar is not None:
+        found = library.find(game.world.calendar, "calendars", within=pack_id)
+        assert isinstance(found, Calendar)
+        calendar = found
+    return Clock.for_season(
+        game.world.minutes_per_tick, calendar, game.world.start_season
     )
 
 
@@ -956,6 +988,7 @@ def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
             tick=state.tick,
             day=context.clock.day(state.tick),
             day_part=context.clock.day_part(state.tick),
+            season=context.clock.season(state.tick).id,
             elapsed=ticks,
         )
     )

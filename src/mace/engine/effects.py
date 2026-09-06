@@ -243,6 +243,7 @@ def apply(
                 tick=state.tick,
                 day=context.clock.day(state.tick),
                 day_part=context.clock.day_part(state.tick),
+                season=context.clock.season(state.tick).id,
                 elapsed=payload.ticks,
             )
         )

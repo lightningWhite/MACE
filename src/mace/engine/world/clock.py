@@ -1,32 +1,26 @@
-"""World time: ticks, days, and which part of the day it is.
+"""World time: ticks, days, seasons, and which part of the day it is.
 
-A tick is the atomic unit of world time, and how much of a day one is worth is
-the game's decision (`world.minutesPerTick`, default 30). Everything else here
-follows from that.
+A tick is the atomic unit of world time. How many make a day is the
+**calendar's** decision (`calendar.ticksPerDay`); what one is worth in
+real-world minutes is the **game's** (`world.minutesPerTick`). Setting them to
+48 and 30 gives the twenty-four hours everyone expects, and a game that wants
+a thirty-hour day on a slow planet just says so.
 
-This is the phase-1 clock: a day is twenty-four hours and the day parts are
-fixed. Authored calendars — named months, seasons of different lengths, worlds
-whose day is not twenty-four hours — arrive with the rest of the world
-simulation in phase 2, and will supply these boundaries from content rather
-than from here. See docs/05-world-simulation.md.
+Everything else here follows from those two numbers and the calendar's day
+parts and seasons. This module is pure: it reads no files and no wall clock,
+and the same tick always resolves to the same day, season, and light level.
+See docs/05-world-simulation.md § Layer 1.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-__all__ = ["DEFAULT_DAY_PARTS", "MINUTES_PER_DAY", "Clock"]
+from mace.model.calendar import STANDARD_YEAR, Calendar, DayPart, Season
 
-MINUTES_PER_DAY = 24 * 60
+__all__ = ["MINUTES_PER_HOUR", "Clock"]
 
-#: The minute of the day each part begins, and its name. Ordered, and the last
-#: entry wraps around to the start of the next day.
-DEFAULT_DAY_PARTS: tuple[tuple[int, str], ...] = (
-    (5 * 60, "dawn"),
-    (8 * 60, "day"),
-    (17 * 60, "dusk"),
-    (20 * 60, "night"),
-)
+MINUTES_PER_HOUR = 60
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,9 +31,48 @@ class Clock:
     ----------
     minutes_per_tick : int
         How much world time one tick represents.
+    calendar : Calendar
+        The world's division of time. Defaults to `standard-year`.
+    season_offset : int
+        How many days to add before reading the season, so a game that opens
+        in autumn puts day 1 at the start of autumn rather than of spring.
     """
 
     minutes_per_tick: int = 30
+    calendar: Calendar = field(default=STANDARD_YEAR)
+    season_offset: int = 0
+
+    @classmethod
+    def for_season(
+        cls, minutes_per_tick: int, calendar: Calendar, start_season: str | None
+    ) -> Clock:
+        """Build a clock whose day 1 falls in a chosen season.
+
+        Parameters
+        ----------
+        minutes_per_tick : int
+            How much world time one tick represents.
+        calendar : Calendar
+            The world's calendar.
+        start_season : str or None
+            The season day 1 should fall on. Unknown or absent starts the year
+            where the calendar does — content validation reports the typo, and
+            a clock is not the place to fail a playthrough over one.
+
+        Returns
+        -------
+        Clock
+            The clock.
+        """
+        offset = 0
+        if start_season is not None:
+            elapsed = 0
+            for season in calendar.seasons:
+                if season.id == start_season:
+                    offset = elapsed
+                    break
+                elapsed += season.days
+        return cls(minutes_per_tick, calendar, offset)
 
     @property
     def ticks_per_day(self) -> int:
@@ -48,9 +81,20 @@ class Clock:
         Returns
         -------
         int
-            At least one, however coarse the tick.
+            The calendar's day length.
         """
-        return max(1, MINUTES_PER_DAY // self.minutes_per_tick)
+        return self.calendar.ticks_per_day
+
+    @property
+    def minutes_per_day(self) -> int:
+        """How long a day is in world minutes.
+
+        Returns
+        -------
+        int
+            Ticks per day times minutes per tick.
+        """
+        return self.ticks_per_day * self.minutes_per_tick
 
     def day(self, tick: int) -> int:
         """Which day a tick falls on, counting from one.
@@ -67,6 +111,21 @@ class Clock:
         """
         return tick // self.ticks_per_day + 1
 
+    def tick_of_day(self, tick: int) -> int:
+        """How far into its day a tick is.
+
+        Parameters
+        ----------
+        tick : int
+            The tick to place.
+
+        Returns
+        -------
+        int
+            Zero-based tick within the day.
+        """
+        return tick % self.ticks_per_day
+
     def minute_of_day(self, tick: int) -> int:
         """How far into its day a tick is, in minutes.
 
@@ -80,7 +139,54 @@ class Clock:
         int
             Minutes since midnight.
         """
-        return (tick % self.ticks_per_day) * self.minutes_per_tick % MINUTES_PER_DAY
+        return self.tick_of_day(tick) * self.minutes_per_tick
+
+    def day_of_year(self, tick: int) -> int:
+        """Which day of the year a tick falls on.
+
+        Parameters
+        ----------
+        tick : int
+            The tick to place.
+
+        Returns
+        -------
+        int
+            Zero-based, wrapped at the year's length, and shifted by the
+            game's starting season.
+        """
+        elapsed = self.day(tick) - 1 + self.season_offset
+        return elapsed % self.calendar.days_per_year
+
+    def season(self, tick: int) -> Season:
+        """Which season a tick falls in.
+
+        Parameters
+        ----------
+        tick : int
+            The tick to place.
+
+        Returns
+        -------
+        Season
+            The season in force.
+        """
+        return self.calendar.season_at(self.day_of_year(tick))
+
+    def part(self, tick: int) -> DayPart:
+        """Which part of the day a tick falls in.
+
+        Parameters
+        ----------
+        tick : int
+            The tick to place.
+
+        Returns
+        -------
+        DayPart
+            The part in force, with the season's `dayPartShift` applied.
+        """
+        return self.calendar.part_at(self.tick_of_day(tick), self.season(tick))
 
     def day_part(self, tick: int) -> str:
         """Name the part of the day a tick falls in.
@@ -93,14 +199,69 @@ class Clock:
         Returns
         -------
         str
-            `dawn`, `day`, `dusk`, or `night`.
+            The day part's id — what `{dayPart: [...]}` matches against.
         """
-        minute = self.minute_of_day(tick)
-        part = DEFAULT_DAY_PARTS[-1][1]
-        for start, name in DEFAULT_DAY_PARTS:
-            if minute >= start:
-                part = name
-        return part
+        return self.part(tick).id
+
+    def light(self, tick: int) -> float:
+        """How much light the sky gives at a tick, before weather.
+
+        Weather multiplies this by its visibility to give the one number that
+        feeds stealth, ranged accuracy, encounter detection, and which
+        description variant is shown.
+
+        Parameters
+        ----------
+        tick : int
+            The tick to place.
+
+        Returns
+        -------
+        float
+            0 to 1.
+        """
+        return self.part(tick).light
+
+    def day_name(self, tick: int) -> str | None:
+        """The weekday name for a tick, if the calendar names its days.
+
+        Parameters
+        ----------
+        tick : int
+            The tick to place.
+
+        Returns
+        -------
+        str or None
+            The name, or None when the calendar declares no day names.
+        """
+        names = self.calendar.day_names
+        if not names:
+            return None
+        return names[(self.day(tick) - 1) % len(names)]
+
+    def month_name(self, tick: int) -> str | None:
+        """The month name for a tick, if the calendar names its months.
+
+        Months are naming only: the year is divided evenly between the names
+        and nothing in the simulation reads the result.
+
+        Parameters
+        ----------
+        tick : int
+            The tick to place.
+
+        Returns
+        -------
+        str or None
+            The name, or None when the calendar declares no month names.
+        """
+        names = self.calendar.month_names
+        if not names:
+            return None
+        length = self.calendar.days_per_year / len(names)
+        index = int(self.day_of_year(tick) / length)
+        return names[min(index, len(names) - 1)]
 
     def clock_time(self, tick: int) -> str:
         """Render a tick as a wall-clock time, for status lines and journals.
@@ -113,7 +274,7 @@ class Clock:
         Returns
         -------
         str
-            `HH:MM`, twenty-four hour.
+            `HH:MM`, counted from the start of the day however long a day is.
         """
         minute = self.minute_of_day(tick)
-        return f"{minute // 60:02d}:{minute % 60:02d}"
+        return f"{minute // MINUTES_PER_HOUR:02d}:{minute % MINUTES_PER_HOUR:02d}"

@@ -29,8 +29,10 @@ from mace.content.errors import ContentError
 from mace.content.ids import qualify
 from mace.content.library import COLLECTION_MODELS, Library, LoadedPack
 from mace.content.loader import load_library
-from mace.model import Entity, Scene
+from mace.model import Calendar, ClimateOverride, Condition, Entity, Scene
 from mace.model.base import RESERVED_ACTORS, ContentModel, Reference
+from mace.model.calendar import STANDARD_YEAR
+from mace.model.conditions import DayPartIs
 
 __all__ = [
     "Problem",
@@ -397,6 +399,7 @@ def validate_library(library: Library) -> Report:
         problems.extend(_check_references(library, pack))
         problems.extend(_check_reserved_names(pack))
         problems.extend(_check_game(library, pack))
+        problems.extend(_check_calendar(library, pack))
         problems.extend(_check_reachable_scenes(library, pack))
         problems.extend(_check_notes(pack))
     return Report(tuple(problems))
@@ -579,6 +582,132 @@ def _check_game(library: Library, pack: LoadedPack) -> Iterator[Problem]:
                 collection="quests",
                 object_id=local_id,
             )
+
+
+def _check_calendar(library: Library, pack: LoadedPack) -> Iterator[Problem]:
+    """The day parts and seasons content names must exist in the calendar.
+
+    A `{dayPart: [evening]}` condition on a calendar that has no `evening` is
+    a condition that can never hold — silently, forever. It is the kind of
+    mistake that only shows up as "that description never appears", so it is
+    worth an error at load time rather than a shrug at runtime.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs, for resolving the game's calendar.
+    pack : LoadedPack
+        The pack to check.
+
+    Yields
+    ------
+    Problem
+        Errors for names the calendar does not declare.
+    """
+    game = pack.game
+    if game is None:
+        return
+
+    calendar = STANDARD_YEAR
+    if game.world.calendar is not None:
+        try:
+            found = library.find(game.world.calendar, "calendars", within=pack.id)
+        except ContentError:
+            return  # Already reported by the reference check.
+        assert isinstance(found, Calendar)
+        calendar = found
+
+    parts = {part.id for part in calendar.day_parts}
+    seasons = {season.id for season in calendar.seasons}
+
+    if game.world.start_season is not None and game.world.start_season not in seasons:
+        yield Problem(
+            severity=Severity.ERROR,
+            message=(
+                f"starts in season `{game.world.start_season}`, which "
+                f"`{calendar.id}` does not have; it has "
+                f"{', '.join(sorted(seasons))}"
+            ),
+            pack=pack.id,
+            collection="game",
+            field="world.startSeason",
+        )
+
+    for collection, local_id, definition in _each_definition(pack):
+        for path, named in _day_parts_named(definition):
+            if named in parts:
+                continue
+            yield Problem(
+                severity=Severity.ERROR,
+                message=(
+                    f"names day part `{named}`, which `{calendar.id}` does not "
+                    f"have; it has {', '.join(sorted(parts))}"
+                ),
+                pack=pack.id,
+                collection=collection,
+                object_id=local_id,
+                field=path,
+            )
+
+
+def _day_parts_named(
+    definition: ContentModel, path: str = ""
+) -> Iterator[tuple[str, str]]:
+    """Every day part a definition names, and where it named it.
+
+    Parameters
+    ----------
+    definition : ContentModel
+        The definition to walk.
+    path : str
+        The field path reached so far.
+
+    Yields
+    ------
+    tuple of (str, str)
+        The field path, and the day part named there.
+    """
+    for name, field in type(definition).model_fields.items():
+        value = getattr(definition, name)
+        here = f"{path}.{field.alias or name}".lstrip(".")
+        yield from _day_parts_in(value, here)
+
+
+def _day_parts_in(value: Any, path: str) -> Iterator[tuple[str, str]]:
+    """Find day-part names in a validated value.
+
+    Parameters
+    ----------
+    value : object
+        A model, collection, or scalar.
+    path : str
+        The field path it was reached by.
+
+    Yields
+    ------
+    tuple of (str, str)
+        The field path, and the day part named there.
+    """
+    if isinstance(value, Condition):
+        if isinstance(value.payload, DayPartIs):
+            for named in value.payload.parts:
+                yield path, named
+        yield from _day_parts_named(value.payload, path)
+        return
+    if isinstance(value, ClimateOverride):
+        if value.day_part is not None:
+            yield f"{path}.dayPart", value.day_part
+        return
+    if isinstance(value, ContentModel):
+        yield from _day_parts_named(value, path)
+        return
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            yield from _day_parts_in(item, f"{path}.{key}")
+        return
+    if isinstance(value, tuple | list):
+        for index, item in enumerate(value):
+            yield from _day_parts_in(item, f"{path}[{index}]")
 
 
 def _check_reachable_scenes(library: Library, pack: LoadedPack) -> Iterator[Problem]:

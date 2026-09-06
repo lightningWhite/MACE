@@ -198,6 +198,8 @@ class TimePassed(Event):
         Which day that is.
     day_part : str
         Which part of it.
+    season : str
+        Which season the calendar says it is.
     elapsed : int
         How many ticks passed.
     """
@@ -206,6 +208,7 @@ class TimePassed(Event):
     tick: int
     day: int
     day_part: str
+    season: str = ""
     elapsed: int = 0
 
     def payload(self) -> dict[str, Any]:
@@ -213,6 +216,7 @@ class TimePassed(Event):
             "tick": self.tick,
             "day": self.day,
             "dayPart": self.day_part,
+            "season": self.season,
             "elapsed": self.elapsed,
         }
 

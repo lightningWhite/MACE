@@ -3,6 +3,6 @@
 See docs/05-world-simulation.md.
 """
 
-from mace.engine.world.clock import DEFAULT_DAY_PARTS, MINUTES_PER_DAY, Clock
+from mace.engine.world.clock import MINUTES_PER_HOUR, Clock
 
-__all__ = ["Clock", "DEFAULT_DAY_PARTS", "MINUTES_PER_DAY"]
+__all__ = ["Clock", "MINUTES_PER_HOUR"]

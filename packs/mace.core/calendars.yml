@@ -1,0 +1,22 @@
+# The calendar a game gets when it names none. Forty-eight ticks to the day at
+# thirty minutes a tick is twenty-four hours; four thirty-day seasons make a
+# hundred-and-twenty-day year, which is long enough for a season to mean
+# something and short enough that a playthrough can cross one.
+#
+# `dayPartShift` is what gives summer its long evenings and winter its short
+# afternoons, without the engine needing to know where the sun is.
+calendars:
+
+  - id: standard-year
+    name: "The Standard Year"
+    ticksPerDay: 48
+    dayParts:
+      - {id: dawn,  name: "dawn",     startTick: 10, light: 0.5}
+      - {id: day,   name: "daylight", startTick: 14, light: 1.0}
+      - {id: dusk,  name: "dusk",     startTick: 36, light: 0.5}
+      - {id: night, name: "night",    startTick: 40, light: 0.15}
+    seasons:
+      - {id: spring, name: "Spring", days: 30}
+      - {id: summer, name: "Summer", days: 30, dayPartShift: {dawn: -3, night: 3}}
+      - {id: autumn, name: "Autumn", days: 30}
+      - {id: winter, name: "Winter", days: 30, dayPartShift: {dawn: 3, night: -3}}

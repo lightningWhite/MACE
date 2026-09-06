@@ -35,6 +35,7 @@ from typing import Any
 from pydantic.json_schema import models_json_schema
 
 from mace.model.base import ContentModel
+from mace.model.calendar import Calendar
 from mace.model.conditions import CONDITION_PAYLOADS, Condition
 from mace.model.effects import EFFECT_PAYLOADS, Effect
 from mace.model.entity import Entity
@@ -60,6 +61,7 @@ DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 #: The top-level key each modelled content type lives under in a pack file.
 CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
+    "calendars": Calendar,
     "entities": Entity,
     "locations": Location,
     "routes": Route,
@@ -74,7 +76,6 @@ UNMODELLED_COLLECTIONS: dict[str, str] = {
     "regions": "phase 2 — world simulation",
     "climates": "phase 2 — world simulation",
     "weatherConditions": "phase 2 — world simulation",
-    "calendars": "phase 2 — world simulation",
     "terrains": "phase 2 — travel",
     "celestialEvents": "phase 2 — world events",
     "pressureEvents": "phase 2 — world events",

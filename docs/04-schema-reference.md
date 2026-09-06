@@ -289,12 +289,42 @@ closer. That honesty is what makes reading them a skill rather than a guess.
 
 ### Calendar
 
+Files under `calendars/`. A game that names none runs on
+`mace.core:standard-year` — forty-eight ticks to the day, four thirty-day
+seasons.
+
 | Field | Type | Notes |
 |---|---|---|
-| `ticksPerDay` | int | |
-| `dayParts` | [{id, name, startTick}] | `dawn`, `day`, `dusk`, `night`. Light level derives from this. |
-| `seasons` | [{id, name, days}] | |
-| `monthNames` / `dayNames` | [str]? | Flavor for the journal. |
+| `id`, `name` | | |
+| `ticksPerDay` | int? | Default 48. With `world.minutesPerTick: 30` that is twenty-four hours. |
+| `dayParts` | [DayPart] | At least one, written in the order the day runs through them. |
+| `seasons` | [Season] | At least one. Their lengths add up to the year. |
+| `dayNames` | [str]? | A repeating weekday cycle, for the journal and status line. |
+| `monthNames` | [str]? | Naming only — the year is split evenly between them and nothing reads the result. |
+
+#### DayPart
+
+A part runs from its `startTick` until the next begins, and the last wraps
+midnight: `night` starting at tick 40 of 48 also covers ticks 0–9.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | str | What `{dayPart: [...]}` matches. |
+| `name` | str? | What the player reads. Defaults to the id. |
+| `startTick` | int | Tick of the day this part begins on. Must be after the part before it. |
+| `light` | number? | 0–1, default 1. Multiplied by the weather's `visibility` to give the one light number stealth, ranged accuracy, encounter detection, and description selection all read. |
+
+#### Season
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | str | How a climate keys its weather profile. |
+| `name` | str? | Defaults to the id. |
+| `days` | int | |
+| `dayPartShift` | {dayPart: int}? | Ticks to move each part by this season. `{dawn: -3, night: +3}` is a long summer evening, with no model of where the sun is. |
+
+`game.world.startSeason` puts day 1 at the start of that season rather than at
+the start of the year.
 
 ---
 

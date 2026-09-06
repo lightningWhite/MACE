@@ -226,6 +226,7 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
     return LoadedPack(
         manifest=manifest,
         root=root,
+        calendars=built["calendars"],  # type: ignore[arg-type]
         entities=built["entities"],  # type: ignore[arg-type]
         locations=built["locations"],  # type: ignore[arg-type]
         routes=built["routes"],  # type: ignore[arg-type]

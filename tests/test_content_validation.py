@@ -421,7 +421,6 @@ UNTARGETED_REFERENCES = {
     ("Route", "terrain"),  # phase 2 — terrain
     ("Route", "encounters"),  # phase 2 — encounter tables
     ("Waypoint", "encounters"),  # phase 2 — encounter tables
-    ("WorldSetup", "calendar"),  # phase 2 — calendars
     ("WorldSetup", "start_region"),  # phase 2 — regions
     ("PlayerSetup", "backgrounds"),  # phase 4 — backgrounds
     ("WeatherIs", "conditions"),  # phase 2 — weather conditions

@@ -47,7 +47,7 @@ terminal, with scenes, choices, items, and win/lose.
 **Playable at the end:** the same game, but journeys take days, storms roll
 through, and the road between towns is dangerous.
 
-- [ ] Clock, calendar, day parts, seasons
+- [x] Clock, calendar, day parts, seasons
 - [ ] Climate model: seasonal weights + Markov transitions
 - [ ] Regions and weather fronts propagating across the region graph
 - [ ] Weather effects: visibility, travel multiplier, stat modifiers, tags

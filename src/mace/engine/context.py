@@ -180,7 +180,8 @@ class RuleContext:
         Returns
         -------
         dict
-            Time now, and the weather once there is any to report.
+            Time now — tick, day, season, day part, light — and the weather
+            once there is any to report.
         """
         tick = self.state.tick
         return {
@@ -189,6 +190,14 @@ class RuleContext:
             "dayPart": self.clock.day_part(tick),
             "time": self.clock.clock_time(tick),
             "minutesPerTick": self.clock.minutes_per_tick,
+            "ticksPerDay": self.clock.ticks_per_day,
+            "season": self.clock.season(tick).id,
+            "dayOfYear": self.clock.day_of_year(tick) + 1,
+            "dayName": self.clock.day_name(tick) or "",
+            "monthName": self.clock.month_name(tick) or "",
+            # The sky's own light. Weather multiplies it once there is weather;
+            # until then the day part is the whole story.
+            "light": self.clock.light(tick),
             # Weather arrives in phase 2. An empty list reads as false and
             # `'rain' in world.weather` answers false rather than erroring.
             "weather": [],

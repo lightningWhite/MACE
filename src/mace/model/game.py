@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import Field
 
 from mace.model.base import (
+    CalendarRef,
     ContentModel,
     EntityRef,
     Id,
@@ -76,7 +77,7 @@ class WorldSetup(ContentModel):
     """
 
     minutes_per_tick: int = Field(default=30, gt=0)
-    calendar: Ref | None = None
+    calendar: CalendarRef | None = None
     start_tick: int = Field(default=0, ge=0)
     start_season: Id | None = None
     start_region: Ref | None = None

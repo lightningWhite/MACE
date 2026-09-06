@@ -14,7 +14,7 @@ from typing import Any
 
 from mace.content.errors import ContentError
 from mace.content.ids import qualify, split
-from mace.model import Entity, Game, Location, Pack, Quest, Route, Scene
+from mace.model import Calendar, Entity, Game, Location, Pack, Quest, Route, Scene
 from mace.model.base import ContentModel
 
 __all__ = ["COLLECTION_MODELS", "SINGULAR", "LoadedPack", "Library"]
@@ -23,6 +23,7 @@ __all__ = ["COLLECTION_MODELS", "SINGULAR", "LoadedPack", "Library"]
 #: resolver both key off this, so adding a content type is one entry here plus
 #: a field on `LoadedPack`.
 COLLECTION_MODELS: dict[str, type[ContentModel]] = {
+    "calendars": Calendar,
     "entities": Entity,
     "locations": Location,
     "routes": Route,
@@ -35,6 +36,7 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
 #: plurals are not a rule you can apply, and `entitie` in an error message
 #: undermines everything else the message is trying to do.
 SINGULAR: dict[str, str] = {
+    "calendars": "calendar",
     "entities": "entity",
     "locations": "location",
     "routes": "route",
@@ -53,7 +55,7 @@ class LoadedPack:
         The pack's `pack.yml`.
     root : Path
         The directory it was read from.
-    entities, locations, routes, scenes, quests : mapping
+    calendars, entities, locations, routes, scenes, quests : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
         The game manifest, for `kind: game` packs.
@@ -64,6 +66,7 @@ class LoadedPack:
 
     manifest: Pack
     root: Path
+    calendars: Mapping[str, Calendar]
     entities: Mapping[str, Entity]
     locations: Mapping[str, Location]
     routes: Mapping[str, Route]

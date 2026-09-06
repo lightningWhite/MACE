@@ -5,6 +5,12 @@
   "description": "Any file in a pack other than its manifest. Every key is optional and a file may mix collections freely; the loader merges by id.",
   "type": "object",
   "properties": {
+    "calendars": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Calendar"
+      }
+    },
     "entities": {
       "type": "array",
       "items": {
@@ -47,10 +53,6 @@
       "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
     },
     "weatherConditions": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
-    },
-    "calendars": {
       "type": "array",
       "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
     },
@@ -309,6 +311,74 @@
         "entity"
       ],
       "title": "AttachAlly",
+      "type": "object"
+    },
+    "Calendar": {
+      "additionalProperties": false,
+      "description": "A world's division of time into days, parts of days, and seasons.\n\nAttributes\n----------\nid, name : str\n    Identity.\nticks_per_day : int\n    How many ticks a day holds.\nday_parts : tuple of DayPart\n    The parts of the day, in ascending `startTick` order.\nseasons : tuple of Season\n    The seasons, in the order the year runs through them.\nday_names : tuple of str\n    A repeating cycle of weekday names, for the journal and status line.\nmonth_names : tuple of str\n    Month names. The year is split evenly between them; months are naming\n    only, and nothing in the simulation reads them.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "ticksPerDay": {
+          "default": 48,
+          "exclusiveMinimum": 0,
+          "title": "Ticksperday",
+          "type": "integer"
+        },
+        "dayParts": {
+          "items": {
+            "$ref": "#/$defs/DayPart"
+          },
+          "minItems": 1,
+          "title": "Dayparts",
+          "type": "array"
+        },
+        "seasons": {
+          "items": {
+            "$ref": "#/$defs/Season"
+          },
+          "minItems": 1,
+          "title": "Seasons",
+          "type": "array"
+        },
+        "dayNames": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Daynames",
+          "type": "array"
+        },
+        "monthNames": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Monthnames",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "dayParts",
+        "seasons"
+      ],
+      "title": "Calendar",
       "type": "object"
     },
     "Chance": {
@@ -712,6 +782,47 @@
         "max"
       ],
       "title": "Damage",
+      "type": "object"
+    },
+    "DayPart": {
+      "additionalProperties": false,
+      "description": "One named stretch of the day.\n\nA part runs from its `startTick` until the next part begins, and the last\nwraps around midnight \u2014 which is why `night` starting at tick 40 of 48\nalso covers ticks 0 to 9.\n\nAttributes\n----------\nid : str\n    How content names it: `dayPart: [dusk, night]`.\nname : str or None\n    What the player reads. Defaults to the id.\nstart_tick : int\n    The tick of the day this part begins on.\nlight : float\n    How much light it brings, 0 to 1. Multiplied by the weather's\n    visibility to give the single number stealth, ranged accuracy,\n    encounter detection, and description selection all read.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "startTick": {
+          "minimum": 0,
+          "title": "Starttick",
+          "type": "integer"
+        },
+        "light": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Light",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "startTick"
+      ],
+      "title": "DayPart",
       "type": "object"
     },
     "DayPartIs": {
@@ -2765,6 +2876,49 @@
         "id"
       ],
       "title": "Scene",
+      "type": "object"
+    },
+    "Season": {
+      "additionalProperties": false,
+      "description": "One season of the year.\n\nAttributes\n----------\nid : str\n    How content names it, and how a climate keys its weather profile.\nname : str or None\n    What the player reads. Defaults to the id.\ndays : int\n    How long it lasts. The seasons together define the year's length.\nday_part_shift : mapping\n    Ticks to move each day part by, this season. Negative is earlier.\n    `{dawn: -3, night: +3}` is a long summer evening, without needing a\n    model of where the sun is.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "days": {
+          "exclusiveMinimum": 0,
+          "title": "Days",
+          "type": "integer"
+        },
+        "dayPartShift": {
+          "patternProperties": {
+            "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "type": "integer"
+            }
+          },
+          "title": "Daypartshift",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "days"
+      ],
+      "title": "Season",
       "type": "object"
     },
     "SetDisposition": {

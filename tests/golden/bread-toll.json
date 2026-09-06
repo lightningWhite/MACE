@@ -164,6 +164,7 @@
           "tick": 26,
           "day": 1,
           "dayPart": "day",
+          "season": "autumn",
           "elapsed": 6
         },
         {
@@ -332,6 +333,7 @@
           "tick": 32,
           "day": 1,
           "dayPart": "day",
+          "season": "autumn",
           "elapsed": 6
         },
         {
