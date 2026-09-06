@@ -29,6 +29,7 @@ __all__ = [
     "Look",
     "Respond",
     "Travel",
+    "Use",
     "Wait",
     "decode",
 ]
@@ -140,6 +141,23 @@ class Wait(BaseAction):
 
 
 @dataclass(frozen=True, slots=True)
+class Use(BaseAction):
+    """Use something you are carrying.
+
+    Attributes
+    ----------
+    item : str
+        The item reference, bare or qualified.
+    """
+
+    kind: ClassVar[str] = "use"
+    item: str
+
+    def payload(self) -> dict[str, Any]:
+        return {"item": self.item}
+
+
+@dataclass(frozen=True, slots=True)
 class Respond(BaseAction):
     """Answer the move a fight has just telegraphed.
 
@@ -168,11 +186,12 @@ class Respond(BaseAction):
         return {"response": self.response, "elapsedMs": self.elapsed_ms}
 
 
-Action = Look | Choose | Interact | Respond | Travel | Wait
+Action = Look | Choose | Interact | Respond | Travel | Use | Wait
 
 #: Every action kind, for decoding a saved log.
 ACTIONS: dict[str, type[BaseAction]] = {
-    action.kind: action for action in (Look, Choose, Interact, Respond, Travel, Wait)
+    action.kind: action
+    for action in (Look, Choose, Interact, Respond, Travel, Use, Wait)
 }
 
 #: Fields whose recorded name differs from the constructor's, so an action log
@@ -219,7 +238,7 @@ def decode(record: dict[str, Any], *, offered: Sequence[str] | None = None) -> A
 
     fields = {RECORD_FIELDS.get(name, name): value for name, value in fields.items()}
     built = ACTIONS[kind](**fields)
-    assert isinstance(built, Look | Choose | Interact | Respond | Travel | Wait)
+    assert isinstance(built, Look | Choose | Interact | Respond | Travel | Use | Wait)
     return built
 
 

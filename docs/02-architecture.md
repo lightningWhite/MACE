@@ -114,7 +114,7 @@ Selected event types (the full list lives with the code):
 | `quest.updated` | `questId`, `stage`, `status` | Journal entry |
 | `combat.begin` | `combatants`, `mode`, `canFlee`, `matrix` | Switch to combat view; the matrix is the training wheels |
 | `combat.tell` | `move`, `type`, `text`, `windowMs`, `clear` | The telegraph the player reacts to. `type` is empty when the tell was not legible |
-| `combat.responses` | `options`, `stamina`, `momentum`, `streak` | What the player may answer with, and the resources they are spending |
+| `combat.responses` | `options[]`, `stamina`, `momentum`, `streak` | What the player may answer with, and the resources they are spending. Each option is a `response` and a `label` |
 | `combat.resolve` | `read`, `result`, `precision`, `damageTaken`, `damageDealt`, `momentum` | Hit feedback that says *why* |
 | `combat.end` | `outcome`, `exchanges`, `spoils` | Return to exploration |
 | `game.over` | `outcome`, `reason` | Win/lose sequence |
@@ -126,7 +126,10 @@ renders it as a shrinking timing bar. Same event, same engine, same fairness.
 the same reason: without it a front-end would have to reach into engine state to
 find out what the player can do. It carries stamina and momentum because those
 are the resources being managed and a UI has to show them somewhere permanent —
-the same argument that produced `world.status`.
+the same argument that produced `world.status`. Each option carries a `label`
+for the same reason `choices` carries a `prompt`: only the engine knows that
+`use:fantasy.core:healing-draught` is called "Healing Draught", and a front-end
+that worked that out would be reading content.
 
 `world.status` is the one event that is a projection rather than a happening.
 A status line has to be *standing* — `Day 3 · dusk · Fenmoor · light rain` —

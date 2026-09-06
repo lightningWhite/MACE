@@ -25,7 +25,7 @@ Combat is a sequence of **exchanges**. Each exchange:
 
    2. READ          You choose a response. The right response depends on
                     the move type — this is knowledge.
-                    [P]arry  [D]odge  [B]lock  [S]trike  [R]ecover  [F]lee
+                    [P]arry [D]odge [B]lock [S]trike [R]ecover [F]lee [Br(e)ad]
 
    3. TIME          When you commit matters. Early is hesitant, late is
                     too late, and the sweet spot is near the end of the
@@ -141,8 +141,11 @@ CLI says so and drops to the untimed presentation. A window that is secretly
 unfair is worse than no window, and it is the exact failure this system exists
 to avoid.
 
-**Not yet built:** using an item mid-fight. The response vocabulary has room for
-it and nothing in the loop is in its way; it simply is not there.
+Reaching into your pack is a response like any other: `use:<item>` spends the
+exchange, so the move that was coming lands with nobody answering it. That is
+what makes the healing draught a decision about *when* rather than a button —
+you buy the hitpoints with a hit, and taking one at the wrong moment is how a
+fight is lost. It is the same price an order costs, for the same reason.
 
 ## Resources — why you can't just spam
 

@@ -464,6 +464,23 @@ def test_fleeing_costs_effort_whether_or_not_it_works(tmp_path: Path) -> None:
     assert result.state.protagonist.pools["stamina"] < before
 
 
+def _offered(result: StepResult) -> list[str]:
+    """The response names a step left on offer.
+
+    Parameters
+    ----------
+    result : StepResult
+        The step.
+
+    Returns
+    -------
+    list of str
+        The `response` of each option, in presentation order.
+    """
+    event = next(e for e in result.events if e.kind == "combat.responses")
+    return [str(option["response"]) for option in event.payload()["options"]]
+
+
 def test_fleeing_is_not_offered_when_content_forbids_it(tmp_path: Path) -> None:
     library = brawl_pack(
         tmp_path,
@@ -475,9 +492,7 @@ def test_fleeing_is_not_offered_when_content_forbids_it(tmp_path: Path) -> None:
             }
         ],
     )
-    result = start(library)
-    offered = next(e for e in result.events if e.kind == "combat.responses")
-    assert "flee" not in offered.payload()["options"]
+    assert "flee" not in _offered(start(library))
 
 
 def test_an_enemy_with_no_effort_left_still_gets_answered(tmp_path: Path) -> None:
@@ -990,15 +1005,13 @@ def test_an_order_is_offered_only_when_it_would_mean_something(
 ) -> None:
     """Nobody to direct, or one thing to direct them at, is a button."""
     alone = start(brawl_pack(tmp_path / "alone"))
-    offered = next(e for e in alone.events if e.kind == "combat.responses")
-    assert "focus" not in offered.payload()["options"]
+    assert "focus" not in _offered(alone)
 
     library = escort_pack(tmp_path / "escorted")
     result = begin(library, "brawl", seed="escort")
     result = step(result.state, Choose(0), library)
     result = step(result.state, Choose(1), library)
-    offered = next(e for e in result.events if e.kind == "combat.responses")
-    assert "focus" in offered.payload()["options"]
+    assert "focus" in _offered(result)
 
 
 def test_an_order_costs_the_exchange_it_is_given_in(tmp_path: Path) -> None:
@@ -1012,6 +1025,8 @@ def test_an_order_costs_the_exchange_it_is_given_in(tmp_path: Path) -> None:
     assert result.state.combat is not None
     assert result.state.combat.focus is not None
     assert result.state.protagonist.pools["hitpoints"] < before
+    # Giving an order is not an answer to the move, so it lands square.
+    assert resolved(result)["precision"] == 0.0
 
 
 def test_repeating_an_order_moves_along_the_line(tmp_path: Path) -> None:

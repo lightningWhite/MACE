@@ -588,6 +588,30 @@ sleep — which is what makes the inn worth the detour rather than the only
 option. `rest` needs `rest` in `game.rules.survival`, and reports
 `engine.unsupported` when a game has turned it off.
 
+### Using what you are carrying
+
+An item's `use` block is what makes it worth carrying rather than worth selling:
+
+```yaml
+- id: bread
+  kind: item
+  name: "Bread"
+  item:
+    stackable: true
+    baseValue: 2
+    use:
+      consumed: true
+      effects:
+        - {adjustStat: {actor: player, stat: stamina, delta: 6, reason: "bread"}}
+```
+
+The engine offers every usable thing in the player's pack as a menu option, and
+as a `use:<item>` response inside a fight. Using something costs no tick by
+default, the way looking around does; a bandage that takes ten minutes says so
+with `advanceTime` among its own effects. Mid-fight it costs the *exchange* —
+the move that was coming lands unanswered — which is what makes a healing
+draught a decision about when.
+
 ### The ones that hand over the loop
 
 | Effect | Body | Notes |

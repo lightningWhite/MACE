@@ -27,6 +27,7 @@ from mace.engine.actions import (
     Look,
     Respond,
     Travel,
+    Use,
     Wait,
 )
 from mace.engine.combat import fight as combat
@@ -42,6 +43,7 @@ from mace.engine.events import (
     FlagChanged,
     FrontMoved,
     GameOver,
+    InventoryChanged,
     Moved,
     Narrated,
     QuestUpdated,
@@ -283,6 +285,10 @@ def _perform(action: Action, context: RuleContext, events: list[Event]) -> bool:
         state.pending = None
         return _run_scene(context.qualify(action.scene, "scenes"), context, events)
 
+    if isinstance(action, Use):
+        state.pending = None
+        return _use(context.qualify(action.item, "entities"), context, events)
+
     if isinstance(action, Travel):
         state.pending = None
         return _travel(context.qualify(action.to, "locations"), context, events)
@@ -330,6 +336,9 @@ def _choose(action: Choose, context: RuleContext, events: list[Event]) -> bool:
 
     if option.journey is not None:
         return _resume(context, events, onward=option.journey == "onward")
+
+    if option.use is not None:
+        return _use(option.use, context, events)
 
     if option.travel is not None:
         return _travel(option.travel, context, events)
@@ -488,6 +497,153 @@ def _fled(fight: CombatState, context: RuleContext, events: list[Event]) -> bool
         )
     )
     return False
+
+
+def _use(item_id: str, context: RuleContext, events: list[Event]) -> bool:
+    """Use something the player is carrying.
+
+    An item's `use` block has been in the model and in `fantasy.core` since
+    phase 1 and has never done anything: bread declared six stamina and gave
+    none, because the only way to spend an item was an authored scene applying
+    the effects by hand. This is that block finally meaning what it says.
+
+    Time is the author's to charge. Using something costs no tick by default,
+    the way looking around does; a bandage that takes ten minutes says so with
+    `advanceTime` in its own effects.
+
+    Parameters
+    ----------
+    item_id : str
+        Qualified entity id of the item.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+
+    Raises
+    ------
+    RuleError
+        If the player has none of it, or it is not a thing that can be used.
+    """
+    outcome = spend_item(item_id, context, events)
+    if _settle(outcome, context, events):
+        return outcome.restart
+    for queued in outcome.play:
+        if _run_scene(queued, context, events):
+            return True
+    return False
+
+
+def spend_item(
+    item_id: str, context: RuleContext, events: list[Event]
+) -> EffectOutcome:
+    """Apply an item's `use` effects and consume it if it says to.
+
+    Public because a fight reaches for it too: `use:` as a combat response
+    spends the same item the same way, and having two implementations of
+    "drink the draught" is how they come to disagree.
+
+    Parameters
+    ----------
+    item_id : str
+        Qualified entity id of the item.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Returns
+    -------
+    EffectOutcome
+        What the effects asked the runner for.
+
+    Raises
+    ------
+    RuleError
+        If the player has none of it, or it is not a thing that can be used.
+    """
+    state = context.state
+    player = state.protagonist
+    definition = _item(item_id, context)
+    if definition.item is None or definition.item.use is None:
+        raise RuleError(f"`{definition.name}` is not something you can use")
+    if player.inventory.get(item_id, 0) < 1:
+        raise RuleError(f"you have no {definition.name}")
+
+    outcome = apply_all(definition.item.use.effects, context, source=item_id)
+    events.extend(outcome.events)
+
+    if definition.item.use.consumed:
+        left = player.inventory.get(item_id, 0) - 1
+        if left > 0:
+            player.inventory[item_id] = left
+        else:
+            player.inventory.pop(item_id, None)
+        events.append(
+            InventoryChanged(
+                actor=player.instance_id, item=item_id, delta=-1, quantity=max(left, 0)
+            )
+        )
+    return outcome
+
+
+def _item(item_id: str, context: RuleContext) -> Entity:
+    """Look up an item definition by qualified id.
+
+    Parameters
+    ----------
+    item_id : str
+        The qualified id.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    Entity
+        The definition.
+
+    Raises
+    ------
+    RuleError
+        If the content is no longer there.
+    """
+    pack_id, local_id = item_id.split(":", 1)
+    found = context.library.pack(pack_id).entities.get(local_id)
+    if found is None:
+        raise RuleError(f"`{item_id}` is not an item any more")
+    return found
+
+
+def usable(context: RuleContext) -> list[tuple[str, Entity]]:
+    """Everything in the player's pack that has a `use` block.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    list of tuple
+        Qualified item id and definition, in inventory order so a menu and a
+        combat response list agree with each other.
+    """
+    found: list[tuple[str, Entity]] = []
+    for item_id, quantity in sorted(context.state.protagonist.inventory.items()):
+        if quantity < 1:
+            continue
+        try:
+            definition = _item(item_id, context)
+        except RuleError:  # pragma: no cover — inventory ids come from content
+            continue
+        if definition.item is not None and definition.item.use is not None:
+            found.append((item_id, definition))
+    return found
 
 
 def _travel(destination: str, context: RuleContext, events: list[Event]) -> bool:
@@ -1747,6 +1903,12 @@ def _offer_options(context: RuleContext, events: list[Event]) -> None:
         target = _location(destination, context)
         label = way.label or f"Travel to {target.name if target else destination}"
         options.append(PendingChoice(prompt=label, travel=destination))
+
+    # Last, because talking to people and walking down roads is what a player
+    # came here to do and eating the bread is not. A UI with an inventory panel
+    # will show these somewhere else entirely; the menu is what a terminal has.
+    for item_id, definition in usable(context):
+        options.append(PendingChoice(prompt=f"Use {definition.name}", use=item_id))
 
     state.pending = PendingChoices(OPTIONS_MENU, tuple(options))
     events.append(

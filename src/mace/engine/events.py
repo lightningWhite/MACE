@@ -896,9 +896,12 @@ class ResponseOffered(Event):
     ----------
     combat : str
         The fight's session id.
-    options : tuple of str
-        Response names, in presentation order. A `combat.input` action names
-        one of these.
+    options : tuple of tuple
+        Response name and label, in presentation order. A `combat.input`
+        action names the response; the label is what to call it. Both, for the
+        same reason `choices` carries a prompt: only the engine knows that
+        `use:fantasy.core:healing-draught` is called "Healing Draught", and a
+        front-end that worked it out would be reading content.
     stamina : float
         What the player has left to spend.
     momentum : float
@@ -909,7 +912,7 @@ class ResponseOffered(Event):
 
     kind: ClassVar[str] = "combat.responses"
     combat: str
-    options: tuple[str, ...] = ()
+    options: tuple[tuple[str, str], ...] = ()
     stamina: float = 0.0
     momentum: float = 1.0
     streak: int = 0
@@ -917,7 +920,10 @@ class ResponseOffered(Event):
     def payload(self) -> dict[str, Any]:
         return {
             "combat": self.combat,
-            "options": list(self.options),
+            "options": [
+                {"response": response, "label": label}
+                for response, label in self.options
+            ],
             "stamina": self.stamina,
             "momentum": self.momentum,
             "streak": self.streak,

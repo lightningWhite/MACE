@@ -36,6 +36,11 @@ RECOVER = "recover"
 #: — an order with one target and nobody to give it to is a button.
 FOCUS = "focus"
 
+#: Reach for something in your pack instead of answering. The response carries
+#: the item after a colon — `use:fantasy.core:healing-draught` — because unlike
+#: an order there is no sensible way to cycle through potions.
+USE = "use"
+
 RESERVED_RESPONSES = frozenset({FLEE, RECOVER, FOCUS})
 
 #: What a fighter hits with when it is holding nothing. Bare hands are worse

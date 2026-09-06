@@ -108,6 +108,11 @@
               "prompt": "Take the north road",
               "available": true,
               "hint": null
+            },
+            {
+              "prompt": "Use Bread",
+              "available": true,
+              "hint": null
             }
           ]
         },
@@ -174,6 +179,11 @@
             },
             {
               "prompt": "Take the north road",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Use Bread",
               "available": true,
               "hint": null
             }
@@ -293,6 +303,11 @@
             },
             {
               "prompt": "Turn back to Fenmoor",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Use Bread",
               "available": true,
               "hint": null
             }

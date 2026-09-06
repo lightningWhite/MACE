@@ -148,6 +148,11 @@
               "prompt": "Take the north road",
               "available": true,
               "hint": null
+            },
+            {
+              "prompt": "Use Bread",
+              "available": true,
+              "hint": null
             }
           ]
         },
@@ -288,6 +293,11 @@
             },
             {
               "prompt": "Turn back to Fenmoor",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Use Bread",
               "available": true,
               "hint": null
             }
@@ -470,13 +480,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 40.0,
           "momentum": 1.0,
@@ -557,13 +592,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 28.5,
           "momentum": 1.0,
@@ -644,13 +704,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 26.5,
           "momentum": 1.0,
@@ -731,13 +816,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 24.5,
           "momentum": 1.15,
@@ -810,13 +920,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 13.0,
           "momentum": 1.0,
@@ -889,13 +1024,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 4.0,
           "momentum": 1.0,
@@ -968,13 +1128,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 0.0,
           "momentum": 1.0,
@@ -1047,13 +1232,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 0.0,
           "momentum": 1.0,
@@ -1126,13 +1336,38 @@
           "kind": "combat.responses",
           "combat": "combat#1",
           "options": [
-            "dodge",
-            "block",
-            "parry",
-            "jump",
-            "strike",
-            "recover",
-            "flee"
+            {
+              "response": "dodge",
+              "label": "dodge"
+            },
+            {
+              "response": "block",
+              "label": "block"
+            },
+            {
+              "response": "parry",
+              "label": "parry"
+            },
+            {
+              "response": "jump",
+              "label": "jump"
+            },
+            {
+              "response": "strike",
+              "label": "strike"
+            },
+            {
+              "response": "recover",
+              "label": "recover"
+            },
+            {
+              "response": "flee",
+              "label": "flee"
+            },
+            {
+              "response": "use:fantasy.core:bread",
+              "label": "Bread"
+            }
           ],
           "stamina": 0.0,
           "momentum": 1.0,
@@ -1254,6 +1489,11 @@
               "prompt": "Take the north road",
               "available": true,
               "hint": null
+            },
+            {
+              "prompt": "Use Bread",
+              "available": true,
+              "hint": null
             }
           ]
         },
@@ -1330,6 +1570,11 @@
             },
             {
               "prompt": "Take the north road",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Use Bread",
               "available": true,
               "hint": null
             }

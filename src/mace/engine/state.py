@@ -674,6 +674,8 @@ class PendingChoice:
     journey : str or None
         `onward` or `back`, on the two options an interrupted journey offers.
         Neither starts a new journey, which is why they are not `travel`.
+    use : str or None
+        Qualified id of an item this option spends.
     effects : tuple
         Inline effects to apply if it is taken.
     available : bool
@@ -688,6 +690,7 @@ class PendingChoice:
     goto: str | None = None
     travel: str | None = None
     journey: str | None = None
+    use: str | None = None
     effects: tuple[Any, ...] = ()
     available: bool = True
     hint: str | None = None

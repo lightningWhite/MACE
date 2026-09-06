@@ -32,6 +32,7 @@ from mace.engine.combat.roster import (
     FLEE,
     FOCUS,
     RECOVER,
+    USE,
     Fighter,
     fighter_for,
 )
@@ -374,9 +375,12 @@ def respond(
 
     roster = _roster(fight, context)
     defender = roster[tell.defender]
-    if response not in responses_for(defender, fight):
-        offered = ", ".join(responses_for(defender, fight))
-        raise RuleError(f"`{response}` is not one of your answers; you have {offered}")
+    allowed = responses_for(defender, fight, context)
+    if response not in allowed:
+        raise RuleError(
+            f"`{response}` is not one of your answers; you have "
+            f"{', '.join(allowed)}"
+        )
 
     if response == FLEE:
         _attempt_flight(context, roster, events)
@@ -384,6 +388,10 @@ def respond(
 
     if response == FOCUS:
         _give_an_order(context, fight, roster, events)
+        return
+
+    if response.startswith(f"{USE}:"):
+        _reach_for_it(context, fight, roster, response, events)
         return
 
     _resolve(context, roster, tell, response, elapsed_ms, events)
@@ -516,7 +524,10 @@ def _precision(
     float
         0 to 1.
     """
-    if staggered or response == RECOVER:
+    if staggered or response in {RECOVER, CAUGHT}:
+        # Neither is an answer to the move. `recover` is a deliberate choice to
+        # be hit; `caught` is having spent the exchange on something else — an
+        # order, a potion, a break for it that failed. Both take it square.
         return 0.0
     if elapsed_ms is None:
         raw = resolution.tactical_precision()
@@ -753,6 +764,45 @@ def _grow(fighter: Fighter, stat: str) -> None:
     fighter.state.pools[stat] = round(min(float(ceiling), stored + step), 3)
 
 
+def _reach_for_it(
+    context: RuleContext,
+    fight: CombatState,
+    roster: dict[str, Fighter],
+    response: str,
+    events: list[Event],
+) -> None:
+    """Spend the exchange using something out of your pack.
+
+    Priced the same way an order is: the move that was coming lands with
+    nobody answering it. That is what makes the healing draught a decision
+    about *when* rather than a button — you are buying the hitpoints with a
+    hit, and taking one at the wrong moment is how a fight is lost.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    fight : CombatState
+        The fight.
+    roster : dict
+        Instance id to fighter.
+    response : str
+        The response, `use:` and a qualified item id.
+    events : list of Event
+        Accumulator.
+    """
+    from mace.engine.step import spend_item  # noqa: PLC0415
+
+    spend_item(response.split(":", 1)[1], context, events)
+
+    tell = fight.tell
+    assert tell is not None
+    _resolve(context, roster, tell, CAUGHT, None, events)
+    if _settled(context, events):
+        return
+    _next_tell(context, events)
+
+
 def _give_an_order(
     context: RuleContext,
     fight: CombatState,
@@ -905,7 +955,7 @@ def _next_tell(context: RuleContext, events: list[Event]) -> None:
             events.append(
                 ResponseOffered(
                     combat=fight.id,
-                    options=responses_for(target, fight),
+                    options=labelled(target, fight, context),
                     stamina=round(target.pool(context.game.rules.effort_pool), 2),
                     momentum=resolution.multiplier(target.combatant.momentum),
                     streak=target.combatant.streak,
@@ -1310,7 +1360,9 @@ def _auto_answer(
 # ── Bookkeeping ───────────────────────────────────────────────────────────────
 
 
-def responses_for(fighter: Fighter, fight: CombatState) -> tuple[str, ...]:
+def responses_for(
+    fighter: Fighter, fight: CombatState, context: RuleContext | None = None
+) -> tuple[str, ...]:
     """Everything a fighter may answer with right now.
 
     Parameters
@@ -1319,23 +1371,61 @@ def responses_for(fighter: Fighter, fight: CombatState) -> tuple[str, ...]:
         Who is answering.
     fight : CombatState
         The fight, for whether fleeing is allowed.
+    context : RuleContext or None
+        The playthrough. Needed only to offer what the player is carrying;
+        without it the pack is left out, which is what every caller that only
+        wants to check a defense wants.
 
     Returns
     -------
     tuple of str
-        Defense types, then `recover`, then `flee` and `focus` where each
-        would mean something. The order is presentation order, and it is the
-        engine's rather than a front-end's so that a terminal and a browser
-        bind the same keys to the same things.
+        Defense types, then `recover`, then `flee`, `focus` and any usable
+        item, where each would mean something. The order is presentation
+        order, and it is the engine's rather than a front-end's so that a
+        terminal and a browser bind the same keys to the same things.
     """
     options = [*fighter.responses, RECOVER]
-    if fighter.combatant.side == "player":
-        if fight.can_flee:
-            options.append(FLEE)
-        allies = [c for c in fight.standing("player") if c.actor != fighter.actor]
-        if allies and len(fight.standing("enemy")) > 1:
-            options.append(FOCUS)
+    if fighter.combatant.side != "player":
+        return tuple(options)
+
+    if fight.can_flee:
+        options.append(FLEE)
+    allies = [c for c in fight.standing("player") if c.actor != fighter.actor]
+    if allies and len(fight.standing("enemy")) > 1:
+        options.append(FOCUS)
+    if context is not None:
+        from mace.engine.step import usable  # noqa: PLC0415
+
+        options.extend(f"{USE}:{item_id}" for item_id, _found in usable(context))
     return tuple(options)
+
+
+def labelled(
+    fighter: Fighter, fight: CombatState, context: RuleContext
+) -> tuple[tuple[str, str], ...]:
+    """The offered responses, each with what to call it.
+
+    Parameters
+    ----------
+    fighter : Fighter
+        Who is answering.
+    fight : CombatState
+        The fight.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    tuple of tuple
+        Response and label, in presentation order.
+    """
+    from mace.engine.step import usable  # noqa: PLC0415
+
+    names = {f"{USE}:{item_id}": found.name for item_id, found in usable(context)}
+    return tuple(
+        (response, names.get(response, response))
+        for response in responses_for(fighter, fight, context)
+    )
 
 
 def _settled(context: RuleContext, events: list[Event]) -> bool:

@@ -398,28 +398,50 @@ def _local(qualified: str) -> str:
     return qualified.split(":", 1)[-1]
 
 
-def keys_for(options: Sequence[str]) -> dict[str, str]:
+def keys_for(options: Sequence[tuple[str, str]]) -> dict[str, tuple[str, str]]:
     """Bind a key to each response, without content having to name one.
 
     A move's `key` would be presentation leaking into content — a browser
     binds a button, a screen reader binds nothing. So the terminal picks:
-    first free letter of the name, and failing that a digit.
+    first free letter of the *label*, and failing that a digit.
 
     Parameters
     ----------
-    options : sequence of str
-        The response names, in presentation order.
+    options : sequence of tuple
+        Response and label, in presentation order.
 
     Returns
     -------
     dict
-        Key to response name, in the order the options were offered.
+        Key to the response and label it stands for, in offer order.
     """
-    bound: dict[str, str] = {}
-    for index, name in enumerate(options, start=1):
-        letter = next((c for c in name if c not in bound), str(index)[-1])
-        bound[letter] = name
+    bound: dict[str, tuple[str, str]] = {}
+    for index, (response, label) in enumerate(options, start=1):
+        letter = next(
+            (c for c in label.lower() if c.isalnum() and c not in bound),
+            str(index)[-1],
+        )
+        bound[letter] = (response, label)
     return bound
+
+
+def _marked(key: str, label: str) -> str:
+    """Show a response with its key marked, wherever in the word it fell.
+
+    Parameters
+    ----------
+    key : str
+        The bound character.
+    label : str
+        What the response is called.
+
+    Returns
+    -------
+    str
+        `[d]odge`, or `s[t]rike` when the obvious letter was taken.
+    """
+    at = label.lower().index(key)
+    return f"{label[:at]}[{key}]{label[at + 1 :]}"
 
 
 def fight(renderer: Renderer, result: StepResult, timed: bool) -> Action | None:
@@ -458,11 +480,13 @@ def fight(renderer: Renderer, result: StepResult, timed: bool) -> Action | None:
     if offered is None:  # pragma: no cover — a live fight always offers them
         return None
 
-    options = [str(name) for name in offered["options"]]
+    options = [
+        (str(option["response"]), str(option["label"])) for option in offered["options"]
+    ]
     bound = keys_for(options)
     renderer.line("")
     renderer.line(
-        "  " + "   ".join(f"[{key}]{name[1:]}" for key, name in bound.items())
+        "  " + "   ".join(_marked(key, label) for key, (_r, label) in bound.items())
     )
     renderer.line(
         f"  stamina {_number(offered['stamina'])}"
@@ -475,7 +499,7 @@ def fight(renderer: Renderer, result: StepResult, timed: bool) -> Action | None:
     return _timed(renderer, bound, combat.tell.window_ms)
 
 
-def _untimed(renderer: Renderer, bound: dict[str, str]) -> Action | None:
+def _untimed(renderer: Renderer, bound: dict[str, tuple[str, str]]) -> Action | None:
     """Read an answer with no clock running.
 
     Parameters
@@ -483,7 +507,7 @@ def _untimed(renderer: Renderer, bound: dict[str, str]) -> Action | None:
     renderer : Renderer
         For complaining.
     bound : dict
-        Key to response name.
+        Key to response and label.
 
     Returns
     -------
@@ -498,14 +522,18 @@ def _untimed(renderer: Renderer, bound: dict[str, str]) -> Action | None:
         if typed in {"q", "quit", "exit"}:
             return None
         chosen = bound.get(typed[:1]) or next(
-            (name for name in bound.values() if name == typed), None
+            (pair for pair in bound.values() if typed in {pair[0], pair[1].lower()}),
+            None,
         )
         if chosen is not None:
-            return Respond(chosen)
-        renderer.line(f"  One of: {', '.join(bound.values())}, or `q` to stop.")
+            return Respond(chosen[0])
+        names = ", ".join(label for _r, label in bound.values())
+        renderer.line(f"  One of: {names}, or `q` to stop.")
 
 
-def _timed(renderer: Renderer, bound: dict[str, str], window_ms: int) -> Action | None:
+def _timed(
+    renderer: Renderer, bound: dict[str, tuple[str, str]], window_ms: int
+) -> Action | None:
     """Read an answer against a monotonic deadline.
 
     A key that is not one of the answers still spends the window — hesitating
@@ -518,7 +546,7 @@ def _timed(renderer: Renderer, bound: dict[str, str], window_ms: int) -> Action 
     renderer : Renderer
         For prompting.
     bound : dict
-        Key to response name.
+        Key to response and label.
     window_ms : int
         How long the window is open.
 
@@ -543,7 +571,7 @@ def _timed(renderer: Renderer, bound: dict[str, str], window_ms: int) -> Action 
         # engine is told exactly how much of it went by.
         renderer.line("  (too slow)" if pressed.key is None else "  (fumbled)")
         return Respond("recover", pressed.elapsed_ms)
-    return Respond(chosen, pressed.elapsed_ms)
+    return Respond(chosen[0], pressed.elapsed_ms)
 
 
 def choose(renderer: Renderer, result: StepResult) -> Action | None:

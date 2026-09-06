@@ -127,7 +127,7 @@ def test_play_complains_about_a_number_that_is_not_on_offer(
     assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
     printed = capsys.readouterr().out
     assert "Type the number" in printed
-    assert "Pick a number between 1 and 3." in printed
+    assert "Pick a number between 1 and 4." in printed
 
 
 def test_play_needs_to_know_which_game(
@@ -249,7 +249,8 @@ def test_a_terminal_that_cannot_time_says_so_rather_than_faking_it(
 
 def test_keys_are_bound_without_content_naming_one() -> None:
     """A move's key would be presentation leaking into content."""
-    assert keys_for(["dodge", "block", "parry"]) == {
+    bound = keys_for([("dodge", "dodge"), ("block", "block"), ("parry", "parry")])
+    assert {key: response for key, (response, _label) in bound.items()} == {
         "d": "dodge",
         "b": "block",
         "p": "parry",
@@ -257,13 +258,19 @@ def test_keys_are_bound_without_content_naming_one() -> None:
 
 
 def test_a_taken_letter_falls_through_to_the_next_one() -> None:
-    bound = keys_for(["strike", "shove"])
-    assert bound["s"] == "strike"
-    assert bound["h"] == "shove"
+    bound = keys_for([("strike", "strike"), ("shove", "shove")])
+    assert bound["s"][0] == "strike"
+    assert bound["h"][0] == "shove"
+
+
+def test_a_key_is_bound_from_the_label_not_the_protocol_name() -> None:
+    """`use:fantasy.core:bread` is called Bread, and `b` is what you press."""
+    bound = keys_for([("use:fantasy.core:bread", "Bread")])
+    assert bound["b"] == ("use:fantasy.core:bread", "Bread")
 
 
 def test_every_response_gets_a_key_even_when_the_letters_run_out() -> None:
-    bound = keys_for(["aa", "aa", "aa"])
+    bound = keys_for([("aa", "aa"), ("aa", "aa"), ("aa", "aa")])
     assert len(bound) == 3
 
 

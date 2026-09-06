@@ -84,8 +84,9 @@ pattern, and win.
       by `test_reading_an_enemy_wins_fights`.*
 - [x] [ADR-0008](decisions/0008-the-player-answers.md) — the player answers
       rather than taking turns
-- [ ] **Deferred:** using an item mid-fight. The response vocabulary has room
-      for it; it is not built.
+- [x] Using an item, in a room and mid-fight — `item.use` had been modelled
+      and authored since phase 1 and never implemented, so bread declared six
+      stamina and gave none
 
 ---
 
