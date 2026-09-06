@@ -1,23 +1,31 @@
-# Six ticks is three hours at thirty minutes a tick, so a journey that starts
-# at dusk finishes in the dark — and that will matter once weather does.
+# The main road is one route, not two, and the bridge is a waypoint on it —
+# which is the whole point of routes having a length. You do not choose to go
+# to the Old Bridge; you set out for Hagan's Castle and the bridge is in the
+# way. Six ticks is three hours at thirty minutes a tick, so a journey that
+# starts at dusk finishes in the dark, and weather makes it longer than that.
 routes:
 
   - id: north-road
     name: "The North Road"
     from: fenmoor
-    to: troll-bridge
-    ticks: 6
-    dangerLevel: 5
-    description:
-      - "You set out on the rutted track north, under oaks that drip on you for company."
-
-  - id: bridge-road
-    name: "The Castle Road"
-    from: troll-bridge
     to: hagans-castle
     ticks: 6
-    dangerLevel: 4
+    dangerLevel: 5
+    waypoints:
+      # Gorm stops you. Paying him is the only way past, and until you have,
+      # every crossing of this road ends here.
+      - location: troll-bridge
+        atTick: 3
+        stopIf: [{flag: {entity: gorm, flag: has-been-paid, is: false}}]
     description:
+      - {text: "You set out on the rutted track north, under oaks that drip on you for company.",
+         when: {weatherTag: [wet]}}
+      - "You set out on the rutted track north, under oaks that have given up their leaves."
+    legDescriptions:
+      - {text: "The rain finds every gap in your cloak.", when: {weatherTag: [wet]}}
+      - {text: "Something moves in the undergrowth, then decides against it.",
+         when: {dayPart: [night]}}
+      - {text: "Crows argue in the branches overhead.", when: {dayPart: [day]}}
       - "The road climbs, and the barley country falls away behind you."
 
   - id: south-track
@@ -26,3 +34,5 @@ routes:
     to: traders-post
     ticks: 2
     dangerLevel: 1
+    legDescriptions:
+      - "Cart ruts, and a hedge somebody has been meaning to lay for years."

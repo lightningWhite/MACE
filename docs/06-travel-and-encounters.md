@@ -35,6 +35,36 @@ Consequences that fall out for free:
   player picks. That's exactly the v0 "intermediary location" idea, made
   first-class.
 
+### How a leg resolves
+
+Progress along a route is measured in **route ticks** and is fractional. Each
+world tick of walking adds `1 / travelMultiplier` of progress, so a storm makes
+a tick of walking worth half a tick of road without anyone computing a total in
+advance — and the weather is free to change halfway along. A leg boundary is
+crossed whenever the whole part of the progress increases, and that's when the
+leg flavour and the encounter roll happen.
+
+`blocksTravel` bites at the moment of **setting out**, not partway along. Being
+told you can't leave is a decision — shelter here and lose the day — whereas
+being stopped three ticks down a road you already committed to is a punishment.
+Weather met mid-journey slows you instead, which a blizzard's `travelMultiplier`
+does hard enough to hurt.
+
+### Being stopped
+
+A waypoint's `stopIf` ends the journey where it stands. The player is *at* the
+waypoint — it's a real location, so its entities, scenes and description all
+work — and the engine offers two ways out that no exit provides: **carry on**
+and **turn back**. The middle of a bridge is not a place with roads leading off
+it, and without those the player would be stranded.
+
+A waypoint that stopped you is deliberately not recorded as passed. Carrying on
+while the condition still holds costs nothing and gets nowhere: the troll is
+still owed, and you're told so without burning an hour. Once the condition
+lifts, the waypoint counts as passed and the journey resumes from exactly where
+it stood. Turning back walks the road already walked — a decision with a cost,
+not an undo.
+
 ```yaml
 - id: north-road
   name: "The North Road"

@@ -21,6 +21,7 @@ from mace.engine.rng import RandomSource
 __all__ = [
     "EntityState",
     "GameState",
+    "Journey",
     "Modifier",
     "Outcome",
     "PendingChoice",
@@ -256,6 +257,43 @@ class QuestState:
 
 
 @dataclass(slots=True)
+class Journey:
+    """A road being walked, and how far along it the player is.
+
+    Travel is a process rather than a transition, which is the whole reason
+    routes have a length. Keeping the journey in state is what makes it
+    *interruptible*: a bridge that stops you, and later a fight you flee from,
+    leave you partway along a road rather than teleported to one end of it.
+
+    Attributes
+    ----------
+    route : str
+        Qualified route id.
+    origin, destination : str
+        Qualified location ids, in the direction of travel — which may be the
+        reverse of the way the route was written.
+    progress : float
+        How far along, in route ticks. Fractional, because bad weather makes
+        a tick of walking worth less than a tick of road.
+    passed : tuple of str
+        Waypoints already reached and got past, so a resumed journey does not
+        meet the same bridge twice.
+    blocked_at : str or None
+        A waypoint that stopped the player and is still stopping them. It is
+        deliberately *not* in `passed`: a bridge with a troll on it is not
+        somewhere you have been past, it is somewhere you have been stopped,
+        and carrying on has to meet it again.
+    """
+
+    route: str
+    origin: str
+    destination: str
+    progress: float = 0.0
+    passed: tuple[str, ...] = ()
+    blocked_at: str | None = None
+
+
+@dataclass(slots=True)
 class PendingChoice:
     """One option currently on offer.
 
@@ -268,6 +306,9 @@ class PendingChoice:
     travel : str or None
         The location it goes to. Set on the menu the engine offers between
         scenes; a scene's own choices never travel.
+    journey : str or None
+        `onward` or `back`, on the two options an interrupted journey offers.
+        Neither starts a new journey, which is why they are not `travel`.
     effects : tuple
         Inline effects to apply if it is taken.
     available : bool
@@ -281,6 +322,7 @@ class PendingChoice:
     prompt: str
     goto: str | None = None
     travel: str | None = None
+    journey: str | None = None
     effects: tuple[Any, ...] = ()
     available: bool = True
     hint: str | None = None
@@ -346,6 +388,8 @@ class GameState:
         The weather systems currently crossing the map.
     fronts_spawned : int
         How many have ever formed, so instance ids stay unique.
+    journey : Journey or None
+        A road part-walked, if one was interrupted.
     pending : PendingChoices or None
         Choices awaiting an answer.
     outcome : Outcome
@@ -369,6 +413,7 @@ class GameState:
     weather: dict[str, RegionWeather] = field(default_factory=dict)
     fronts: list[FrontState] = field(default_factory=list)
     fronts_spawned: int = 0
+    journey: Journey | None = None
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING
     ended_because: str | None = None

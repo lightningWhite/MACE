@@ -55,10 +55,10 @@ through, and the road between towns is dangerous.
 - [ ] Entity `env` responses
 - [ ] World events: celestial (scheduled), pressure (building, with omens), triggered
 - [ ] Event phases, aftermath world changes, and the news queue
-- [ ] Routes, waypoints, leg-by-leg travel resolution, interruption and resumption
+- [x] Routes, waypoints, leg-by-leg travel resolution, interruption and resumption
 - [ ] Encounter tables: two-stage resolution, cooldowns, anti-clumping pressure
 - [ ] Exposure and rest — the mechanics that make weather bite
-- [ ] Conditional descriptions driven by weather and time
+- [x] Conditional descriptions driven by weather and time
 - [x] Status line in the CLI
 - [ ] `packs/fantasy.core` — first real library pack
 

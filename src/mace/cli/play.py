@@ -89,6 +89,15 @@ class Renderer:
             self.line("")
             return
 
+        if event.kind == "travel.leg":
+            if payload["text"]:
+                self.line(str(payload["text"]))
+            return
+
+        if event.kind == "travel.interrupted":
+            self.line("")
+            return
+
         if event.kind == "weather.changed":
             if payload["text"]:
                 self.line("")

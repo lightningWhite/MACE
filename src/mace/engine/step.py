@@ -34,6 +34,8 @@ from mace.engine.events import (
     RuleFailed,
     SceneEntered,
     TimePassed,
+    TravelInterrupted,
+    TravelLeg,
     WeatherChanged,
     WorldStatus,
 )
@@ -41,6 +43,7 @@ from mace.engine.rng import RandomSource
 from mace.engine.state import (
     EntityState,
     GameState,
+    Journey,
     Outcome,
     PendingChoice,
     PendingChoices,
@@ -273,6 +276,9 @@ def _choose(action: Choose, context: RuleContext, events: list[Event]) -> bool:
 
     state.pending = None
 
+    if option.journey is not None:
+        return _resume(context, events, onward=option.journey == "onward")
+
     if option.travel is not None:
         return _travel(option.travel, context, events)
 
@@ -288,7 +294,7 @@ def _choose(action: Choose, context: RuleContext, events: list[Event]) -> bool:
 
 
 def _travel(destination: str, context: RuleContext, events: list[Event]) -> bool:
-    """Move the player along a route to another location.
+    """Set out for another location, and walk the road there.
 
     Parameters
     ----------
@@ -307,22 +313,394 @@ def _travel(destination: str, context: RuleContext, events: list[Event]) -> bool
     Raises
     ------
     RuleError
-        If there is no way from here to there.
+        If there is no way from here to there, or the weather has closed it.
     """
     state = context.state
     origin = state.location
+    assert origin is not None
     exit_taken, route = _find_exit(destination, context)
     if exit_taken is None:
         raise RuleError(f"there is no way from here to `{destination}`")
 
-    ticks = route.ticks if route is not None else 1
-    route_id = context.qualify(exit_taken.route, "routes") if exit_taken.route else None
+    state.journey = None
+    if route is None:
+        # An exit with no route is a doorway, not a road: one tick, no legs.
+        state.protagonist.location = destination
+        state.revealed.add(destination)
+        _advance(context, 1, events)
+        events.append(Moved(origin, destination, None, 1))
+        return _arrive(destination, context, events)
 
-    state.protagonist.location = destination
-    state.revealed.add(destination)
-    _advance(context, ticks, events)
-    events.append(Moved(origin, destination, route_id, ticks))
-    return _arrive(destination, context, events)
+    _refuse_if_closed(context)
+    route_id = context.qualify(exit_taken.route or route.id, "routes")
+
+    line = _first_matching(route.description, context)
+    if line is not None:
+        events.append(Narrated(line.text))
+
+    state.journey = Journey(route=route_id, origin=origin, destination=destination)
+    return _walk(route, context, events)
+
+
+def _refuse_if_closed(context: RuleContext) -> None:
+    """Stop a journey from starting when the weather has closed the road.
+
+    `blocksTravel` bites at the moment of setting out, not partway along it.
+    Being told you cannot leave is a decision — shelter here, and lose the
+    day — whereas being stopped three ticks down a road you have already
+    committed to is just a punishment. Weather met mid-journey slows the
+    player down through `travelMultiplier` instead, which a blizzard sets
+    high enough to hurt.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Raises
+    ------
+    RuleError
+        If the road is closed.
+    """
+    observed = context.weather()
+    if not observed.blocks_travel:
+        return
+    raise RuleError(
+        f"the road is closed — nobody is travelling in this {observed.label}"
+    )
+
+
+def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
+    """Resolve a journey leg by leg until it ends or something stops it.
+
+    One world tick at a time, because that is what makes distance felt: the
+    weather can change under you, a journey that starts at dusk finishes in
+    the dark, and bad going costs you real hours. `travelMultiplier` scales
+    how much road a tick of walking is worth, so a storm turns a three-tick
+    road into a five-tick slog without anybody computing a total in advance.
+
+    Parameters
+    ----------
+    route : Route
+        The road being walked.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+    """
+    state = context.state
+    journey = state.journey
+    assert journey is not None
+
+    stops = _waypoints(route, journey, context)
+    began_at = state.tick
+    leg = int(journey.progress)
+
+    if _still_barred(stops, journey, context):
+        _interrupt(route, context, events, "the way is still barred")
+        return False
+
+    while journey.progress < route.ticks:
+        _tick(context, events)
+        journey.progress += 1.0 / max(0.01, context.weather().travel_multiplier)
+
+        reached = _next_waypoint(stops, journey)
+        crossed = min(int(journey.progress), route.ticks)
+        if crossed > leg or reached is not None:
+            leg = crossed
+            events.append(
+                TravelLeg(
+                    route=journey.route,
+                    leg=min(leg, route.ticks),
+                    of=route.ticks,
+                    waypoint=reached[0] if reached is not None else None,
+                    text=_leg_line(route, context),
+                )
+            )
+
+        if reached is None:
+            continue
+
+        where, stop_if = reached
+        state.protagonist.location = where
+        state.revealed.add(where)
+        if _arrive(where, context, events):
+            return True
+
+        barred = bool(stop_if) and all_hold(stop_if, context)
+        if barred:
+            journey.blocked_at = where
+            _interrupt(route, context, events, "the way is barred")
+            return False
+
+        journey.passed = (*journey.passed, where)
+        if state.pending is not None:
+            # The waypoint's own scene is asking the player something. The
+            # journey waits on the answer rather than walking through it.
+            _interrupt(route, context, events, "something here wants an answer")
+            return False
+
+    _finish(route, began_at, context, events)
+    return _arrive(journey.destination, context, events)
+
+
+def _still_barred(
+    stops: list[tuple[float, str, Any]], journey: Journey, context: RuleContext
+) -> bool:
+    """Whether the waypoint that stopped this journey is still stopping it.
+
+    Checked before a tick is spent, so trying the bridge again while the troll
+    is still owed costs nothing but the answer. Once the condition lifts the
+    waypoint counts as passed and the journey carries on from where it stood.
+
+    Parameters
+    ----------
+    stops : list of tuple
+        The waypoints, from `_waypoints`.
+    journey : Journey
+        The journey, whose `blocked_at` is being reconsidered.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    bool
+        Whether the road is still shut.
+    """
+    if journey.blocked_at is None:
+        return False
+    for _at, where, stop_if in stops:
+        if where != journey.blocked_at:
+            continue
+        if stop_if and all_hold(stop_if, context):
+            return True
+        break
+    journey.passed = (*journey.passed, journey.blocked_at)
+    journey.blocked_at = None
+    return False
+
+
+def _finish(
+    route: Route, began_at: int, context: RuleContext, events: list[Event]
+) -> None:
+    """Put the player down at the far end of a road.
+
+    Parameters
+    ----------
+    route : Route
+        The road walked.
+    began_at : int
+        The tick the journey started on.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    """
+    state = context.state
+    journey = state.journey
+    assert journey is not None
+    origin = state.location
+
+    state.protagonist.location = journey.destination
+    state.revealed.add(journey.destination)
+    state.journey = None
+    _announce_time(context, state.tick - began_at, events)
+    events.append(
+        Moved(origin, journey.destination, journey.route, state.tick - began_at)
+    )
+    del route
+
+
+def _interrupt(
+    route: Route, context: RuleContext, events: list[Event], reason: str
+) -> None:
+    """Stop a journey where it stands, leaving it to be carried on later.
+
+    Parameters
+    ----------
+    route : Route
+        The road being walked.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    reason : str
+        What stopped it.
+    """
+    state = context.state
+    journey = state.journey
+    assert journey is not None
+    where = state.location
+    assert where is not None
+    events.append(
+        TravelInterrupted(
+            route=journey.route,
+            at=where,
+            destination=journey.destination,
+            remaining=round(route.ticks - journey.progress, 3),
+            reason=reason,
+        )
+    )
+
+
+def _resume(context: RuleContext, events: list[Event], *, onward: bool) -> bool:
+    """Carry on an interrupted journey, or turn round and walk it back.
+
+    Turning back is not free and not instant: the road already walked has to
+    be walked again, which is what makes "push on or turn round" a decision
+    rather than an undo. Waypoints already passed are not met a second time.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    onward : bool
+        Whether to carry on rather than turn back.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+
+    Raises
+    ------
+    RuleError
+        If there is no journey to carry on, or the weather has closed the road.
+    """
+    state = context.state
+    journey = state.journey
+    if journey is None:
+        raise RuleError("there is no journey to carry on")
+    _refuse_if_closed(context)
+
+    pack_id, local_id = journey.route.split(":", 1)
+    route = context.library.pack(pack_id).routes.get(local_id)
+    if route is None:
+        state.journey = None
+        raise RuleError(f"the route `{journey.route}` is no longer there")
+
+    if not onward:
+        # Walking back past whatever stopped you is always allowed: a troll who
+        # will not let you north has no opinion about you going home.
+        behind = journey.passed
+        if journey.blocked_at is not None:
+            behind = (*behind, journey.blocked_at)
+        state.journey = Journey(
+            route=journey.route,
+            origin=journey.destination,
+            destination=journey.origin,
+            progress=route.ticks - journey.progress,
+            passed=behind,
+        )
+    return _walk(route, context, events)
+
+
+def _waypoints(
+    route: Route, journey: Journey, context: RuleContext
+) -> list[tuple[float, str, Any]]:
+    """Where the waypoints of a route fall, in the direction being walked.
+
+    A waypoint with no `atTick` is spaced evenly along the road, and the whole
+    list is mirrored when the road is walked the other way — the bridge is
+    three ticks from Fenmoor whichever end you started at.
+
+    Parameters
+    ----------
+    route : Route
+        The road.
+    journey : Journey
+        The journey, for which way round it is being walked.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    list of tuple
+        Progress, qualified location id, and the conditions that force a stop,
+        in the order they are met.
+    """
+    backwards = context.qualify(route.origin, "locations") != journey.origin
+    count = len(route.waypoints)
+    stops: list[tuple[float, str, Any]] = []
+
+    for index, waypoint in enumerate(route.waypoints, start=1):
+        at = (
+            float(waypoint.at_tick)
+            if waypoint.at_tick is not None
+            else route.ticks * index / (count + 1)
+        )
+        if backwards:
+            at = route.ticks - at
+        stops.append(
+            (
+                at,
+                context.qualify(waypoint.location, "locations"),
+                waypoint.stop_if,
+            )
+        )
+    stops.sort(key=lambda entry: entry[0])
+    return stops
+
+
+def _next_waypoint(
+    stops: list[tuple[float, str, Any]], journey: Journey
+) -> tuple[str, Any] | None:
+    """The waypoint this leg reached, if it reached one.
+
+    Parameters
+    ----------
+    stops : list of tuple
+        The waypoints, from `_waypoints`.
+    journey : Journey
+        The journey.
+
+    Returns
+    -------
+    tuple or None
+        The location and its `stopIf` conditions, or None.
+    """
+    for at, where, stop_if in stops:
+        if where in journey.passed:
+            continue
+        if journey.progress >= at:
+            return where, stop_if
+    return None
+
+
+def _leg_line(route: Route, context: RuleContext) -> str | None:
+    """A line of road flavor for this leg, chosen for the hour and the sky.
+
+    Unlike a location's description, which takes the *first* line that fits so
+    an author can order their variants by specificity, a leg line is drawn at
+    random from all of them. A place should read the same way twice; a road
+    should not, or six legs of it is the same sentence six times.
+
+    Parameters
+    ----------
+    route : Route
+        The road.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    str or None
+        The line, or None when the author wrote none that fit.
+    """
+    eligible = [
+        line for line in route.leg_descriptions or () if all_hold(line.when, context)
+    ]
+    if not eligible:
+        return None
+    stream = context.state.rng.stream(f"travel.{route.id}")
+    return stream.choice(eligible).text
 
 
 def _find_exit(
@@ -772,6 +1150,8 @@ def _offer_options(context: RuleContext, events: list[Event]) -> None:
         for scene_ref in context.definition(entity).scenes:
             _offer_scene(scene_ref, context, options)
 
+    _offer_journey(context, options)
+
     for way in here.exits:
         if not all_hold(way.when, context):
             continue
@@ -789,6 +1169,34 @@ def _offer_options(context: RuleContext, events: list[Event]) -> None:
             tuple(ChoiceOffered(option.prompt) for option in options),
         )
     )
+
+
+def _offer_journey(context: RuleContext, options: list[PendingChoice]) -> None:
+    """Offer to carry on, or turn round, when a journey was interrupted.
+
+    Both are ways out of a waypoint, and a waypoint usually has no exits of
+    its own — the middle of a bridge is not a place with roads leading off it.
+    Without these the player would be stranded on the road they stopped on.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    options : list of PendingChoice
+        The menu being built.
+    """
+    journey = context.state.journey
+    if journey is None:
+        return
+    for way, where in (("onward", journey.destination), ("back", journey.origin)):
+        target = _location(where, context)
+        name = target.name if target is not None else where
+        options.append(
+            PendingChoice(
+                prompt=("Carry on to " if way == "onward" else "Turn back to ") + name,
+                journey=way,
+            )
+        )
 
 
 def _offer_scene(
@@ -1020,11 +1428,7 @@ def _clock(library: Library, pack_id: str, game: Game) -> Clock:
 
 
 def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
-    """Move the world clock forward.
-
-    Phase 2 turns this into the full tick pipeline — weather, fronts, world
-    events, exposure — in the fixed order documented in the architecture. For
-    now it moves the clock and says so.
+    """Move the world clock forward, and say so.
 
     Parameters
     ----------
@@ -1039,6 +1443,41 @@ def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
         return
     state = context.state
     state.tick += ticks
+    _announce_time(context, ticks, events)
+    _sync_weather(context, events)
+
+
+def _tick(context: RuleContext, events: list[Event]) -> None:
+    """Advance the world exactly one tick, without announcing it.
+
+    A journey walks tick by tick so the weather can change under the player,
+    but a `world.time` event per leg is noise: the front-end wants to know
+    that three hours went by, not six times that half an hour did.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    """
+    context.state.tick += 1
+    _sync_weather(context, events)
+
+
+def _announce_time(context: RuleContext, ticks: int, events: list[Event]) -> None:
+    """Report that the clock moved.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    ticks : int
+        How far it moved.
+    events : list of Event
+        Accumulator.
+    """
+    state = context.state
     events.append(
         TimePassed(
             tick=state.tick,
@@ -1048,7 +1487,6 @@ def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
             elapsed=ticks,
         )
     )
-    _sync_weather(context, events)
 
 
 def _sync_weather(context: RuleContext, events: list[Event]) -> None:
@@ -1137,6 +1575,7 @@ def _read_the_sky(context: RuleContext, region: str, events: list[Event]) -> Non
         Accumulator.
     """
     state = context.state
+    spoken = False
     for front in state.fronts:
         if front.announced:
             continue
@@ -1145,6 +1584,10 @@ def _read_the_sky(context: RuleContext, region: str, events: list[Event]) -> Non
             front.announced = True
             continue
         if front.ahead != region:
+            continue
+        if spoken:
+            # One omen a step. Two warnings in a row read as a weather report,
+            # and the front that did not get its line keeps it for next tick.
             continue
 
         front.announced = True
@@ -1155,6 +1598,7 @@ def _read_the_sky(context: RuleContext, region: str, events: list[Event]) -> Non
         line = _first_matching(definition.omen, context)
         if line is not None:
             events.append(Narrated(line.text))
+            spoken = True
 
 
 def _location(location_id: str | None, context: RuleContext) -> Location | None:

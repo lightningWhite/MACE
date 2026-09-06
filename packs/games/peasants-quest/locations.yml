@@ -15,7 +15,7 @@ locations:
     mapPosition: {x: 0, y: 120}
     exits:
       - {to: traders-post, route: south-track}
-      - {to: troll-bridge, route: north-road}
+      - {to: hagans-castle, route: north-road, label: "Take the north road"}
 
   - id: traders-post
     name: "Trader's Post"
@@ -41,10 +41,10 @@ locations:
     entities: [gorm]
     scenes: [mace.core:rest-a-while]
     mapPosition: {x: 10, y: 60}
-    exits:
-      - {to: fenmoor, route: north-road}
-      - {to: hagans-castle, route: bridge-road,
-         when: [{flag: {entity: gorm, flag: has-been-paid}}]}
+    # No exits of its own: the middle of a bridge is not a place with roads
+    # leading off it. The journey you are on is the way out, in either
+    # direction, and the engine offers both.
+    visible: false
 
   - id: hagans-castle
     name: "Hagan's Castle"
@@ -58,4 +58,4 @@ locations:
     onArrive: castle-arrival
     mapPosition: {x: 20, y: 0}
     exits:
-      - {to: troll-bridge, route: bridge-road}
+      - {to: fenmoor, route: north-road, label: "Take the road south again"}

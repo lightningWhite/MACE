@@ -1,6 +1,6 @@
 {
   "name": "bread-toll",
-  "summary": "The short way north: pay the troll in bread and answer the muster on day one.",
+  "summary": "The short way north: set out for the castle, meet the bridge on the way, pay the troll in bread, and answer the muster on day one.",
   "pack": "peasants-quest",
   "seed": "autumn",
   "packs": {
@@ -27,7 +27,7 @@
     },
     {
       "kind": "choose",
-      "option": 3
+      "option": 2
     },
     {
       "kind": "choose",
@@ -105,7 +105,7 @@
               "hint": null
             },
             {
-              "prompt": "Travel to The Old Bridge",
+              "prompt": "Take the north road",
               "available": true,
               "hint": null
             }
@@ -172,7 +172,7 @@
               "hint": null
             },
             {
-              "prompt": "Travel to The Old Bridge",
+              "prompt": "Take the north road",
               "available": true,
               "hint": null
             }
@@ -203,30 +203,33 @@
       },
       "events": [
         {
-          "kind": "world.time",
-          "tick": 26,
-          "day": 1,
-          "dayPart": "day",
-          "season": "autumn",
-          "elapsed": 6
+          "kind": "narrate",
+          "text": "You set out on the rutted track north, under oaks that have given up their leaves.",
+          "pause": false
         },
         {
-          "kind": "weather.changed",
-          "region": "peasants-quest:the-northwood",
-          "condition": "fantasy.core:overcast",
-          "name": "overcast",
-          "intensity": 0.5276,
-          "tags": [],
-          "visibility": 0.85,
-          "temperature": 12.55,
-          "text": "The sky closes over, flat and grey, with no weather in it yet."
-        },
-        {
-          "kind": "moved",
-          "from": "peasants-quest:fenmoor",
-          "to": "peasants-quest:troll-bridge",
+          "kind": "travel.leg",
           "route": "peasants-quest:north-road",
-          "ticks": 6
+          "leg": 1,
+          "of": 6,
+          "waypoint": null,
+          "text": "The road climbs, and the barley country falls away behind you."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 2,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 3,
+          "of": 6,
+          "waypoint": "peasants-quest:troll-bridge",
+          "text": "The road climbs, and the barley country falls away behind you."
         },
         {
           "kind": "narrate",
@@ -237,6 +240,14 @@
           "kind": "narrate",
           "text": "A stone span over black water, older than the road it carries.",
           "pause": false
+        },
+        {
+          "kind": "travel.interrupted",
+          "route": "peasants-quest:north-road",
+          "at": "peasants-quest:troll-bridge",
+          "destination": "peasants-quest:hagans-castle",
+          "remaining": 3.0,
+          "reason": "the way is barred"
         },
         {
           "kind": "choices",
@@ -253,7 +264,12 @@
               "hint": null
             },
             {
-              "prompt": "Travel to Fenmoor",
+              "prompt": "Carry on to Hagan's Castle",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Turn back to Fenmoor",
               "available": true,
               "hint": null
             }
@@ -261,18 +277,18 @@
         },
         {
           "kind": "world.status",
-          "tick": 26,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "13:00",
+          "time": "11:30",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
-          "weather": "fantasy.core:overcast",
-          "sky": "overcast",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
           "temperature": 12.55,
-          "light": 0.85,
+          "light": 0.65,
           "indoors": false
         }
       ]
@@ -331,18 +347,18 @@
         },
         {
           "kind": "world.status",
-          "tick": 26,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "13:00",
+          "time": "11:30",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
-          "weather": "fantasy.core:overcast",
-          "sky": "overcast",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
           "temperature": 12.55,
-          "light": 0.85,
+          "light": 0.65,
           "indoors": false
         }
       ]
@@ -395,12 +411,12 @@
               "hint": null
             },
             {
-              "prompt": "Travel to Fenmoor",
+              "prompt": "Carry on to Hagan's Castle",
               "available": true,
               "hint": null
             },
             {
-              "prompt": "Travel to Hagan's Castle",
+              "prompt": "Turn back to Fenmoor",
               "available": true,
               "hint": null
             }
@@ -408,18 +424,18 @@
         },
         {
           "kind": "world.status",
-          "tick": 26,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "13:00",
+          "time": "11:30",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
-          "weather": "fantasy.core:overcast",
-          "sky": "overcast",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
           "temperature": 12.55,
-          "light": 0.85,
+          "light": 0.65,
           "indoors": false
         }
       ]
@@ -427,23 +443,58 @@
     {
       "action": {
         "kind": "choose",
-        "option": 3
+        "option": 2
       },
       "events": [
         {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-northwood",
+          "condition": "fantasy.core:overcast",
+          "name": "overcast",
+          "intensity": 0.5276,
+          "tags": [],
+          "visibility": 0.85,
+          "temperature": 12.55,
+          "text": "The sky closes over, flat and grey, with no weather in it yet."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 4,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 5,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 6,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
           "kind": "world.time",
-          "tick": 32,
+          "tick": 26,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "elapsed": 6
+          "elapsed": 3
         },
         {
           "kind": "moved",
           "from": "peasants-quest:troll-bridge",
           "to": "peasants-quest:hagans-castle",
-          "route": "peasants-quest:bridge-road",
-          "ticks": 6
+          "route": "peasants-quest:north-road",
+          "ticks": 3
         },
         {
           "kind": "narrate",
@@ -481,7 +532,7 @@
               "hint": null
             },
             {
-              "prompt": "Travel to The Old Bridge",
+              "prompt": "Take the road south again",
               "available": true,
               "hint": null
             }
@@ -489,11 +540,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 32,
+          "tick": 26,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "16:00",
+          "time": "13:00",
           "location": "peasants-quest:hagans-castle",
           "place": "Hagan's Castle",
           "region": "peasants-quest:the-marches",

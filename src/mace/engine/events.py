@@ -29,6 +29,8 @@ __all__ = [
     "QuestUpdated",
     "RuleFailed",
     "SceneEntered",
+    "TravelInterrupted",
+    "TravelLeg",
     "StatChanged",
     "TimePassed",
     "Unsupported",
@@ -186,6 +188,76 @@ class Moved(Event):
             "to": self.destination,
             "route": self.route,
             "ticks": self.ticks,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class TravelLeg(Event):
+    """One stretch of a journey went by.
+
+    Attributes
+    ----------
+    route : str
+        Qualified route id.
+    leg : int
+        Which leg of the road this was, counting from one.
+    of : int
+        How many legs the road has, before weather lengthens it.
+    waypoint : str or None
+        A place reached on this leg, if one was.
+    text : str or None
+        A line of road flavor, chosen for the hour and the weather.
+    """
+
+    kind: ClassVar[str] = "travel.leg"
+    route: str
+    leg: int
+    of: int
+    waypoint: str | None = None
+    text: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "route": self.route,
+            "leg": self.leg,
+            "of": self.of,
+            "waypoint": self.waypoint,
+            "text": self.text,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class TravelInterrupted(Event):
+    """A journey stopped partway, and can be carried on later.
+
+    Attributes
+    ----------
+    route : str
+        Qualified route id.
+    at : str
+        Where the player is now — the waypoint they were stopped at.
+    destination : str
+        Where they were going.
+    remaining : float
+        How much road is left, in route ticks.
+    reason : str or None
+        What stopped them.
+    """
+
+    kind: ClassVar[str] = "travel.interrupted"
+    route: str
+    at: str
+    destination: str
+    remaining: float = 0.0
+    reason: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "route": self.route,
+            "at": self.at,
+            "destination": self.destination,
+            "remaining": self.remaining,
+            "reason": self.reason,
         }
 
 

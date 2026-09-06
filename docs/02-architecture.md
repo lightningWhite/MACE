@@ -100,7 +100,8 @@ Selected event types (the full list lives with the code):
 | `narrate` | `text`, `pause` | A line of prose, optionally waiting for enter |
 | `choices` | `sceneId`, `options[]` | A numbered menu / buttons |
 | `moved` | `from`, `to`, `viaRoute` | Map update, journey framing |
-| `travel.leg` | `waypoint`, `ticksElapsed` | "You ford the shallows at midday." |
+| `travel.leg` | `route`, `leg`, `of`, `waypoint`, `text` | "You ford the shallows at midday." |
+| `travel.interrupted` | `route`, `at`, `destination`, `remaining`, `reason` | "The troll does not move." |
 | `world.time` | `tick`, `dayPart`, `day`, `season` | Clock / sky in the UI chrome |
 | `weather.changed` | `region`, `condition`, `intensity`, `tags`, `visibility` | "The rain thickens into sleet." |
 | `world.status` | `day`, `dayPart`, `season`, `place`, `sky`, `light` | The standing status line, above the prompt |

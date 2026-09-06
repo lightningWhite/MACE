@@ -1,6 +1,6 @@
 {
   "name": "sold-the-hook",
-  "summary": "The long way: trade at the post, fail to haggle with the troll, pay in bread.",
+  "summary": "The long way: trade at the post, walk back, fail to haggle with the troll, and pay in bread instead.",
   "pack": "peasants-quest",
   "seed": "harvest",
   "packs": {
@@ -55,7 +55,7 @@
     },
     {
       "kind": "choose",
-      "option": 3
+      "option": 2
     },
     {
       "kind": "choose",
@@ -135,7 +135,7 @@
               "hint": null
             },
             {
-              "prompt": "Travel to The Old Bridge",
+              "prompt": "Take the north road",
               "available": true,
               "hint": null
             }
@@ -202,7 +202,7 @@
               "hint": null
             },
             {
-              "prompt": "Travel to The Old Bridge",
+              "prompt": "Take the north road",
               "available": true,
               "hint": null
             }
@@ -233,19 +233,35 @@
       },
       "events": [
         {
+          "kind": "travel.leg",
+          "route": "peasants-quest:south-track",
+          "leg": 1,
+          "of": 2,
+          "waypoint": null,
+          "text": "Cart ruts, and a hedge somebody has been meaning to lay for years."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:south-track",
+          "leg": 2,
+          "of": 2,
+          "waypoint": null,
+          "text": "Cart ruts, and a hedge somebody has been meaning to lay for years."
+        },
+        {
           "kind": "world.time",
-          "tick": 22,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "elapsed": 2
+          "elapsed": 3
         },
         {
           "kind": "moved",
           "from": "peasants-quest:fenmoor",
           "to": "peasants-quest:traders-post",
           "route": "peasants-quest:south-track",
-          "ticks": 2
+          "ticks": 3
         },
         {
           "kind": "narrate",
@@ -300,11 +316,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 22,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "11:00",
+          "time": "11:30",
           "location": "peasants-quest:traders-post",
           "place": "Trader's Post",
           "region": "peasants-quest:the-lowlands",
@@ -385,11 +401,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 22,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "11:00",
+          "time": "11:30",
           "location": "peasants-quest:traders-post",
           "place": "Trader's Post",
           "region": "peasants-quest:the-lowlands",
@@ -485,11 +501,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 22,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "11:00",
+          "time": "11:30",
           "location": "peasants-quest:traders-post",
           "place": "Trader's Post",
           "region": "peasants-quest:the-lowlands",
@@ -587,11 +603,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 22,
+          "tick": 23,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "11:00",
+          "time": "11:30",
           "location": "peasants-quest:traders-post",
           "place": "Trader's Post",
           "region": "peasants-quest:the-lowlands",
@@ -610,19 +626,35 @@
       },
       "events": [
         {
+          "kind": "travel.leg",
+          "route": "peasants-quest:south-track",
+          "leg": 1,
+          "of": 2,
+          "waypoint": null,
+          "text": "Cart ruts, and a hedge somebody has been meaning to lay for years."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:south-track",
+          "leg": 2,
+          "of": 2,
+          "waypoint": null,
+          "text": "Cart ruts, and a hedge somebody has been meaning to lay for years."
+        },
+        {
           "kind": "world.time",
-          "tick": 24,
+          "tick": 26,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "elapsed": 2
+          "elapsed": 3
         },
         {
           "kind": "moved",
           "from": "peasants-quest:traders-post",
           "to": "peasants-quest:fenmoor",
           "route": "peasants-quest:south-track",
-          "ticks": 2
+          "ticks": 3
         },
         {
           "kind": "narrate",
@@ -644,7 +676,7 @@
               "hint": null
             },
             {
-              "prompt": "Travel to The Old Bridge",
+              "prompt": "Take the north road",
               "available": true,
               "hint": null
             }
@@ -652,11 +684,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 24,
+          "tick": 26,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "12:00",
+          "time": "13:00",
           "location": "peasants-quest:fenmoor",
           "place": "Fenmoor",
           "region": "peasants-quest:the-lowlands",
@@ -675,19 +707,44 @@
       },
       "events": [
         {
-          "kind": "world.time",
-          "tick": 30,
-          "day": 1,
-          "dayPart": "day",
-          "season": "autumn",
-          "elapsed": 6
+          "kind": "narrate",
+          "text": "You set out on the rutted track north, under oaks that drip on you for company.",
+          "pause": false
         },
         {
-          "kind": "moved",
-          "from": "peasants-quest:fenmoor",
-          "to": "peasants-quest:troll-bridge",
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-lowlands",
+          "condition": "fantasy.core:overcast",
+          "name": "overcast",
+          "intensity": 0.9912,
+          "tags": [],
+          "visibility": 0.85,
+          "temperature": 11.31,
+          "text": "The sky closes over, flat and grey, with no weather in it yet."
+        },
+        {
+          "kind": "travel.leg",
           "route": "peasants-quest:north-road",
-          "ticks": 6
+          "leg": 1,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 2,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 3,
+          "of": 6,
+          "waypoint": "peasants-quest:troll-bridge",
+          "text": "The road climbs, and the barley country falls away behind you."
         },
         {
           "kind": "narrate",
@@ -698,6 +755,14 @@
           "kind": "narrate",
           "text": "A stone span over black water, older than the road it carries.",
           "pause": false
+        },
+        {
+          "kind": "travel.interrupted",
+          "route": "peasants-quest:north-road",
+          "at": "peasants-quest:troll-bridge",
+          "destination": "peasants-quest:hagans-castle",
+          "remaining": 2.091,
+          "reason": "the way is barred"
         },
         {
           "kind": "choices",
@@ -714,7 +779,12 @@
               "hint": null
             },
             {
-              "prompt": "Travel to Fenmoor",
+              "prompt": "Carry on to Hagan's Castle",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Turn back to Fenmoor",
               "available": true,
               "hint": null
             }
@@ -843,7 +913,12 @@
               "hint": null
             },
             {
-              "prompt": "Travel to Fenmoor",
+              "prompt": "Carry on to Hagan's Castle",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Turn back to Fenmoor",
               "available": true,
               "hint": null
             }
@@ -985,12 +1060,12 @@
               "hint": null
             },
             {
-              "prompt": "Travel to Fenmoor",
+              "prompt": "Carry on to Hagan's Castle",
               "available": true,
               "hint": null
             },
             {
-              "prompt": "Travel to Hagan's Castle",
+              "prompt": "Turn back to Fenmoor",
               "available": true,
               "hint": null
             }
@@ -1017,23 +1092,47 @@
     {
       "action": {
         "kind": "choose",
-        "option": 3
+        "option": 2
       },
       "events": [
         {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 4,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 5,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 6,
+          "of": 6,
+          "waypoint": null,
+          "text": "The road climbs, and the barley country falls away behind you."
+        },
+        {
           "kind": "world.time",
-          "tick": 36,
+          "tick": 33,
           "day": 1,
-          "dayPart": "dusk",
+          "dayPart": "day",
           "season": "autumn",
-          "elapsed": 6
+          "elapsed": 3
         },
         {
           "kind": "moved",
           "from": "peasants-quest:troll-bridge",
           "to": "peasants-quest:hagans-castle",
-          "route": "peasants-quest:bridge-road",
-          "ticks": 6
+          "route": "peasants-quest:north-road",
+          "ticks": 3
         },
         {
           "kind": "narrate",
@@ -1071,7 +1170,7 @@
               "hint": null
             },
             {
-              "prompt": "Travel to The Old Bridge",
+              "prompt": "Take the road south again",
               "available": true,
               "hint": null
             }
@@ -1079,18 +1178,18 @@
         },
         {
           "kind": "world.status",
-          "tick": 36,
+          "tick": 33,
           "day": 1,
-          "dayPart": "dusk",
+          "dayPart": "day",
           "season": "autumn",
-          "time": "18:00",
+          "time": "16:30",
           "location": "peasants-quest:hagans-castle",
           "place": "Hagan's Castle",
           "region": "peasants-quest:the-marches",
           "weather": "fantasy.core:clear",
           "sky": "clear",
-          "temperature": 1.97,
-          "light": 0.5,
+          "temperature": 3.76,
+          "light": 1.0,
           "indoors": false
         }
       ]
