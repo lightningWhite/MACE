@@ -139,7 +139,7 @@ class TransferContents(EffectPayload):
     target: EntityRef = Field(alias="to")
 
 
-class Move(EffectPayload):
+class MoveActor(EffectPayload):
     """Put an actor somewhere else, without travelling there."""
 
     actor: EntityRef = "player"
@@ -429,7 +429,7 @@ EFFECT_PAYLOADS: dict[EffectTag, type[EffectPayload]] = {
     "endGame": NoArguments,
     "fireEvent": FireEvent,
     "giveItem": ItemTransfer,
-    "move": Move,
+    "move": MoveActor,
     "openRoute": OpenRoute,
     "playScene": PlayScene,
     "rest": Rest,

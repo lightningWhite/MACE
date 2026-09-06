@@ -17,12 +17,13 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from mace.model.base import (
+    CombatProfileRef,
     ContentModel,
     EntityRef,
     Flag,
     Id,
+    MoveRef,
     Name,
-    Ref,
     RouteRef,
     SceneRef,
     SlotName,
@@ -203,7 +204,8 @@ class ItemProps(ContentModel):
     armor : float or None
         Damage reduction when worn.
     moves : tuple of str
-        Combat moves this item grants its wielder.
+        Combat moves this item grants its wielder. A weapon is how a fighter
+        gets a `thrust` to answer with; a shield is how they get a `block`.
     use : ItemUse or None
         What using it from the inventory does.
     base_value : float or None
@@ -217,7 +219,7 @@ class ItemProps(ContentModel):
     equip_slot: SlotName | None = None
     damage: Damage | None = None
     armor: float | None = None
-    moves: tuple[Ref, ...] = ()
+    moves: tuple[MoveRef, ...] = ()
     use: ItemUse | None = None
     base_value: float | None = None
 
@@ -259,9 +261,13 @@ class CombatAssignment(ContentModel):
     ----------
     profile : str
         The combat profile that supplies moves, patterns, and temperament.
+    moves : tuple of str
+        Extra moves this actor knows, over and above its profile's. A signature
+        move on an otherwise ordinary bandit, without a profile to maintain.
     """
 
-    profile: Ref
+    profile: CombatProfileRef
+    moves: tuple[MoveRef, ...] = ()
 
 
 class Entity(ContentModel):

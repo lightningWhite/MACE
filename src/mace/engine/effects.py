@@ -55,7 +55,7 @@ from mace.model.effects import (
     DismissAlly,
     FireEvent,
     ItemTransfer,
-    Move,
+    MoveActor,
     NoArguments,
     OpenRoute,
     PlayScene,
@@ -227,7 +227,7 @@ def apply(
         )
         return
 
-    if isinstance(payload, Move):
+    if isinstance(payload, MoveActor):
         actor = _actor(payload.actor, context)
         destination = _reference(payload.to, "locations", context)
         origin, actor.location = actor.location, destination

@@ -8,6 +8,7 @@ entities:
     description: "Weathered, unhurried, and entirely uninterested in you."
     tags: [human, villager]
     disposition: friendly
+    combat: {profile: brawler}
     stats:
       hitpoints: {base: 30, max: 30}
       stamina:   {base: 20, max: 20}
@@ -20,6 +21,7 @@ entities:
     description: "A pack, a ledger, and an eye for what you can afford."
     tags: [human, merchant]
     disposition: friendly
+    combat: {profile: brawler}
     stats:
       hitpoints: {base: 35, max: 35}
       stamina:   {base: 25, max: 25}
@@ -31,6 +33,7 @@ entities:
     description: "Somebody's idea of order, in a padded coat."
     tags: [human, soldier]
     disposition: neutral
+    combat: {profile: shield-line}
     stats:
       hitpoints: {base: 55, max: 55}
       stamina:   {base: 40, max: 40}
@@ -43,6 +46,7 @@ entities:
     description: "Moss in its hair and the patient look of something that gets paid eventually."
     tags: [monster, large, troll]
     disposition: neutral
+    combat: {profile: bridge-troll-profile}
     stats:
       hitpoints: {base: 80, max: 80}
       stamina:   {base: 60, max: 60}
@@ -67,6 +71,7 @@ entities:
     description: "Long-legged, unhurried, and looking at you the way you look at bread."
     tags: [beast, wolf]
     disposition: hostile
+    combat: {profile: pack-hunter}
     stats:
       hitpoints: {base: 22, max: 22}
       stamina:   {base: 30, max: 30}

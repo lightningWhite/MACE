@@ -701,30 +701,59 @@ A block on an `actor` entity.
 
 ## Combat profile
 
-Detailed in [Combat](07-combat.md).
+Collection: `combatProfiles`. Detailed in [Combat](07-combat.md).
 
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | | |
-| `moves` | [Ref] | Moves this fighter can use. |
-| `patterns` | [{sequence: [Ref], weight: number}]? | Learnable behavior. Absent = random selection. |
-| `aggression` | number? | 0–1. Biases attack vs. defend. |
+| `extends` | Ref? | A profile to inherit from. A veteran duelist is a duelist that feints more. |
+| `moves` | [Ref] | Moves this fighter can use — attacks and defenses both. A fighter with no defense moves can only take the hit. |
+| `patterns` | [Pattern]? | Learnable behavior. Absent = random selection. |
+| `aggression` | number? | 0–1. How readily it presses an attack it cannot afford. |
 | `feintChance` | number? | 0–1. Higher = harder to read. |
 | `tellClarity` | number? | 0–1. How obvious the telegraph is. Lowers with difficulty. |
-| `fleeThreshold` | number? | Fraction of vital pool at which it tries to run. |
+| `fleeThreshold` | number? | Fraction of vital pool at which it tries to run. 0 never runs. |
+| `tags` | [Tag]? | |
+
+### Pattern
+
+| Field | Type | Notes |
+|---|---|---|
+| `sequence` | [Ref] | Moves in order, played to the end before another pattern is picked. Every move must also be in the profile's `moves`. |
+| `weight` | number | Relative weight among the patterns currently eligible. |
+| `when` | [Condition]? | Eligibility — a wolf pack hunts differently in the dark. |
 
 ### Move
 
+Collection: `moves`.
+
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | | |
-| `type` | str | `thrust`, `slash`, `overhead`, `sweep`, `grapple`, ... author-defined. |
-| `tell` | str | The telegraph text: "The troll winds up, club over its head." |
-| `windupMs` | int | How long the player has to respond. Scaled by stats. |
-| `counters` | [str] | Which defense types beat it. |
-| `damage` | {min, max} | |
-| `cost` | int | Effort-pool cost. |
-| `effects` | [Effect]? | Status effects on hit. |
+| `extends` | Ref? | A move to inherit from. |
+| `kind` | `attack` \| `defense` | Whether it is telegraphed or is the answer. Default `attack`. |
+| `type` | str | `thrust`, `slash`, `overhead`, `sweep`, `grapple` for attacks; `parry`, `dodge`, `block` for defenses. Author-defined — an attack's `counters` names defense `type`s, which is the whole counter matrix. |
+| `tell` | Description | Attacks only, required: "The troll winds up, club over its head." |
+| `vagueTell` | Description? | What a low `tellClarity` shows instead. Without one, an unclear tell is withheld. |
+| `windupMs` | int | How long the defender has, before their speed widens it. Default 1000. |
+| `counters` | [str] | Defense types that beat this attack. |
+| `damage` | {min, max, type?}? | What it does when it lands. A *defense* may carry damage too — that is what `strike` is. |
+| `cost` | number | Effort-pool cost. |
+| `mitigation` | number | Defenses only, 0–1. The share of damage stopped when the read was right but the timing was not. |
+| `feint` | bool | A windup that means nothing. Its `counters` is the one right answer. |
+| `effects` | [Effect]? | Applied to the defender when it lands. |
+| `tags` | [Tag]? | |
+
+An entity fights by naming a profile:
+
+```yaml
+combat:
+  profile: fantasy.core:quick-duelist
+  moves: [signature-riposte]     # optional extras, over and above the profile's
+```
+
+An item may grant moves too (`item.moves`): carrying a dagger is what makes
+`parry` one of your options.
 
 ---
 

@@ -39,6 +39,7 @@ from mace.model.climate import (
     SeasonProfile,
     TemperatureRange,
 )
+from mace.model.combat import CombatProfile, Move, MoveKind, Pattern
 from mace.model.conditions import (
     Condition,
     ConditionPayload,
@@ -105,6 +106,7 @@ __all__ = [
     "CombatAssignment",
     "CombatEncounter",
     "CombatMode",
+    "CombatProfile",
     "Condition",
     "ConditionPayload",
     "ConditionTag",
@@ -138,12 +140,15 @@ __all__ = [
     "ItemUse",
     "Location",
     "MapPosition",
+    "Move",
+    "MoveKind",
     "Name",
     "Omen",
     "Pack",
     "PackId",
     "PackKind",
     "PackRequirement",
+    "Pattern",
     "PlayerSetup",
     "Period",
     "Phase",

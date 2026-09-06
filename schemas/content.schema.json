@@ -23,6 +23,12 @@
         "$ref": "#/$defs/Climate"
       }
     },
+    "combatProfiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CombatProfile"
+      }
+    },
     "encounterTables": {
       "type": "array",
       "items": {
@@ -39,6 +45,12 @@
       "type": "array",
       "items": {
         "$ref": "#/$defs/Location"
+      }
+    },
+    "moves": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Move"
       }
     },
     "pressureEvents": {
@@ -91,14 +103,6 @@
     },
     "game": {
       "$ref": "#/$defs/Game"
-    },
-    "combatProfiles": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 3 \u2014 combat."
-    },
-    "moves": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 3 \u2014 combat."
     },
     "backgrounds": {
       "type": "array",
@@ -996,12 +1000,21 @@
     },
     "CombatAssignment": {
       "additionalProperties": false,
-      "description": "How an actor fights.\n\nAttributes\n----------\nprofile : str\n    The combat profile that supplies moves, patterns, and temperament.",
+      "description": "How an actor fights.\n\nAttributes\n----------\nprofile : str\n    The combat profile that supplies moves, patterns, and temperament.\nmoves : tuple of str\n    Extra moves this actor knows, over and above its profile's. A signature\n    move on an otherwise ordinary bandit, without a profile to maintain.",
       "properties": {
         "profile": {
           "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
           "title": "Profile",
           "type": "string"
+        },
+        "moves": {
+          "default": [],
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Moves",
+          "type": "array"
         }
       },
       "required": [
@@ -1041,6 +1054,129 @@
         "against"
       ],
       "title": "CombatEncounter",
+      "type": "object"
+    },
+    "CombatProfile": {
+      "additionalProperties": false,
+      "description": "How a fighter fights: its moves, its habits, and its nerve.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A profile to inherit from. A veteran duelist is a duelist that feints\n    more and telegraphs less.\nmoves : tuple of str\n    Every move this fighter can use, attacks and defenses both. A\n    defender's answers come from here, so a fighter with no defense moves\n    can only take the hit.\npatterns : tuple of Pattern\n    Weighted sequences. Empty means moves are drawn at random, which is\n    legal, cheap, and unlearnable \u2014 see ADR-0006.\naggression : float\n    0 to 1. How readily it presses an attack it cannot really afford.\nfeint_chance : float\n    0 to 1. How often a windup means nothing.\ntell_clarity : float\n    0 to 1. How legibly it telegraphs. A veteran shows you very little.\nflee_threshold : float\n    The share of its vital pool at which it tries to run. 0 never runs.\ntags : tuple of str\n    Free-form labels.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "moves": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "patterns": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Pattern"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Patterns",
+          "type": "array"
+        },
+        "aggression": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Aggression",
+          "type": "number"
+        },
+        "feintChance": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Feintchance",
+          "type": "number"
+        },
+        "tellClarity": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Tellclarity",
+          "type": "number"
+        },
+        "fleeThreshold": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Fleethreshold",
+          "type": "number"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "CombatProfile",
       "type": "object"
     },
     "Condition": {
@@ -1627,7 +1763,7 @@
           "type": "object",
           "properties": {
             "move": {
-              "$ref": "#/$defs/Move"
+              "$ref": "#/$defs/MoveActor"
             }
           },
           "required": [
@@ -2826,7 +2962,7 @@
     },
     "ItemProps": {
       "additionalProperties": false,
-      "description": "The `kind: item` block.\n\nAttributes\n----------\nweight : float or None\n    Carried weight.\nstackable : bool or None\n    Whether copies collapse into one inventory entry.\nequip_slot : str or None\n    Which slot it occupies when equipped.\ndamage : Damage or None\n    For weapons.\narmor : float or None\n    Damage reduction when worn.\nmoves : tuple of str\n    Combat moves this item grants its wielder.\nuse : ItemUse or None\n    What using it from the inventory does.\nbase_value : float or None\n    The price anchor. `simple` economies use it as the price; `market`\n    economies price around it. Same name as a good's, because it is the\n    same idea.",
+      "description": "The `kind: item` block.\n\nAttributes\n----------\nweight : float or None\n    Carried weight.\nstackable : bool or None\n    Whether copies collapse into one inventory entry.\nequip_slot : str or None\n    Which slot it occupies when equipped.\ndamage : Damage or None\n    For weapons.\narmor : float or None\n    Damage reduction when worn.\nmoves : tuple of str\n    Combat moves this item grants its wielder. A weapon is how a fighter\n    gets a `thrust` to answer with; a shield is how they get a `block`.\nuse : ItemUse or None\n    What using it from the inventory does.\nbase_value : float or None\n    The price anchor. `simple` economies use it as the price; `market`\n    economies price around it. Same name as a good's, because it is the\n    same idea.",
       "properties": {
         "weight": {
           "anyOf": [
@@ -3245,6 +3381,198 @@
     },
     "Move": {
       "additionalProperties": false,
+      "description": "One thing a fighter can do in an exchange.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A move to inherit from.\nkind : {'attack', 'defense'}\n    Whether this is something you telegraph or something you answer with.\ntype : str\n    Author-defined: `overhead`, `thrust`, `sweep` for attacks; `parry`,\n    `dodge`, `block` for defenses. An attack's `counters` names defense\n    types, so the two vocabularies meet here and nowhere in the engine.\ntell : Description or None\n    The telegraph, for an attack. \"The troll hauls the club over its head.\"\nvague_tell : Description or None\n    The same windup, badly read \u2014 what a low `tellClarity` shows instead.\n    Without one, an unclear tell is simply withheld, which is worse\n    atmosphere and the same information.\nwindup_ms : int\n    How long the defender has, before their speed widens it.\ncounters : tuple of str\n    Defense *types* that beat this attack.\ndamage : Damage or None\n    What it does when it lands. A defense may carry damage too \u2014 that is\n    what `strike` is: an interrupt that answers a grapple by hurting it.\ncost : float\n    Effort-pool cost of using it.\nmitigation : float\n    For a defense: the share of damage it stops when the read was right\n    but the timing was not. A dodge is cheap and stops everything or\n    nothing; a block is expensive and always takes some of the sting out.\nfeint : bool\n    Marks a move as the pack's feint: a windup that means nothing, whose\n    only correct answer is whatever `counters` names.\neffects : tuple of Effect\n    Applied to the defender when the move lands.\ntags : tuple of str\n    Free-form labels.\n\nExtending another definition makes type optional here \u2014 the parent supplies them.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "kind": {
+          "default": "attack",
+          "enum": [
+            "attack",
+            "defense"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "type": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Type",
+          "type": "string"
+        },
+        "tell": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tell"
+        },
+        "vagueTell": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vaguetell"
+        },
+        "windupMs": {
+          "default": 1000,
+          "exclusiveMinimum": 0,
+          "title": "Windupms",
+          "type": "integer"
+        },
+        "counters": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Counters",
+          "type": "array"
+        },
+        "damage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Damage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cost": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Cost",
+          "type": "number"
+        },
+        "mitigation": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Mitigation",
+          "type": "number"
+        },
+        "feint": {
+          "default": false,
+          "title": "Feint",
+          "type": "boolean"
+        },
+        "effects": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Effect"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Effects",
+          "type": "array"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Move",
+      "type": "object",
+      "if": {
+        "not": {
+          "required": [
+            "extends"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "MoveActor": {
+      "additionalProperties": false,
       "description": "Put an actor somewhere else, without travelling there.",
       "properties": {
         "actor": {
@@ -3262,7 +3590,7 @@
       "required": [
         "to"
       ],
-      "title": "Move",
+      "title": "MoveActor",
       "type": "object"
     },
     "NoArguments": {
@@ -3331,6 +3659,50 @@
       "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
       "type": "string",
       "description": "Reopen a road something closed."
+    },
+    "Pattern": {
+      "additionalProperties": false,
+      "description": "A sequence of moves a fighter tends to play, and how often.\n\nAttributes\n----------\nsequence : tuple of str\n    The moves, in order. Played to the end before another pattern is\n    picked, which is what makes a habit observable.\nweight : float\n    Relative weight among the patterns currently eligible.\nwhen : tuple of Condition or None\n    Eligibility. A wolf pack hunts differently in the dark.",
+      "properties": {
+        "sequence": {
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Sequence",
+          "type": "array"
+        },
+        "weight": {
+          "default": 1.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        }
+      },
+      "required": [
+        "sequence"
+      ],
+      "title": "Pattern",
+      "type": "object"
     },
     "Period": {
       "additionalProperties": false,

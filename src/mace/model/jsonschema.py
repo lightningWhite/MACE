@@ -37,6 +37,7 @@ from pydantic.json_schema import models_json_schema
 from mace.model.base import ContentModel
 from mace.model.calendar import Calendar
 from mace.model.climate import Climate
+from mace.model.combat import CombatProfile, Move
 from mace.model.conditions import CONDITION_PAYLOADS, Condition
 from mace.model.effects import EFFECT_PAYLOADS, Effect
 from mace.model.encounter import EncounterTable
@@ -71,9 +72,11 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
     "celestialEvents": CelestialEvent,
     "climates": Climate,
+    "combatProfiles": CombatProfile,
     "encounterTables": EncounterTable,
     "entities": Entity,
     "locations": Location,
+    "moves": Move,
     "pressureEvents": PressureEvent,
     "regions": Region,
     "routes": Route,
@@ -88,8 +91,6 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
 #: misspelled collection key an error while leaving room for the phase that
 #: models them — see docs/12-roadmap.md.
 UNMODELLED_COLLECTIONS: dict[str, str] = {
-    "combatProfiles": "phase 3 — combat",
-    "moves": "phase 3 — combat",
     "backgrounds": "phase 4 — character creation",
     "goods": "phase 5 — economy",
     "markets": "phase 5 — economy",
@@ -116,6 +117,15 @@ def _models() -> list[type[ContentModel]]:
     -------
     list of type
         The models to generate definitions for.
+
+    Raises
+    ------
+    ValueError
+        If two different models share a class name. `$defs` is keyed by that
+        name, so a collision drops one of them from the generated schema —
+        which surfaces as valid content failing to validate, several files
+        away from the cause. It happened once, between the `move` effect and
+        the combat `Move`, and it is cheaper to refuse than to debug.
     """
     models: list[type[ContentModel]] = [
         Pack,
@@ -130,7 +140,13 @@ def _models() -> list[type[ContentModel]]:
     ]
     seen: dict[str, type[ContentModel]] = {}
     for model in models:
-        seen.setdefault(model.__name__, model)
+        claimed = seen.setdefault(model.__name__, model)
+        if claimed is not model:
+            raise ValueError(
+                f"two models are called `{model.__name__}`: "
+                f"{claimed.__module__} and {model.__module__}. Rename one — "
+                "the generated `$defs` is keyed by the class name."
+            )
     return list(seen.values())
 
 

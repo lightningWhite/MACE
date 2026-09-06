@@ -315,7 +315,7 @@ def test_pity_pressure_leaves_the_long_run_rate_alone(tmp_path: Path) -> None:
     table = library.pack("tiny").encounter_tables["road-table"]
     from mace.engine.step import _context  # noqa: PLC0415
 
-    context = _context(library, state, library.pack("tiny").game)  # type: ignore[arg-type]
+    context = _context(library, state, library.pack("tiny").game)
 
     hits = 0
     rolls = 4000

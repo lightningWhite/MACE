@@ -29,7 +29,7 @@ from mace.content.errors import ContentError
 from mace.content.ids import qualify
 from mace.content.library import COLLECTION_MODELS, Library, LoadedPack
 from mace.content.loader import load_library
-from mace.model import Calendar, ClimateOverride, Condition, Entity, Scene
+from mace.model import Calendar, ClimateOverride, Condition, Entity, Move, Scene
 from mace.model.base import RESERVED_ACTORS, ContentModel, Reference
 from mace.model.calendar import STANDARD_YEAR
 from mace.model.conditions import DayPartIs
@@ -403,6 +403,7 @@ def validate_library(library: Library) -> Report:
         problems.extend(_check_calendar(library, pack))
         problems.extend(_check_event_references(library, pack))
         problems.extend(_check_reachable_scenes(library, pack))
+        problems.extend(_check_combat(library, pack))
         problems.extend(_check_notes(pack))
     return Report(tuple(problems))
 
@@ -909,6 +910,170 @@ def _scene_targets(
             continue
         targets.add(qualified)
     return targets
+
+
+def _check_combat(library: Library, pack: LoadedPack) -> Iterator[Problem]:
+    """A fighter must be able to fight, and a pattern must be playable.
+
+    Three mistakes are worth catching before a fight starts rather than in the
+    middle of one: a pattern naming a move its profile does not know, an attack
+    no defense in the pack can beat, and a fighter with nothing to answer with.
+    All three produce a fight rather than a crash, which is exactly why they
+    would otherwise go unnoticed until a playtester lost one.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs, for resolution.
+    pack : LoadedPack
+        The pack to check.
+
+    Yields
+    ------
+    Problem
+        Errors for unplayable patterns, warnings for unanswerable attacks.
+    """
+    for local_id, profile in pack.combat_profiles.items():
+        known = {
+            resolved
+            for reference in profile.moves
+            if (resolved := _resolve(library, pack, reference, "moves")) is not None
+        }
+        for index, pattern in enumerate(profile.patterns):
+            for step, reference in enumerate(pattern.sequence):
+                resolved = _resolve(library, pack, reference, "moves")
+                if resolved is None or resolved in known:
+                    continue
+                yield Problem(
+                    severity=Severity.ERROR,
+                    message=(
+                        f"plays `{reference}`, which is not in this profile's "
+                        "`moves`, so the fighter does not know it"
+                    ),
+                    pack=pack.id,
+                    collection="combatProfiles",
+                    object_id=local_id,
+                    field=f"patterns[{index}].sequence[{step}]",
+                )
+
+        if known and not any(
+            _move(library, resolved).kind == "defense" for resolved in sorted(known)
+        ):
+            yield Problem(
+                severity=Severity.NOTE,
+                message=(
+                    "knows no defense moves, so a fighter using it can only "
+                    "take the hit. Deliberate for a thing that never blocks."
+                ),
+                pack=pack.id,
+                collection="combatProfiles",
+                object_id=local_id,
+                field="moves",
+            )
+
+    answers = _defense_types(library, pack)
+    for local_id, move in pack.moves.items():
+        if move.kind != "attack":
+            continue
+        if not move.counters:
+            yield Problem(
+                severity=Severity.WARNING,
+                message=(
+                    "has no `counters`, so no read is ever the right one and "
+                    "the move is pure damage"
+                ),
+                pack=pack.id,
+                collection="moves",
+                object_id=local_id,
+                field="counters",
+            )
+            continue
+        unanswered = [name for name in move.counters if name not in answers]
+        if unanswered:
+            yield Problem(
+                severity=Severity.WARNING,
+                message=(
+                    f"is beaten by {', '.join(f'`{name}`' for name in unanswered)}, "
+                    "which no defense move here or in this pack's dependencies "
+                    "has as its `type`"
+                ),
+                pack=pack.id,
+                collection="moves",
+                object_id=local_id,
+                field="counters",
+            )
+
+
+def _defense_types(library: Library, pack: LoadedPack) -> set[str]:
+    """Every defense type a pack can see, its dependencies included.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs.
+    pack : LoadedPack
+        The pack whose view to take.
+
+    Returns
+    -------
+    set of str
+        The `type` of every defense move in scope.
+    """
+    visible = [pack, *(library.pack(r.id) for r in pack.manifest.requires)]
+    return {
+        move.type
+        for source in visible
+        for move in source.moves.values()
+        if move.kind == "defense"
+    }
+
+
+def _resolve(
+    library: Library, pack: LoadedPack, reference: str, collection: str
+) -> str | None:
+    """Qualify a reference, or None when it names nothing.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs.
+    pack : LoadedPack
+        The pack the reference was written in.
+    reference : str
+        As the author wrote it.
+    collection : str
+        Where to look.
+
+    Returns
+    -------
+    str or None
+        The qualified id, or None. A dangling reference is already reported by
+        the reference check, so it is skipped rather than reported twice.
+    """
+    try:
+        return library.resolve(reference, collection, within=pack.id)
+    except ContentError:
+        return None
+
+
+def _move(library: Library, qualified: str) -> Move:
+    """Look up a move by qualified id.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs.
+    qualified : str
+        The qualified id.
+
+    Returns
+    -------
+    Move
+        The move.
+    """
+    pack_id, local_id = qualified.split(":", 1)
+    found = library.pack(pack_id).moves[local_id]
+    return found
 
 
 def _check_notes(pack: LoadedPack) -> Iterator[Problem]:

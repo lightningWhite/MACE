@@ -36,10 +36,12 @@ __all__ = [
     "CalendarRef",
     "CelestialRef",
     "ClimateRef",
+    "CombatProfileRef",
     "EncounterRef",
     "FrontRef",
     "EntityRef",
     "LocationRef",
+    "MoveRef",
     "QuestRef",
     "RESERVED_ACTORS",
     "Reference",
@@ -123,8 +125,10 @@ CelestialRef = Annotated[Ref, Reference("celestialEvents")]
 EncounterRef = Annotated[Ref, Reference("encounterTables")]
 FrontRef = Annotated[Ref, Reference("weatherFronts")]
 ClimateRef = Annotated[Ref, Reference("climates")]
+CombatProfileRef = Annotated[Ref, Reference("combatProfiles")]
 EntityRef = Annotated[Ref, Reference("entities")]
 LocationRef = Annotated[Ref, Reference("locations")]
+MoveRef = Annotated[Ref, Reference("moves")]
 RouteRef = Annotated[Ref, Reference("routes")]
 SceneRef = Annotated[Ref, Reference("scenes")]
 QuestRef = Annotated[Ref, Reference("quests")]

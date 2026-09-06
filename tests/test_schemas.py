@@ -8,11 +8,13 @@ drift into describing content nobody writes. Both are checked here.
 import json
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
+from mace.model.base import ContentModel
 from mace.model.jsonschema import (
     CONTENT_COLLECTIONS,
     SCHEMA_FILES,
@@ -109,3 +111,27 @@ def test_every_collection_the_docs_describe_is_accounted_for() -> None:
         for key in yaml.safe_load(path.read_text())
     }
     assert used_by_the_example <= known, sorted(used_by_the_example - known)
+
+
+def test_two_models_may_not_share_a_name() -> None:
+    """`$defs` is keyed by class name, so a collision would drop one schema.
+
+    It happened once: the `move` *effect* payload and the combat `Move` content
+    type were both called `Move`, and the effect's definition quietly vanished
+    from the generated schema — which showed up as an authored `{move: ...}`
+    effect failing to validate, three files away from the cause. Generating
+    the schemas at all now proves there is no collision; this checks that the
+    refusal is real rather than assumed.
+    """
+    with pytest.raises(ValueError, match="two models are called `Effect`"):
+        with patch.dict(CONTENT_COLLECTIONS, {"impostors": _Impostor}):
+            content_schema()
+
+
+class _Impostor(ContentModel):
+    """A model that claims a name another model already has."""
+
+    id: str
+
+
+_Impostor.__name__ = "Effect"

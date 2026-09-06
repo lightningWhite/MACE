@@ -16,6 +16,7 @@ entities:
       endurance: {base: 30, customizable: true, growth: normal}
       charisma:  {base: 22, customizable: true}
       stealth:   {base: 18, customizable: true}
+    combat: {profile: fantasy.core:adventurer}
     inventory:
       - {item: fantasy.core:gold, qty: 4}
       - {item: fantasy.core:bread, qty: 2}
@@ -68,6 +69,8 @@ entities:
       equipSlot: mainHand
       baseValue: 3
       damage: {min: 2, max: 6, type: slash}
+      # A billhook is not a weapon and does not teach you to parry with one.
+      moves: [fantasy.core:strike]
 
   - id: kings-token
     kind: item

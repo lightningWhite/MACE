@@ -40,6 +40,9 @@ entities:
       equipSlot: mainHand
       baseValue: 12
       damage: {min: 2, max: 5, type: pierce}
+      # A weapon is how a fighter gets an answer to hold. Carrying a dagger is
+      # what makes `parry` one of your options.
+      moves: [parry, strike]
 
   - id: healing-draught
     kind: item

@@ -65,14 +65,14 @@ def test_an_unknown_collection_suggests_the_right_one(tmp_path: Path) -> None:
 
 
 def test_collections_no_model_covers_yet_are_kept_as_they_were(tmp_path: Path) -> None:
-    """A phase-2 collection must survive a phase-1 load untouched."""
+    """A later phase's collection must survive today's load untouched."""
     write_pack(
         tmp_path,
-        "arms",
-        files={"moves.yml": {"moves": [{"id": "overhand", "tempo": 3}]}},
+        "trade",
+        files={"goods.yml": {"goods": [{"id": "iron", "density": 3}]}},
     )
-    library = load_library(tmp_path / "arms")
-    assert library.pack("arms").unmodelled["moves"] == ({"id": "overhand", "tempo": 3},)
+    library = load_library(tmp_path / "trade")
+    assert library.pack("trade").unmodelled["goods"] == ({"id": "iron", "density": 3},)
 
 
 # ── Dependency ordering ───────────────────────────────────────────────────────

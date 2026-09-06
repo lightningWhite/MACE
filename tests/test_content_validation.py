@@ -293,6 +293,115 @@ def test_a_dangerous_road_with_no_encounters_is_a_note(tmp_path: Path) -> None:
     assert any(p.object_id == "road" for p in report.notes)
 
 
+# ── Combat ────────────────────────────────────────────────────────────────────
+
+
+def combat_pack(tmp_path: Path, **overrides: Any) -> Path:
+    """Write a pack with one attack, one defense, and one profile.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Where to write it.
+    **overrides
+        Collections to replace wholesale.
+
+    Returns
+    -------
+    Path
+        The pack directory.
+    """
+    content: dict[str, Any] = {
+        "moves": [
+            {"id": "guard", "kind": "defense", "type": "block"},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "counters": ["block"],
+            },
+        ],
+        "combatProfiles": [
+            {
+                "id": "thug",
+                "moves": ["guard", "swing"],
+                "patterns": [{"sequence": ["swing"]}],
+            }
+        ],
+    }
+    content.update(overrides)
+    return write_pack(tmp_path, "fights", files={"a.yml": content})
+
+
+def test_a_clean_combat_pack_reports_nothing(tmp_path: Path) -> None:
+    report = validate_paths(combat_pack(tmp_path))
+    assert report.problems == ()
+
+
+def test_a_pattern_may_only_play_moves_the_profile_knows(tmp_path: Path) -> None:
+    """The mistake produces a fight rather than a crash, so it needs catching."""
+    report = validate_paths(
+        combat_pack(
+            tmp_path,
+            combatProfiles=[
+                {
+                    "id": "thug",
+                    "moves": ["guard"],
+                    "patterns": [{"sequence": ["swing"]}],
+                }
+            ],
+        )
+    )
+    assert any("does not know it" in p.message for p in report.errors)
+
+
+def test_an_attack_nothing_can_beat_is_a_warning(tmp_path: Path) -> None:
+    report = validate_paths(
+        combat_pack(
+            tmp_path,
+            moves=[
+                {"id": "guard", "kind": "defense", "type": "block"},
+                {
+                    "id": "swing",
+                    "type": "slash",
+                    "tell": "He swings.",
+                    "counters": ["pirouette"],
+                },
+            ],
+        )
+    )
+    assert any("`pirouette`" in p.message for p in report.warnings)
+
+
+def test_an_attack_with_no_counters_is_a_warning(tmp_path: Path) -> None:
+    report = validate_paths(
+        combat_pack(
+            tmp_path,
+            moves=[
+                {"id": "guard", "kind": "defense", "type": "block"},
+                {"id": "swing", "type": "slash", "tell": "He swings."},
+            ],
+        )
+    )
+    assert any("pure damage" in p.message for p in report.warnings)
+
+
+def test_a_profile_that_cannot_defend_is_a_note(tmp_path: Path) -> None:
+    report = validate_paths(
+        combat_pack(
+            tmp_path,
+            combatProfiles=[
+                {
+                    "id": "thug",
+                    "moves": ["swing"],
+                    "patterns": [{"sequence": ["swing"]}],
+                }
+            ],
+        )
+    )
+    assert any("knows no defense moves" in p.message for p in report.notes)
+
+
 # ── Reporting ─────────────────────────────────────────────────────────────────
 
 
@@ -416,8 +525,6 @@ UNTARGETED_REFERENCES = {
     # only points at one collection. `_check_event_references` covers them.
     ("FireEvent", "event"),
     ("SetPressure", "event"),
-    ("CombatAssignment", "profile"),  # phase 3 — combat profiles
-    ("ItemProps", "moves"),  # phase 3 — moves
     ("Location", "biome"),  # phase 2 — biomes
     ("Region", "biome"),  # phase 2 — biomes
     ("PlayerSetup", "backgrounds"),  # phase 4 — backgrounds

@@ -18,10 +18,12 @@ from mace.model import (
     Calendar,
     CelestialEvent,
     Climate,
+    CombatProfile,
     EncounterTable,
     Entity,
     Game,
     Location,
+    Move,
     Pack,
     PressureEvent,
     Quest,
@@ -43,9 +45,11 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
     "celestialEvents": CelestialEvent,
     "climates": Climate,
+    "combatProfiles": CombatProfile,
     "encounterTables": EncounterTable,
     "entities": Entity,
     "locations": Location,
+    "moves": Move,
     "pressureEvents": PressureEvent,
     "regions": Region,
     "routes": Route,
@@ -64,9 +68,11 @@ SINGULAR: dict[str, str] = {
     "calendars": "calendar",
     "celestialEvents": "celestial event",
     "climates": "climate",
+    "combatProfiles": "combat profile",
     "encounterTables": "encounter table",
     "entities": "entity",
     "locations": "location",
+    "moves": "move",
     "pressureEvents": "pressure event",
     "regions": "region",
     "routes": "route",
@@ -83,6 +89,7 @@ SINGULAR: dict[str, str] = {
 #: snake_case like every other attribute in the codebase.
 _FIELDS: dict[str, str] = {
     "celestialEvents": "celestial_events",
+    "combatProfiles": "combat_profiles",
     "encounterTables": "encounter_tables",
     "pressureEvents": "pressure_events",
     "weatherConditions": "weather_conditions",
@@ -100,9 +107,9 @@ class LoadedPack:
         The pack's `pack.yml`.
     root : Path
         The directory it was read from.
-    calendars, celestialEvents, climates, encounterTables, entities, locations,
-    pressureEvents, regions, routes, scenes, quests, terrains,
-    weatherConditions, weatherFronts : mapping
+    calendars, celestialEvents, climates, combatProfiles, encounterTables,
+    entities, locations, moves, pressureEvents, regions, routes, scenes,
+    quests, terrains, weatherConditions, weatherFronts : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
         The game manifest, for `kind: game` packs.
@@ -116,9 +123,11 @@ class LoadedPack:
     calendars: Mapping[str, Calendar]
     celestial_events: Mapping[str, CelestialEvent]
     climates: Mapping[str, Climate]
+    combat_profiles: Mapping[str, CombatProfile]
     encounter_tables: Mapping[str, EncounterTable]
     entities: Mapping[str, Entity]
     locations: Mapping[str, Location]
+    moves: Mapping[str, Move]
     pressure_events: Mapping[str, PressureEvent]
     regions: Mapping[str, Region]
     routes: Mapping[str, Route]

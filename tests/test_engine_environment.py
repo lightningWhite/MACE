@@ -14,7 +14,7 @@ from mace.content import load_library
 from mace.engine.actions import Choose, Wait
 from mace.engine.environment import ENVIRONMENT, EXPOSURE_THRESHOLD
 from mace.engine.stats import effective
-from mace.engine.step import begin, step
+from mace.engine.step import StepResult, begin, step
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -143,7 +143,7 @@ def weather_pack(
     return load_library(root)
 
 
-def status(result: Any) -> dict[str, Any]:
+def status(result: StepResult) -> dict[str, Any]:
     """The last status projection of a step.
 
     Parameters
@@ -337,7 +337,7 @@ def test_content_can_read_how_cold_the_player_is(tmp_path: Path) -> None:
     result = step(begin(library, "tiny").state, Wait(6), library)
     from mace.engine.step import _context  # noqa: PLC0415
 
-    context = _context(library, result.state, library.pack("tiny").game)  # type: ignore[arg-type]
+    context = _context(library, result.state, library.pack("tiny").game)
     assert context.expression_context()["player"]["exposure"] > 0.0
 
 

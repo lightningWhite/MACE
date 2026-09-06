@@ -1,0 +1,243 @@
+# The counter matrix, as content. Nothing in the engine knows that `dodge`
+# beats `overhead` — an attack names the defense types that beat it, a defense
+# declares its type, and the two meet here. A sci-fi pack whose answers are
+# `sidestep` and `overload` replaces this file and changes no code.
+#
+# Read across: a slow huge swing is stepped out of, a wide cut is taken on the
+# shield, a straight thrust is turned aside, a low sweep is jumped, and a grab
+# is answered by hurting the thing doing the grabbing. Five minutes to learn,
+# and then the depth is in the *enemies* rather than in the table.
+moves:
+
+  # ── Answers ─────────────────────────────────────────────────────────────
+  # Cheap and total, or expensive and partial: that is the whole trade. A dodge
+  # costs little and stops everything or nothing; a block always takes some of
+  # the sting out and empties you doing it.
+
+  - id: dodge
+    kind: defense
+    name: "Dodge"
+    type: dodge
+    cost: 4
+    mitigation: 0.35
+
+  - id: block
+    kind: defense
+    name: "Block"
+    type: block
+    cost: 9
+    mitigation: 0.75
+
+  - id: parry
+    kind: defense
+    name: "Parry"
+    type: parry
+    cost: 6
+    mitigation: 0.55
+
+  - id: jump
+    kind: defense
+    name: "Jump"
+    type: jump
+    cost: 5
+    mitigation: 0.40
+
+  # A strike is a defense that answers by hurting: the interrupt that beats a
+  # grapple, and the only right answer to a feint. Expensive, because reading a
+  # feint correctly should feel like a decision rather than a reflex.
+  - id: strike
+    kind: defense
+    name: "Strike"
+    type: strike
+    cost: 11
+    mitigation: 0.15
+    damage: {min: 3, max: 7, type: interrupt}
+
+  # ── What comes at you ───────────────────────────────────────────────────
+
+  - id: club-overhead
+    name: "Overhead smash"
+    type: overhead
+    tell: "The troll hauls the club up over its head."
+    vagueTell: "The troll's shoulders bunch."
+    windupMs: 1400
+    counters: [dodge]
+    damage: {min: 9, max: 15, type: bludgeon}
+    cost: 10
+
+  - id: club-sweep
+    name: "Low sweep"
+    type: sweep
+    tell: "The club drops low and comes round at your knees."
+    vagueTell: "The troll shifts its weight onto its back foot."
+    windupMs: 900
+    counters: [jump, dodge]
+    damage: {min: 5, max: 9, type: bludgeon}
+    cost: 7
+
+  - id: troll-grab
+    name: "Grab"
+    type: grapple
+    tell: "It reaches for you with its free hand, slow and certain."
+    vagueTell: "It leans in."
+    windupMs: 1100
+    counters: [strike]
+    damage: {min: 4, max: 7, type: crush}
+    cost: 8
+
+  - id: troll-roar
+    name: "Roar"
+    type: feint
+    feint: true
+    tell: "It draws a breath that fills the whole hollow of the bridge."
+    vagueTell: "It draws a breath."
+    windupMs: 700
+    counters: [strike]
+    cost: 3
+
+  - id: sword-slash
+    name: "Slash"
+    type: slash
+    tell: "The blade comes round in a wide, unhurried arc."
+    vagueTell: "The blade moves."
+    windupMs: 800
+    counters: [block]
+    damage: {min: 6, max: 11, type: slash}
+    cost: 7
+
+  - id: sword-thrust
+    name: "Thrust"
+    type: thrust
+    tell: "The point comes up and steadies on your chest."
+    vagueTell: "The point comes up."
+    windupMs: 600
+    counters: [parry]
+    damage: {min: 7, max: 12, type: pierce}
+    cost: 8
+
+  - id: shield-shove
+    name: "Shield shove"
+    type: grapple
+    tell: "He drops his shoulder behind the shield and comes on."
+    vagueTell: "He steps in."
+    windupMs: 750
+    counters: [strike]
+    damage: {min: 3, max: 6, type: crush}
+    cost: 6
+
+  - id: duelist-feint
+    name: "Feint"
+    type: feint
+    feint: true
+    tell: "The blade twitches high — or does it."
+    vagueTell: "The blade twitches."
+    windupMs: 550
+    counters: [strike]
+    cost: 4
+
+  - id: bite
+    name: "Bite"
+    type: thrust
+    tell: "It comes off its haunches, jaws first."
+    vagueTell: "It gathers itself."
+    windupMs: 650
+    counters: [parry, dodge]
+    damage: {min: 4, max: 8, type: pierce}
+    cost: 6
+
+  - id: lunge
+    name: "Lunge"
+    type: slash
+    tell: "It rakes in low and wide, herding you."
+    vagueTell: "It circles."
+    windupMs: 750
+    counters: [block]
+    damage: {min: 3, max: 6, type: slash}
+    cost: 5
+
+  - id: fists
+    name: "Swing"
+    type: slash
+    tell: "A wide, artless swing."
+    vagueTell: "He moves."
+    windupMs: 1000
+    counters: [block, dodge]
+    damage: {min: 2, max: 5, type: bludgeon}
+    cost: 5
+
+
+# A profile is temperament. `patterns` are the whole reason an enemy is worth
+# authoring: an enemy that picks at random is noise, and noise cannot be
+# learned. These fighters have habits, and a player who notices wins.
+combatProfiles:
+
+  # What a person who has never fought anybody knows how to do. Any actor
+  # without its own profile can extend this and get a fight.
+  - id: brawler
+    name: "Brawler"
+    moves: [dodge, block, strike, fists]
+    aggression: 0.5
+    feintChance: 0.0
+    tellClarity: 1.0
+    fleeThreshold: 0.25
+    patterns:
+      - {sequence: [fists, fists], weight: 100}
+
+  # The player archetype: knows every answer, and brings its attack from
+  # whatever it is holding.
+  - id: adventurer
+    name: "Adventurer"
+    moves: [dodge, block, parry, jump, strike]
+    aggression: 0.6
+    tellClarity: 1.0
+
+  - id: bridge-troll-profile
+    name: "Bridge troll"
+    moves: [club-overhead, club-sweep, troll-grab, troll-roar, block, strike]
+    aggression: 0.7
+    feintChance: 0.10
+    tellClarity: 0.8
+    fleeThreshold: 0.15
+    # It likes to swing twice high and then go low. That is the sentence a
+    # player should be able to say out loud after three fights.
+    patterns:
+      - {sequence: [club-overhead, club-overhead, club-sweep], weight: 50}
+      - {sequence: [troll-roar, club-sweep, troll-grab], weight: 30}
+      - {sequence: [club-sweep, club-overhead], weight: 20}
+
+  - id: quick-duelist
+    name: "Quick duelist"
+    moves: [sword-thrust, sword-slash, duelist-feint, parry, dodge, strike]
+    aggression: 0.65
+    feintChance: 0.20
+    tellClarity: 0.65
+    fleeThreshold: 0.20
+    patterns:
+      - {sequence: [sword-thrust, sword-thrust, sword-slash], weight: 40}
+      - {sequence: [duelist-feint, sword-thrust], weight: 35}
+      - {sequence: [sword-slash, sword-thrust], weight: 25}
+
+  - id: shield-line
+    name: "Shield line"
+    moves: [sword-slash, shield-shove, sword-thrust, block, strike]
+    aggression: 0.45
+    feintChance: 0.05
+    tellClarity: 0.85
+    fleeThreshold: 0.10
+    patterns:
+      - {sequence: [shield-shove, sword-slash], weight: 45}
+      - {sequence: [sword-slash, sword-slash, sword-thrust], weight: 35}
+      - {sequence: [sword-thrust, shield-shove], weight: 20}
+
+  - id: pack-hunter
+    name: "Pack hunter"
+    moves: [bite, lunge, dodge, strike]
+    aggression: 0.8
+    feintChance: 0.05
+    tellClarity: 0.7
+    fleeThreshold: 0.35
+    patterns:
+      - {sequence: [lunge, bite], weight: 50}
+      - {sequence: [bite, bite], weight: 30}
+      # Wolves circle in the dark, where they can afford to.
+      - {sequence: [lunge, lunge, bite], weight: 40, when: [{dayPart: [dusk, night]}]}

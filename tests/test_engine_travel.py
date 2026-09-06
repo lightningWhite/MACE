@@ -15,7 +15,7 @@ import yaml
 from conftest import game_pack
 from mace.content import load_library
 from mace.engine.actions import Choose
-from mace.engine.step import begin, step
+from mace.engine.step import StepResult, begin, step
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -157,7 +157,7 @@ def legs(result: Any) -> list[dict[str, Any]]:
     return [e.payload() for e in result.events if e.kind == "travel.leg"]
 
 
-def moved(result: Any) -> dict[str, Any] | None:
+def moved(result: StepResult) -> dict[str, Any] | None:
     """The arrival event of one step, if it arrived.
 
     Parameters
