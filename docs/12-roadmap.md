@@ -42,7 +42,7 @@ terminal, with scenes, choices, items, and win/lose.
 
 ---
 
-## Phase 2 — A world that moves *(current)*
+## Phase 2 — A world that moves *(done)*
 
 **Playable at the end:** the same game, but journeys take days, storms roll
 through, and the road between towns is dangerous.
@@ -60,11 +60,12 @@ through, and the road between towns is dangerous.
 - [x] Exposure and rest — the mechanics that make weather bite
 - [x] Conditional descriptions driven by weather and time
 - [x] Status line in the CLI
-- [ ] `packs/fantasy.core` — first real library pack
+- [x] `packs/fantasy.core` — first real library pack: weather, climates,
+      fronts, terrains, an encounter table, and the scenes it plays
 
 ---
 
-## Phase 3 — Combat
+## Phase 3 — Combat *(current)*
 
 **Playable at the end:** you can fight a troll in the terminal, lose, learn its
 pattern, and win.

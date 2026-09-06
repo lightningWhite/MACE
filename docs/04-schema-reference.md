@@ -172,6 +172,30 @@ The connection between two locations, and the most important upgrade over v0's
 | `when` | [Condition]? | Conditions required to use the route at all. |
 | `dangerLevel` | int? | 0–10, a hint used by the wizard to suggest encounter rates. |
 
+### Terrain
+
+Files under `terrains/`. What a road is made of, and how badly the weather
+ruins it.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id`, `name` | | |
+| `extends` | Ref? | |
+| `travelMultiplier` | number? | How slow this surface is in fair weather. Default 1. |
+| `inWeather` | {tag: number}? | An extra multiplier per weather tag, on top of the weather's own. |
+| `tags` | [str]? | Free-form labels for encounter tables and content to match on. |
+
+Only the **largest** matching `inWeather` entry applies, not the product: a
+wet, cold, windy night on a forest track should be bad, not impossible.
+
+The split between a condition's `travelMultiplier` and a terrain's `inWeather`
+is what makes a detour worth considering. Rain on a paved highway is an
+inconvenience; rain on a forest track is mud to the ankles. The long way round
+on a good road can genuinely beat the short way through the wood — but only
+when it is wet, which is a decision rather than a fixed answer.
+
+---
+
 ### Waypoint
 
 | Field | Type | Notes |

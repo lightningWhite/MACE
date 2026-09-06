@@ -10,6 +10,8 @@ and a bridge with a troll on it keeps stopping you until you deal with it.
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from conftest import game_pack
 from mace.content import load_library
 from mace.engine.actions import Choose
@@ -453,3 +455,76 @@ def test_the_bridge_on_the_north_road_is_a_waypoint() -> None:
     assert result.state.location == "peasants-quest:troll-bridge"
     assert result.state.journey is not None
     assert result.state.journey.destination == "peasants-quest:hagans-castle"
+
+
+# ── Terrain ──────────────────────────────────────────────────────────────────
+
+
+def terrain_pack(tmp_path: Path, *, weather: str, surface: dict[str, Any]) -> Any:
+    """A road with a named surface, under a pinned condition.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Where to write the pack.
+    weather : str
+        The condition pinned over home.
+    surface : dict
+        The terrain definition.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    library = road_pack(
+        tmp_path,
+        weather=weather,
+        route={
+            "id": "road",
+            "from": "home",
+            "to": "castle",
+            "ticks": 4,
+            "terrain": surface["id"],
+        },
+    )
+    del library
+
+    path = tmp_path / "tiny" / "terrains.yml"
+    path.write_text(yaml.safe_dump({"terrains": [surface]}, sort_keys=False))
+    return load_library(tmp_path)
+
+
+def test_terrain_multiplies_on_top_of_the_weather(tmp_path: Path) -> None:
+    """Rain on a paved road is an inconvenience; rain on a track is mud."""
+    good = terrain_pack(
+        tmp_path / "good",
+        weather="slog",
+        surface={"id": "paved", "travelMultiplier": 1.0, "inWeather": {"wet": 1.0}},
+    )
+    bad = terrain_pack(
+        tmp_path / "bad",
+        weather="slog",
+        surface={"id": "track", "travelMultiplier": 1.0, "inWeather": {"wet": 2.0}},
+    )
+
+    quick = moved(step(begin(good, "tiny").state, Choose(0), good))
+    slow = moved(step(begin(bad, "tiny").state, Choose(0), bad))
+    assert quick is not None and slow is not None
+    assert slow["ticks"] > quick["ticks"]
+
+
+def test_only_the_worst_weather_tag_counts(tmp_path: Path) -> None:
+    """A wet, cold, windy night should be bad, not impossible."""
+    library = terrain_pack(
+        tmp_path,
+        weather="slog",
+        surface={
+            "id": "track",
+            "travelMultiplier": 1.0,
+            "inWeather": {"wet": 2.0, "cold": 3.0},
+        },
+    )
+    surface = library.pack("tiny").terrains["track"]
+    assert surface.cost(("wet", "cold")) == 3.0
+    assert surface.cost(()) == 1.0

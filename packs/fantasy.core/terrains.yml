@@ -1,0 +1,45 @@
+# What a road is made of, and how badly the weather ruins it. A weather
+# condition's own `travelMultiplier` says how bad the *weather* is; a terrain's
+# `inWeather` says how badly *this surface* takes it, and the two multiply.
+#
+# That split is what makes a detour worth considering: the long way round on a
+# good road can genuinely beat the short way through the wood, but only when it
+# is wet. A fixed answer is not a decision.
+terrains:
+
+  - id: paved-road
+    name: "Paved road"
+    travelMultiplier: 0.9
+    tags: [made, fast]
+    inWeather: {wet: 1.05, cold: 1.1}
+
+  - id: cart-road
+    name: "Cart road"
+    travelMultiplier: 1.0
+    tags: [made]
+    inWeather: {wet: 1.2, cold: 1.15}
+
+  - id: forest-track
+    name: "Forest track"
+    travelMultiplier: 1.15
+    tags: [rough, wooded]
+    inWeather: {wet: 1.5, cold: 1.2, severe: 1.7}
+
+  - id: moorland
+    name: "Open moor"
+    travelMultiplier: 1.2
+    tags: [rough, exposed]
+    inWeather: {wet: 1.4, windy: 1.4, severe: 1.9}
+
+  - id: mountain-path
+    name: "Mountain path"
+    travelMultiplier: 1.5
+    tags: [rough, exposed, high]
+    inWeather: {wet: 1.6, cold: 1.5, severe: 2.4}
+
+  - id: ford
+    name: "Ford"
+    travelMultiplier: 1.3
+    tags: [water]
+    # A ford in the rain is not slow. A ford in the rain is a river.
+    inWeather: {wet: 2.5, severe: 3.0}

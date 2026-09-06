@@ -67,6 +67,7 @@ from mace.model import (
     Quest,
     Route,
     Scene,
+    Terrain,
     WeatherFront,
 )
 from mace.model.calendar import STANDARD_YEAR
@@ -441,6 +442,11 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
     how much road a tick of walking is worth, so a storm turns a three-tick
     road into a five-tick slog without anybody computing a total in advance.
 
+    The road's terrain multiplies on top of the weather's own, because rain on
+    a paved highway is an inconvenience and rain on a forest track is mud to
+    the ankles. That is what makes the long way round on a good road worth
+    considering — but only when it is wet.
+
     Parameters
     ----------
     route : Route
@@ -468,10 +474,16 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
         _interrupt(route, context, events, "the way is still barred")
         return False
 
+    surface = _terrain(route, context)
+
     while journey.progress < length:
         leg_before = int(journey.progress)
         _tick(context, events)
-        journey.progress += 1.0 / max(0.01, context.weather().travel_multiplier)
+        observed = context.weather()
+        going = observed.travel_multiplier
+        if surface is not None:
+            going *= surface.cost(observed.tags)
+        journey.progress += 1.0 / max(0.01, going)
 
         reached = _next_waypoint(stops, journey)
         crossed = min(int(journey.progress), length)
@@ -561,6 +573,32 @@ def _still_barred(
     journey.passed = (*journey.passed, journey.blocked_at)
     journey.blocked_at = None
     return False
+
+
+def _terrain(route: Route, context: RuleContext) -> Terrain | None:
+    """The surface a road is made of, if the author said.
+
+    Parameters
+    ----------
+    route : Route
+        The road.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    Terrain or None
+        Its terrain.
+    """
+    if route.terrain is None:
+        return None
+    try:
+        found = context.library.find(
+            route.terrain, "terrains", within=context.state.pack
+        )
+    except ContentError:
+        return None
+    return found if isinstance(found, Terrain) else None
 
 
 def _finish(

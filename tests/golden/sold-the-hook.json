@@ -804,7 +804,7 @@
           "route": "peasants-quest:north-road",
           "at": "peasants-quest:troll-bridge",
           "destination": "peasants-quest:hagans-castle",
-          "remaining": 2.091,
+          "remaining": 2.864,
           "reason": "the way is barred"
         },
         {
@@ -1175,6 +1175,17 @@
           "text": "Crows argue in the branches overhead."
         },
         {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-northwood",
+          "condition": "fantasy.core:overcast",
+          "name": "overcast",
+          "intensity": 0.9767,
+          "tags": [],
+          "visibility": 0.85,
+          "temperature": 2.92,
+          "text": "The sky closes over, flat and grey, with no weather in it yet."
+        },
+        {
           "kind": "travel.leg",
           "route": "peasants-quest:north-road",
           "leg": 6,
@@ -1184,18 +1195,18 @@
         },
         {
           "kind": "world.time",
-          "tick": 33,
+          "tick": 34,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "elapsed": 3
+          "elapsed": 4
         },
         {
           "kind": "moved",
           "from": "peasants-quest:troll-bridge",
           "to": "peasants-quest:hagans-castle",
           "route": "peasants-quest:north-road",
-          "ticks": 3
+          "ticks": 4
         },
         {
           "kind": "narrate",
@@ -1241,11 +1252,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 33,
+          "tick": 34,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "16:30",
+          "time": "17:00",
           "location": "peasants-quest:hagans-castle",
           "place": "Hagan's Castle",
           "region": "peasants-quest:the-marches",

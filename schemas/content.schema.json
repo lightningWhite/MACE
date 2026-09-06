@@ -59,6 +59,12 @@
         "$ref": "#/$defs/Route"
       }
     },
+    "terrains": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Terrain"
+      }
+    },
     "weatherConditions": {
       "type": "array",
       "items": {
@@ -85,10 +91,6 @@
     },
     "game": {
       "$ref": "#/$defs/Game"
-    },
-    "terrains": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 travel."
     },
     "combatProfiles": {
       "type": "array",
@@ -4978,6 +4980,85 @@
         "max"
       ],
       "title": "TemperatureRange",
+      "type": "object"
+    },
+    "Terrain": {
+      "additionalProperties": false,
+      "description": "A road surface, and what conditions do to it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A terrain to inherit from.\ntravel_multiplier : float\n    How slow this surface is in fair weather. A mountain path is slow\n    before anything falls on it.\nin_weather : mapping\n    Weather tag to an extra multiplier, applied on top of the weather's\n    own. Only the largest applies, not the product: a wet, cold, windy\n    night on a forest track should be bad, not impossible.\ntags : tuple of str\n    Free-form labels for encounter tables and content to match on.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "travelMultiplier": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Travelmultiplier",
+          "type": "number"
+        },
+        "inWeather": {
+          "patternProperties": {
+            "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "type": "number"
+            }
+          },
+          "title": "Inweather",
+          "type": "object"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Terrain",
       "type": "object"
     },
     "TransferContents": {

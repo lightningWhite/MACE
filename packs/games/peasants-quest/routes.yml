@@ -10,6 +10,7 @@ routes:
     from: fenmoor
     to: hagans-castle
     ticks: 6
+    terrain: fantasy.core:forest-track
     dangerLevel: 5
     encounters: forest-road
     waypoints:
@@ -34,6 +35,7 @@ routes:
     from: fenmoor
     to: traders-post
     ticks: 2
+    terrain: fantasy.core:cart-road
     dangerLevel: 1
     encounters: the-quiet-track
     legDescriptions:

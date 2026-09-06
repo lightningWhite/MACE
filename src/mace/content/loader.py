@@ -236,6 +236,7 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
         regions=built["regions"],  # type: ignore[arg-type]
         routes=built["routes"],  # type: ignore[arg-type]
         scenes=built["scenes"],  # type: ignore[arg-type]
+        terrains=built["terrains"],  # type: ignore[arg-type]
         quests=built["quests"],  # type: ignore[arg-type]
         weather_conditions=built["weatherConditions"],  # type: ignore[arg-type]
         weather_fronts=built["weatherFronts"],  # type: ignore[arg-type]

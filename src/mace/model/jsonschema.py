@@ -50,6 +50,7 @@ from mace.model.quest import Quest
 from mace.model.region import Region
 from mace.model.route import Route
 from mace.model.scene import Scene
+from mace.model.terrain import Terrain
 from mace.model.text import DescriptionLine, SayLine
 from mace.model.weather import WeatherCondition
 
@@ -76,6 +77,7 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "pressureEvents": PressureEvent,
     "regions": Region,
     "routes": Route,
+    "terrains": Terrain,
     "weatherConditions": WeatherCondition,
     "weatherFronts": WeatherFront,
     "scenes": Scene,
@@ -86,7 +88,6 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
 #: misspelled collection key an error while leaving room for the phase that
 #: models them — see docs/12-roadmap.md.
 UNMODELLED_COLLECTIONS: dict[str, str] = {
-    "terrains": "phase 2 — travel",
     "combatProfiles": "phase 3 — combat",
     "moves": "phase 3 — combat",
     "backgrounds": "phase 4 — character creation",

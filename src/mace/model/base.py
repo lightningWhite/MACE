@@ -56,6 +56,7 @@ __all__ = [
     "Ref",
     "SlotName",
     "Tag",
+    "TerrainRef",
     "VersionRange",
     "WeatherRef",
     "Version",
@@ -129,6 +130,7 @@ SceneRef = Annotated[Ref, Reference("scenes")]
 QuestRef = Annotated[Ref, Reference("quests")]
 PressureRef = Annotated[Ref, Reference("pressureEvents")]
 RegionRef = Annotated[Ref, Reference("regions")]
+TerrainRef = Annotated[Ref, Reference("terrains")]
 WeatherRef = Annotated[Ref, Reference("weatherConditions")]
 
 #: Names that stand for something the game supplies rather than an id an author

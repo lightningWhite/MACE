@@ -10,7 +10,13 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from mace.model.base import ContentModel, EncounterRef, Id, LocationRef, Ref
+from mace.model.base import (
+    ContentModel,
+    EncounterRef,
+    Id,
+    LocationRef,
+    TerrainRef,
+)
 from mace.model.conditions import Conditions
 from mace.model.text import Description
 
@@ -51,7 +57,7 @@ class Route(ContentModel):
     bidirectional: bool = True
     ticks: int = Field(gt=0)
 
-    terrain: Ref | None = None
+    terrain: TerrainRef | None = None
     waypoints: tuple[Waypoint, ...] = ()
     encounters: EncounterRef | None = None
 

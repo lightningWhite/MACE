@@ -28,6 +28,7 @@ from mace.model import (
     Region,
     Route,
     Scene,
+    Terrain,
     WeatherCondition,
     WeatherFront,
 )
@@ -48,6 +49,7 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
     "pressureEvents": PressureEvent,
     "regions": Region,
     "routes": Route,
+    "terrains": Terrain,
     "weatherConditions": WeatherCondition,
     "weatherFronts": WeatherFront,
     "scenes": Scene,
@@ -68,6 +70,7 @@ SINGULAR: dict[str, str] = {
     "pressureEvents": "pressure event",
     "regions": "region",
     "routes": "route",
+    "terrains": "terrain",
     "weatherConditions": "weather condition",
     "weatherFronts": "weather front",
     "scenes": "scene",
@@ -98,7 +101,7 @@ class LoadedPack:
     root : Path
         The directory it was read from.
     calendars, celestialEvents, climates, encounterTables, entities, locations,
-    pressureEvents, regions, routes, scenes, quests,
+    pressureEvents, regions, routes, scenes, quests, terrains,
     weatherConditions, weatherFronts : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
@@ -120,6 +123,7 @@ class LoadedPack:
     regions: Mapping[str, Region]
     routes: Mapping[str, Route]
     scenes: Mapping[str, Scene]
+    terrains: Mapping[str, Terrain]
     quests: Mapping[str, Quest]
     weather_conditions: Mapping[str, WeatherCondition]
     weather_fronts: Mapping[str, WeatherFront]

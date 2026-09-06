@@ -88,6 +88,7 @@ from mace.model.quest import Quest, QuestStage
 from mace.model.region import Region
 from mace.model.route import Route, Waypoint
 from mace.model.scene import Choice, Scene
+from mace.model.terrain import Terrain
 from mace.model.text import Description, DescriptionLine, Say, SayLine
 from mace.model.weather import WeatherCondition
 
@@ -166,6 +167,7 @@ __all__ = [
     "StatModifier",
     "Tag",
     "TemperatureRange",
+    "Terrain",
     "Version",
     "VersionRange",
     "Waypoint",
