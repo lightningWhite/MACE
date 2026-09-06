@@ -262,6 +262,43 @@ day part's `light`. Coldest before dawn, warmest at noon, no sun model.
 While a sequence runs, the chain does not interfere. When it ends, the chain
 resumes from wherever the sequence left the sky.
 
+### WeatherFront
+
+Files under `weatherFronts/`. This is the *kind* of front; where one actually
+is lives in session state. A climate lists the kinds that can form in it and
+how often, with `fronts` and `frontFrequency`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id`, `name` | | `name` is a phrase read inside a sentence — "a storm out of the west". |
+| `extends` | Ref? | |
+| `weight` | number? | Relative likelihood among the kinds a climate offers, once one is forming. Default 1. |
+| `when` | [Condition]? | Extra gating. |
+| `seasons` | [str]? | Seasons this front can form in. Empty means any. |
+| `intensityRange` | [min, max]? | 0–1, default [0.4, 1.0]. Drawn at birth; scales the bias and decays with age. |
+| `speedTicks` | int? | Ticks over each region before hopping to the next. Default 6. |
+| `lifespanTicks` | int? | How long it lives, whatever its heading has left. Default 54. |
+| `hops` | [fewest, most]? | How many regions a heading may cross. Default [2, 4]. |
+| `biases` | {weather: number}? | Multipliers on the transition weights of the region the front is over. Above 1 makes a condition likelier, below 1 rarer. |
+| `aheadBias` | number? | 0–1, default 0.3. The share of the bias the region *ahead* receives — the foreshadowing dial. 0 means a front arrives without warning. |
+| `omen` | str \| [Descr]? | Shown once, as ordinary narration, when the front is one region away and coming this way. |
+
+**How a front resolves.** One roll per tick is made across the whole map, at
+the largest `frontFrequency` any region's climate offers — one roll, not one
+per region, so adding regions to a map does not silently make a game stormier.
+The kind is drawn by `weight` among the eligible kinds, the origin among the
+regions whose climate offers that kind, and the heading by walking the
+`neighbors` graph without revisiting. A region with no unvisited neighbours
+ends the heading, and a front whose heading runs out dies there.
+
+While it lives, a front over a region multiplies that region's transition
+weights by its `biases`, scaled by its current strength — its birth intensity
+decayed linearly toward nothing at the end of its lifespan. The region ahead
+gets `aheadBias` of the same. So a storm approaches, arrives, sits, and eases,
+rather than switching on and off.
+
+---
+
 ### WeatherCondition
 
 Files under `weatherConditions/`.

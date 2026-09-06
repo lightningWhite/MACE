@@ -50,7 +50,7 @@ through, and the road between towns is dangerous.
 - [x] Clock, calendar, day parts, seasons
 - [x] Climate model: seasonal weights + Markov transitions
 - [x] Regions, per-region weather chains, lazily fast-forwarded
-- [ ] Weather fronts propagating across the region graph
+- [x] Weather fronts propagating across the region graph, with omens
 - [ ] Weather effects: visibility, travel multiplier, stat modifiers, tags
 - [ ] Entity `env` responses
 - [ ] World events: celestial (scheduled), pressure (building, with omens), triggered

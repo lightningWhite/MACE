@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from pydantic import Field, model_validator
 
-from mace.model.base import ClimateRef, ContentModel, Id, WeatherRef
+from mace.model.base import ClimateRef, ContentModel, FrontRef, Id, WeatherRef
 from mace.model.conditions import Conditions
 
 __all__ = ["Climate", "ClimateSequence", "SeasonProfile", "TemperatureRange"]
@@ -126,9 +126,14 @@ class Climate(ContentModel):
         two is an hour and reads much better.
     sequences : tuple of ClimateSequence
         Authored progressions that override the chain while they run.
+    fronts : tuple of str
+        The kinds of front that can form in regions with this climate.
     front_frequency : float
-        The chance per tick that a front spawns in a region with this
-        climate. Fronts arrive with layer 3.
+        The chance **per tick** that a front forms somewhere on the map. One
+        roll is made across the whole world rather than one per region, so
+        adding regions does not silently make a game stormier. Two or three
+        fronts alive at once is plenty, so this wants to be small: at a
+        sixty-tick lifespan, 0.02 keeps about one and a bit in the air.
     freezing_point : float
         The temperature below which a condition becomes its `freezesTo`.
     lapse_rate : float
@@ -146,6 +151,7 @@ class Climate(ContentModel):
     step_ticks: int = Field(default=1, gt=0)
 
     sequences: tuple[ClimateSequence, ...] = ()
+    fronts: tuple[FrontRef, ...] = ()
     front_frequency: float = Field(default=0.0, ge=0.0, le=1.0)
     freezing_point: float = 0.0
     lapse_rate: float = 0.65

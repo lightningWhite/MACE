@@ -16,6 +16,13 @@ climates:
     freezingPoint: 0.0
     lapseRate: 0.65
 
+    # One roll per tick across the whole map. Fronts also die when their
+    # heading runs out, so on a three-region map they live well short of their
+    # lifespan and this needs to be higher than it looks. About one in the air
+    # at a time — more than that and none of them mean anything.
+    fronts: [westerly, autumn-gale, still-air]
+    frontFrequency: 0.04
+
     seasons:
       spring:
         temperature: {min: 4, max: 18}

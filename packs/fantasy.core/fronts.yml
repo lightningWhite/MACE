@@ -1,0 +1,49 @@
+# Fronts are what make weather a world rather than a slot machine. A front sits
+# over a region, bends its chain toward its own kind of weather, and hops along
+# its heading every few ticks — so neighbouring regions get related weather,
+# and a storm has a direction you can name.
+#
+# The `omen` is the whole point. It fires once, when the front is one region
+# away and coming this way, as ordinary narration. A player who reads it and
+# decides to wait a day has just made a decision the weather model existed to
+# offer them.
+weatherFronts:
+
+  - id: westerly
+    name: "a westerly"
+    weight: 5
+    intensityRange: [0.3, 0.7]
+    speedTicks: 8
+    lifespanTicks: 60
+    hops: [2, 3]
+    biases: {rain: 3.0, drizzle: 2.5, overcast: 1.5, clear: 0.2, fog: 0.3}
+    aheadBias: 0.35
+    omen:
+      - "The wind has come round to the west, and it has weather on it."
+
+  - id: autumn-gale
+    name: "a gale"
+    weight: 2
+    seasons: [autumn, winter]
+    intensityRange: [0.6, 1.0]
+    speedTicks: 5
+    lifespanTicks: 48
+    hops: [3, 4]
+    biases: {storm: 8.0, rain: 4.0, overcast: 1.5, clear: 0.05, fog: 0.1}
+    aheadBias: 0.4
+    omen:
+      - {text: "Away to the west the cloud has gone the colour of a bruise, and it is coming this way.",
+         when: {dayPart: [dawn, day, dusk]}}
+      - "You cannot see it, but you can hear it — a long tearing sound off the west, getting nearer."
+
+  - id: still-air
+    name: "a settled spell"
+    weight: 3
+    intensityRange: [0.4, 0.9]
+    speedTicks: 12
+    lifespanTicks: 96
+    hops: [2, 4]
+    biases: {clear: 4.0, fog: 2.0, rain: 0.2, drizzle: 0.3, storm: 0.05}
+    aheadBias: 0.3
+    omen:
+      - "The sky to the west has gone quiet and enormous. Whatever is coming, it is not rain."

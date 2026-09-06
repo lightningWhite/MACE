@@ -33,6 +33,7 @@ __all__ = [
     "TimePassed",
     "Unsupported",
     "VariableChanged",
+    "FrontMoved",
     "WeatherChanged",
     "WorldStatus",
     "records",
@@ -220,6 +221,50 @@ class TimePassed(Event):
             "dayPart": self.day_part,
             "season": self.season,
             "elapsed": self.elapsed,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class FrontMoved(Event):
+    """A weather system formed, crossed into a region, or died.
+
+    Mostly for the map view and for debugging: the *player's* experience of a
+    front is the omen it throws ahead of itself and the weather it brings, not
+    a notification that one exists. A front-end that shows this as a message
+    has misread the whole layer.
+
+    Attributes
+    ----------
+    front : str
+        The front's session id.
+    definition : str
+        Qualified id of the front's content definition.
+    phase : str
+        `formed`, `moved`, or `faded`.
+    at : str
+        The region it is over.
+    ahead : str or None
+        The region it is heading for.
+    intensity : float
+        0 to 1, decaying with age.
+    """
+
+    kind: ClassVar[str] = "weather.front"
+    front: str
+    definition: str
+    phase: str = "formed"
+    at: str = ""
+    ahead: str | None = None
+    intensity: float = 0.0
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "front": self.front,
+            "definition": self.definition,
+            "phase": self.phase,
+            "at": self.at,
+            "ahead": self.ahead,
+            "intensity": self.intensity,
         }
 
 

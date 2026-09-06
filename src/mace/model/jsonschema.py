@@ -40,6 +40,7 @@ from mace.model.climate import Climate
 from mace.model.conditions import CONDITION_PAYLOADS, Condition
 from mace.model.effects import EFFECT_PAYLOADS, Effect
 from mace.model.entity import Entity
+from mace.model.front import WeatherFront
 from mace.model.game import Game
 from mace.model.location import Location
 from mace.model.pack import Pack
@@ -71,6 +72,7 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "regions": Region,
     "routes": Route,
     "weatherConditions": WeatherCondition,
+    "weatherFronts": WeatherFront,
     "scenes": Scene,
     "quests": Quest,
 }

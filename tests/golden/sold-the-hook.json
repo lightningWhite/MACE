@@ -683,17 +683,6 @@
           "elapsed": 6
         },
         {
-          "kind": "weather.changed",
-          "region": "peasants-quest:the-northwood",
-          "condition": "fantasy.core:clear",
-          "name": "clear",
-          "intensity": 0.7492,
-          "tags": [],
-          "visibility": 1.0,
-          "temperature": 2.92,
-          "text": "The cloud breaks up and the sky comes through behind it."
-        },
-        {
           "kind": "moved",
           "from": "peasants-quest:fenmoor",
           "to": "peasants-quest:troll-bridge",
@@ -1038,17 +1027,6 @@
           "dayPart": "dusk",
           "season": "autumn",
           "elapsed": 6
-        },
-        {
-          "kind": "weather.changed",
-          "region": "peasants-quest:the-marches",
-          "condition": "fantasy.core:clear",
-          "name": "clear",
-          "intensity": 0.5391,
-          "tags": [],
-          "visibility": 1.0,
-          "temperature": 1.97,
-          "text": "The cloud breaks up and the sky comes through behind it."
         },
         {
           "kind": "moved",

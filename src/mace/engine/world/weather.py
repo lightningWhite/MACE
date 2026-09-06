@@ -27,11 +27,13 @@ from dataclasses import dataclass
 from mace.content import ContentError, Library
 from mace.engine.rng import RandomStream
 from mace.engine.state import GameState, RegionWeather
+from mace.engine.world import fronts
 from mace.engine.world.clock import Clock
 from mace.model import Climate, Location, Region, WeatherCondition
 
 __all__ = [
     "DEFAULT_LAPSE_RATE",
+    "Prepared",
     "Observation",
     "climate_of",
     "observe",
@@ -357,8 +359,20 @@ def _condition(library: Library, reference: str, pack: str) -> WeatherCondition 
 # ── Stepping the chain ────────────────────────────────────────────────────────
 
 
+#: A region resolved once: itself, its climate, and the pack that climate was
+#: written in. The driver builds these at the top of a tick and hands them back
+#: down, because resolving a climate reference per region per tick is the one
+#: cost in this layer that would actually add up.
+Prepared = tuple[Region, "Climate | None", str]
+
+
 def sync(
-    library: Library, state: GameState, clock: Clock, pack: str, region_id: str
+    library: Library,
+    state: GameState,
+    clock: Clock,
+    pack: str,
+    region_id: str,
+    prepared: Prepared | None = None,
 ) -> bool:
     """Bring one region's weather up to the current tick.
 
@@ -378,6 +392,8 @@ def sync(
         The pack references resolve against.
     region_id : str
         Qualified region id.
+    prepared : tuple or None
+        The region, its climate, and the climate's pack, already resolved.
 
     Returns
     -------
@@ -385,7 +401,7 @@ def sync(
         Whether the condition in force changed. The caller narrates a change;
         weather that is doing what it was doing is not news.
     """
-    region, climate, home = climate_of(library, region_id)
+    region, climate, home = prepared or climate_of(library, region_id)
     if climate is None:
         return False
 
@@ -402,7 +418,7 @@ def sync(
     while here.stepped_to + step <= state.tick:
         here.stepped_to += step
         _refresh_temperature(here, stream, clock, region, climate)
-        _step(here, stream, clock, home, climate, library)
+        _step(here, stream, clock, home, climate, library, state, region_id)
 
     return here.condition != before
 
@@ -478,6 +494,8 @@ def _step(
     home: str,
     climate: Climate,
     library: Library,
+    state: GameState,
+    region_id: str,
 ) -> None:
     """Take one step of the chain, or one step of a running sequence.
 
@@ -495,6 +513,10 @@ def _step(
         The climate.
     library : Library
         The loaded content.
+    state : GameState
+        The playthrough, for the fronts crossing the map.
+    region_id : str
+        Qualified region id.
     """
     if here.sequence is not None:
         _advance_sequence(here, stream, clock, climate, library, home)
@@ -505,20 +527,27 @@ def _step(
         return
 
     season = clock.season(here.stepped_to).id
-    chosen = _next_condition(here, stream, climate, season)
+    bias = fronts.biases_for(library, state, region_id, here.stepped_to)
+    chosen = _next_condition(here, stream, climate, season, bias, library, home)
     _settle(here, stream, clock, climate, home, chosen, library)
 
 
 def _next_condition(
-    here: RegionWeather, stream: RandomStream, climate: Climate, season: str
+    here: RegionWeather,
+    stream: RandomStream,
+    climate: Climate,
+    season: str,
+    bias: dict[str, float],
+    library: Library,
+    home: str,
 ) -> str:
     """Draw what the sky becomes next.
 
-    The transition row supplies coherence and the season's weights supply
-    character, and they are multiplied rather than chosen between. A season
-    that lists any weights is treated as a whitelist: a condition it does not
-    mention weighs nothing, which is how a lowland climate keeps blizzards out
-    of summer without a second matrix.
+    Three multiplications, in one place. The transition row supplies
+    coherence, the season's weights supply character, and any front nearby
+    supplies direction. A season that lists any weights is treated as a
+    whitelist: a condition it does not mention weighs nothing, which is how a
+    lowland climate keeps blizzards out of summer without a second matrix.
 
     Parameters
     ----------
@@ -530,6 +559,14 @@ def _next_condition(
         The climate.
     season : str
         The season now.
+    bias : mapping
+        Qualified condition id to the multiplier the fronts near this region
+        are offering. A front over the region is what makes its storm likely;
+        a front one region away is the foreshadowing.
+    library : Library
+        The loaded content.
+    home : str
+        The pack the climate was written in.
 
     Returns
     -------
@@ -545,7 +582,9 @@ def _next_condition(
     seasonal = profile.weights if profile is not None else {}
 
     weights = {
-        candidate: weight * (seasonal.get(candidate, 0.0) if seasonal else 1.0)
+        candidate: weight
+        * (seasonal.get(candidate, 0.0) if seasonal else 1.0)
+        * bias.get(_qualify(library, home, candidate), 1.0)
         for candidate, weight in row.items()
     }
     if not any(value > 0 for value in weights.values()):

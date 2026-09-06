@@ -26,6 +26,7 @@ from mace.engine.events import (
     ChoiceOffered,
     ChoicesOffered,
     Event,
+    FrontMoved,
     GameOver,
     Moved,
     Narrated,
@@ -47,8 +48,17 @@ from mace.engine.state import (
     QuestStatus,
 )
 from mace.engine.stats import starting_pools
-from mace.engine.world import Clock, region_of, sync
-from mace.model import Calendar, Entity, Game, Location, Quest, Route, Scene
+from mace.engine.world import Clock, advance, region_of
+from mace.model import (
+    Calendar,
+    Entity,
+    Game,
+    Location,
+    Quest,
+    Route,
+    Scene,
+    WeatherFront,
+)
 from mace.model.calendar import STANDARD_YEAR
 from mace.model.text import DescriptionLine, SayLine
 
@@ -839,6 +849,7 @@ def _initial_state(library: Library, pack_id: str, game: Game, seed: str) -> Gam
         rng=RandomSource(seed),
         player=_instance_id(protagonist_id),
         tick=game.world.start_tick,
+        world_tick=game.world.start_tick,
         start_tick=game.world.start_tick,
     )
 
@@ -1041,11 +1052,16 @@ def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
 
 
 def _sync_weather(context: RuleContext, events: list[Event]) -> None:
-    """Bring the player's region up to now, and narrate a change in the sky.
+    """Bring the whole world up to now, and report what the player can see.
 
-    The one place the weather chain is stepped. Conditions and descriptions
-    only ever read, so a question about the world cannot change it — which is
-    what lets the same action log replay to the same events.
+    The one place the world is stepped. Conditions and descriptions only ever
+    read, so a question about the world cannot change it — which is what lets
+    the same action log replay to the same events.
+
+    What is narrated is deliberately narrower than what happened. Fronts move
+    across the whole map; the player learns about the one heading their way,
+    once, as an omen, and about the weather it eventually brings. There is no
+    system message and no pressure bar.
 
     Parameters
     ----------
@@ -1055,19 +1071,33 @@ def _sync_weather(context: RuleContext, events: list[Event]) -> None:
         Accumulator.
     """
     state = context.state
+    changes = advance(context.library, state, context.clock, state.pack)
+
     region = region_of(
         context.library,
         state.pack,
         context.here(),
         context.game.world.start_region,
     )
+    for front in [*changes.formed, *changes.faded]:
+        events.append(
+            FrontMoved(
+                front=front.id,
+                definition=front.kind,
+                phase="formed" if front in changes.formed else "faded",
+                at=front.at,
+                ahead=front.ahead,
+                intensity=round(front.intensity, 4),
+            )
+        )
+
     if region is None:
         return
 
-    changed = sync(context.library, state, context.clock, state.pack, region)
-    if not changed:
-        return
+    _read_the_sky(context, region, events)
 
+    if region not in changes.weather:
+        return
     observed = context.weather()
     if observed.condition is None:
         return
@@ -1087,6 +1117,44 @@ def _sync_weather(context: RuleContext, events: list[Event]) -> None:
             text=line.text if line is not None else None,
         )
     )
+
+
+def _read_the_sky(context: RuleContext, region: str, events: list[Event]) -> None:
+    """Narrate the omen of any front heading for the player's region.
+
+    This is the payoff of the whole layer: a line of ordinary prose, early
+    enough to act on, that lets a player decide to leave now and beat the
+    storm — or wait a day and lose one. Once per front, because a warning
+    repeated every tick is a notification, not an omen.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    region : str
+        The region the player is in.
+    events : list of Event
+        Accumulator.
+    """
+    state = context.state
+    for front in state.fronts:
+        if front.announced:
+            continue
+        if front.at == region:
+            # It is already here. The weather itself is the news now.
+            front.announced = True
+            continue
+        if front.ahead != region:
+            continue
+
+        front.announced = True
+        pack_id, local_id = front.kind.split(":", 1)
+        definition = context.library.pack(pack_id).weather_fronts.get(local_id)
+        if not isinstance(definition, WeatherFront):
+            continue
+        line = _first_matching(definition.omen, context)
+        if line is not None:
+            events.append(Narrated(line.text))
 
 
 def _location(location_id: str | None, context: RuleContext) -> Location | None:

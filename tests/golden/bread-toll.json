@@ -439,17 +439,6 @@
           "elapsed": 6
         },
         {
-          "kind": "weather.changed",
-          "region": "peasants-quest:the-marches",
-          "condition": "fantasy.core:overcast",
-          "name": "overcast",
-          "intensity": 0.1155,
-          "tags": [],
-          "visibility": 0.85,
-          "temperature": 0.83,
-          "text": "The sky closes over, flat and grey, with no weather in it yet."
-        },
-        {
           "kind": "moved",
           "from": "peasants-quest:troll-bridge",
           "to": "peasants-quest:hagans-castle",

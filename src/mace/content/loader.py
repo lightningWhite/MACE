@@ -235,6 +235,7 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
         scenes=built["scenes"],  # type: ignore[arg-type]
         quests=built["quests"],  # type: ignore[arg-type]
         weather_conditions=built["weatherConditions"],  # type: ignore[arg-type]
+        weather_fronts=built["weatherFronts"],  # type: ignore[arg-type]
         game=game,
         unmodelled=unmodelled,
     )

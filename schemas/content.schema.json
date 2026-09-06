@@ -47,6 +47,12 @@
         "$ref": "#/$defs/WeatherCondition"
       }
     },
+    "weatherFronts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WeatherFront"
+      }
+    },
     "scenes": {
       "type": "array",
       "items": {
@@ -525,7 +531,7 @@
     },
     "Climate": {
       "additionalProperties": false,
-      "description": "How weather behaves in the regions that use it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nseasons : mapping\n    Season id to what that season is like here. A season the calendar has\n    and the climate does not falls back to the transition matrix alone.\ntransitions : mapping\n    Condition to the relative weight of each condition it can become.\n    A condition absent from the matrix holds until something else moves\n    it, which is a reasonable reading of \"the author forgot\".\nstep_ticks : int\n    How many ticks pass between chain steps. One means the sky is\n    reconsidered every tick, which is twitchy at thirty minutes a tick;\n    two is an hour and reads much better.\nsequences : tuple of ClimateSequence\n    Authored progressions that override the chain while they run.\nfront_frequency : float\n    The chance per tick that a front spawns in a region with this\n    climate. Fronts arrive with layer 3.\nfreezing_point : float\n    The temperature below which a condition becomes its `freezesTo`.\nlapse_rate : float\n    Degrees lost per hundred units of a region's `elevation`. 0.65 is the\n    real world's; a game whose elevations are in feet, or whose\n    temperatures are in Fahrenheit, sets its own.",
+      "description": "How weather behaves in the regions that use it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nseasons : mapping\n    Season id to what that season is like here. A season the calendar has\n    and the climate does not falls back to the transition matrix alone.\ntransitions : mapping\n    Condition to the relative weight of each condition it can become.\n    A condition absent from the matrix holds until something else moves\n    it, which is a reasonable reading of \"the author forgot\".\nstep_ticks : int\n    How many ticks pass between chain steps. One means the sky is\n    reconsidered every tick, which is twitchy at thirty minutes a tick;\n    two is an hour and reads much better.\nsequences : tuple of ClimateSequence\n    Authored progressions that override the chain while they run.\nfronts : tuple of str\n    The kinds of front that can form in regions with this climate.\nfront_frequency : float\n    The chance **per tick** that a front forms somewhere on the map. One\n    roll is made across the whole world rather than one per region, so\n    adding regions does not silently make a game stormier. Two or three\n    fronts alive at once is plenty, so this wants to be small: at a\n    sixty-tick lifespan, 0.02 keeps about one and a bit in the air.\nfreezing_point : float\n    The temperature below which a condition becomes its `freezesTo`.\nlapse_rate : float\n    Degrees lost per hundred units of a region's `elevation`. 0.65 is the\n    real world's; a game whose elevations are in feet, or whose\n    temperatures are in Fahrenheit, sets its own.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -599,6 +605,22 @@
             ]
           },
           "title": "Sequences",
+          "type": "array"
+        },
+        "fronts": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Fronts",
           "type": "array"
         },
         "frontFrequency": {
@@ -3862,6 +3884,176 @@
         "id"
       ],
       "title": "WeatherCondition",
+      "type": "object"
+    },
+    "WeatherFront": {
+      "additionalProperties": false,
+      "description": "A kind of weather system that crosses the map.\n\nAttributes\n----------\nid, name : str\n    Identity. `name` is a phrase, not a noun \u2014 \"a storm out of the west\" \u2014\n    because it is read inside a sentence.\nextends : str or None\n    A front to inherit from.\nweight : float\n    How likely this kind is, relative to the other kinds a climate offers,\n    once the climate has decided a front spawns at all.\nwhen : tuple of Condition or None\n    Extra gating \u2014 a front that only forms in winter, or once the player\n    has crossed the range.\nseasons : tuple of str\n    Seasons this front can form in. Empty means any.\nintensity_range : tuple of float\n    The band a new front's intensity is drawn within. Intensity scales the\n    bias and decays as the front ages.\nspeed_ticks : int\n    Ticks spent in each region before hopping to the next.\nlifespan_ticks : int\n    How long the front lives, whatever its heading has left.\nhops : tuple of int\n    The smallest and largest number of regions a heading may cross.\nbiases : mapping\n    Multipliers on the transition weights of the region the front is over.\n    Above 1 makes a condition likelier, below 1 rarer, and the whole effect\n    scales with the front's current intensity.\nahead_bias : float\n    The share of the bias the region *ahead* of the front receives. This\n    is the foreshadowing dial: 0 means a front arrives without warning.\nomen : Description or None\n    What the player sees when the front is in the next region along and\n    coming this way. Ordinary narration, never a system message.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "weight": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "seasons": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Seasons",
+          "type": "array"
+        },
+        "intensityRange": {
+          "default": [
+            0.4,
+            1.0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Intensityrange",
+          "type": "array"
+        },
+        "speedTicks": {
+          "default": 6,
+          "exclusiveMinimum": 0,
+          "title": "Speedticks",
+          "type": "integer"
+        },
+        "lifespanTicks": {
+          "default": 54,
+          "exclusiveMinimum": 0,
+          "title": "Lifespanticks",
+          "type": "integer"
+        },
+        "hops": {
+          "default": [
+            2,
+            4
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Hops",
+          "type": "array"
+        },
+        "biases": {
+          "patternProperties": {
+            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "type": "number"
+            }
+          },
+          "title": "Biases",
+          "type": "object"
+        },
+        "aheadBias": {
+          "default": 0.3,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Aheadbias",
+          "type": "number"
+        },
+        "omen": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Omen"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "WeatherFront",
       "type": "object"
     },
     "WeatherIs": {

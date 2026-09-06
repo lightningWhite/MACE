@@ -60,6 +60,7 @@ from mace.model.entity import (
     Stat,
     StatModifier,
 )
+from mace.model.front import WeatherFront
 from mace.model.game import (
     CombatMode,
     Game,
@@ -140,6 +141,7 @@ __all__ = [
     "VersionRange",
     "Waypoint",
     "WeatherCondition",
+    "WeatherFront",
     "WorldSetup",
     "authored_value",
 ]

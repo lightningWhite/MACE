@@ -486,12 +486,18 @@ so a given seed always produces the same eruption tick. Celestial events need no
 randomness at all — they're a pure function of the calendar, which is why they
 can be forecast.
 
-The world sim is also **lazily evaluated for regions the player isn't in**. Only
-the player's region, the regions fronts occupy, and any region a quest is
-watching need to be stepped every tick; the rest are fast-forwarded from their
-stream position when first visited. This keeps a large map cheap without losing
-determinism, because each region's stream position is a pure function of the tick
-count.
+**Every region with a climate steps every tick.** The original design here was
+to step only the player's region and fast-forward the rest on demand, and the
+fast-forward is still in the code — a region that comes into existence
+mid-game begins its chain at the playthrough's opening tick and catches up, so
+looking at a place late gives the weather it would have had all along.
+
+But it cannot be the normal path once fronts exist. A front's bias is a fact
+about *when*: replaying a region's chain on day nine, under day nine's fronts,
+would give a different world from having stepped it on days one through eight
+under the fronts that were actually there. Stepping everything is a handful of
+weighted draws per tick at any map size an author will actually build, and it
+is correct. Determinism is worth more than the saving.
 
 ---
 

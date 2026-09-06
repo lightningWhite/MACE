@@ -26,6 +26,7 @@ from mace.model import (
     Route,
     Scene,
     WeatherCondition,
+    WeatherFront,
 )
 from mace.model.base import ContentModel
 
@@ -42,6 +43,7 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
     "regions": Region,
     "routes": Route,
     "weatherConditions": WeatherCondition,
+    "weatherFronts": WeatherFront,
     "scenes": Scene,
     "quests": Quest,
 }
@@ -58,6 +60,7 @@ SINGULAR: dict[str, str] = {
     "regions": "region",
     "routes": "route",
     "weatherConditions": "weather condition",
+    "weatherFronts": "weather front",
     "scenes": "scene",
     "quests": "quest",
 }
@@ -66,7 +69,10 @@ SINGULAR: dict[str, str] = {
 #: Collections whose Python field name differs from their content key, so
 #: `weatherConditions:` in YAML stays camelCase and the attribute stays
 #: snake_case like every other attribute in the codebase.
-_FIELDS: dict[str, str] = {"weatherConditions": "weather_conditions"}
+_FIELDS: dict[str, str] = {
+    "weatherConditions": "weather_conditions",
+    "weatherFronts": "weather_fronts",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,7 +86,7 @@ class LoadedPack:
     root : Path
         The directory it was read from.
     calendars, climates, entities, locations, regions, routes, scenes, quests,
-    weatherConditions : mapping
+    weatherConditions, weatherFronts : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
         The game manifest, for `kind: game` packs.
@@ -100,6 +106,7 @@ class LoadedPack:
     scenes: Mapping[str, Scene]
     quests: Mapping[str, Quest]
     weather_conditions: Mapping[str, WeatherCondition]
+    weather_fronts: Mapping[str, WeatherFront]
     game: Game | None
     unmodelled: Mapping[str, tuple[Any, ...]]
 

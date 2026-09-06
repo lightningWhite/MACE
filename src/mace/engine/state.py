@@ -27,6 +27,7 @@ __all__ = [
     "PendingChoices",
     "QuestState",
     "QuestStatus",
+    "FrontState",
     "RegionWeather",
 ]
 
@@ -111,6 +112,74 @@ class EntityState:
     flags: set[str] = field(default_factory=set)
     modifiers: list[Modifier] = field(default_factory=list)
     disposition: str | None = None
+
+
+@dataclass(slots=True)
+class FrontState:
+    """One weather system, somewhere on the map, on its way somewhere else.
+
+    A front is the only part of the weather model with a position and a
+    direction, which is what makes "the storm came down out of the north" a
+    true sentence rather than a flourish.
+
+    Attributes
+    ----------
+    id : str
+        Unique within the session — `westerly#3`.
+    kind : str
+        Qualified id of the front definition.
+    heading : tuple of str
+        The regions it crosses, in order. The first is where it formed.
+    position : int
+        Which region of the heading it is over now.
+    intensity : float
+        0 to 1 at birth, decaying with age. Scales the bias it applies.
+    born_at_tick : int
+        When it formed.
+    expires_at_tick : int
+        When it dies, whatever its heading has left.
+    hops_at_tick : int
+        When it next moves along.
+    announced : bool
+        Whether its omen has been shown to the player. Once is enough — a
+        front that keeps announcing itself stops being an omen and starts
+        being a notification.
+    """
+
+    id: str
+    kind: str
+    heading: tuple[str, ...]
+    position: int = 0
+    intensity: float = 1.0
+    born_at_tick: int = 0
+    expires_at_tick: int = 0
+    hops_at_tick: int = 0
+    announced: bool = False
+
+    @property
+    def at(self) -> str:
+        """The region the front is over.
+
+        Returns
+        -------
+        str
+            Qualified region id.
+        """
+        return self.heading[min(self.position, len(self.heading) - 1)]
+
+    @property
+    def ahead(self) -> str | None:
+        """The region it is heading for next.
+
+        Returns
+        -------
+        str or None
+            Qualified region id, or None when this is the last of its heading.
+        """
+        following = self.position + 1
+        if following >= len(self.heading):
+            return None
+        return self.heading[following]
 
 
 @dataclass(slots=True)
@@ -250,6 +319,10 @@ class GameState:
         Named random streams, positioned wherever play has taken them.
     tick : int
         World time. Its real-world meaning is `game.world.minutesPerTick`.
+    world_tick : int
+        How far the world simulation has been driven. Never behind `tick` by
+        the time a front-end sees anything; it exists so that an action which
+        moves the clock six ticks steps the world six times rather than once.
     start_tick : int
         The tick the playthrough opened on. A region the player has never
         visited begins its weather here and is fast-forwarded to now, so
@@ -269,6 +342,10 @@ class GameState:
         Qualified ids of scenes that have run, for `once`.
     weather : dict
         Qualified region id to what the sky is doing there.
+    fronts : list of FrontState
+        The weather systems currently crossing the map.
+    fronts_spawned : int
+        How many have ever formed, so instance ids stay unique.
     pending : PendingChoices or None
         Choices awaiting an answer.
     outcome : Outcome
@@ -282,6 +359,7 @@ class GameState:
     rng: RandomSource
     player: str
     tick: int = 0
+    world_tick: int = 0
     start_tick: int = 0
     entities: dict[str, EntityState] = field(default_factory=dict)
     quests: dict[str, QuestState] = field(default_factory=dict)
@@ -289,6 +367,8 @@ class GameState:
     revealed: set[str] = field(default_factory=set)
     played: set[str] = field(default_factory=set)
     weather: dict[str, RegionWeather] = field(default_factory=dict)
+    fronts: list[FrontState] = field(default_factory=list)
+    fronts_spawned: int = 0
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING
     ended_because: str | None = None
