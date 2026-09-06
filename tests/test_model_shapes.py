@@ -38,7 +38,7 @@ def test_python_field_names_are_accepted_too() -> None:
 def test_content_is_frozen() -> None:
     location = Location(id="fenmoor", name="Fenmoor")
     with pytest.raises(ValidationError):
-        location.name = "Somewhere else"  # type: ignore[misc]
+        location.name = "Somewhere else"
 
 
 def test_unknown_keys_are_rejected() -> None:

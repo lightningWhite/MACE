@@ -29,11 +29,15 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black>=24.0",
+    # Test-only: proves the generated schemas in `schemas/` actually accept the
+    # content they claim to. Never imported by the engine or the content layer.
+    "jsonschema>=4.20",
     "mypy>=1.10",
     "pre-commit>=3.7",
     "pytest>=8.0",
     "ruff>=0.5",
     "types-PyYAML",
+    "types-jsonschema",
 ]
 
 [project.scripts]

@@ -15,11 +15,11 @@ its text may be written as a bare string.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, Any
+from typing import Annotated, Any, ClassVar
 
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, WithJsonSchema
 
-from mace.model.base import ContentModel, shorthand
+from mace.model.base import ContentModel, one_or_many_schema
 from mace.model.conditions import Conditions
 
 __all__ = [
@@ -42,15 +42,10 @@ class DescriptionLine(ContentModel):
         the fallback.
     """
 
+    shorthand_field: ClassVar[str] = "text"
+
     text: str
     when: Conditions | None = None
-
-    _expand = shorthand("text")
-
-    def authored(self) -> Any:
-        if self.when is None:
-            return self.text
-        return super().authored()
 
 
 class SayLine(ContentModel):
@@ -67,16 +62,11 @@ class SayLine(ContentModel):
         presentation concern, but where the beats fall is the author's call.
     """
 
+    shorthand_field: ClassVar[str] = "text"
+
     text: str
     when: Conditions | None = None
     pause: bool = False
-
-    _expand = shorthand("text")
-
-    def authored(self) -> Any:
-        if self.when is None and not self.pause:
-            return self.text
-        return super().authored()
 
 
 def _as_lines(value: Any) -> Any:
@@ -98,7 +88,15 @@ def _as_lines(value: Any) -> Any:
 
 
 #: Conditional description text. A bare string is a single unconditional line.
-Description = Annotated[tuple[DescriptionLine, ...], BeforeValidator(_as_lines)]
+Description = Annotated[
+    tuple[DescriptionLine, ...],
+    BeforeValidator(_as_lines),
+    WithJsonSchema(one_or_many_schema("DescriptionLine")),
+]
 
 #: Scene narration, in order.
-Say = Annotated[tuple[SayLine, ...], BeforeValidator(_as_lines)]
+Say = Annotated[
+    tuple[SayLine, ...],
+    BeforeValidator(_as_lines),
+    WithJsonSchema(one_or_many_schema("SayLine")),
+]

@@ -1,8 +1,12 @@
 # 4. Schema Reference
 
-Field-by-field reference for every content type. Machine-readable JSON Schemas
-live in `schemas/` and are the enforcement mechanism; this document is the
-explanation.
+Field-by-field reference for every content type. This document is the
+explanation; the enforcement is in two places, and they cover different moments.
+`schemas/` validates a file **as authored** — `extends` present, inherited
+fields absent, merge sentinels intact — and is what CI and an author's editor
+read. The pydantic models in `src/mace/model/` validate the same content
+**after** the loader has resolved all of that. Both are generated from the same
+source: the models. See [`schemas/README.md`](../schemas/README.md).
 
 Notation: `?` marks an optional field. `[T]` is a list of `T`. `Ref` is a content
 id, bare or `pack:id` qualified.

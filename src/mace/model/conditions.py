@@ -17,9 +17,9 @@ docs/04-schema-reference.md and ADR-0003.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
-from pydantic import BeforeValidator, Field, model_validator
+from pydantic import BeforeValidator, Field, WithJsonSchema, model_validator
 
 from mace.model.base import (
     ContentModel,
@@ -29,7 +29,7 @@ from mace.model.base import (
     Name,
     Ref,
     Tag,
-    shorthand,
+    one_or_many_schema,
     unwrap_tagged,
 )
 
@@ -95,7 +95,7 @@ class StatCompare(ConditionPayload):
     value: float
 
 
-class QuestStage(ConditionPayload):
+class QuestAtStage(ConditionPayload):
     """A quest is currently at a given stage."""
 
     quest: Ref
@@ -105,89 +105,72 @@ class QuestStage(ConditionPayload):
 class QuestRef(ConditionPayload):
     """A quest has completed, or failed."""
 
+    shorthand_field: ClassVar[str] = "quest"
+
     quest: Ref
-
-    _expand = shorthand("quest")
-
-    def authored(self) -> Any:
-        return self.quest
 
 
 class Chance(ConditionPayload):
     """A weighted coin flip on the surrounding content's RNG stream."""
 
+    shorthand_field: ClassVar[str] = "probability"
+
     probability: float = Field(ge=0.0, le=1.0)
-
-    _expand = shorthand("probability")
-
-    def authored(self) -> Any:
-        return self.probability
 
 
 class ExprCondition(ConditionPayload):
     """An author expression, parsed at load time."""
 
+    shorthand_field: ClassVar[str] = "expression"
+
     expression: ExpressionField
 
-    _expand = shorthand("expression")
-
     def authored(self) -> Any:
+        # The one shorthand the base class cannot render: an expression's bare
+        # form is its source text, not the `{expr: ...}` wrapper a bare
+        # `Expression` renders to everywhere else.
         return self.expression.source
 
 
 class WeatherIs(ConditionPayload):
     """The current weather is one of these conditions."""
 
+    shorthand_field: ClassVar[str] = "conditions"
+
     conditions: tuple[Ref, ...] = Field(min_length=1)
-
-    _expand = shorthand("conditions")
-
-    def authored(self) -> Any:
-        return list(self.conditions)
 
 
 class WeatherTagIs(ConditionPayload):
     """The current weather carries one of these tags — `wet`, `cold`, `dark`."""
 
+    shorthand_field: ClassVar[str] = "tags"
+
     tags: tuple[Tag, ...] = Field(min_length=1)
-
-    _expand = shorthand("tags")
-
-    def authored(self) -> Any:
-        return list(self.tags)
 
 
 class DayPartIs(ConditionPayload):
     """The world clock is in one of these parts of the day."""
 
+    shorthand_field: ClassVar[str] = "parts"
+
     parts: tuple[Id, ...] = Field(min_length=1)
-
-    _expand = shorthand("parts")
-
-    def authored(self) -> Any:
-        return list(self.parts)
 
 
 class ConditionGroup(ConditionPayload):
     """A group of conditions, for `all` and `any`."""
 
+    shorthand_field: ClassVar[str] = "conditions"
+
     conditions: tuple[Condition, ...] = Field(min_length=1)
-
-    _expand = shorthand("conditions")
-
-    def authored(self) -> Any:
-        return [condition.authored() for condition in self.conditions]
 
 
 class ConditionNegation(ConditionPayload):
     """A single negated condition."""
 
+    shorthand_field: ClassVar[str] = "condition"
+    shorthand_wraps_mapping: ClassVar[bool] = True
+
     condition: Condition
-
-    _expand = shorthand("condition", bare_mapping=True)
-
-    def authored(self) -> Any:
-        return self.condition.authored()
 
 
 #: The typed body each condition tag expects.
@@ -203,7 +186,7 @@ CONDITION_PAYLOADS: dict[ConditionTag, type[ConditionPayload]] = {
     "not": ConditionNegation,
     "questComplete": QuestRef,
     "questFailed": QuestRef,
-    "questStage": QuestStage,
+    "questStage": QuestAtStage,
     "statAtLeast": StatCompare,
     "statAtMost": StatCompare,
     "weather": WeatherIs,
@@ -262,7 +245,11 @@ def _as_condition_list(value: Any) -> Any:
 
 
 #: A list of conditions, ANDed. Accepts a single condition as shorthand.
-Conditions = Annotated[tuple[Condition, ...], BeforeValidator(_as_condition_list)]
+Conditions = Annotated[
+    tuple[Condition, ...],
+    BeforeValidator(_as_condition_list),
+    WithJsonSchema(one_or_many_schema("Condition")),
+]
 
 ConditionGroup.model_rebuild()
 ConditionNegation.model_rebuild()

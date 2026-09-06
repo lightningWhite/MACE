@@ -1,0 +1,3226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/lightningWhite/MACE/main/schemas/content.schema.json",
+  "title": "MACE content file",
+  "description": "Any file in a pack other than its manifest. Every key is optional and a file may mix collections freely; the loader merges by id.",
+  "type": "object",
+  "properties": {
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Entity"
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Location"
+      }
+    },
+    "routes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Route"
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Scene"
+      }
+    },
+    "quests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Quest"
+      }
+    },
+    "game": {
+      "$ref": "#/$defs/Game"
+    },
+    "regions": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
+    },
+    "climates": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
+    },
+    "weatherConditions": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
+    },
+    "calendars": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 world simulation."
+    },
+    "terrains": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 travel."
+    },
+    "celestialEvents": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 world events."
+    },
+    "pressureEvents": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 world events."
+    },
+    "encounterTables": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 2 \u2014 encounters."
+    },
+    "combatProfiles": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 3 \u2014 combat."
+    },
+    "moves": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 3 \u2014 combat."
+    },
+    "backgrounds": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 4 \u2014 character creation."
+    },
+    "goods": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 5 \u2014 economy."
+    },
+    "markets": {
+      "type": "array",
+      "description": "Not yet modelled \u2014 phase 5 \u2014 economy."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "AdjustStat": {
+      "additionalProperties": false,
+      "description": "Move a stat or pool by a relative amount.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "stat": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Stat",
+          "type": "string"
+        },
+        "delta": {
+          "oneOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "expr": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expr"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Delta"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "stat",
+        "delta"
+      ],
+      "title": "AdjustStat",
+      "type": "object"
+    },
+    "AdvanceQuest": {
+      "additionalProperties": false,
+      "description": "Move a quest to a given stage, or to its next one.",
+      "properties": {
+        "quest": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Quest",
+          "type": "string"
+        },
+        "stage": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stage"
+        }
+      },
+      "required": [
+        "quest"
+      ],
+      "title": "AdvanceQuest",
+      "type": "object"
+    },
+    "AdvanceTime": {
+      "additionalProperties": false,
+      "description": "Push the world clock forward \u2014 resting, waiting, a long conversation.",
+      "properties": {
+        "ticks": {
+          "exclusiveMinimum": 0,
+          "title": "Ticks",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ticks"
+      ],
+      "title": "AdvanceTime",
+      "type": "object"
+    },
+    "ApplyModifier": {
+      "additionalProperties": false,
+      "description": "Apply a temporary stat modifier, the way a potion or a spell would.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "stat": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Stat",
+          "type": "string"
+        },
+        "add": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Add"
+        },
+        "mult": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mult"
+        },
+        "ticks": {
+          "exclusiveMinimum": 0,
+          "title": "Ticks",
+          "type": "integer"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        }
+      },
+      "required": [
+        "stat",
+        "ticks"
+      ],
+      "title": "ApplyModifier",
+      "type": "object"
+    },
+    "AtLocation": {
+      "additionalProperties": false,
+      "description": "The actor is at a location.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "location": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Location",
+          "type": "string"
+        }
+      },
+      "required": [
+        "location"
+      ],
+      "title": "AtLocation",
+      "type": "object"
+    },
+    "AttachAlly": {
+      "additionalProperties": false,
+      "description": "Add an entity to the player's party, optionally until a condition holds.",
+      "properties": {
+        "entity": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Entity",
+          "type": "string"
+        },
+        "until": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "entity"
+      ],
+      "title": "AttachAlly",
+      "type": "object"
+    },
+    "Chance": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number",
+      "description": "A weighted coin flip on the surrounding content's RNG stream."
+    },
+    "Choice": {
+      "additionalProperties": false,
+      "description": "One option offered to the player.\n\nAttributes\n----------\nprompt : str\n    The option text.\nwhen : tuple of Condition or None\n    Conditions required for the choice to be available.\nshow_when_unavailable : bool\n    Show the choice greyed out rather than hiding it, so the player can see\n    what they are missing.\nunavailable_hint : str or None\n    Why it is unavailable \u2014 \"(You'd need ten gold.)\"\ngoto : str or None\n    The scene this choice leads to.\neffects : tuple of Effect\n    Inline effects, for one-liners not worth a scene of their own.",
+      "properties": {
+        "prompt": {
+          "title": "Prompt",
+          "type": "string"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "showWhenUnavailable": {
+          "default": false,
+          "title": "Showwhenunavailable",
+          "type": "boolean"
+        },
+        "unavailableHint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailablehint"
+        },
+        "goto": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Goto"
+        },
+        "effects": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Effects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "title": "Choice",
+      "type": "object"
+    },
+    "ClimateOverride": {
+      "additionalProperties": false,
+      "description": "A hard weather override for one place.\n\nIt is always winter on the Dark Mountain, whatever the season is doing in\nthe lowlands. This bypasses the climate model rather than biasing it.\n\nAttributes\n----------\ncondition : str or None\n    The weather condition that always holds here.\nday_part : str or None\n    A day part that always holds here \u2014 for caves and deep forest.\nlocked : bool\n    Whether the override resists weather fronts moving through.",
+      "properties": {
+        "condition": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Condition"
+        },
+        "dayPart": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Daypart"
+        },
+        "locked": {
+          "default": false,
+          "title": "Locked",
+          "type": "boolean"
+        }
+      },
+      "title": "ClimateOverride",
+      "type": "object"
+    },
+    "CombatAssignment": {
+      "additionalProperties": false,
+      "description": "How an actor fights.\n\nAttributes\n----------\nprofile : str\n    The combat profile that supplies moves, patterns, and temperament.",
+      "properties": {
+        "profile": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Profile",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "title": "CombatAssignment",
+      "type": "object"
+    },
+    "Condition": {
+      "description": "One condition, written as a single-key mapping.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "all": {
+              "$ref": "#/$defs/ConditionGroup"
+            }
+          },
+          "required": [
+            "all"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "any": {
+              "$ref": "#/$defs/ConditionGroup"
+            }
+          },
+          "required": [
+            "any"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "atLocation": {
+              "$ref": "#/$defs/AtLocation"
+            }
+          },
+          "required": [
+            "atLocation"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "chance": {
+              "$ref": "#/$defs/Chance"
+            }
+          },
+          "required": [
+            "chance"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "dayPart": {
+              "$ref": "#/$defs/DayPartIs"
+            }
+          },
+          "required": [
+            "dayPart"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "expr": {
+              "$ref": "#/$defs/ExprCondition"
+            }
+          },
+          "required": [
+            "expr"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "flag": {
+              "$ref": "#/$defs/FlagIs"
+            }
+          },
+          "required": [
+            "flag"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "hasItem": {
+              "$ref": "#/$defs/HasItem"
+            }
+          },
+          "required": [
+            "hasItem"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "not": {
+              "$ref": "#/$defs/ConditionNegation"
+            }
+          },
+          "required": [
+            "not"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "questComplete": {
+              "$ref": "#/$defs/QuestRef"
+            }
+          },
+          "required": [
+            "questComplete"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "questFailed": {
+              "$ref": "#/$defs/QuestRef"
+            }
+          },
+          "required": [
+            "questFailed"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "questStage": {
+              "$ref": "#/$defs/QuestAtStage"
+            }
+          },
+          "required": [
+            "questStage"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "statAtLeast": {
+              "$ref": "#/$defs/StatCompare"
+            }
+          },
+          "required": [
+            "statAtLeast"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "statAtMost": {
+              "$ref": "#/$defs/StatCompare"
+            }
+          },
+          "required": [
+            "statAtMost"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "weather": {
+              "$ref": "#/$defs/WeatherIs"
+            }
+          },
+          "required": [
+            "weather"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "weatherTag": {
+              "$ref": "#/$defs/WeatherTagIs"
+            }
+          },
+          "required": [
+            "weatherTag"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ConditionGroup": {
+      "items": {
+        "$ref": "#/$defs/Condition"
+      },
+      "minItems": 1,
+      "type": "array",
+      "description": "A group of conditions, for `all` and `any`."
+    },
+    "ConditionNegation": {
+      "$ref": "#/$defs/Condition",
+      "description": "A single negated condition."
+    },
+    "ContainerProps": {
+      "additionalProperties": false,
+      "description": "The `kind: container` block.\n\nAttributes\n----------\ncapacity : int or None\n    How much it holds. `None` means no limit.\ncontents : tuple of InventoryEntry\n    What is inside at game start.",
+      "properties": {
+        "capacity": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capacity"
+        },
+        "contents": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/InventoryEntry"
+          },
+          "title": "Contents",
+          "type": "array"
+        }
+      },
+      "title": "ContainerProps",
+      "type": "object"
+    },
+    "Damage": {
+      "additionalProperties": false,
+      "description": "A weapon's damage range.\n\nAttributes\n----------\nmin, max : float\n    The bounds of a single hit, before stats and gear.\ntype : str\n    Author-defined: `slash`, `pierce`, `plasma`.",
+      "properties": {
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ],
+      "title": "Damage",
+      "type": "object"
+    },
+    "DayPartIs": {
+      "items": {
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "description": "The world clock is in one of these parts of the day."
+    },
+    "DescriptionLine": {
+      "description": "One candidate line of description.\n\nAttributes\n----------\ntext : str\n    What the player reads.\nwhen : tuple of Condition or None\n    Conditions that must hold for this line to be chosen. `None` makes it\n    the fallback.",
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "One candidate line of description.\n\nAttributes\n----------\ntext : str\n    What the player reads.\nwhen : tuple of Condition or None\n    Conditions that must hold for this line to be chosen. `None` makes it\n    the fallback."
+        },
+        {
+          "additionalProperties": false,
+          "description": "May be written as the bare value shown, which is the same as the mapping form with every other field left out.",
+          "properties": {
+            "text": {
+              "title": "Text",
+              "type": "string"
+            },
+            "when": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Condition"
+                },
+                {
+                  "items": {
+                    "$ref": "#/$defs/Condition"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "When"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "title": "DescriptionLine",
+          "type": "object"
+        }
+      ]
+    },
+    "DismissAlly": {
+      "additionalProperties": false,
+      "description": "Remove an entity from the player's party.",
+      "properties": {
+        "entity": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Entity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity"
+      ],
+      "title": "DismissAlly",
+      "type": "object"
+    },
+    "Effect": {
+      "description": "One effect, written as a single-key mapping.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "adjustStat": {
+              "$ref": "#/$defs/AdjustStat"
+            }
+          },
+          "required": [
+            "adjustStat"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "advanceQuest": {
+              "$ref": "#/$defs/AdvanceQuest"
+            }
+          },
+          "required": [
+            "advanceQuest"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "advanceTime": {
+              "$ref": "#/$defs/AdvanceTime"
+            }
+          },
+          "required": [
+            "advanceTime"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "applyModifier": {
+              "$ref": "#/$defs/ApplyModifier"
+            }
+          },
+          "required": [
+            "applyModifier"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "attachAlly": {
+              "$ref": "#/$defs/AttachAlly"
+            }
+          },
+          "required": [
+            "attachAlly"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "dismissAlly": {
+              "$ref": "#/$defs/DismissAlly"
+            }
+          },
+          "required": [
+            "dismissAlly"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "endGame": {
+              "$ref": "#/$defs/NoArguments"
+            }
+          },
+          "required": [
+            "endGame"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "giveItem": {
+              "$ref": "#/$defs/ItemTransfer"
+            }
+          },
+          "required": [
+            "giveItem"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "move": {
+              "$ref": "#/$defs/Move"
+            }
+          },
+          "required": [
+            "move"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "playScene": {
+              "$ref": "#/$defs/PlayScene"
+            }
+          },
+          "required": [
+            "playScene"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "restart": {
+              "$ref": "#/$defs/NoArguments"
+            }
+          },
+          "required": [
+            "restart"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reveal": {
+              "$ref": "#/$defs/Reveal"
+            }
+          },
+          "required": [
+            "reveal"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "setDisposition": {
+              "$ref": "#/$defs/SetDisposition"
+            }
+          },
+          "required": [
+            "setDisposition"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "setFlag": {
+              "$ref": "#/$defs/SetFlag"
+            }
+          },
+          "required": [
+            "setFlag"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "setStat": {
+              "$ref": "#/$defs/SetStat"
+            }
+          },
+          "required": [
+            "setStat"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "setVar": {
+              "$ref": "#/$defs/SetVar"
+            }
+          },
+          "required": [
+            "setVar"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "startCombat": {
+              "$ref": "#/$defs/StartCombat"
+            }
+          },
+          "required": [
+            "startCombat"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "takeItem": {
+              "$ref": "#/$defs/ItemTransfer"
+            }
+          },
+          "required": [
+            "takeItem"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "transferContents": {
+              "$ref": "#/$defs/TransferContents"
+            }
+          },
+          "required": [
+            "transferContents"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Entity": {
+      "additionalProperties": false,
+      "description": "Anything the world contains that content can refer to by id.\n\nExtending another definition makes name optional here \u2014 the parent supplies them.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "kind": {
+          "default": "fixture",
+          "enum": [
+            "actor",
+            "item",
+            "fixture",
+            "container",
+            "portal"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "playable": {
+          "default": false,
+          "title": "Playable",
+          "type": "boolean"
+        },
+        "visible": {
+          "default": true,
+          "title": "Visible",
+          "type": "boolean"
+        },
+        "stats": {
+          "anyOf": [
+            {
+              "patternProperties": {
+                "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
+                  "$ref": "#/$defs/Stat"
+                }
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stats"
+        },
+        "pools": {
+          "anyOf": [
+            {
+              "patternProperties": {
+                "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pools"
+        },
+        "inventory": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/InventoryEntry"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Inventory",
+          "type": "array"
+        },
+        "equipment": {
+          "anyOf": [
+            {
+              "patternProperties": {
+                "^[a-z][a-zA-Z0-9]*$": {
+                  "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Equipment"
+        },
+        "skills": {
+          "anyOf": [
+            {
+              "patternProperties": {
+                "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skills"
+        },
+        "disposition": {
+          "anyOf": [
+            {
+              "enum": [
+                "friendly",
+                "neutral",
+                "hostile"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Disposition"
+        },
+        "combat": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CombatAssignment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "env": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EnvResponse"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Env",
+          "type": "array"
+        },
+        "scenes": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Scenes",
+          "type": "array"
+        },
+        "flags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "item": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ItemProps"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "container": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContainerProps"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "portal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PortalProps"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "custom": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Custom"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Entity",
+      "type": "object",
+      "if": {
+        "not": {
+          "required": [
+            "extends"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "EnvResponse": {
+      "additionalProperties": false,
+      "description": "How an entity answers the weather, the dark, or the season.\n\nAttributes\n----------\nwhen : tuple of Condition\n    When this response applies.\nmodify : tuple of StatModifier\n    Adjustments held for as long as the condition does.\neffects : tuple of Effect\n    One-shot effects fired on entering the condition.",
+      "properties": {
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "When"
+        },
+        "modify": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/StatModifier"
+          },
+          "title": "Modify",
+          "type": "array"
+        },
+        "effects": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Effects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "when"
+      ],
+      "title": "EnvResponse",
+      "type": "object"
+    },
+    "Exit": {
+      "additionalProperties": false,
+      "description": "A way out of a location.\n\nAttributes\n----------\nto : str\n    The destination location.\nroute : str or None\n    The route taken. Omitted, the loader synthesizes a one-tick route.\nlabel : str or None\n    Overrides the default \"Travel to X\".\nwhen : tuple of Condition or None\n    Conditions gating the exit \u2014 a locked gate, a quest requirement.\nhidden_until : tuple of Condition or None\n    Conditions revealing a secret passage.",
+      "properties": {
+        "to": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "To",
+          "type": "string"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "hiddenUntil": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hiddenuntil"
+        }
+      },
+      "required": [
+        "to"
+      ],
+      "title": "Exit",
+      "type": "object"
+    },
+    "ExprCondition": {
+      "description": "An author expression, parsed at load time.",
+      "type": "string"
+    },
+    "FlagIs": {
+      "additionalProperties": false,
+      "description": "An entity's boolean flag has a given value.",
+      "properties": {
+        "entity": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Entity",
+          "type": "string"
+        },
+        "flag": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Flag",
+          "type": "string"
+        },
+        "is": {
+          "default": true,
+          "title": "Is",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "entity",
+        "flag"
+      ],
+      "title": "FlagIs",
+      "type": "object"
+    },
+    "Game": {
+      "additionalProperties": false,
+      "description": "The contents of a game pack's `game.yml`, under its `game:` key.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "tagline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tagline"
+        },
+        "authors": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Authors",
+          "type": "array"
+        },
+        "difficulty": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Difficulty"
+        },
+        "estimatedMinutes": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimatedminutes"
+        },
+        "introduction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SayLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/SayLine"
+              },
+              "type": "array"
+            }
+          ],
+          "default": [],
+          "title": "Introduction"
+        },
+        "player": {
+          "$ref": "#/$defs/PlayerSetup"
+        },
+        "world": {
+          "$ref": "#/$defs/WorldSetup",
+          "default": {}
+        },
+        "rules": {
+          "$ref": "#/$defs/GameRules",
+          "default": {}
+        },
+        "quests": {
+          "default": [],
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Quests",
+          "type": "array"
+        },
+        "winConditions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            }
+          ],
+          "default": [],
+          "title": "Winconditions"
+        },
+        "loseConditions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            }
+          ],
+          "default": [],
+          "title": "Loseconditions"
+        },
+        "onWin": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Onwin"
+        },
+        "onLose": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Onlose"
+        }
+      },
+      "required": [
+        "name",
+        "player"
+      ],
+      "title": "Game",
+      "type": "object"
+    },
+    "GameRules": {
+      "additionalProperties": false,
+      "description": "The structural choices a game makes about its own simulation.\n\nAttributes\n----------\nvital_pool : str\n    The pool whose exhaustion means death.\neffort_pool : str\n    The pool combat actions are paid from.\ncombat_mode : {'reflex', 'tactical', 'auto'}\n    The default combat presentation. The player may override it.\ndeath_is_permanent : bool\n    Whether death ends the playthrough or returns to a scene.\nsurvival : tuple of str\n    Which survival systems are on: `exposure`, `rest`, `hunger`, `thirst`.\n    Empty disables them all.\neconomy : {'simple', 'market'}\n    `simple` prices from each item's `value`; `market` runs the full\n    supply-and-demand model.",
+      "properties": {
+        "vitalPool": {
+          "default": "hitpoints",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Vitalpool",
+          "type": "string"
+        },
+        "effortPool": {
+          "default": "stamina",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Effortpool",
+          "type": "string"
+        },
+        "combatMode": {
+          "default": "tactical",
+          "enum": [
+            "reflex",
+            "tactical",
+            "auto"
+          ],
+          "title": "Combatmode",
+          "type": "string"
+        },
+        "deathIsPermanent": {
+          "default": false,
+          "title": "Deathispermanent",
+          "type": "boolean"
+        },
+        "survival": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Survival",
+          "type": "array"
+        },
+        "economy": {
+          "default": "simple",
+          "enum": [
+            "simple",
+            "market"
+          ],
+          "title": "Economy",
+          "type": "string"
+        }
+      },
+      "title": "GameRules",
+      "type": "object"
+    },
+    "HasItem": {
+      "additionalProperties": false,
+      "description": "The actor carries at least `qty` of an item.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "item": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Item",
+          "type": "string"
+        },
+        "qty": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Qty",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "title": "HasItem",
+      "type": "object"
+    },
+    "InventoryEntry": {
+      "additionalProperties": false,
+      "description": "A stack of one item.\n\nAttributes\n----------\nitem : str\n    Reference to the item entity.\nqty : int\n    How many.",
+      "properties": {
+        "item": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Item",
+          "type": "string"
+        },
+        "qty": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Qty",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "title": "InventoryEntry",
+      "type": "object"
+    },
+    "ItemProps": {
+      "additionalProperties": false,
+      "description": "The `kind: item` block.\n\nAttributes\n----------\nweight : float or None\n    Carried weight.\nstackable : bool or None\n    Whether copies collapse into one inventory entry.\nequip_slot : str or None\n    Which slot it occupies when equipped.\ndamage : Damage or None\n    For weapons.\narmor : float or None\n    Damage reduction when worn.\nmoves : tuple of str\n    Combat moves this item grants its wielder.\nuse : ItemUse or None\n    What using it from the inventory does.\nvalue : float or None\n    Base trade value, the anchor a market prices from.",
+      "properties": {
+        "weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weight"
+        },
+        "stackable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stackable"
+        },
+        "equipSlot": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-zA-Z0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Equipslot"
+        },
+        "damage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Damage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "armor": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Armor"
+        },
+        "moves": {
+          "default": [],
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "use": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ItemUse"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "ItemProps",
+      "type": "object"
+    },
+    "ItemTransfer": {
+      "additionalProperties": false,
+      "description": "Give an actor items, or take them away.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "item": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Item",
+          "type": "string"
+        },
+        "qty": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Qty",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "title": "ItemTransfer",
+      "type": "object"
+    },
+    "ItemUse": {
+      "additionalProperties": false,
+      "description": "What happens when an item is used from the inventory.\n\nAttributes\n----------\neffects : tuple of Effect\n    What using it does.\nconsumed : bool\n    Whether the item is spent in the using.",
+      "properties": {
+        "effects": {
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "minItems": 1,
+          "title": "Effects",
+          "type": "array"
+        },
+        "consumed": {
+          "default": false,
+          "title": "Consumed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "effects"
+      ],
+      "title": "ItemUse",
+      "type": "object"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "description": "A place in the world.\n\nExtending another definition makes name optional here \u2014 the parent supplies them.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Region"
+        },
+        "biome": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Biome"
+        },
+        "climate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClimateOverride"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "indoors": {
+          "default": false,
+          "title": "Indoors",
+          "type": "boolean"
+        },
+        "visible": {
+          "default": true,
+          "title": "Visible",
+          "type": "boolean"
+        },
+        "discovered": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Discovered"
+        },
+        "entities": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Entities",
+          "type": "array"
+        },
+        "scenes": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Scenes",
+          "type": "array"
+        },
+        "onArrive": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Onarrive"
+        },
+        "encounters": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Encounters"
+        },
+        "safe": {
+          "default": false,
+          "title": "Safe",
+          "type": "boolean"
+        },
+        "exits": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Exit"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Exits",
+          "type": "array"
+        },
+        "mapPosition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MapPosition"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "flags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Location",
+      "type": "object",
+      "if": {
+        "not": {
+          "required": [
+            "extends"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "MapPosition": {
+      "additionalProperties": false,
+      "description": "Where a location sits on the map view.\n\nAttributes\n----------\nx, y : float\n    Map coordinates. Optional overall \u2014 the layout engine can infer them.",
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "MapPosition",
+      "type": "object"
+    },
+    "Move": {
+      "additionalProperties": false,
+      "description": "Put an actor somewhere else, without travelling there.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "to": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "to"
+      ],
+      "title": "Move",
+      "type": "object"
+    },
+    "NoArguments": {
+      "additionalProperties": false,
+      "description": "An effect that takes nothing: `{restart: {}}`, `{endGame: {}}`.",
+      "properties": {},
+      "title": "NoArguments",
+      "type": "object"
+    },
+    "PlayScene": {
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "type": "string",
+      "description": "Run another scene."
+    },
+    "PlayerSetup": {
+      "additionalProperties": false,
+      "description": "Who the player is and where they start.\n\nAttributes\n----------\nentity : str\n    An entity with `playable: true`.\nstart_location : str\n    Where the game opens.\ncreation_points : int\n    Points the player may spend on stats marked `customizable`.\nbackgrounds : tuple of str\n    Optional starting variants offered at character creation.",
+      "properties": {
+        "entity": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Entity",
+          "type": "string"
+        },
+        "startLocation": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Startlocation",
+          "type": "string"
+        },
+        "creationPoints": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Creationpoints",
+          "type": "integer"
+        },
+        "backgrounds": {
+          "default": [],
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Backgrounds",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entity",
+        "startLocation"
+      ],
+      "title": "PlayerSetup",
+      "type": "object"
+    },
+    "PortalProps": {
+      "additionalProperties": false,
+      "description": "The `kind: portal` block.\n\nAttributes\n----------\nroute : str\n    The route this portal gates.\nrequires_item : str or None\n    A key, a writ, a password token.",
+      "properties": {
+        "route": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Route",
+          "type": "string"
+        },
+        "requiresItem": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requiresitem"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "title": "PortalProps",
+      "type": "object"
+    },
+    "Quest": {
+      "additionalProperties": false,
+      "description": "An objective with stages, a journal, and consequences.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "hiddenUntil": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hiddenuntil"
+        },
+        "stages": {
+          "items": {
+            "$ref": "#/$defs/QuestStage"
+          },
+          "minItems": 1,
+          "title": "Stages",
+          "type": "array"
+        },
+        "onComplete": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Oncomplete",
+          "type": "array"
+        },
+        "onFail": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Onfail",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "stages"
+      ],
+      "title": "Quest",
+      "type": "object"
+    },
+    "QuestAtStage": {
+      "additionalProperties": false,
+      "description": "A quest is currently at a given stage.",
+      "properties": {
+        "quest": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Quest",
+          "type": "string"
+        },
+        "stage": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Stage",
+          "type": "string"
+        }
+      },
+      "required": [
+        "quest",
+        "stage"
+      ],
+      "title": "QuestAtStage",
+      "type": "object"
+    },
+    "QuestRef": {
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "type": "string",
+      "description": "A quest has completed, or failed."
+    },
+    "QuestStage": {
+      "additionalProperties": false,
+      "description": "One step of a quest.\n\nAttributes\n----------\nid : str\n    Stage id, referenced by the `questStage` condition.\njournal : str\n    What the player reads in the quest log while this stage is current.\ncomplete : tuple of Condition\n    Conditions that advance to the next stage.\nfail : tuple of Condition or None\n    Conditions that fail the whole quest.\non_enter : tuple of Effect\n    Effects fired when this stage becomes current.\ndeadline_ticks : int or None\n    Shorthand for a tick-count fail condition.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "journal": {
+          "title": "Journal",
+          "type": "string"
+        },
+        "complete": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Complete"
+        },
+        "fail": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fail"
+        },
+        "onEnter": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Onenter",
+          "type": "array"
+        },
+        "deadlineTicks": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deadlineticks"
+        }
+      },
+      "required": [
+        "id",
+        "journal",
+        "complete"
+      ],
+      "title": "QuestStage",
+      "type": "object"
+    },
+    "Reveal": {
+      "additionalProperties": false,
+      "description": "Make a location known, so it appears on the map and in travel menus.",
+      "properties": {
+        "location": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Location",
+          "type": "string"
+        }
+      },
+      "required": [
+        "location"
+      ],
+      "title": "Reveal",
+      "type": "object"
+    },
+    "Route": {
+      "additionalProperties": false,
+      "description": "A connection between two locations, with a length.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "from": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "From",
+          "type": "string"
+        },
+        "to": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "To",
+          "type": "string"
+        },
+        "bidirectional": {
+          "default": true,
+          "title": "Bidirectional",
+          "type": "boolean"
+        },
+        "ticks": {
+          "exclusiveMinimum": 0,
+          "title": "Ticks",
+          "type": "integer"
+        },
+        "terrain": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Terrain"
+        },
+        "waypoints": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Waypoint"
+          },
+          "title": "Waypoints",
+          "type": "array"
+        },
+        "encounters": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Encounters"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "legDescriptions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Legdescriptions"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "dangerLevel": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dangerlevel"
+        }
+      },
+      "required": [
+        "id",
+        "from",
+        "to",
+        "ticks"
+      ],
+      "title": "Route",
+      "type": "object"
+    },
+    "SayLine": {
+      "description": "One line of scene narration.\n\nAttributes\n----------\ntext : str\n    What the player reads.\nwhen : tuple of Condition or None\n    Conditions that must hold for this line to be spoken at all.\npause : bool\n    Whether the front-end waits for the player before going on. Pacing is a\n    presentation concern, but where the beats fall is the author's call.",
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "One line of scene narration.\n\nAttributes\n----------\ntext : str\n    What the player reads.\nwhen : tuple of Condition or None\n    Conditions that must hold for this line to be spoken at all.\npause : bool\n    Whether the front-end waits for the player before going on. Pacing is a\n    presentation concern, but where the beats fall is the author's call."
+        },
+        {
+          "additionalProperties": false,
+          "description": "May be written as the bare value shown, which is the same as the mapping form with every other field left out.",
+          "properties": {
+            "text": {
+              "title": "Text",
+              "type": "string"
+            },
+            "when": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Condition"
+                },
+                {
+                  "items": {
+                    "$ref": "#/$defs/Condition"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "When"
+            },
+            "pause": {
+              "default": false,
+              "title": "Pause",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "title": "SayLine",
+          "type": "object"
+        }
+      ]
+    },
+    "Scene": {
+      "additionalProperties": false,
+      "description": "A unit of interaction: some narration, some changes, and what comes next.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt"
+        },
+        "visible": {
+          "default": true,
+          "title": "Visible",
+          "type": "boolean"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "say": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SayLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/SayLine"
+              },
+              "type": "array"
+            }
+          ],
+          "default": [],
+          "title": "Say"
+        },
+        "effects": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Effects",
+          "type": "array"
+        },
+        "choices": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Choice"
+          },
+          "title": "Choices",
+          "type": "array"
+        },
+        "goto": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Goto"
+        },
+        "else": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Else"
+        },
+        "once": {
+          "default": false,
+          "title": "Once",
+          "type": "boolean"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Scene",
+      "type": "object"
+    },
+    "SetDisposition": {
+      "additionalProperties": false,
+      "description": "Change how an entity feels about the player.",
+      "properties": {
+        "actor": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "to": {
+          "enum": [
+            "friendly",
+            "neutral",
+            "hostile"
+          ],
+          "title": "To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "actor",
+        "to"
+      ],
+      "title": "SetDisposition",
+      "type": "object"
+    },
+    "SetFlag": {
+      "additionalProperties": false,
+      "description": "Set or clear a boolean flag on an entity.",
+      "properties": {
+        "entity": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Entity",
+          "type": "string"
+        },
+        "flag": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Flag",
+          "type": "string"
+        },
+        "value": {
+          "default": true,
+          "title": "Value",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "entity",
+        "flag"
+      ],
+      "title": "SetFlag",
+      "type": "object"
+    },
+    "SetStat": {
+      "additionalProperties": false,
+      "description": "Set a stat or pool to an absolute value.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "stat": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Stat",
+          "type": "string"
+        },
+        "value": {
+          "oneOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "expr": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expr"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "stat",
+        "value"
+      ],
+      "title": "SetStat",
+      "type": "object"
+    },
+    "SetVar": {
+      "additionalProperties": false,
+      "description": "Set a game variable, readable from expressions as `vars.name`.",
+      "properties": {
+        "name": {
+          "pattern": "^[a-z][a-zA-Z0-9]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "oneOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "expr": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expr"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "title": "SetVar",
+      "type": "object"
+    },
+    "StartCombat": {
+      "additionalProperties": false,
+      "description": "Hand control to the combat system.",
+      "properties": {
+        "against": {
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Against",
+          "type": "array"
+        },
+        "canFlee": {
+          "default": true,
+          "title": "Canflee",
+          "type": "boolean"
+        },
+        "onFlee": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Onflee"
+        }
+      },
+      "required": [
+        "against"
+      ],
+      "title": "StartCombat",
+      "type": "object"
+    },
+    "Stat": {
+      "additionalProperties": false,
+      "description": "A single ability or pool, before anything acts on it.\n\nAttributes\n----------\nbase : float\n    The value with nothing acting on it.\nmax : float or None\n    Cap. Defaults to 100 for abilities; pools should set it explicitly.\nmin : float\n    Floor. Defaults to 0.\ncustomizable : bool\n    Whether the player may spend creation points here at game start.\ngrowth : {'none', 'slow', 'normal', 'fast'}\n    How fast the stat improves through use.",
+      "properties": {
+        "base": {
+          "title": "Base",
+          "type": "number"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "min": {
+          "default": 0.0,
+          "title": "Min",
+          "type": "number"
+        },
+        "customizable": {
+          "default": false,
+          "title": "Customizable",
+          "type": "boolean"
+        },
+        "growth": {
+          "default": "none",
+          "enum": [
+            "none",
+            "slow",
+            "normal",
+            "fast"
+          ],
+          "title": "Growth",
+          "type": "string"
+        }
+      },
+      "required": [
+        "base"
+      ],
+      "title": "Stat",
+      "type": "object"
+    },
+    "StatCompare": {
+      "additionalProperties": false,
+      "description": "An actor's effective stat is at or beyond a threshold.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "stat": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Stat",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "stat",
+        "value"
+      ],
+      "title": "StatCompare",
+      "type": "object"
+    },
+    "StatModifier": {
+      "additionalProperties": false,
+      "description": "An adjustment to a stat while some condition holds.\n\nAttributes\n----------\nstat : str\n    Which stat is affected.\nadd : float or None\n    A flat adjustment.\nmult : float or None\n    A multiplier, applied after `add`.",
+      "properties": {
+        "stat": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Stat",
+          "type": "string"
+        },
+        "add": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Add"
+        },
+        "mult": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mult"
+        }
+      },
+      "required": [
+        "stat"
+      ],
+      "title": "StatModifier",
+      "type": "object"
+    },
+    "TransferContents": {
+      "additionalProperties": false,
+      "description": "Move everything in one container or actor into another.",
+      "properties": {
+        "from": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "From",
+          "type": "string"
+        },
+        "to": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "title": "TransferContents",
+      "type": "object"
+    },
+    "Waypoint": {
+      "additionalProperties": false,
+      "description": "A place passed through on the way to somewhere else.\n\nAttributes\n----------\nlocation : str\n    A real location definition \u2014 waypoints are locations.\nat_tick : int or None\n    How far into the journey it is reached. Defaults to even spacing.\nstop_if : tuple of Condition or None\n    Conditions that force a stop here, such as a bridge with a troll on it.\nencounters : str or None\n    A waypoint-specific table, rolled in addition to the route's.",
+      "properties": {
+        "location": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Location",
+          "type": "string"
+        },
+        "atTick": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attick"
+        },
+        "stopIf": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stopif"
+        },
+        "encounters": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Encounters"
+        }
+      },
+      "required": [
+        "location"
+      ],
+      "title": "Waypoint",
+      "type": "object"
+    },
+    "WeatherIs": {
+      "items": {
+        "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "description": "The current weather is one of these conditions."
+    },
+    "WeatherTagIs": {
+      "items": {
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "description": "The current weather carries one of these tags \u2014 `wet`, `cold`, `dark`."
+    },
+    "WorldSetup": {
+      "additionalProperties": false,
+      "description": "How time and place are configured at the start of a playthrough.\n\nAttributes\n----------\nminutes_per_tick : int\n    How much world time one tick represents. Sets the pace of everything:\n    travel, weather, hunger, the seven days you have left.\ncalendar : str or None\n    The calendar governing days, seasons, and day parts.\nstart_tick : int\n    The tick the game opens on \u2014 dawn of day one, or mid-morning.\nstart_season : str or None\n    Which season the game opens in.\nstart_region : str or None\n    Which region seeds the weather model.",
+      "properties": {
+        "minutesPerTick": {
+          "default": 30,
+          "exclusiveMinimum": 0,
+          "title": "Minutespertick",
+          "type": "integer"
+        },
+        "calendar": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calendar"
+        },
+        "startTick": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Starttick",
+          "type": "integer"
+        },
+        "startSeason": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startseason"
+        },
+        "startRegion": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startregion"
+        }
+      },
+      "title": "WorldSetup",
+      "type": "object"
+    }
+  }
+}

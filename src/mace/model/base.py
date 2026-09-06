@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import difflib
 from collections.abc import Mapping, Sequence
-from typing import Annotated, Any
+from typing import Annotated, Any, ClassVar
 
 from pydantic import (
     BaseModel,
@@ -44,7 +44,7 @@ __all__ = [
     "VersionRange",
     "Version",
     "authored_value",
-    "shorthand",
+    "one_or_many_schema",
     "unwrap_tagged",
 ]
 
@@ -118,6 +118,31 @@ class ContentModel(BaseModel):
         validate_default=True,
     )
 
+    #: When set, this model accepts a bare value in place of its mapping, and
+    #: renders back to that bare value when every other field is at its
+    #: default. `{chance: 0.15}` rather than `{chance: {probability: 0.15}}`;
+    #: a description line that is only its own text.
+    shorthand_field: ClassVar[str | None] = None
+
+    #: Whether the bare value may itself be a mapping, as it is for `not`,
+    #: whose shorthand body is another condition. When false a mapping is taken
+    #: to be the full form and passed through untouched, which is what lets
+    #: `{text: ..., when: ...}` coexist with a bare `"..."`.
+    shorthand_wraps_mapping: ClassVar[bool] = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _expand_shorthand(cls, value: Any) -> Any:
+        """Expand this model's bare authored form into its mapping form."""
+        field = cls.shorthand_field
+        if field is None:
+            return value
+        if isinstance(value, Mapping) and (
+            set(value) <= {field} or not cls.shorthand_wraps_mapping
+        ):
+            return value
+        return {field: value}
+
     def authored(self) -> Any:
         """Render this model back into the shape its author wrote.
 
@@ -132,6 +157,10 @@ class ContentModel(BaseModel):
         object
             A mapping of authored keys to authored values.
         """
+        shorthand = type(self).shorthand_field
+        if shorthand is not None and self._renders_as_shorthand():
+            return authored_value(getattr(self, shorthand))
+
         rendered: dict[str, Any] = {}
         for name, field in type(self).model_fields.items():
             value = getattr(self, name)
@@ -141,6 +170,26 @@ class ContentModel(BaseModel):
                     continue
             rendered[field.alias or name] = authored_value(value)
         return rendered
+
+    def _renders_as_shorthand(self) -> bool:
+        """Whether this instance carries nothing but its shorthand field.
+
+        Returns
+        -------
+        bool
+            True when the bare authored form says everything this model holds.
+        """
+        shorthand = type(self).shorthand_field
+        if shorthand is None:
+            return False
+        for name, field in type(self).model_fields.items():
+            if name == shorthand:
+                continue
+            if field.is_required():
+                return False
+            if getattr(self, name) != field.get_default(call_default_factory=True):
+                return False
+        return True
 
     @model_serializer(mode="plain")
     def _serialize(self) -> Any:
@@ -316,33 +365,23 @@ def authored_value(value: Any) -> Any:
     return value
 
 
-def shorthand(field: str, *, bare_mapping: bool = False) -> Any:
-    """Build a validator that accepts a bare value in place of a mapping.
+def one_or_many_schema(definition: str) -> dict[str, Any]:
+    """Describe a field that takes one thing or a list of them.
 
-    Several authored shapes read better without a field name — `{chance: 0.15}`
-    rather than `{chance: {probability: 0.15}}`, and a description line that is
-    just its own text. The body still has a named field internally, so code
-    reading it is explicit about what the bare value meant.
+    Several fields are kind to authors this way: a description line's `when`
+    takes one condition and a scene's takes several, and nobody should have to
+    remember which. Pydantic cannot see that through a `BeforeValidator`, so
+    the JSON Schema says it explicitly.
 
     Parameters
     ----------
-    field : str
-        The field a bare value is assigned to.
-    bare_mapping : bool
-        Whether the bare value may itself be a mapping, as it is for `not`,
-        whose shorthand body is another condition. When false a mapping is
-        taken to be the full form and passed through untouched, which is what
-        lets `{text: ..., when: ...}` coexist with a bare `"..."`.
+    definition : str
+        The name of the definition in the generated `$defs` block.
 
     Returns
     -------
-    Any
-        A pydantic model validator, to be assigned in a model's class body.
+    dict
+        A JSON Schema fragment.
     """
-
-    def expand(value: Any) -> Any:
-        if isinstance(value, Mapping) and (set(value) <= {field} or not bare_mapping):
-            return value
-        return {field: value}
-
-    return model_validator(mode="before")(expand)
+    reference = {"$ref": f"#/$defs/{definition}"}
+    return {"anyOf": [reference, {"type": "array", "items": reference}]}

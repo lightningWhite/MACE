@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/lightningWhite/MACE/main/schemas/pack.schema.json",
+  "title": "MACE pack manifest",
+  "additionalProperties": false,
+  "description": "A pack's manifest.\n\nAttributes\n----------\nid : str\n    Dotted namespace, globally unique \u2014 `fantasy.core`, `peasants-quest`.\nname : str\n    Human-readable title.\nversion : str\n    Semantic version. Minor for additions, major for breaking id changes.\nkind : {'library', 'game'}\n    Games appear in the play menu; libraries are there to be built on.\nmace_version : str\n    The engine version range this pack works with.\nrequires : tuple of PackRequirement\n    Dependency packs, in the order bare references resolve against them.",
+  "properties": {
+    "id": {
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+      "title": "Version",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "library",
+        "game"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "maceVersion": {
+      "pattern": "^(?:\\^|~|>=|<=|>|<|=)?\\d+(?:\\.\\d+){0,2}$",
+      "title": "Maceversion",
+      "type": "string"
+    },
+    "authors": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Authors",
+      "type": "array"
+    },
+    "license": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "License"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "tags": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "requires": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PackRequirement"
+      },
+      "title": "Requires",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "version",
+    "kind",
+    "maceVersion"
+  ],
+  "type": "object",
+  "$defs": {
+    "PackRequirement": {
+      "additionalProperties": false,
+      "description": "A dependency on another pack.\n\nAttributes\n----------\nid : str\n    The pack depended on.\nversion : str\n    The version range this pack was written against.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^(?:\\^|~|>=|<=|>|<|=)?\\d+(?:\\.\\d+){0,2}$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "title": "PackRequirement",
+      "type": "object"
+    }
+  }
+}

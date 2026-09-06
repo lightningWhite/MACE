@@ -16,7 +16,7 @@ vocabulary is a deliberate, reviewable act (ADR-0003).
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import Field, model_validator
 
@@ -28,7 +28,6 @@ from mace.model.base import (
     Name,
     Ref,
     SlotName,
-    shorthand,
     unwrap_tagged,
 )
 from mace.model.conditions import Condition
@@ -192,18 +191,13 @@ class AdvanceTime(EffectPayload):
 
     ticks: int = Field(gt=0)
 
-    _expand = shorthand("ticks")
-
 
 class PlayScene(EffectPayload):
     """Run another scene."""
 
+    shorthand_field: ClassVar[str] = "scene"
+
     scene: Ref
-
-    _expand = shorthand("scene")
-
-    def authored(self) -> Any:
-        return self.scene
 
 
 class NoArguments(EffectPayload):

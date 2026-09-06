@@ -24,7 +24,7 @@ Design settled and written down. This document set.
 terminal, with scenes, choices, items, and win/lose.
 
 - [x] Pydantic content models for pack, entity, location, route, scene, quest, game
-- [ ] JSON Schemas in `schemas/`, generated from the models
+- [x] JSON Schemas in `schemas/`, generated from the models
 - [ ] Pack loader: discovery, id resolution, `extends` inheritance, dependency order
 - [ ] Validator with error/warning/note severities and file+id reporting
 - [x] `mace.engine.expr` — the safe expression parser and evaluator

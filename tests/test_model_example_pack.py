@@ -70,7 +70,9 @@ def objects(filename: str, key: str | None) -> list[Any]:
     list
         The raw objects, with merge sentinels resolved.
     """
-    document = resolve_merge_sentinels(yaml.safe_load((PACK_ROOT / filename).read_text()))
+    document = resolve_merge_sentinels(
+        yaml.safe_load((PACK_ROOT / filename).read_text())
+    )
     body = document if key is None else document[key]
     return body if isinstance(body, list) else [body]
 
