@@ -224,6 +224,22 @@
           "text": "Crows argue in the branches overhead."
         },
         {
+          "kind": "encounter",
+          "table": "peasants-quest:forest-road",
+          "entry": "the-weather-turns",
+          "chance": 0.34,
+          "where": "peasants-quest:north-road"
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "fantasy.core:the-road-notices-you"
+        },
+        {
+          "kind": "narrate",
+          "text": "The road has been going up for longer than it looked like it would.",
+          "pause": false
+        },
+        {
           "kind": "travel.leg",
           "route": "peasants-quest:north-road",
           "leg": 3,

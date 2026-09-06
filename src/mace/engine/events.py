@@ -19,6 +19,7 @@ from typing import Any, ClassVar
 __all__ = [
     "ChoiceOffered",
     "ChoicesOffered",
+    "EncounterFired",
     "Event",
     "FlagChanged",
     "GameOver",
@@ -188,6 +189,42 @@ class Moved(Event):
             "to": self.destination,
             "route": self.route,
             "ticks": self.ticks,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class EncounterFired(Event):
+    """Something happened on the road, or in a room the player lingered in.
+
+    Emitted before whatever it turned into — the scene, or the fight — so a
+    debug overlay can show the roll next to its consequence. A player-facing
+    front-end has no reason to render this at all: the encounter *is* the
+    scene that follows.
+
+    Attributes
+    ----------
+    table : str
+        Qualified id of the table that produced it.
+    entry : str
+        The entry's id.
+    chance : float
+        The effective chance it was rolled against, after anti-clumping.
+    where : str or None
+        Qualified id of the location or route it happened on.
+    """
+
+    kind: ClassVar[str] = "encounter"
+    table: str
+    entry: str
+    chance: float = 0.0
+    where: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "table": self.table,
+            "entry": self.entry,
+            "chance": self.chance,
+            "where": self.where,
         }
 
 

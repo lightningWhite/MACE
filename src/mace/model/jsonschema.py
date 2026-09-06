@@ -39,6 +39,7 @@ from mace.model.calendar import Calendar
 from mace.model.climate import Climate
 from mace.model.conditions import CONDITION_PAYLOADS, Condition
 from mace.model.effects import EFFECT_PAYLOADS, Effect
+from mace.model.encounter import EncounterTable
 from mace.model.entity import Entity
 from mace.model.front import WeatherFront
 from mace.model.game import Game
@@ -67,6 +68,7 @@ DIALECT = "https://json-schema.org/draft/2020-12/schema"
 CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
     "climates": Climate,
+    "encounterTables": EncounterTable,
     "entities": Entity,
     "locations": Location,
     "regions": Region,
@@ -84,7 +86,6 @@ UNMODELLED_COLLECTIONS: dict[str, str] = {
     "terrains": "phase 2 — travel",
     "celestialEvents": "phase 2 — world events",
     "pressureEvents": "phase 2 — world events",
-    "encounterTables": "phase 2 — encounters",
     "combatProfiles": "phase 3 — combat",
     "moves": "phase 3 — combat",
     "backgrounds": "phase 4 — character creation",

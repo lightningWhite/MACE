@@ -22,9 +22,11 @@ from mace.engine.actions import Action, Choose, Interact, Look, Travel, Wait
 from mace.engine.conditions import RuleError, all_hold, holds
 from mace.engine.context import RuleContext
 from mace.engine.effects import EffectOutcome, apply_all
+from mace.engine.encounter import Rolled, roll, table_for
 from mace.engine.events import (
     ChoiceOffered,
     ChoicesOffered,
+    EncounterFired,
     Event,
     FrontMoved,
     GameOver,
@@ -36,6 +38,7 @@ from mace.engine.events import (
     TimePassed,
     TravelInterrupted,
     TravelLeg,
+    Unsupported,
     WeatherChanged,
     WorldStatus,
 )
@@ -223,8 +226,10 @@ def _perform(action: Action, context: RuleContext, events: list[Event]) -> bool:
         return False
 
     if isinstance(action, Wait):
-        _advance(context, action.ticks, events)
+        # Cleared first: `_advance` stops the wait short if something asks the
+        # player a question, and last turn's menu is not that question.
         state.pending = None
+        _advance(context, action.ticks, events)
         return False
 
     if isinstance(action, Interact):
@@ -406,6 +411,7 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
         return False
 
     while journey.progress < route.ticks:
+        leg_before = int(journey.progress)
         _tick(context, events)
         journey.progress += 1.0 / max(0.01, context.weather().travel_multiplier)
 
@@ -423,14 +429,26 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
                 )
             )
 
+        if crossed > leg_before and _encounters(context, events, on=route):
+            return True
+        if state.pending is not None:
+            _interrupt(route, context, events, "something on the road")
+            return False
+
         if reached is None:
             continue
 
-        where, stop_if = reached
+        where, stop_if, table = reached
         state.protagonist.location = where
         state.revealed.add(where)
         if _arrive(where, context, events):
             return True
+
+        found = table_for(context, table)
+        if found is not None:
+            hit = roll(context, found[0], found[1])
+            if hit is not None and _happens(hit, where, context, events):
+                return True
 
         barred = bool(stop_if) and all_hold(stop_if, context)
         if barred:
@@ -450,7 +468,9 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
 
 
 def _still_barred(
-    stops: list[tuple[float, str, Any]], journey: Journey, context: RuleContext
+    stops: list[tuple[float, str, Any, str | None]],
+    journey: Journey,
+    context: RuleContext,
 ) -> bool:
     """Whether the waypoint that stopped this journey is still stopping it.
 
@@ -474,7 +494,7 @@ def _still_barred(
     """
     if journey.blocked_at is None:
         return False
-    for _at, where, stop_if in stops:
+    for _at, where, stop_if, _table in stops:
         if where != journey.blocked_at:
             continue
         if stop_if and all_hold(stop_if, context):
@@ -604,7 +624,7 @@ def _resume(context: RuleContext, events: list[Event], *, onward: bool) -> bool:
 
 def _waypoints(
     route: Route, journey: Journey, context: RuleContext
-) -> list[tuple[float, str, Any]]:
+) -> list[tuple[float, str, Any, str | None]]:
     """Where the waypoints of a route fall, in the direction being walked.
 
     A waypoint with no `atTick` is spaced evenly along the road, and the whole
@@ -623,12 +643,12 @@ def _waypoints(
     Returns
     -------
     list of tuple
-        Progress, qualified location id, and the conditions that force a stop,
-        in the order they are met.
+        Progress, qualified location id, the conditions that force a stop, and
+        the waypoint's own encounter table, in the order they are met.
     """
     backwards = context.qualify(route.origin, "locations") != journey.origin
     count = len(route.waypoints)
-    stops: list[tuple[float, str, Any]] = []
+    stops: list[tuple[float, str, Any, str | None]] = []
 
     for index, waypoint in enumerate(route.waypoints, start=1):
         at = (
@@ -643,6 +663,7 @@ def _waypoints(
                 at,
                 context.qualify(waypoint.location, "locations"),
                 waypoint.stop_if,
+                waypoint.encounters,
             )
         )
     stops.sort(key=lambda entry: entry[0])
@@ -650,8 +671,8 @@ def _waypoints(
 
 
 def _next_waypoint(
-    stops: list[tuple[float, str, Any]], journey: Journey
-) -> tuple[str, Any] | None:
+    stops: list[tuple[float, str, Any, str | None]], journey: Journey
+) -> tuple[str, Any, str | None] | None:
     """The waypoint this leg reached, if it reached one.
 
     Parameters
@@ -664,14 +685,143 @@ def _next_waypoint(
     Returns
     -------
     tuple or None
-        The location and its `stopIf` conditions, or None.
+        The location, its `stopIf` conditions, and its own table, or None.
     """
-    for at, where, stop_if in stops:
+    for at, where, stop_if, table in stops:
         if where in journey.passed:
             continue
         if journey.progress >= at:
-            return where, stop_if
+            return where, stop_if, table
     return None
+
+
+def _encounters(
+    context: RuleContext, events: list[Event], *, on: Route | None = None
+) -> bool:
+    """Roll every table that applies where the player is, and act on a hit.
+
+    The tables that apply are the region's, then the road's or the place's —
+    region first, so a road's own entries are the more specific answer and get
+    to be the last word when both fire in the same breath.
+
+    `safe: true` on a location suppresses all of it. Towns are safe; the
+    wilderness is not.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    on : Route or None
+        The road being walked, if the player is on one.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+    """
+    state = context.state
+    here = context.here()
+    if here is not None and here.safe and on is None:
+        return False
+
+    for reference, home, where in _tables_here(context, here, on):
+        found = table_for(context, reference, within=home)
+        if found is None:
+            continue
+        table_id, table = found
+        fired = roll(context, table_id, table)
+        if fired is None:
+            continue
+        if _happens(fired, where, context, events):
+            return True
+        if state.pending is not None:
+            # The encounter is asking the player something. Nothing else rolls
+            # until they have answered it.
+            return False
+    return False
+
+
+def _tables_here(
+    context: RuleContext, here: Location | None, on: Route | None
+) -> list[tuple[str | None, str, str | None]]:
+    """Which tables to roll, in order, and the pack each was written in.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    here : Location or None
+        Where the player is.
+    on : Route or None
+        The road being walked, if any.
+
+    Returns
+    -------
+    list of tuple
+        Reference, the pack it was written in, and where it would happen.
+    """
+    tables: list[tuple[str | None, str, str | None]] = []
+    region = region_of(
+        context.library, context.state.pack, here, context.game.world.start_region
+    )
+    if region is not None:
+        pack_id, local_id = region.split(":", 1)
+        definition = context.library.pack(pack_id).regions.get(local_id)
+        if definition is not None:
+            tables.append((definition.encounters, pack_id, region))
+
+    if on is not None:
+        tables.append(
+            (
+                on.encounters,
+                context.state.pack,
+                (
+                    context.state.journey.route
+                    if context.state.journey is not None
+                    else None
+                ),
+            )
+        )
+    elif here is not None:
+        tables.append((here.encounters, context.state.pack, context.state.location))
+    return [entry for entry in tables if entry[0] is not None]
+
+
+def _happens(
+    fired: Rolled, where: str | None, context: RuleContext, events: list[Event]
+) -> bool:
+    """Turn a rolled entry into the thing it stands for.
+
+    Parameters
+    ----------
+    fired : Rolled
+        What the table produced.
+    where : str or None
+        Where it happened.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+    """
+    events.append(
+        EncounterFired(
+            table=fired.table,
+            entry=fired.entry.id,
+            chance=round(fired.chance, 4),
+            where=where,
+        )
+    )
+    if fired.entry.scene is not None:
+        return _run_scene(context.qualify(fired.entry.scene, "scenes"), context, events)
+    events.append(Unsupported("a combat encounter", "phase 3"))
+    return False
 
 
 def _leg_line(route: Route, context: RuleContext) -> str | None:
@@ -1428,7 +1578,13 @@ def _clock(library: Library, pack_id: str, game: Game) -> Clock:
 
 
 def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
-    """Move the world clock forward, and say so.
+    """Move the world clock forward, a tick at a time, and say so.
+
+    A tick at a time because a place can have an encounter table too: a
+    dungeon corridor the player waits in is as good a place to be found as a
+    road. Something turning up cuts the wait short — an ambush is not
+    something you sleep through — and the elapsed time reported is what
+    actually elapsed.
 
     Parameters
     ----------
@@ -1442,9 +1598,15 @@ def _advance(context: RuleContext, ticks: int, events: list[Event]) -> None:
     if ticks <= 0:
         return
     state = context.state
-    state.tick += ticks
+    for passing in range(1, ticks + 1):
+        state.tick += 1
+        _sync_weather(context, events)
+        if _encounters(context, events) or state.pending is not None:
+            # Something found the player standing still. The rest of the wait
+            # does not happen: an ambush is not something you sleep through.
+            _announce_time(context, passing, events)
+            return
     _announce_time(context, ticks, events)
-    _sync_weather(context, events)
 
 
 def _tick(context: RuleContext, events: list[Event]) -> None:

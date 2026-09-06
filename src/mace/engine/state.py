@@ -19,6 +19,7 @@ from typing import Any
 from mace.engine.rng import RandomSource
 
 __all__ = [
+    "EncounterMemory",
     "EntityState",
     "GameState",
     "Journey",
@@ -76,6 +77,44 @@ class Modifier:
     label: str = ""
     source: str = ""
     expires_at_tick: int | None = None
+
+
+@dataclass(slots=True)
+class EncounterMemory:
+    """What one encounter table remembers about this playthrough.
+
+    Two jobs, both about how a road *feels* rather than what it contains.
+
+    `last_at_tick` enforces `minGapTicks`: independent rolls produce three
+    ambushes in a row, and that reads as broken even when it is fair.
+
+    `pressure` is the pity system, and it is written so that it does not
+    quietly make a road more dangerous than its author asked for. An empty
+    roll adds `pressureStep`; a roll that fires subtracts
+    `pressureStep × (1/chance − 1)`. Over a long run at the authored rate the
+    misses outnumber the hits by exactly `(1 − chance) : chance`, so the two
+    terms cancel and the mean stays put. What changes is the variance: long
+    empty stretches get likelier to end and streaks get likelier to stop.
+
+    Attributes
+    ----------
+    table : str
+        Qualified table id.
+    pressure : float
+        Added to `chance` on the next roll. May be negative.
+    last_at_tick : int or None
+        When this table last produced something.
+    fired : dict
+        Entry id to how many times it has fired.
+    last_entry_tick : dict
+        Entry id to when it last fired, for `cooldownTicks`.
+    """
+
+    table: str
+    pressure: float = 0.0
+    last_at_tick: int | None = None
+    fired: dict[str, int] = field(default_factory=dict)
+    last_entry_tick: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -388,6 +427,8 @@ class GameState:
         The weather systems currently crossing the map.
     fronts_spawned : int
         How many have ever formed, so instance ids stay unique.
+    encounters : dict
+        Qualified table id to what that table remembers.
     journey : Journey or None
         A road part-walked, if one was interrupted.
     pending : PendingChoices or None
@@ -413,6 +454,7 @@ class GameState:
     weather: dict[str, RegionWeather] = field(default_factory=dict)
     fronts: list[FrontState] = field(default_factory=list)
     fronts_spawned: int = 0
+    encounters: dict[str, EncounterMemory] = field(default_factory=dict)
     journey: Journey | None = None
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING

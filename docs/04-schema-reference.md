@@ -428,27 +428,70 @@ the start of the year.
 
 ## Encounter table
 
-Detailed in [Travel & Encounters](06-travel-and-encounters.md).
+Files under `encounterTables/`. Detailed in
+[Travel & Encounters](06-travel-and-encounters.md).
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | str | |
-| `chance` | number | 0–1, probability that *anything* happens per roll. |
-| `minGapTicks` | int? | Anti-clumping: no second encounter within N ticks. |
+| `id`, `name` | | |
+| `extends` | Ref? | A bandit-country road is a country road with worse entries. |
+| `chance` | number | 0–1, the probability that *anything* happens per roll. The one danger dial. |
+| `minGapTicks` | int? | A hard floor between encounters from this table. |
+| `pressureStep` | number? | Anti-clumping. See below. Default 0, which turns the pity system off. |
 | `entries` | [Entry] | |
 
 ### Entry
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | str | |
-| `weight` | number | Relative weight among *eligible* entries. |
-| `when` | [Condition]? | Eligibility — time, weather, quest state, party strength. |
+| `id` | str | How cooldowns and caps are tracked; unique within the table. |
+| `weight` | number | Relative weight among *eligible* entries. Not a probability: `5` against a total of 100 is the five-percent troll. |
+| `when` | [Condition]? | Eligibility — time, weather, quest state, what the player is carrying. |
 | `scene` | Ref? | The scene played. |
-| `combat` | {against: [Ref]}? | Shortcut for a straight fight. |
+| `combat` | {against: [Ref], fleeTo?: Ref}? | A straight fight, for when a scene would be ceremony. Arrives with phase 3. |
 | `once` | bool? | Never repeats in a playthrough. |
 | `cooldownTicks` | int? | Can't recur within N ticks. |
-| `maxPerGame` | int? | |
+| `maxPerGame` | int? | A cap looser than `once`. |
+
+An entry with neither `scene` nor `combat` is a load-time error: it would fire
+and nothing would happen.
+
+### Where tables attach, and in what order
+
+| Attach point | Rolled when |
+|---|---|
+| `region.encounters` | Every leg, and every tick spent standing in the region |
+| `route.encounters` | Every travel leg |
+| `waypoint.encounters` | On reaching the waypoint, in addition to the route's |
+| `location.encounters` | Every tick the player spends there |
+
+The region rolls first and the road or the place second, so the more specific
+table gets the last word when both fire in the same breath. `location.safe:
+true` suppresses the location's own table and the region's while standing
+there — towns are safe, the wilderness is not — but a road running through a
+region is still a road.
+
+An encounter that offers the player a choice interrupts what they were doing:
+a journey stops where it stands and can be carried on, and a wait is cut short
+at the tick it happened, because an ambush is not something you sleep through.
+
+### Anti-clumping, honestly
+
+`minGapTicks` is the blunt instrument: no second encounter from this table
+within N ticks. It lowers the observed rate below `chance` on short roads,
+which is the intended trade.
+
+`pressureStep` is the pity system, and it is written so it does *not* quietly
+make a road more dangerous than its author asked for. An empty roll adds
+`pressureStep` to the next roll's chance; a roll that fires subtracts
+`pressureStep × (1/chance − 1)`. Over a long run at the authored rate, misses
+outnumber hits by exactly `(1 − chance) : chance`, so the two terms cancel and
+the mean stays put. What changes is the variance: long empty stretches get
+likelier to end, and streaks get likelier to stop.
+
+A roll that fires but finds every entry ineligible resets the pressure to
+zero rather than banking it, so a table whose entries are all on cooldown does
+not build up a debt it pays off all at once later.
 
 ---
 

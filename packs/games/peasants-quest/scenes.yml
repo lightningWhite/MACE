@@ -188,3 +188,17 @@ scenes:
   - id: defeat
     say:
       - "The road north keeps what it takes."
+
+  # ── Encounters on the north road ──────────────────────────────────────────
+
+  - id: wolves-on-the-road
+    visible: false
+    say:
+      - "Something keeps pace with you in the trees for a hundred yards, and then does not."
+      - {text: "You do not see it. You hear it decide against you.", pause: true}
+
+  - id: riders-going-north
+    visible: false
+    say:
+      - "Six riders come up behind you at a trot, in the king's colours, and do not slow down."
+      - '"Muster''s at the castle," one calls back. "Walk faster."'

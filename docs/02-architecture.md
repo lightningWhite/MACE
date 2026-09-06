@@ -105,6 +105,7 @@ Selected event types (the full list lives with the code):
 | `world.time` | `tick`, `dayPart`, `day`, `season` | Clock / sky in the UI chrome |
 | `weather.changed` | `region`, `condition`, `intensity`, `tags`, `visibility` | "The rain thickens into sleet." |
 | `world.status` | `day`, `dayPart`, `season`, `place`, `sky`, `light` | The standing status line, above the prompt |
+| `encounter` | `table`, `entry`, `chance`, `where` | Nothing on its own — the scene that follows is the encounter |
 | `world.event` | `kind`, `region`, `severity` | Earthquake, eruption, meteor shower |
 | `stat.changed` | `actor`, `stat`, `delta`, `reason` | Health bar animation, "(-8 hp)" |
 | `inventory.changed` | `actor`, `item`, `delta` | Inventory panel |

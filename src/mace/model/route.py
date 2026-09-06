@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from mace.model.base import ContentModel, Id, LocationRef, Ref
+from mace.model.base import ContentModel, EncounterRef, Id, LocationRef, Ref
 from mace.model.conditions import Conditions
 from mace.model.text import Description
 
@@ -38,7 +38,7 @@ class Waypoint(ContentModel):
     location: LocationRef
     at_tick: int | None = Field(default=None, ge=0)
     stop_if: Conditions | None = None
-    encounters: Ref | None = None
+    encounters: EncounterRef | None = None
 
 
 class Route(ContentModel):
@@ -53,7 +53,7 @@ class Route(ContentModel):
 
     terrain: Ref | None = None
     waypoints: tuple[Waypoint, ...] = ()
-    encounters: Ref | None = None
+    encounters: EncounterRef | None = None
 
     description: Description | None = None
     leg_descriptions: Description | None = None

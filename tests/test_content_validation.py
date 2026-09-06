@@ -416,11 +416,7 @@ UNTARGETED_REFERENCES = {
     ("ItemProps", "moves"),  # phase 3 — moves
     ("Location", "biome"),  # phase 2 — biomes
     ("Region", "biome"),  # phase 2 — biomes
-    ("Region", "encounters"),  # phase 2 — encounter tables
-    ("Location", "encounters"),  # phase 2 — encounter tables
     ("Route", "terrain"),  # phase 2 — terrain
-    ("Route", "encounters"),  # phase 2 — encounter tables
-    ("Waypoint", "encounters"),  # phase 2 — encounter tables
     ("PlayerSetup", "backgrounds"),  # phase 4 — backgrounds
 }
 

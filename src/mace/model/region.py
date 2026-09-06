@@ -11,7 +11,14 @@ See docs/05-world-simulation.md § Layer 2 and § Layer 3.
 
 from __future__ import annotations
 
-from mace.model.base import ClimateRef, ContentModel, Id, Ref, RegionRef
+from mace.model.base import (
+    ClimateRef,
+    ContentModel,
+    EncounterRef,
+    Id,
+    Ref,
+    RegionRef,
+)
 from mace.model.text import Description
 
 __all__ = ["Region"]
@@ -53,7 +60,7 @@ class Region(ContentModel):
     neighbors: tuple[RegionRef, ...] = ()
     elevation: float = 0.0
     biome: Ref | None = None
-    encounters: Ref | None = None
+    encounters: EncounterRef | None = None
 
     @property
     def label(self) -> str:

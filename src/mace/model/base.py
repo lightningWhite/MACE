@@ -35,6 +35,7 @@ __all__ = [
     "AuthoredValue",
     "CalendarRef",
     "ClimateRef",
+    "EncounterRef",
     "FrontRef",
     "EntityRef",
     "LocationRef",
@@ -115,6 +116,7 @@ class Reference:
 #: covers yet — a terrain, an encounter table — stays a plain `Ref` until the
 #: phase that models it can check it.
 CalendarRef = Annotated[Ref, Reference("calendars")]
+EncounterRef = Annotated[Ref, Reference("encounterTables")]
 FrontRef = Annotated[Ref, Reference("weatherFronts")]
 ClimateRef = Annotated[Ref, Reference("climates")]
 EntityRef = Annotated[Ref, Reference("entities")]

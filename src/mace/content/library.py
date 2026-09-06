@@ -17,6 +17,7 @@ from mace.content.ids import qualify, split
 from mace.model import (
     Calendar,
     Climate,
+    EncounterTable,
     Entity,
     Game,
     Location,
@@ -38,6 +39,7 @@ __all__ = ["COLLECTION_MODELS", "SINGULAR", "LoadedPack", "Library"]
 COLLECTION_MODELS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
     "climates": Climate,
+    "encounterTables": EncounterTable,
     "entities": Entity,
     "locations": Location,
     "regions": Region,
@@ -55,6 +57,7 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
 SINGULAR: dict[str, str] = {
     "calendars": "calendar",
     "climates": "climate",
+    "encounterTables": "encounter table",
     "entities": "entity",
     "locations": "location",
     "regions": "region",
@@ -70,6 +73,7 @@ SINGULAR: dict[str, str] = {
 #: `weatherConditions:` in YAML stays camelCase and the attribute stays
 #: snake_case like every other attribute in the codebase.
 _FIELDS: dict[str, str] = {
+    "encounterTables": "encounter_tables",
     "weatherConditions": "weather_conditions",
     "weatherFronts": "weather_fronts",
 }
@@ -85,7 +89,8 @@ class LoadedPack:
         The pack's `pack.yml`.
     root : Path
         The directory it was read from.
-    calendars, climates, entities, locations, regions, routes, scenes, quests,
+    calendars, climates, encounterTables, entities, locations, regions, routes,
+    scenes, quests,
     weatherConditions, weatherFronts : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
@@ -99,6 +104,7 @@ class LoadedPack:
     root: Path
     calendars: Mapping[str, Calendar]
     climates: Mapping[str, Climate]
+    encounter_tables: Mapping[str, EncounterTable]
     entities: Mapping[str, Entity]
     locations: Mapping[str, Location]
     regions: Mapping[str, Region]

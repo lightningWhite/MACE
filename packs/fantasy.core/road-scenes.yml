@@ -1,0 +1,42 @@
+# The scenes a road table plays. Deliberately small: an encounter that is only
+# a sentence is still an encounter, and it is what stops the ogre feeling like
+# a slot machine payout.
+#
+# Note the shape of the variants. A scene's `say` lines are a *sequence* — every
+# line whose `when` holds is spoken, in order — so alternatives have to be
+# written as conditions that exclude each other. A location's `description` is
+# the other way round and takes the first line that fits.
+scenes:
+
+  - id: nothing-much-happens
+    visible: false
+    say:
+      - {text: "A long stretch of nothing. Somewhere out of sight, water.",
+         when: {dayPart: [dawn, day]}}
+      - {text: "Nothing on the road but you, and the sound of your own boots.",
+         when: {not: {dayPart: [dawn, day]}}}
+
+  - id: the-road-notices-you
+    visible: false
+    say:
+      - {text: "The wind gets under your cloak and stays there.",
+         when: {weatherTag: [wet]}}
+      - {text: "It is cold enough now that your hands have stopped complaining.",
+         when: [{weatherTag: [cold]}, {not: {weatherTag: [wet]}}]}
+      - {text: "The road has been going up for longer than it looked like it would.",
+         when: {not: {weatherTag: [wet, cold]}}}
+
+  - id: someone-on-the-road
+    visible: false
+    say:
+      - {text: "A carter comes the other way, nods, and says nothing worth repeating.",
+         when: {dayPart: [dawn, day]}}
+      - {text: "Someone passes going the other way, too fast, and does not look at you.",
+         when: {not: {dayPart: [dawn, day]}}}
+
+  - id: something-in-the-grass
+    visible: false
+    say:
+      - "Something pale in the grass at the roadside. A loaf, wrapped, dropped by somebody in a hurry."
+    effects:
+      - {giveItem: {actor: player, item: bread, qty: 1}}

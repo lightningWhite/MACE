@@ -1,0 +1,16 @@
+# A quiet road, for authors who want a table to inherit from rather than one
+# to use. Most of the weight is atmosphere on purpose: entries that are not
+# threats are what make the threats land, and a road where a third of legs
+# produce a fight reads as a grind rather than as danger.
+encounterTables:
+
+  - id: quiet-road
+    name: "A quiet road"
+    chance: 0.18
+    minGapTicks: 4
+    pressureStep: 0.04
+    entries:
+      - {id: nothing-much, weight: 50, scene: nothing-much-happens}
+      - {id: the-weather-turns, weight: 20, scene: the-road-notices-you}
+      - {id: a-traveller, weight: 18, scene: someone-on-the-road}
+      - {id: something-worth-having, weight: 12, scene: something-in-the-grass}

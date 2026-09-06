@@ -228,6 +228,7 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
         root=root,
         calendars=built["calendars"],  # type: ignore[arg-type]
         climates=built["climates"],  # type: ignore[arg-type]
+        encounter_tables=built["encounterTables"],  # type: ignore[arg-type]
         entities=built["entities"],  # type: ignore[arg-type]
         locations=built["locations"],  # type: ignore[arg-type]
         regions=built["regions"],  # type: ignore[arg-type]

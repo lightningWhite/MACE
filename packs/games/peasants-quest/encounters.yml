@@ -1,0 +1,29 @@
+# The north road's own table. It inherits the quiet-road mix from fantasy.core
+# and then makes the road worse: a higher `chance`, and two entries that are
+# actually dangerous. `$append` keeps the inherited atmosphere entries, which
+# is the point — they are what make the wolves land.
+encounterTables:
+
+  - id: forest-road
+    extends: fantasy.core:quiet-road
+    name: "The North Road"
+    chance: 0.30
+    minGapTicks: 5
+    entries:
+      - $append
+      - id: wolves-in-the-wood
+        weight: 14
+        when: [{any: [{dayPart: [dusk, night]}, {weatherTag: [cold]}]}]
+        cooldownTicks: 40
+        scene: wolves-on-the-road
+
+      - id: the-kings-riders
+        weight: 8
+        once: true
+        when: [{dayPart: [dawn, day]}]
+        scene: riders-going-north
+
+  - id: the-quiet-track
+    extends: fantasy.core:quiet-road
+    name: "The Trader's Track"
+    chance: 0.12

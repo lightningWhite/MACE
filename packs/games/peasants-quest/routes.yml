@@ -11,6 +11,7 @@ routes:
     to: hagans-castle
     ticks: 6
     dangerLevel: 5
+    encounters: forest-road
     waypoints:
       # Gorm stops you. Paying him is the only way past, and until you have,
       # every crossing of this road ends here.
@@ -34,5 +35,6 @@ routes:
     to: traders-post
     ticks: 2
     dangerLevel: 1
+    encounters: the-quiet-track
     legDescriptions:
       - "Cart ruts, and a hedge somebody has been meaning to lay for years."

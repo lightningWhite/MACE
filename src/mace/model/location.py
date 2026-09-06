@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from mace.model.base import (
     ContentModel,
+    EncounterRef,
     EntityRef,
     Flag,
     Id,
@@ -109,7 +110,7 @@ class Location(ContentModel):
     scenes: tuple[SceneRef, ...] = ()
     on_arrive: SceneRef | None = None
 
-    encounters: Ref | None = None
+    encounters: EncounterRef | None = None
     safe: bool = False
 
     exits: tuple[Exit, ...] = ()

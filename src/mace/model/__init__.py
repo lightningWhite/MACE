@@ -46,6 +46,7 @@ from mace.model.conditions import (
     ConditionTag,
 )
 from mace.model.effects import Effect, EffectPayload, EffectTag
+from mace.model.encounter import CombatEncounter, EncounterEntry, EncounterTable
 from mace.model.entity import (
     CombatAssignment,
     ContainerProps,
@@ -87,6 +88,7 @@ __all__ = [
     "ClimateSequence",
     "ClimateStep",
     "CombatAssignment",
+    "CombatEncounter",
     "CombatMode",
     "Condition",
     "ConditionPayload",
@@ -101,6 +103,8 @@ __all__ = [
     "Effect",
     "EffectPayload",
     "EffectTag",
+    "EncounterEntry",
+    "EncounterTable",
     "Entity",
     "EntityKind",
     "EnvResponse",

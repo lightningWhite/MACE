@@ -17,6 +17,12 @@
         "$ref": "#/$defs/Climate"
       }
     },
+    "encounterTables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EncounterTable"
+      }
+    },
     "entities": {
       "type": "array",
       "items": {
@@ -79,10 +85,6 @@
     "pressureEvents": {
       "type": "array",
       "description": "Not yet modelled \u2014 phase 2 \u2014 world events."
-    },
-    "encounterTables": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 encounters."
     },
     "combatProfiles": {
       "type": "array",
@@ -780,6 +782,39 @@
       "title": "CombatAssignment",
       "type": "object"
     },
+    "CombatEncounter": {
+      "additionalProperties": false,
+      "description": "A straight fight, without an interposing scene.\n\nAttributes\n----------\nagainst : tuple of str\n    The entities to spawn and fight. Repeat one to get several of it.\nflee_to : str or None\n    Where fleeing puts the player. Omitted, they end up back the way they\n    came, which for a journey is wherever they last stopped.",
+      "properties": {
+        "against": {
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Against",
+          "type": "array"
+        },
+        "fleeTo": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fleeto"
+        }
+      },
+      "required": [
+        "against"
+      ],
+      "title": "CombatEncounter",
+      "type": "object"
+    },
     "Condition": {
       "description": "One condition, written as a single-key mapping.",
       "oneOf": [
@@ -1391,6 +1426,177 @@
           "additionalProperties": false
         }
       ]
+    },
+    "EncounterEntry": {
+      "additionalProperties": false,
+      "description": "One thing that can happen, and how likely it is among the rest.\n\nAttributes\n----------\nid : str\n    Names it, for cooldowns and for the debug overlay.\nweight : float\n    Relative weight among the entries currently eligible. Not a\n    probability: `5` next to a total of 100 is the five-percent troll.\nwhen : tuple of Condition or None\n    Eligibility. Time, weather, quest state, what the player is carrying.\nscene : str or None\n    The scene played.\ncombat : CombatEncounter or None\n    A fight, for when a scene would only be ceremony.\nonce : bool\n    Never repeats in a playthrough.\ncooldown_ticks : int\n    How long before this entry can recur.\nmax_per_game : int or None\n    A cap looser than `once`.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "scene": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scene"
+        },
+        "combat": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CombatEncounter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "once": {
+          "default": false,
+          "title": "Once",
+          "type": "boolean"
+        },
+        "cooldownTicks": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Cooldownticks",
+          "type": "integer"
+        },
+        "maxPerGame": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxpergame"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "EncounterEntry",
+      "type": "object"
+    },
+    "EncounterTable": {
+      "additionalProperties": false,
+      "description": "A set of things that might happen, and how often anything does.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A table to inherit from. A bandit-country road is a country road with\n    worse entries.\nchance : float\n    The probability that *something* happens, per roll. The one dial.\nmin_gap_ticks : int\n    A hard floor between encounters from this table. Pure independent\n    rolls produce three ambushes in a row, and that feels broken even\n    when it is fair.\npressure_step : float\n    How much an empty roll adds to the next one's chance. Tightens the\n    variance without changing the long-run rate \u2014 see `EncounterMemory`\n    for why it stays honest. Zero turns the pity system off.\nentries : tuple of EncounterEntry\n    What can happen.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "chance": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Chance",
+          "type": "number"
+        },
+        "minGapTicks": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Mingapticks",
+          "type": "integer"
+        },
+        "pressureStep": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Pressurestep",
+          "type": "number"
+        },
+        "entries": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EncounterEntry"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "EncounterTable",
+      "type": "object"
     },
     "Entity": {
       "additionalProperties": false,
