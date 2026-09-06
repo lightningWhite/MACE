@@ -30,7 +30,7 @@ terminal, with scenes, choices, items, and win/lose.
 - [x] `mace.engine.expr` — the safe expression parser and evaluator
 - [ ] Structured condition and effect evaluation
 - [ ] `GameState`, `Action`, `Event`, and the `step()` function
-- [ ] Seeded named RNG streams
+- [x] Seeded named RNG streams
 - [ ] Minimal CLI player: `mace play <pack>`
 - [ ] First golden replay test
 - [ ] Items carry `baseValue`; `mace.core` buy/sell scenes (`economy: simple`)
