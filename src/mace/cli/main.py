@@ -72,6 +72,15 @@ def build_parser() -> argparse.ArgumentParser:
         default="mace",
         help="the session seed; the same seed replays the same world",
     )
+    player.add_argument(
+        "--combat",
+        choices=["reflex", "tactical", "auto"],
+        help=(
+            "how combat is played: `reflex` runs a timing window, `tactical` "
+            "is untimed and loses none of the reading, `auto` plays both "
+            "sides. Overrides the game's own default."
+        ),
+    )
     player.set_defaults(run=run_play)
     return parser
 
@@ -89,7 +98,12 @@ def run_play(options: argparse.Namespace) -> int:
     int
         The process exit code.
     """
-    return play(options.paths, pack_id=options.pack, seed=options.seed)
+    return play(
+        options.paths,
+        pack_id=options.pack,
+        seed=options.seed,
+        combat_mode=options.combat,
+    )
 
 
 def run_validate(options: argparse.Namespace) -> int:

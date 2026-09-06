@@ -126,7 +126,13 @@ class StepResult:
         return [event.record() for event in self.events]
 
 
-def begin(library: Library, pack_id: str, seed: str = "mace") -> StepResult:
+def begin(
+    library: Library,
+    pack_id: str,
+    seed: str = "mace",
+    *,
+    combat_mode: str | None = None,
+) -> StepResult:
     """Start a playthrough.
 
     Parameters
@@ -137,6 +143,10 @@ def begin(library: Library, pack_id: str, seed: str = "mace") -> StepResult:
         Which game pack to play.
     seed : str
         The session seed. The same seed and actions replay identically.
+    combat_mode : str or None
+        The player's choice of combat presentation, overriding the game's
+        default. Part of what a session opens with, like the seed, because
+        changing it midway would change what a recorded elapsed time means.
 
     Returns
     -------
@@ -154,6 +164,7 @@ def begin(library: Library, pack_id: str, seed: str = "mace") -> StepResult:
         raise ContentError("is not a playable game pack", pack=pack_id)
 
     state = _initial_state(library, pack_id, pack.game, seed)
+    state.combat_mode = combat_mode
     context = _context(library, state, pack.game)
     events: list[Event] = []
 
@@ -211,7 +222,7 @@ def step(state: GameState, action: Action, library: Library) -> StepResult:
         return StepResult(state, tuple(events))
 
     if restart:
-        fresh = begin(library, state.pack, state.seed)
+        fresh = begin(library, state.pack, state.seed, combat_mode=state.combat_mode)
         return StepResult(fresh.state, tuple([*events, *fresh.events]))
 
     _after_action(context, events)

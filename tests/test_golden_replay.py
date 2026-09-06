@@ -11,6 +11,12 @@ behaviour change nobody reviewed.
 
     MACE_UPDATE_GOLDEN=1 pytest tests/test_golden_replay.py
 
+A combat recording carries `combatMode` and its `combat.input` actions carry
+the elapsed milliseconds that were measured live. That is the point of
+ADR-0004's quantization rule: a replay resolves against the number that was
+written down rather than re-measuring one, so the same recording produces the
+same exchange on a machine that is slower, faster, or in a browser.
+
 Actions are recorded by the **prompt** of the option they took, not by its
 index. An index is what the engine takes and the wrong thing to write down: the
 moment an author inserts a menu entry above the one a recording meant, an
@@ -51,7 +57,12 @@ def replay(library: Library, recording: dict[str, Any]) -> list[dict[str, Any]]:
     list of dict
         The event records, in order, with the action that caused each batch.
     """
-    result = begin(library, recording["pack"], seed=recording["seed"])
+    result = begin(
+        library,
+        recording["pack"],
+        seed=recording["seed"],
+        combat_mode=recording.get("combatMode"),
+    )
     stream: list[dict[str, Any]] = [{"action": None, "events": result.records()}]
 
     for number, record in enumerate(recording["actions"], start=1):

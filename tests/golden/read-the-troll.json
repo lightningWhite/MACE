@@ -1,0 +1,1319 @@
+{
+  "name": "read-the-troll",
+  "summary": "Refuse the toll and win: tactical mode, every windup answered correctly and no clock running. The bridge opens because the reads were right, which is the whole claim tempo combat makes.",
+  "pack": "peasants-quest",
+  "seed": "read-the-troll",
+  "combatMode": "tactical",
+  "packs": {
+    "mace.core": "0.1.0",
+    "fantasy.core": "0.1.0",
+    "peasants-quest": "0.1.0"
+  },
+  "actions": [
+    {
+      "kind": "choose",
+      "prompt": "Take the north road"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Speak to the troll"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Refuse, and put a hand on your hook"
+    },
+    {
+      "kind": "combat.input",
+      "response": "dodge"
+    },
+    {
+      "kind": "combat.input",
+      "response": "dodge"
+    },
+    {
+      "kind": "combat.input",
+      "response": "jump"
+    },
+    {
+      "kind": "combat.input",
+      "response": "dodge"
+    },
+    {
+      "kind": "combat.input",
+      "response": "dodge"
+    },
+    {
+      "kind": "combat.input",
+      "response": "jump"
+    },
+    {
+      "kind": "combat.input",
+      "response": "jump"
+    },
+    {
+      "kind": "combat.input",
+      "response": "dodge"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Carry on to Hagan's Castle"
+    }
+  ],
+  "stream": [
+    {
+      "action": null,
+      "events": [
+        {
+          "kind": "narrate",
+          "text": "You are a peasant. You have worked your old friend's farm for twenty-five years.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "One morning, as you cut barley in the low field, a host of the king's guard rides through the standing crop as though it were water.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "They tell you the king has called every man between twenty-two and thirty-five to the Dark Mountain. You have seven days to reach Hagan's Castle.",
+          "pause": true
+        },
+        {
+          "kind": "moved",
+          "from": null,
+          "to": "peasants-quest:fenmoor",
+          "route": null,
+          "ticks": 0
+        },
+        {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-lowlands",
+          "condition": "fantasy.core:clear",
+          "name": "clear",
+          "intensity": 0.8368,
+          "tags": [],
+          "visibility": 1.0,
+          "temperature": 12.3,
+          "text": "The cloud breaks up and the sky comes through behind it."
+        },
+        {
+          "kind": "narrate",
+          "text": "Fenmoor",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "Six houses, a well, and more geese than people. The barley stands unfinished in the low field.",
+          "pause": false
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:fenmoor-arrival"
+        },
+        {
+          "kind": "narrate",
+          "text": "The geese scatter. Nobody else looks up.",
+          "pause": false
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Say goodbye to Hallam",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to Trader's Post",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Take the north road",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 20,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "10:00",
+          "location": "peasants-quest:fenmoor",
+          "place": "Fenmoor",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 12.3,
+          "light": 1.0,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Take the north road"
+      },
+      "events": [
+        {
+          "kind": "narrate",
+          "text": "You set out on the rutted track north, under oaks that have given up their leaves.",
+          "pause": false
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 1,
+          "of": 6,
+          "waypoint": null,
+          "text": "The road climbs, and the barley country falls away behind you."
+        },
+        {
+          "kind": "encounter",
+          "table": "peasants-quest:forest-road",
+          "entry": "nothing-much",
+          "chance": 0.3,
+          "where": "peasants-quest:north-road"
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "fantasy.core:nothing-much-happens"
+        },
+        {
+          "kind": "narrate",
+          "text": "A long stretch of nothing. Somewhere out of sight, water.",
+          "pause": false
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 2,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 3,
+          "of": 6,
+          "waypoint": "peasants-quest:troll-bridge",
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "narrate",
+          "text": "The Old Bridge",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "A stone span over black water, older than the road it carries.",
+          "pause": false
+        },
+        {
+          "kind": "travel.interrupted",
+          "route": "peasants-quest:north-road",
+          "at": "peasants-quest:troll-bridge",
+          "destination": "peasants-quest:hagans-castle",
+          "remaining": 2.522,
+          "reason": "the way is barred"
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Rest a while",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Speak to the troll",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Carry on to Hagan's Castle",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Turn back to Fenmoor",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Speak to the troll"
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:talk-to-gorm"
+        },
+        {
+          "kind": "narrate",
+          "text": "The troll unfolds itself from beneath the bridge, and the bridge seems glad to be rid of the weight.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Toll,\" it says. \"Ten gold, or swim.\"",
+          "pause": true
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:gorm",
+          "flag": "has-spoken",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "peasants-quest:talk-to-gorm",
+          "options": [
+            {
+              "prompt": "Pay the toll (10 gold)",
+              "available": false,
+              "hint": "You don't have ten gold."
+            },
+            {
+              "prompt": "Try to talk it down",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Offer it your bread (4 loaves)",
+              "available": false,
+              "hint": "You have nothing like four loaves."
+            },
+            {
+              "prompt": "Ask about the road north",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Refuse, and put a hand on your hook",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Refuse, and put a hand on your hook"
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:fight-gorm"
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Swim, then,\" it says, and reaches for the club.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "It is a great deal bigger than you, and it has done this before.",
+          "pause": true
+        },
+        {
+          "kind": "combat.begin",
+          "combat": "combat#1",
+          "mode": "tactical",
+          "combatants": [
+            {
+              "actor": "peasants-quest:letholin",
+              "name": "Letholin",
+              "side": "player",
+              "profile": "fantasy.core:adventurer"
+            },
+            {
+              "actor": "peasants-quest:gorm",
+              "name": "Gorm",
+              "side": "enemy",
+              "profile": "fantasy.core:bridge-troll-profile"
+            }
+          ],
+          "canFlee": true,
+          "matrix": [
+            {
+              "type": "feint",
+              "beatenBy": [
+                "strike"
+              ]
+            },
+            {
+              "type": "grapple",
+              "beatenBy": [
+                "strike"
+              ]
+            },
+            {
+              "type": "overhead",
+              "beatenBy": [
+                "dodge"
+              ]
+            },
+            {
+              "type": "sweep",
+              "beatenBy": [
+                "jump",
+                "dodge"
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "type": "overhead",
+          "text": "The troll hauls the club up over its head.",
+          "windowMs": 1328,
+          "clear": true
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 40.0,
+          "momentum": 1.0,
+          "streak": 0
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "dodge"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -8.9,
+          "value": 71.1,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -2.0,
+          "value": 38.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 1,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "response": "dodge",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.8105,
+          "damageTaken": 0.0,
+          "damageDealt": 8.9,
+          "critical": false,
+          "momentum": 1.15,
+          "stamina": 38.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "type": "overhead",
+          "text": "The troll hauls the club up over its head.",
+          "windowMs": 1334,
+          "clear": true
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 38.0,
+          "momentum": 1.15,
+          "streak": 1
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "dodge"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -9.8,
+          "value": 61.3,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -2.0,
+          "value": 36.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 2,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "response": "dodge",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.8114,
+          "damageTaken": 0.0,
+          "damageDealt": 9.8,
+          "critical": false,
+          "momentum": 1.3,
+          "stamina": 36.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-sweep",
+          "type": "sweep",
+          "text": "The club drops low and comes round at your knees.",
+          "windowMs": 862,
+          "clear": true
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 36.0,
+          "momentum": 1.3,
+          "streak": 2
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "jump"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -6.3,
+          "value": 55.0,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -3.0,
+          "value": 33.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 3,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-sweep",
+          "response": "jump",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.8123,
+          "damageTaken": 0.0,
+          "damageDealt": 6.3,
+          "critical": false,
+          "momentum": 1.5,
+          "stamina": 33.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "type": "",
+          "text": "The troll's shoulders bunch.",
+          "windowMs": 1348,
+          "clear": false
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 33.0,
+          "momentum": 1.5,
+          "streak": 3
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "dodge"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -12.8,
+          "value": 42.2,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -2.0,
+          "value": 31.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 4,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "response": "dodge",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.8131,
+          "damageTaken": 0.0,
+          "damageDealt": 12.8,
+          "critical": false,
+          "momentum": 1.5,
+          "stamina": 31.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "type": "overhead",
+          "text": "The troll hauls the club up over its head.",
+          "windowMs": 1354,
+          "clear": true
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 31.0,
+          "momentum": 1.5,
+          "streak": 4
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "dodge"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -9.8,
+          "value": 32.4,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -2.0,
+          "value": 29.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 5,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "response": "dodge",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.814,
+          "damageTaken": 0.0,
+          "damageDealt": 9.8,
+          "critical": false,
+          "momentum": 1.5,
+          "stamina": 29.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-sweep",
+          "type": "sweep",
+          "text": "The club drops low and comes round at your knees.",
+          "windowMs": 875,
+          "clear": true
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 29.0,
+          "momentum": 1.5,
+          "streak": 5
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "jump"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -7.2,
+          "value": 25.2,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -3.0,
+          "value": 26.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 6,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-sweep",
+          "response": "jump",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.8148,
+          "damageTaken": 0.0,
+          "damageDealt": 7.2,
+          "critical": false,
+          "momentum": 1.5,
+          "stamina": 26.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-sweep",
+          "type": "sweep",
+          "text": "The club drops low and comes round at your knees.",
+          "windowMs": 879,
+          "clear": true
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 26.0,
+          "momentum": 1.5,
+          "streak": 6
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "jump"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -8.1,
+          "value": 17.1,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -3.0,
+          "value": 23.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 7,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-sweep",
+          "response": "jump",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.8157,
+          "damageTaken": 0.0,
+          "damageDealt": 8.1,
+          "critical": false,
+          "momentum": 1.5,
+          "stamina": 23.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.tell",
+          "combat": "combat#1",
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "type": "",
+          "text": "The troll's shoulders bunch.",
+          "windowMs": 1374,
+          "clear": false
+        },
+        {
+          "kind": "combat.responses",
+          "combat": "combat#1",
+          "options": [
+            "dodge",
+            "block",
+            "parry",
+            "jump",
+            "strike",
+            "recover",
+            "flee"
+          ],
+          "stamina": 23.0,
+          "momentum": 1.5,
+          "streak": 7
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "dodge"
+      },
+      "events": [
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:gorm",
+          "stat": "hitpoints",
+          "delta": -14.4,
+          "value": 2.7,
+          "reason": "your opening"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
+          "stat": "stamina",
+          "delta": -2.0,
+          "value": 21.0,
+          "reason": null
+        },
+        {
+          "kind": "combat.resolve",
+          "combat": "combat#1",
+          "exchange": 8,
+          "attacker": "peasants-quest:gorm",
+          "defender": "peasants-quest:letholin",
+          "move": "fantasy.core:club-overhead",
+          "response": "dodge",
+          "read": "correct",
+          "result": "counter",
+          "precision": 0.8165,
+          "damageTaken": 0.0,
+          "damageDealt": 14.4,
+          "critical": false,
+          "momentum": 1.5,
+          "stamina": 21.0,
+          "feint": false
+        },
+        {
+          "kind": "combat.end",
+          "combat": "combat#1",
+          "outcome": "won",
+          "exchanges": 8,
+          "spoils": []
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:gorm-beaten"
+        },
+        {
+          "kind": "narrate",
+          "text": "The troll sits down in the shallows, which is what trolls do instead of falling.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Cross, then,\" it says, to nobody in particular.",
+          "pause": false
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:gorm",
+          "flag": "has-been-paid",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Rest a while",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Speak to the troll",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Carry on to Hagan's Castle",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Turn back to Fenmoor",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:rain",
+          "sky": "rain",
+          "temperature": 7.76,
+          "light": 0.65,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Carry on to Hagan's Castle"
+      },
+      "events": [
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 4,
+          "of": 6,
+          "waypoint": null,
+          "text": "The road climbs, and the barley country falls away behind you."
+        },
+        {
+          "kind": "weather.front",
+          "front": "westerly#1",
+          "definition": "fantasy.core:westerly",
+          "phase": "formed",
+          "at": "peasants-quest:the-marches",
+          "ahead": "peasants-quest:the-northwood",
+          "intensity": 0.4491
+        },
+        {
+          "kind": "narrate",
+          "text": "The wind has come round to the west, and it has weather on it.",
+          "pause": false
+        },
+        {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-northwood",
+          "condition": "fantasy.core:drizzle",
+          "name": "drizzle",
+          "intensity": 0.1146,
+          "tags": [
+            "wet"
+          ],
+          "visibility": 0.8,
+          "temperature": 7.76,
+          "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 5,
+          "of": 6,
+          "waypoint": null,
+          "text": "The rain finds every gap in your cloak."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 6,
+          "of": 6,
+          "waypoint": null,
+          "text": "The road climbs, and the barley country falls away behind you."
+        },
+        {
+          "kind": "world.time",
+          "tick": 30,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "elapsed": 6
+        },
+        {
+          "kind": "moved",
+          "from": "peasants-quest:troll-bridge",
+          "to": "peasants-quest:hagans-castle",
+          "route": "peasants-quest:north-road",
+          "ticks": 6
+        },
+        {
+          "kind": "narrate",
+          "text": "Hagan's Castle",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "Grey walls on a grey hill, and a muster yard full of men who look as unwilling as you feel.",
+          "pause": false
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:castle-arrival"
+        },
+        {
+          "kind": "narrate",
+          "text": "The muster yard is full of men who look as unwilling as you feel. It is a small comfort, and it does not last.",
+          "pause": false
+        },
+        {
+          "kind": "quest.updated",
+          "quest": "peasants-quest:the-kings-summons",
+          "status": "active",
+          "stage": "report",
+          "journal": "Find the captain of the guard and answer the muster."
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Report to the captain",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Take the road south again",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 30,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "15:00",
+          "location": "peasants-quest:hagans-castle",
+          "place": "Hagan's Castle",
+          "region": "peasants-quest:the-marches",
+          "weather": "fantasy.core:overcast",
+          "sky": "overcast",
+          "temperature": 7.83,
+          "light": 0.85,
+          "indoors": false,
+          "exposure": 0.1238
+        }
+      ]
+    }
+  ]
+}

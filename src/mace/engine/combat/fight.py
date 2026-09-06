@@ -187,13 +187,13 @@ def begin(
     flee_to : str or None
         Qualified location id to put them down at.
     mode : str or None
-        Override the game's default combat mode.
+        Override both the game's default and the player's session setting.
     """
     state = context.state
     state.combats_begun += 1
     fight = CombatState(
         id=f"combat#{state.combats_begun}",
-        mode=mode or context.game.rules.combat_mode,
+        mode=mode or state.combat_mode or context.game.rules.combat_mode,
         can_flee=can_flee,
         after=dict(after or {}),
         flee_to=flee_to,
@@ -243,6 +243,7 @@ def begin(
                 for fighter in roster.values()
             ),
             can_flee=fight.can_flee,
+            matrix=_matrix(roster),
         )
     )
 
@@ -250,6 +251,29 @@ def begin(
         _run_auto(context, events)
         return
     _next_tell(context, events)
+
+
+def _matrix(roster: dict[str, Fighter]) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """What beats what, among the moves this fight can actually produce.
+
+    Parameters
+    ----------
+    roster : dict
+        Instance id to fighter.
+
+    Returns
+    -------
+    tuple of tuple
+        Move type and the defense types that beat it, in a stable order.
+    """
+    beaten: dict[str, list[str]] = {}
+    for fighter in roster.values():
+        if fighter.combatant.side != "enemy":
+            continue
+        for _qualified, move in fighter.attacks:
+            answers = beaten.setdefault(move.type, [])
+            answers.extend(name for name in move.counters if name not in answers)
+    return tuple((move, tuple(answers)) for move, answers in sorted(beaten.items()))
 
 
 def _end(context: RuleContext, outcome: str, events: list[Event]) -> None:
@@ -414,7 +438,7 @@ def _resolve(
             resolution.damage_taken(
                 incoming, outcome, precision=precision, mitigation=mitigation
             ),
-            3,
+            1,
         ),
     )
 
@@ -578,7 +602,7 @@ def _opening(
     )
     if critical:
         dealt *= resolution.CRITICAL_MULTIPLIER
-    return round(max(0.0, dealt - attacker.armor), 3), critical
+    return round(max(0.0, dealt - attacker.armor), 1), critical
 
 
 def _apply(

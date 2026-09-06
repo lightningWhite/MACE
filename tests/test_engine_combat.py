@@ -799,7 +799,7 @@ def test_the_engine_never_calls_random_during_a_fight() -> None:
     result = step(result.state, _named(result, "Speak to the troll"), library)
 
     original = random.random
-    random.random = _forbidden  # type: ignore[assignment]
+    random.random = _forbidden
     try:
         result = step(
             result.state,
@@ -811,7 +811,7 @@ def test_the_engine_never_calls_random_during_a_fight() -> None:
                 break
             result = answer(result.state, library, "dodge")
     finally:
-        random.random = original  # type: ignore[assignment]
+        random.random = original
 
 
 def _forbidden(*_args: Any, **_kwargs: Any) -> float:
@@ -850,6 +850,7 @@ def test_a_fight_cannot_be_started_against_something_absent(
     from mace.engine.step import _context  # noqa: PLC0415
 
     game = library.pack("brawl").game
+    assert game is not None
     context = _context(library, result.state, game)
     with pytest.raises(RuleError, match="cannot fight"):
         combat.begin(context, ["nobody-at-all"], [])

@@ -798,6 +798,14 @@ class CombatBegan(Event):
         Instance id, name, side, and profile id for everyone in it.
     can_flee : bool
         Whether running is allowed at all.
+    matrix : tuple of tuple
+        Move type to the defense types that beat it, for every attack anyone
+        in this fight can throw. Published rather than left for a front-end to
+        work out, because the matrix is *content* and a UI that reconstructed
+        it would be reconstructing content. It is not a spoiler: a player
+        learns the matrix in five minutes and then spends the rest of the game
+        learning enemies, which is where the depth is. What a tell withholds
+        is which move is coming, not what would beat it.
     """
 
     kind: ClassVar[str] = "combat.begin"
@@ -805,6 +813,7 @@ class CombatBegan(Event):
     mode: str = "tactical"
     combatants: tuple[tuple[str, str, str, str], ...] = ()
     can_flee: bool = True
+    matrix: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
     def payload(self) -> dict[str, Any]:
         return {
@@ -815,6 +824,10 @@ class CombatBegan(Event):
                 for actor, name, side, profile in self.combatants
             ],
             "canFlee": self.can_flee,
+            "matrix": [
+                {"type": move, "beatenBy": list(answers)}
+                for move, answers in self.matrix
+            ],
         }
 
 

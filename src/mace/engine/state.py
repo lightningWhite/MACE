@@ -759,6 +759,11 @@ class GameState:
         anything are combat responses.
     combats_begun : int
         How many fights have started, so a fight's stream name is unique.
+    combat_mode : str or None
+        The player's own choice of combat presentation, overriding the game's
+        default. A session setting rather than an action: it belongs with the
+        seed, in the parameters a save opens with, because changing it midway
+        would change what a recorded elapsed time means.
     pending : PendingChoices or None
         Choices awaiting an answer.
     outcome : Outcome
@@ -790,6 +795,7 @@ class GameState:
     journey: Journey | None = None
     combat: CombatState | None = None
     combats_begun: int = 0
+    combat_mode: str | None = None
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING
     ended_because: str | None = None
