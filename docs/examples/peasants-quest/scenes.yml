@@ -163,7 +163,7 @@ scenes:
         effects:
           - {move: {actor: player, to: troll-bridge}}
           - {setStat: {actor: player, stat: hitpoints,
-                       value: {expr: "player.stats.hitpoints.max"}}}
+                       value: {expr: "player.pools.hitpoints.max"}}}
       - prompt: "Start again in Fenmoor"
         effects:
           - {restart: {}}

@@ -331,7 +331,7 @@ when:
   - {questComplete: reach-the-castle}
   - {questFailed: reach-the-castle}
   - {chance: 0.15}                                  # rolls on a scene-local stream
-  - {expr: "player.stats.hitpoints < player.stats.hitpoints.max * 0.25"}
+  - {expr: "player.pools.hitpoints.current < player.pools.hitpoints.max * 0.25"}
 ```
 
 A list of conditions is ANDed. Use `{any: [...]}`, `{all: [...]}`, `{not: {...}}`
@@ -352,7 +352,7 @@ omitted, it is the player.
 ```yaml
 effects:
   - {adjustStat: {actor: player, stat: hitpoints, delta: -8, reason: "troll's club"}}
-  - {setStat: {actor: player, stat: hitpoints, value: {expr: "player.stats.hitpoints.max"}}}
+  - {setStat: {actor: player, stat: hitpoints, value: {expr: "player.pools.hitpoints.max"}}}
   - {giveItem: {actor: player, item: gold, qty: 1}}
   - {takeItem: {actor: player, item: gold, qty: 10}}
   - {move: {actor: player, to: hagans-castle}}
@@ -444,7 +444,7 @@ game:
   winConditions:
     - {questComplete: reach-the-castle}
   loseConditions:
-    - {expr: "player.stats.hitpoints <= 0"}
+    - {expr: "player.pools.hitpoints.current <= 0"}
   onWin:  victory-scene
   onLose: defeat-scene
 ```

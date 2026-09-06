@@ -474,7 +474,7 @@ are never used**: packs are untrusted community input.
 
 ```yaml
 when:
-  - {expr: "player.stats.hitpoints < player.pools.hitpoints.max * 0.25"}
+  - {expr: "player.pools.hitpoints.current < player.pools.hitpoints.max * 0.25"}
   - {expr: "world.day > 7 and 'rain' in world.weather"}
 effects:
   - {setStat: {actor: player, stat: hitpoints, value: {expr: "player.pools.hitpoints.max"}}}
@@ -543,6 +543,42 @@ content refers to.
 - Every path an expression reads is available as `Expression.references`, which
   is how the validator catches `player.hitponts` at author time rather than at
   play time.
+
+#### What the roots hold
+
+| Path | Holds |
+|---|---|
+| `world.tick` | The world clock, in ticks since the game began. |
+| `world.day` | Which day that is, counting from 1. |
+| `world.dayPart` | `dawn`, `day`, `dusk`, or `night`. |
+| `world.time` | The wall-clock time as `HH:MM`. |
+| `world.minutesPerTick` | How much world time one tick is worth. |
+| `world.weather` | Conditions in force. Empty until phase 2. |
+| `world.weatherTags` | Their tags. Empty until phase 2. |
+| `vars.<name>` | Whatever `setVar` last put there. |
+
+Entity roots — `player`, and every entity with exactly one instance in play,
+under its local id — hold:
+
+| Path | Holds |
+|---|---|
+| `.id`, `.name`, `.kind` | From the content definition. |
+| `.tags` | Its tags, as a list. |
+| `.flags` | The flags currently set on it, as a list. |
+| `.disposition` | `friendly`, `neutral`, `hostile`, or `null`. |
+| `.location` | The local id of where it is. |
+| `.stats.<name>` | The **effective** value, after modifiers and clamping. |
+| `.pools.<name>.current` | What the pool is at now. |
+| `.pools.<name>.max` / `.min` | Its bounds. |
+| `.inventory.<itemId>` | How many it holds. |
+| `.equipment.<slot>` | The local id of what is in that slot. |
+| `.custom.<key>` | Whatever the author put in `custom`. |
+
+A pool's *current* value is `pools.<name>.current`, not `pools.<name>` — the
+latter is the mapping, and comparing a mapping to a number is an error rather
+than a silent surprise. An entity whose definition has several instances in
+play is deliberately **not** in scope: a name that could mean two things is
+better as an error than as a guess about which one you meant.
 
 ### Functions
 

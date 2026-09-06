@@ -80,3 +80,75 @@ def troll(**overrides: Any) -> dict[str, Any]:
         "stats": {"hitpoints": {"base": 80}, "strength": {"base": 70}},
         **overrides,
     }
+
+
+def game_pack(
+    root: Path,
+    *,
+    game: dict[str, Any] | None = None,
+    world: dict[str, Any] | None = None,
+    pack_id: str = "tiny",
+) -> Path:
+    """Write a small but complete game pack.
+
+    Defaults to a protagonist, two locations, a road between them, and a
+    winning condition — the smallest thing that is actually playable.
+
+    Parameters
+    ----------
+    root : Path
+        Directory to create the pack under.
+    game : dict or None
+        Fields to merge into the `game:` manifest.
+    world : dict or None
+        Collections to merge into the content file, replacing the defaults for
+        any collection named.
+    pack_id : str
+        The pack's id.
+
+    Returns
+    -------
+    Path
+        The pack directory.
+    """
+    manifest: dict[str, Any] = {
+        "name": "Tiny",
+        "player": {"entity": "hero", "startLocation": "home"},
+        "winConditions": [{"atLocation": {"location": "castle"}}],
+        **(game or {}),
+    }
+    content: dict[str, Any] = {
+        "entities": [
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 20, "max": 20},
+                    "stamina": {"base": 10, "max": 10},
+                    "charisma": {"base": 30},
+                },
+                "inventory": [{"item": "gold", "qty": 5}],
+            },
+            {"id": "gold", "kind": "item", "name": "Gold", "item": {"value": 1}},
+        ],
+        "locations": [
+            {
+                "id": "home",
+                "name": "Home",
+                "description": "Six houses and a well.",
+                "exits": [{"to": "castle", "route": "road"}],
+            },
+            {"id": "castle", "name": "The Castle"},
+        ],
+        "routes": [{"id": "road", "from": "home", "to": "castle", "ticks": 6}],
+        "scenes": [],
+    }
+    content.update(world or {})
+    return write_pack(
+        root,
+        pack_id,
+        kind="game",
+        files={"game.yml": {"game": manifest}, "world.yml": content},
+    )

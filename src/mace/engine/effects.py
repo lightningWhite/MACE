@@ -1,0 +1,545 @@
+"""Making the changes content asks for, and saying what happened.
+
+Every effect in the vocabulary is applied here. Applying one mutates the
+playthrough and returns events describing the change — the events are the only
+thing a front-end sees, so an effect that changes something silently is a bug.
+
+Three effects do not finish here, because they change what the engine does next
+rather than what the world contains: `playScene`, `restart`, and `endGame`.
+They are collected on the outcome for the scene runner to act on.
+
+See docs/03-content-model.md § Conditions and effects.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+
+from mace.content import ContentError
+from mace.engine.conditions import RuleError
+from mace.engine.context import RuleContext
+from mace.engine.events import (
+    Event,
+    FlagChanged,
+    InventoryChanged,
+    LocationRevealed,
+    Moved,
+    QuestUpdated,
+    StatChanged,
+    TimePassed,
+    Unsupported,
+    VariableChanged,
+)
+from mace.engine.expr import Expression
+from mace.engine.state import EntityState, Modifier, QuestState, QuestStatus
+from mace.engine.stats import pool_bounds
+from mace.model import Effect, Quest
+from mace.model.effects import (
+    AdjustStat,
+    AdvanceQuest,
+    AdvanceTime,
+    ApplyModifier,
+    AttachAlly,
+    DismissAlly,
+    ItemTransfer,
+    Move,
+    NoArguments,
+    PlayScene,
+    Reveal,
+    SetDisposition,
+    SetFlag,
+    SetStat,
+    SetVar,
+    StartCombat,
+    TransferContents,
+)
+
+__all__ = ["EffectOutcome", "apply", "apply_all"]
+
+#: Effects whose implementation belongs to a later phase. Content that uses one
+#: still loads and still plays; it just says so rather than pretending.
+LATER_PHASES = {
+    "startCombat": "phase 3 — combat",
+    "attachAlly": "phase 3 — allies",
+    "dismissAlly": "phase 3 — allies",
+}
+
+
+@dataclass(slots=True)
+class EffectOutcome:
+    """What applying some effects did, and what it asked the runner to do next.
+
+    Attributes
+    ----------
+    events : list of Event
+        Everything that happened, in order.
+    play : list of str
+        Qualified ids of scenes to run once the current one finishes.
+    ended : str or None
+        `won` or `lost`, if an effect ended the game.
+    restart : bool
+        Whether an effect asked for a new playthrough.
+    """
+
+    events: list[Event] = field(default_factory=list)
+    play: list[str] = field(default_factory=list)
+    ended: str | None = None
+    restart: bool = False
+
+
+def apply_all(
+    effects: Sequence[Effect], context: RuleContext, *, source: str = ""
+) -> EffectOutcome:
+    """Apply a list of effects in order.
+
+    Order is semantics: taking ten gold and then checking whether the player
+    can afford something is a different scene from doing it the other way
+    round, and replay depends on it staying fixed.
+
+    Parameters
+    ----------
+    effects : sequence of Effect
+        The effects to apply.
+    context : RuleContext
+        The playthrough.
+    source : str
+        What is applying them, for modifier bookkeeping.
+
+    Returns
+    -------
+    EffectOutcome
+        Events and any requests for the runner.
+    """
+    outcome = EffectOutcome()
+    for effect in effects:
+        apply(effect, context, outcome, source=source)
+    return outcome
+
+
+def apply(
+    effect: Effect,
+    context: RuleContext,
+    outcome: EffectOutcome,
+    *,
+    source: str = "",
+) -> None:
+    """Apply one effect, adding to an outcome.
+
+    Parameters
+    ----------
+    effect : Effect
+        What to do.
+    context : RuleContext
+        The playthrough.
+    outcome : EffectOutcome
+        Accumulator for events and runner requests.
+    source : str
+        What is applying it.
+
+    Raises
+    ------
+    RuleError
+        If the effect refers to something that is not there.
+    """
+    payload = effect.payload
+    state = context.state
+
+    if effect.tag in LATER_PHASES:
+        outcome.events.append(Unsupported(effect.tag, LATER_PHASES[effect.tag]))
+        return
+
+    if isinstance(payload, AdjustStat):
+        actor = _actor(payload.actor, context)
+        delta = _number(payload.delta, context, "adjustStat.delta")
+        _write_stat(actor, payload.stat, delta, context, outcome, payload.reason)
+        return
+
+    if isinstance(payload, SetStat):
+        actor = _actor(payload.actor, context)
+        target = _number(payload.value, context, "setStat.value")
+        current = actor.pools.get(payload.stat, 0.0)
+        _write_stat(actor, payload.stat, target - current, context, outcome, None)
+        return
+
+    if isinstance(payload, ApplyModifier):
+        actor = _actor(payload.actor, context)
+        actor.modifiers.append(
+            Modifier(
+                stat=payload.stat,
+                add=float(payload.add or 0.0),
+                mult=float(payload.mult if payload.mult is not None else 1.0),
+                label=payload.label or "",
+                source=source,
+                expires_at_tick=state.tick + payload.ticks,
+            )
+        )
+        return
+
+    if isinstance(payload, ItemTransfer):
+        actor = _actor(payload.actor, context)
+        item = _item(payload.item, context)
+        delta = payload.qty if effect.tag == "giveItem" else -payload.qty
+        _move_items(actor, item, delta, outcome)
+        return
+
+    if isinstance(payload, TransferContents):
+        _transfer_all(
+            _actor(payload.source, context), _actor(payload.target, context), outcome
+        )
+        return
+
+    if isinstance(payload, Move):
+        actor = _actor(payload.actor, context)
+        destination = _reference(payload.to, "locations", context)
+        origin, actor.location = actor.location, destination
+        state.revealed.add(destination)
+        if actor.instance_id == state.player:
+            outcome.events.append(Moved(origin, destination))
+        return
+
+    if isinstance(payload, SetFlag):
+        actor = _actor(payload.entity, context)
+        if payload.value:
+            actor.flags.add(payload.flag)
+        else:
+            actor.flags.discard(payload.flag)
+        outcome.events.append(
+            FlagChanged(actor.instance_id, payload.flag, payload.value)
+        )
+        return
+
+    if isinstance(payload, SetDisposition):
+        actor = _actor(payload.actor, context)
+        actor.disposition = payload.to
+        return
+
+    if isinstance(payload, SetVar):
+        raw = payload.value
+        value = (
+            _evaluate(raw, context, "setVar.value")
+            if isinstance(raw, Expression)
+            else raw
+        )
+        state.variables[payload.name] = value
+        outcome.events.append(VariableChanged(payload.name, value))
+        return
+
+    if isinstance(payload, Reveal):
+        location = _reference(payload.location, "locations", context)
+        if location not in state.revealed:
+            state.revealed.add(location)
+            outcome.events.append(LocationRevealed(location))
+        return
+
+    if isinstance(payload, AdvanceQuest):
+        _advance_quest(payload, context, outcome)
+        return
+
+    if isinstance(payload, AdvanceTime):
+        state.tick += payload.ticks
+        outcome.events.append(
+            TimePassed(
+                tick=state.tick,
+                day=context.clock.day(state.tick),
+                day_part=context.clock.day_part(state.tick),
+                elapsed=payload.ticks,
+            )
+        )
+        return
+
+    if isinstance(payload, PlayScene):
+        outcome.play.append(_reference(payload.scene, "scenes", context))
+        return
+
+    if isinstance(payload, NoArguments):
+        if effect.tag == "restart":
+            outcome.restart = True
+        else:
+            outcome.ended = "lost" if state.outcome.value == "lost" else "won"
+        return
+
+    if isinstance(payload, StartCombat | AttachAlly | DismissAlly):  # pragma: no cover
+        outcome.events.append(Unsupported(effect.tag, "phase 3"))
+        return
+
+    raise RuleError(f"effect `{effect.tag}` is not applicable yet")
+
+
+def _write_stat(
+    actor: EntityState,
+    stat: str,
+    delta: float,
+    context: RuleContext,
+    outcome: EffectOutcome,
+    reason: str | None,
+) -> None:
+    """Move a stat by a delta, clamped, and report what actually happened.
+
+    A heal that overflows the cap reports the healing that landed, not the
+    healing that was asked for — a front-end showing "+20" when 3 went in is
+    lying to the player.
+
+    Parameters
+    ----------
+    actor : EntityState
+        Whose stat.
+    stat : str
+        Which stat.
+    delta : float
+        How much to move it.
+    context : RuleContext
+        The playthrough.
+    outcome : EffectOutcome
+        Accumulator.
+    reason : str or None
+        What did it.
+
+    Raises
+    ------
+    RuleError
+        If the entity has no such stat.
+    """
+    definition = context.definition(actor)
+    if stat not in (definition.stats or {}):
+        raise RuleError(f"`{definition.id}` has no stat `{stat}`")
+
+    low, high = pool_bounds(definition, stat)
+    before = actor.pools.get(stat, 0.0)
+    after = min(max(before + delta, low), high)
+    actor.pools[stat] = after
+    if after != before:
+        outcome.events.append(
+            StatChanged(actor.instance_id, stat, after - before, after, reason)
+        )
+
+
+def _move_items(
+    actor: EntityState, item: str, delta: int, outcome: EffectOutcome
+) -> None:
+    """Add to or take from an inventory, never below zero.
+
+    Parameters
+    ----------
+    actor : EntityState
+        Whose inventory.
+    item : str
+        Qualified item id.
+    delta : int
+        How many to add, or remove as a negative.
+    outcome : EffectOutcome
+        Accumulator.
+    """
+    before = actor.inventory.get(item, 0)
+    after = max(0, before + delta)
+    if after:
+        actor.inventory[item] = after
+    else:
+        actor.inventory.pop(item, None)
+    if after != before:
+        outcome.events.append(
+            InventoryChanged(actor.instance_id, item, after - before, after)
+        )
+
+
+def _transfer_all(
+    source: EntityState, target: EntityState, outcome: EffectOutcome
+) -> None:
+    """Move everything one entity holds into another.
+
+    Parameters
+    ----------
+    source, target : EntityState
+        Where the items come from and go to.
+    outcome : EffectOutcome
+        Accumulator.
+    """
+    for item, quantity in sorted(source.inventory.items()):
+        _move_items(source, item, -quantity, outcome)
+        _move_items(target, item, quantity, outcome)
+
+
+def _advance_quest(
+    payload: AdvanceQuest, context: RuleContext, outcome: EffectOutcome
+) -> None:
+    """Start a quest, or move it to a stage.
+
+    Parameters
+    ----------
+    payload : AdvanceQuest
+        Which quest, and optionally which stage.
+    context : RuleContext
+        The playthrough.
+    outcome : EffectOutcome
+        Accumulator.
+
+    Raises
+    ------
+    RuleError
+        If the quest or stage does not exist.
+    """
+    quest_id = _reference(payload.quest, "quests", context)
+    definition = context.library.find(
+        payload.quest, "quests", within=context.state.pack
+    )
+    assert isinstance(definition, Quest)
+    stages = definition.stages
+    stage_ids = [stage.id for stage in stages]
+
+    progress = context.state.quests.setdefault(quest_id, QuestState(quest=quest_id))
+    if payload.stage is not None:
+        if payload.stage not in stage_ids:
+            raise RuleError(f"`{quest_id}` has no stage `{payload.stage}`")
+        stage = payload.stage
+    elif progress.stage is None:
+        stage = stage_ids[0]
+    else:
+        position = stage_ids.index(progress.stage)
+        if position + 1 >= len(stage_ids):
+            progress.status = QuestStatus.COMPLETE
+            outcome.events.append(QuestUpdated(quest_id, "complete", progress.stage))
+            return
+        stage = stage_ids[position + 1]
+
+    if progress.started_at_tick is None:
+        progress.started_at_tick = context.state.tick
+    progress.stage = stage
+    progress.status = QuestStatus.ACTIVE
+    journal = next(entry.journal for entry in stages if entry.id == stage)
+    outcome.events.append(QuestUpdated(quest_id, "active", stage, journal))
+
+
+def _actor(reference: str, context: RuleContext) -> EntityState:
+    """Find an entity, or say clearly that it is not here.
+
+    Parameters
+    ----------
+    reference : str
+        As the author wrote it.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    EntityState
+        The instance.
+
+    Raises
+    ------
+    RuleError
+        If nothing matches.
+    """
+    actor = context.actor(reference)
+    if actor is None:
+        raise RuleError(f"`{reference}` is not an entity in this playthrough")
+    return actor
+
+
+def _item(reference: str, context: RuleContext) -> str:
+    """Qualify an item reference.
+
+    Parameters
+    ----------
+    reference : str
+        As the author wrote it.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    str
+        The qualified id.
+
+    Raises
+    ------
+    RuleError
+        If it names nothing.
+    """
+    return _reference(reference, "entities", context)
+
+
+def _reference(reference: str, collection: str, context: RuleContext) -> str:
+    """Qualify any reference, turning a content error into a rule error.
+
+    Parameters
+    ----------
+    reference : str
+        As the author wrote it.
+    collection : str
+        Which collection it points into.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    str
+        The qualified id.
+
+    Raises
+    ------
+    RuleError
+        If it names nothing.
+    """
+    try:
+        return context.qualify(reference, collection)
+    except ContentError as error:
+        raise RuleError(error.message) from error
+
+
+def _number(value: object, context: RuleContext, where: str) -> float:
+    """Read an authored value that has to be a number.
+
+    Parameters
+    ----------
+    value : object
+        A literal or a parsed expression.
+    context : RuleContext
+        The playthrough.
+    where : str
+        What is asking, for the error message.
+
+    Returns
+    -------
+    float
+        The number.
+
+    Raises
+    ------
+    RuleError
+        If it is not a number.
+    """
+    if isinstance(value, Expression):
+        value = _evaluate(value, context, where)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise RuleError(f"{where} must be a number, got {value!r}")
+    return float(value)
+
+
+def _evaluate(expression: Expression, context: RuleContext, where: str) -> object:
+    """Evaluate an expression, turning its failure into a rule error.
+
+    Parameters
+    ----------
+    expression : Expression
+        The parsed expression.
+    context : RuleContext
+        The playthrough.
+    where : str
+        What is asking.
+
+    Returns
+    -------
+    object
+        The value.
+
+    Raises
+    ------
+    RuleError
+        If it cannot be evaluated.
+    """
+    from mace.engine.expr import ExprEvaluationError
+
+    try:
+        return expression.evaluate(context.expression_context())
+    except ExprEvaluationError as error:
+        raise RuleError(f"{where}: {error}") from error

@@ -28,8 +28,8 @@ terminal, with scenes, choices, items, and win/lose.
 - [x] Pack loader: discovery, id resolution, `extends` inheritance, dependency order
 - [x] Validator with error/warning/note severities and file+id reporting
 - [x] `mace.engine.expr` — the safe expression parser and evaluator
-- [ ] Structured condition and effect evaluation
-- [ ] `GameState`, `Action`, `Event`, and the `step()` function
+- [x] Structured condition and effect evaluation
+- [x] `GameState`, `Action`, `Event`, and the `step()` function
 - [x] Seeded named RNG streams
 - [ ] Minimal CLI player: `mace play <pack>`
 - [ ] First golden replay test

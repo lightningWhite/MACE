@@ -38,7 +38,7 @@ game:
     - {questComplete: the-kings-summons}
 
   loseConditions:
-    - {expr: "player.pools.hitpoints <= 0"}
+    - {expr: "player.pools.hitpoints.current <= 0"}
     - {questFailed: the-kings-summons}
 
   onWin: victory
