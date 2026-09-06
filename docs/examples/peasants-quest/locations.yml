@@ -1,0 +1,98 @@
+# Regions carry climate. Locations belong to regions. Weather fronts move
+# between neighboring regions — see docs/05-world-simulation.md.
+regions:
+  - id: the-lowlands
+    name: "The Lowlands"
+    climate: fantasy.core:temperate
+    neighbors: [the-northwood, the-range]
+    elevation: 40
+
+  - id: the-northwood
+    name: "The Northwood"
+    climate: fantasy.core:temperate
+    neighbors: [the-lowlands, the-range]
+    elevation: 120
+
+  - id: the-range
+    name: "The Northern Range"
+    climate: fantasy.core:alpine
+    neighbors: [the-northwood]
+    elevation: 1400
+
+locations:
+  - id: fenmoor
+    name: "Fenmoor"
+    type: settlement
+    region: the-lowlands
+    safe: true                  # no encounters here
+    indoors: false
+    description:
+      - text: "Six houses, a well, and more geese than people. The barley stands unfinished in the low field."
+    entities: [old-hallam, fenmoor-well]
+    onArrive: fenmoor-arrival
+    mapPosition: {x: 0, y: 120}
+    exits:
+      - {to: traders-post, route: south-track}
+      - {to: hagans-castle, route: north-road}
+
+  - id: traders-post
+    name: "Trader's Post"
+    type: settlement
+    region: the-lowlands
+    safe: true
+    description:
+      - text: "A crossroads with ambitions. Three stalls, a shuttered inn, and a peddler who has been here longer than the stalls."
+    entities: [peddler, front-gate]
+    mapPosition: {x: -60, y: 160}
+    exits:
+      - {to: fenmoor, route: south-track}
+      - {to: hagans-castle, route: north-road}
+
+  # A waypoint: a real location, but not a destination the player selects.
+  - id: troll-bridge
+    name: "The Old Bridge"
+    type: wilderness
+    region: the-northwood
+    description:
+      - text: "A stone span over black water, older than the road it carries."
+        when: {dayPart: [day, dawn]}
+      - text: "You hear the river well before you see the bridge."
+        when: {dayPart: [night]}
+      - text: "A stone span, slick and dark with rain."
+        when: {weatherTag: [wet]}
+      - text: "A stone span over black water."
+    entities: [gorm]
+    encounters: bridge-encounters
+    mapPosition: {x: 10, y: 60}
+    exits: []                    # reached only by travelling the north road
+
+  - id: hagans-castle
+    name: "Hagan's Castle"
+    type: settlement
+    region: the-northwood
+    safe: true
+    discovered: true             # the player knows it exists from the start
+    description:
+      - text: "Grey walls on a grey hill, and a muster yard full of men who look as unwilling as you feel."
+    entities: [captain-orin]
+    onArrive: castle-arrival
+    mapPosition: {x: 20, y: 0}
+    exits:
+      - {to: fenmoor, route: north-road}
+      - {to: dark-mountain, route: mountain-pass,
+         when: [{questStage: {quest: the-kings-summons, stage: report}}]}
+
+  - id: dark-mountain
+    name: "The Dark Mountain"
+    type: wilderness
+    region: the-range
+    visible: false               # not shown until discovered
+    # Hard climate override: it is always winter up here, whatever the season.
+    climate: {condition: fantasy.core:blizzard, dayPart: night, locked: true}
+    description:
+      - text: "The snow comes sideways and the dark is the kind that has weight to it."
+    entities: [treasure-chest]
+    encounters: mountain-encounters
+    mapPosition: {x: 60, y: -60}
+    exits:
+      - {to: hagans-castle, route: mountain-pass}

@@ -1,0 +1,106 @@
+# CLAUDE.md
+
+Guidance for Claude Code (and other AI assistants) working in this repository.
+
+## What this project is
+
+MACE is an engine and authoring toolkit for text-driven adventure games. A "game"
+is **data, not code**: YAML content packs describing a world map, entities,
+interactions, quests, climate, and encounter tables. The engine loads that data
+and runs a deterministic simulation; front-ends (CLI today, web PWA later) render
+it.
+
+Two audiences, always keep both in mind:
+
+1. **Authors** — people building games with the wizard. They should never have to
+   write code or hand-edit fiddly YAML.
+2. **Players** — people playing those games. The world should feel alive: weather
+   moves, days pass, journeys have consequences, combat rewards skill.
+
+Read `docs/README.md` before making design decisions. The docs are the source of
+truth for intended design; the code is behind them and catching up.
+
+## Non-negotiable architectural rules
+
+These exist so the same engine can drive a terminal, a browser, and eventually a
+multiplayer server. Breaking them is a design regression, not a shortcut.
+
+1. **The engine core is pure and deterministic.** `mace.engine` must not print,
+   read input, touch the filesystem, call the network, or read the wall clock.
+   Same content + same seed + same action log = byte-identical outcome. Always.
+2. **Never call `random` directly.** All randomness comes from the seeded RNG
+   service via a named stream (`rng.stream("weather")`). New subsystem, new
+   stream — this keeps subsystems from desyncing each other's sequences.
+3. **Content and state are separate.** Content packs are static, versioned, and
+   shared (a troll's `base` strength). Session state is per-playthrough and
+   mutable (this troll's `current` hitpoints). Never write runtime values into
+   content models.
+4. **Front-ends consume events, not state.** The engine returns an ordered list of
+   events (`say`, `choices`, `weather.changed`, `combat.tell`, ...). UIs render
+   events and a read-only view-model projection. A UI that reaches into engine
+   internals is a bug.
+5. **No `eval`/`exec` on content.** Author-supplied expressions go through the
+   restricted expression evaluator in `mace.engine.expr`. Content packs are
+   untrusted community input; treat them that way.
+6. **Everything an author writes is schema-validated.** If you add a content
+   field, add it to the pydantic model *and* the JSON Schema in `schemas/`, and
+   add an example to the docs.
+
+## Layout
+
+```
+docs/            Design docs — read these first
+schemas/         JSON Schema for every content type
+packs/           Content: shared libraries + playable games
+src/mace/
+  model/         Pydantic content models (authoring-time shapes)
+  content/       Pack loading, id resolution, inheritance, validation
+  engine/        Pure simulation: state, actions, events, rules
+    world/       Clock, calendar, climate, weather, world events
+    encounter/   Encounter tables and rolls
+    economy/     Goods, markets, price formation, trade flow
+    combat/      Tempo combat resolution
+    expr/        Safe condition/effect expression evaluation
+  wizard/        Declarative authoring flow (shared by CLI and web)
+  cli/           Terminal front-end (play + author)
+  api/           FastAPI service (later phases)
+web/             PWA client (later phases)
+tests/           Unit tests + golden replay conformance tests
+```
+
+Legacy code still lives at `src/wizard.py` and `src/modules/`. It is the v0
+prototype. Migrate it into `src/mace/` rather than extending it in place.
+
+## Conventions
+
+- **Python 3.12+**, formatted with `black` (pre-commit enforces it). Run
+  `pre-commit run --all-files` before committing.
+- **Naming:** Python code uses `snake_case`. The existing prototype uses
+  `camelCase` for functions — new code should not follow it. YAML content keys
+  use `camelCase` (this is deliberate and consistent across all packs).
+- **Content ids** are `kebab-case` and namespaced `pack-id:local-id`. Inside a
+  pack, bare local ids resolve to that pack first, then to its dependencies.
+- **Docstrings** use the numpy-style parameter blocks already established in
+  `src/modules/objects/*.py`.
+
+## Testing expectations
+
+- Rules changes need a unit test.
+- Any change to simulation behavior needs a **golden replay test**: a seed plus
+  an action log with a recorded event stream. These are the contract that lets a
+  second engine implementation (e.g. a TypeScript port) be verified. If a change
+  legitimately alters a golden file, say so explicitly in the commit message.
+- Every pack in `packs/` must validate. `mace validate packs/` runs in CI.
+
+## Working style for this repo
+
+- This is a hobby project built in scattered bits of time. Prefer small,
+  self-contained, committable steps over sweeping refactors.
+- When a design question comes up that the docs don't answer, write the answer
+  into `docs/` (or `docs/decisions/` for a real fork in the road) as part of the
+  change. Undocumented design decisions are how this project got stuck before.
+- Don't add dependencies casually. The engine core should stay on stdlib +
+  pydantic so it can run under Pyodide in the browser.
+- Flavor matters. Prompts, dialog, and generated text should feel like an
+  adventure, not a form. But keep flavor in content and presentation layers, not
+  baked into engine logic.

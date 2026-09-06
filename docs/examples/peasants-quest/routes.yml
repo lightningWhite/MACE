@@ -1,0 +1,46 @@
+routes:
+  # The main road. Six ticks = three hours at 30 min/tick, so a journey that
+  # starts at dusk finishes in the dark — and that matters.
+  - id: north-road
+    name: "The North Road"
+    from: fenmoor
+    to: hagans-castle
+    ticks: 6
+    terrain: fantasy.core:forest-track
+    dangerLevel: 5
+    encounters: forest-road-encounters
+    waypoints:
+      - location: troll-bridge
+        atTick: 3
+        encounters: bridge-encounters
+    description:
+      - text: "You set out on the rutted track north, under oaks that drip on you for company."
+        when: {weatherTag: [wet]}
+      - text: "You set out on the rutted track north."
+    legDescriptions:
+      - {text: "Crows argue in the branches overhead.", when: {dayPart: [day]}}
+      - {text: "Something moves in the undergrowth, then decides against it.", when: {dayPart: [night]}}
+      - {text: "The rain finds every gap in your cloak.", when: {weatherTag: [wet]}}
+      - {text: "The road climbs, and the barley country falls away behind you."}
+
+  - id: south-track
+    name: "The Trader's Track"
+    from: fenmoor
+    to: traders-post
+    ticks: 2
+    terrain: fantasy.core:cart-road
+    dangerLevel: 1
+    encounters: fantasy.core:quiet-road-encounters
+
+  - id: mountain-pass
+    name: "The Pass"
+    from: hagans-castle
+    to: dark-mountain
+    ticks: 9
+    terrain: fantasy.core:mountain-path
+    dangerLevel: 8
+    encounters: mountain-encounters
+    # Blizzards close the pass. The player has to wait it out.
+    when: [{not: {weather: [fantasy.core:blizzard]}}]
+    description:
+      - text: "The pass narrows until the sky is a strip of grey between two walls of rock."

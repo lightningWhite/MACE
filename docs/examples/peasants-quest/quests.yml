@@ -1,0 +1,23 @@
+quests:
+  - id: the-kings-summons
+    name: "The King's Summons"
+    summary: "Reach Hagan's Castle within seven days."
+    stages:
+      - id: travel
+        journal: "Get to Hagan's Castle. You have seven days, and you have already used one."
+        complete:
+          - {atLocation: {actor: player, location: hagans-castle}}
+        fail:
+          - {expr: "world.day > 7"}
+
+      - id: report
+        journal: "Find the captain of the guard and answer the muster."
+        complete:
+          - {flag: {entity: captain-orin, flag: has-spoken}}
+        onEnter:
+          - {setVar: {name: arrivedAtCastle, value: true}}
+
+    onComplete:
+      - {setVar: {name: summonsAnswered, value: true}}
+    onFail:
+      - {playScene: fantasy.core:deserters-end}

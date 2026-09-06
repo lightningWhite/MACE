@@ -1,4 +1,4 @@
-# The Magic and Combat Engine game creation wizard.
+# The MACE (Modular Adventure Creation Engine) game creation wizard.
 #
 # This tool makes it easier to create MACE compatible objects and games
 # by presenting the user with questions and options in a structured manner.

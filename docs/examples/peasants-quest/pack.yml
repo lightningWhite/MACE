@@ -1,0 +1,14 @@
+id: peasants-quest
+name: "A Peasant's Quest"
+version: 0.1.0
+kind: game
+maceVersion: "^0.1"
+authors: ["lightningWhite"]
+license: CC-BY-4.0
+description: >
+  You have twenty-five years of barley behind you and seven days to reach
+  Hagan's Castle. The road north is not kind in autumn.
+tags: [fantasy, medieval, short, low-magic]
+requires:
+  - {id: mace.core, version: "^0.1"}
+  - {id: fantasy.core, version: "^0.3"}

@@ -1,0 +1,119 @@
+# One Entity type covers the player, NPCs, monsters, items, and fixtures.
+# `kind` selects which optional field groups apply. See ADR-0002.
+entities:
+
+  # ── The player ────────────────────────────────────────────────────────────
+  - id: letholin
+    kind: actor
+    playable: true
+    name: "Letholin"
+    description: "Twenty-five years of barley have left you stronger than you look."
+    tags: [human, peasant]
+    stats:
+      hitpoints: {base: 50, max: 50}
+      stamina:   {base: 40, max: 40, growth: normal}
+      strength:  {base: 32, customizable: true, growth: slow}
+      speed:     {base: 41, customizable: true, growth: slow}
+      wisdom:    {base: 12, customizable: true}
+      endurance: {base: 30, customizable: true, growth: normal}
+      charisma:  {base: 22, customizable: true}
+      stealth:   {base: 18, customizable: true}
+    inventory:
+      - {item: fantasy.core:gold, qty: 4}
+      - {item: fantasy.core:bread, qty: 2}
+      - {item: reaping-hook, qty: 1}
+    equipment:
+      mainHand: reaping-hook
+    skills:
+      reaping-hook: 15
+    combat:
+      profile: fantasy.core:untrained-fighter
+    env:
+      - when: {weatherTag: [cold]}
+        modify: [{stat: speed, add: -4}]
+      - when: {weatherTag: [wet]}
+        modify: [{stat: stealth, add: 6}]     # rain covers your noise
+
+  # ── An NPC, extended from the shared library ──────────────────────────────
+  - id: peddler
+    extends: fantasy.core:travelling-merchant
+    name: "The Peddler"
+    description: "A stooped man with a pack twice his size and no visible curiosity about where he is."
+    disposition: friendly
+    stats:
+      charisma: {base: 60}
+    inventory:
+      - {item: fantasy.core:gold, qty: 15}
+      - {item: fantasy.core:dagger, qty: 1}
+      - {item: fantasy.core:rope, qty: 2}
+    scenes: [talk-to-peddler, fantasy.core:generic-haggle]
+
+  # ── A monster, extended and given a name and a grudge ─────────────────────
+  - id: gorm
+    extends: fantasy.core:bridge-troll
+    name: "Gorm"
+    description: "It has moss in its hair and the patient look of something that gets paid eventually."
+    tags: [$append, named]
+    disposition: neutral            # not hostile until you make it so
+    stats:
+      strength: {base: 85}
+    inventory:
+      - {item: fantasy.core:gold, qty: 120}
+    env:
+      - when: {weatherTag: [dark]}
+        modify: [{stat: strength, add: 10}, {stat: stealth, add: 15}]
+    scenes: [talk-to-gorm, attack-gorm]
+
+  - id: captain-orin
+    extends: fantasy.core:soldier
+    name: "Captain Orin"
+    disposition: neutral
+    scenes: [report-to-orin]
+
+  - id: old-hallam
+    extends: fantasy.core:villager
+    name: "Old Hallam"
+    description: "Your friend, your employer, and the reason you stayed."
+    disposition: friendly
+    scenes: [say-goodbye-to-hallam]
+
+  # ── Items ─────────────────────────────────────────────────────────────────
+  - id: reaping-hook
+    kind: item
+    name: "Reaping Hook"
+    description: "Not a weapon. It will have to do."
+    tags: [weapon, improvised]
+    item:
+      weight: 2
+      equipSlot: mainHand
+      damage: {min: 2, max: 6, type: slash}
+      moves: [fantasy.core:wild-swing, fantasy.core:desperate-hack]
+      value: 3
+
+  - id: kings-token
+    kind: item
+    name: "The King's Token"
+    description: "A lead disc stamped with a crown. Proof you answered the summons."
+    tags: [quest]
+    item: {weight: 0, stackable: false, value: 0}
+
+  # ── A fixture and a container ─────────────────────────────────────────────
+  - id: fenmoor-well
+    kind: fixture
+    name: "The Village Well"
+    scenes: [drink-from-well]
+
+  - id: treasure-chest
+    kind: container
+    name: "An Iron-Bound Chest"
+    flags: [locked]
+    container:
+      contents:
+        - {item: fantasy.core:gold, qty: 200}
+        - {item: fantasy.core:healing-draught, qty: 2}
+    scenes: [open-chest]
+
+  - id: front-gate
+    kind: portal
+    name: "The Post Gate"
+    portal: {route: south-track}

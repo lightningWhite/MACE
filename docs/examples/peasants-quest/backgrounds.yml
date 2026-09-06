@@ -1,0 +1,41 @@
+# Optional starting variants for the protagonist. The player picks one, then
+# spends game.player.creationPoints on stats marked `customizable`.
+# See docs/13-open-questions.md #6.
+backgrounds:
+  - id: farmhand
+    name: "Farmhand"
+    description: "Twenty-five years of barley. Your hands are the strongest part of you."
+    stats:
+      strength:  {add: 8}
+      endurance: {add: 6}
+      charisma:  {add: -3}
+    inventory:
+      - {item: fantasy.core:bread, qty: 2}
+    grantsFlag: knows-the-land
+
+  - id: poacher
+    name: "Poacher"
+    description: "You know the wood better than the man who claims to own it."
+    stats:
+      stealth: {add: 15}
+      speed:   {add: 5}
+      charisma: {add: -5}
+    skills:
+      fantasy.core:bow: 20
+    inventory:
+      - {item: fantasy.core:snare, qty: 2}
+    grantsFlag: knows-the-wood       # unlocks a shortcut past the bridge
+
+  - id: old-soldier
+    name: "Old Soldier"
+    description: "You did this once already, a long time ago, for a different king."
+    stats:
+      strength: {add: 4}
+      endurance: {add: 8}
+      speed:    {add: -4}
+    skills:
+      fantasy.core:sword: 30
+    inventory:
+      - {item: fantasy.core:worn-blade, qty: 1}
+    grantsFlag: served-before        # Captain Orin recognises you
+    openingScene: old-soldier-opening

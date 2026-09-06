@@ -1,0 +1,171 @@
+# Scenes are named and flat. Branching is `goto`, the v0 `fallbacks` is `else`.
+# Conditions and effects are structured — see ADR-0003.
+scenes:
+
+  - id: fenmoor-arrival
+    say:
+      - "The geese scatter. Nobody else looks up."
+    once: true
+
+  # ── The troll: the whole interaction graph, readably ───────────────────────
+  - id: talk-to-gorm
+    prompt: "Speak to the troll"
+    when:
+      - {expr: "gorm.disposition != 'hostile'"}
+    say:
+      - "The troll unfolds itself from beneath the bridge, and the bridge seems glad to be rid of the weight."
+      - {text: "\"Toll,\" it says. \"Ten gold, or swim.\"", pause: true}
+    effects:
+      - {setFlag: {entity: gorm, flag: has-spoken, value: true}}
+    choices:
+      - prompt: "Pay the toll (10 gold)"
+        when: [{hasItem: {actor: player, item: fantasy.core:gold, qty: 10}}]
+        showWhenUnavailable: true
+        unavailableHint: "You don't have ten gold."
+        goto: pay-the-toll
+      - prompt: "Try to talk it down"
+        goto: haggle-with-gorm
+      - prompt: "Ask about the road north"
+        goto: gorm-on-the-road
+      - prompt: "Draw your hook"
+        goto: attack-gorm
+    else: gorm-is-past-talking
+
+  - id: pay-the-toll
+    say:
+      - "The troll counts the coins twice, with evident effort, and steps aside."
+    effects:
+      - {takeItem: {actor: player, item: fantasy.core:gold, qty: 10}}
+      - {setFlag: {entity: gorm, flag: has-been-paid, value: true}}
+      - {adjustStat: {actor: gorm, stat: disposition, value: friendly}}
+
+  - id: haggle-with-gorm
+    when:
+      - {statAtLeast: {actor: player, stat: charisma, value: 40}}
+    say:
+      - "You point out, reasonably, that you have four gold and no choice."
+      - "The troll considers this for a long, geological moment."
+      - "\"Four,\" it agrees."
+    effects:
+      - {takeItem: {actor: player, item: fantasy.core:gold, qty: 4}}
+      - {setFlag: {entity: gorm, flag: has-been-paid, value: true}}
+    else: gorm-refuses-to-haggle
+
+  - id: gorm-refuses-to-haggle
+    say:
+      - "The troll looks at you the way you look at a goose."
+      - "\"Ten,\" it says. \"Or swim.\""
+    goto: talk-to-gorm
+
+  - id: gorm-on-the-road
+    say:
+      - "\"Bad,\" says the troll, with feeling. \"Worse at night.\""
+      - {text: "\"Something is out in the wood. Not mine.\"", pause: true}
+    effects:
+      - {setVar: {name: warnedAboutWood, value: true}}
+    goto: talk-to-gorm
+
+  - id: gorm-is-past-talking
+    say:
+      - "The troll has stopped listening. It has, in fact, stopped doing anything but coming towards you."
+    goto: attack-gorm
+
+  - id: attack-gorm
+    prompt: "Attack the troll"
+    say:
+      - "You raise the hook. The troll seems almost pleased."
+    effects:
+      - {adjustStat: {actor: gorm, stat: disposition, value: hostile}}
+      - {startCombat: {against: [gorm], canFlee: true, onFlee: fled-from-gorm}}
+
+  - id: fled-from-gorm
+    say:
+      - "You run. The bridge stays where it is, and so does the troll."
+
+  # ── Ordinary scenes ───────────────────────────────────────────────────────
+  - id: talk-to-peddler
+    prompt: "Talk to the peddler"
+    say:
+      - "\"Hello, traveller,\" he says, to a man standing in his own county."
+      - "\"Here — a piece of gold for stopping. Nobody stops.\""
+    effects:
+      - {giveItem: {actor: player, item: fantasy.core:gold, qty: 1}}
+    once: true
+
+  - id: drink-from-well
+    prompt: "Drink from the well"
+    effects:
+      - {adjustStat: {actor: player, stat: stamina, delta: 8, reason: "cold well water"}}
+    say:
+      - "Cold enough to hurt your teeth. You feel better for it."
+
+  - id: open-chest
+    prompt: "Open the chest"
+    when:
+      - {flag: {entity: treasure-chest, flag: locked, is: false}}
+    say:
+      - "The lid comes up on gold and two stoppered bottles."
+    effects:
+      - {transferContents: {from: treasure-chest, to: player}}
+    else: chest-is-locked
+
+  - id: chest-is-locked
+    say:
+      - "Locked, and the lock is better than the chest."
+    choices:
+      - prompt: "Try to force it"
+        when: [{statAtLeast: {actor: player, stat: strength, value: 60}}]
+        effects:
+          - {setFlag: {entity: treasure-chest, flag: locked, value: false}}
+          - {adjustStat: {actor: player, stat: stamina, delta: -10}}
+        goto: open-chest
+
+  - id: report-to-orin
+    prompt: "Report to the captain"
+    say:
+      - "The captain looks at your hands, then at your face, and writes something down."
+      - "\"Late,\" he says. \"But here.\""
+    effects:
+      - {giveItem: {actor: player, item: kings-token, qty: 1}}
+      - {setFlag: {entity: captain-orin, flag: has-spoken, value: true}}
+      - {reveal: {location: dark-mountain}}
+
+  - id: say-goodbye-to-hallam
+    prompt: "Say goodbye to Hallam"
+    say:
+      - "He doesn't say much. He gives you bread, and holds on a moment too long."
+    effects:
+      - {giveItem: {actor: player, item: fantasy.core:bread, qty: 2}}
+    once: true
+
+  - id: castle-arrival
+    say:
+      - "The muster yard is full of men who look as unwilling as you feel. It is a small comfort, and it does not last."
+    once: true
+
+  # ── Endings — ordinary scenes, no special machinery ───────────────────────
+  - id: victory
+    say:
+      - "You made it. Whatever that turns out to be worth."
+    choices:
+      - prompt: "Play again"
+        effects: [{restart: {}}]
+      - prompt: "Rest"
+        effects: [{endGame: {}}]
+
+  - id: defeat
+    say:
+      - "The road north keeps what it takes."
+    choices:
+      # The v0 "retry from where you got the sword" idea, as a plain choice.
+      - prompt: "Take up the story again at the bridge"
+        when: [{flag: {entity: gorm, flag: has-spoken}}]
+        effects:
+          - {move: {actor: player, to: troll-bridge}}
+          - {setStat: {actor: player, stat: hitpoints,
+                       value: {expr: "player.stats.hitpoints.max"}}}
+      - prompt: "Start again in Fenmoor"
+        effects:
+          - {restart: {}}
+      - prompt: "Let it end"
+        effects: [{endGame: {}}]

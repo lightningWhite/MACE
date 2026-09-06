@@ -1,0 +1,71 @@
+# A small market network. Grain is cheap in the barley country and dear in the
+# mountains — and when the Ashfell closes the pass, that gap becomes a chasm.
+# See docs/08-economy.md.
+
+goods:
+  - id: grain
+    name: "Grain"
+    baseValue: 4
+    category: food
+    weight: 1
+    elasticity: 0.4              # necessity: people pay, they don't stop buying
+    perishable: {ticksToSpoil: 960}
+    producedBy: [farmland]
+    consumedBy: [settlement]
+
+  - id: salt
+    name: "Salt"
+    baseValue: 12
+    category: food
+    weight: 1
+    elasticity: 0.6
+    producedBy: [coast]
+    consumedBy: [settlement]
+
+  - id: iron-ingot
+    name: "Iron Ingot"
+    baseValue: 30
+    category: metal
+    weight: 8
+    elasticity: 1.3              # luxury-ish: demand collapses when it gets dear
+    producedBy: [mine]
+    consumedBy: [smithy, garrison]
+
+markets:
+  - id: fenmoor-market
+    location: fenmoor
+    size: hamlet
+    wealth: 0.3
+    tags: [farmland, settlement]
+    produces:
+      - {good: grain, perTick: 0.8}
+    consumes:
+      - {good: salt,       perTick: 0.1}
+      - {good: iron-ingot, perTick: 0.05}
+    stock:
+      grain: {initial: 400, capacity: 800}
+      salt:  {initial: 20,  capacity: 60}
+
+  - id: traders-post-market
+    location: traders-post
+    size: village
+    wealth: 0.5
+    tags: [settlement]
+    consumes:
+      - {good: grain, perTick: 0.4}
+    stock:
+      grain:      {initial: 120, capacity: 300}
+      salt:       {initial: 60,  capacity: 120}
+      iron-ingot: {initial: 12,  capacity: 40}
+
+  - id: castle-market
+    location: hagans-castle
+    size: town
+    wealth: 0.8
+    tags: [settlement, smithy, garrison]
+    consumes:
+      - {good: grain,      perTick: 1.6}     # a garrison eats
+      - {good: iron-ingot, perTick: 0.4}
+    stock:
+      grain:      {initial: 300, capacity: 900}
+      iron-ingot: {initial: 25,  capacity: 80}
