@@ -1390,6 +1390,14 @@ def _judge(context: RuleContext, events: list[Event]) -> bool:
     lost is a content bug, and dying on the doorstep of victory is the reading
     a player will expect.
 
+    The two lists are combined differently, and deliberately. **Winning needs
+    all of them** — a list of win conditions is a list of objectives, and a
+    game you win having done one of three things is not what an author writing
+    three of them meant. **Losing needs any of them** — a list of lose
+    conditions is a list of ways to fail, and requiring a player to run out of
+    hitpoints *and* miss the deadline simultaneously makes both of them
+    decorative.
+
     Parameters
     ----------
     context : RuleContext
@@ -1403,13 +1411,16 @@ def _judge(context: RuleContext, events: list[Event]) -> bool:
         Whether the game ended.
     """
     game = context.game
-    for conditions, outcome in (
-        (game.lose_conditions, "lost"),
-        (game.win_conditions, "won"),
+    if game.lose_conditions and any(
+        holds(condition, context) for condition in game.lose_conditions
     ):
-        if conditions and all(holds(condition, context) for condition in conditions):
-            _end(context, outcome, f"{outcome} on the conditions the game sets", events)
-            return True
+        _end(context, "lost", "lost on the conditions the game sets", events)
+        return True
+    if game.win_conditions and all(
+        holds(condition, context) for condition in game.win_conditions
+    ):
+        _end(context, "won", "won on the conditions the game sets", events)
+        return True
     return False
 
 

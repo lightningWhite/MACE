@@ -107,6 +107,11 @@ If content changes under a save (an author updates the pack), the loader compare
 versions and warns. Replaying an action log against changed content may diverge;
 the snapshot lets the session continue anyway, with the divergence flagged.
 
+A log meant to survive that should record its choices by **prompt** rather than
+by index — see [Architecture § Determinism](02-architecture.md#determinism-and-randomness).
+An index quietly points at a different option once the menu changes; a prompt
+either finds what it meant or says what it could not find.
+
 ## Accessibility
 
 Not an afterthought, because the reflex layer in combat is exactly the kind of

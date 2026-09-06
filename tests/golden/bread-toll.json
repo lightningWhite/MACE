@@ -11,27 +11,27 @@
   "actions": [
     {
       "kind": "choose",
-      "option": 0
+      "prompt": "Say goodbye to Hallam"
     },
     {
       "kind": "choose",
-      "option": 1
+      "prompt": "Take the north road"
     },
     {
       "kind": "choose",
-      "option": 2
+      "prompt": "Speak to the troll"
     },
     {
       "kind": "choose",
-      "option": 2
+      "prompt": "Offer it your bread (4 loaves)"
     },
     {
       "kind": "choose",
-      "option": 3
+      "prompt": "Carry on to Hagan's Castle"
     },
     {
       "kind": "choose",
-      "option": 0
+      "prompt": "Report to the captain"
     }
   ],
   "stream": [
@@ -133,7 +133,7 @@
     {
       "action": {
         "kind": "choose",
-        "option": 0
+        "prompt": "Say goodbye to Hallam"
       },
       "events": [
         {
@@ -201,7 +201,7 @@
     {
       "action": {
         "kind": "choose",
-        "option": 1
+        "prompt": "Take the north road"
       },
       "events": [
         {
@@ -320,7 +320,7 @@
     {
       "action": {
         "kind": "choose",
-        "option": 2
+        "prompt": "Speak to the troll"
       },
       "events": [
         {
@@ -391,7 +391,7 @@
     {
       "action": {
         "kind": "choose",
-        "option": 2
+        "prompt": "Offer it your bread (4 loaves)"
       },
       "events": [
         {
@@ -474,7 +474,7 @@
     {
       "action": {
         "kind": "choose",
-        "option": 3
+        "prompt": "Carry on to Hagan's Castle"
       },
       "events": [
         {
@@ -580,7 +580,7 @@
     {
       "action": {
         "kind": "choose",
-        "option": 0
+        "prompt": "Report to the captain"
       },
       "events": [
         {

@@ -16,6 +16,8 @@ from mace.engine.actions import Choose, Interact, Look, Travel, Wait, decode
 from mace.engine.state import Outcome
 from mace.engine.step import StepResult, begin, step
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
 
 def playable(
     tmp_path: Path, *, game: dict[str, Any] | None = None, **world: Any
@@ -530,6 +532,60 @@ def test_losing_beats_winning_when_both_are_true(tmp_path: Path) -> None:
     result = begin(library, "tiny")
     result = step(result.state, Travel("castle"), library)
     assert result.state.outcome is Outcome.LOST
+
+
+def test_any_one_lose_condition_is_enough(tmp_path: Path) -> None:
+    """A list of lose conditions is a list of ways to fail, not a checklist.
+
+    Requiring a player to run out of hitpoints *and* miss the deadline at the
+    same moment makes both of them decorative, which is exactly what it did.
+    """
+    library = playable(
+        tmp_path,
+        game={
+            "winConditions": [{"flag": {"entity": "hero", "flag": "done"}}],
+            "loseConditions": [
+                {"atLocation": {"location": "castle"}},
+                {"expr": "player.pools.hitpoints.current <= 0"},
+            ],
+        },
+    )
+    result = begin(library, "tiny")
+    result = step(result.state, Travel("castle"), library)
+    assert result.state.outcome is Outcome.LOST
+
+
+def test_every_win_condition_is_needed(tmp_path: Path) -> None:
+    """A list of win conditions is a list of objectives, and all of them count."""
+    library = playable(
+        tmp_path,
+        game={
+            "winConditions": [
+                {"atLocation": {"location": "castle"}},
+                {"flag": {"entity": "hero", "flag": "knighted"}},
+            ],
+        },
+    )
+    result = begin(library, "tiny")
+    result = step(result.state, Travel("castle"), library)
+    assert result.state.outcome is Outcome.PLAYING
+
+    result.state.protagonist.flags.add("knighted")
+    result = step(result.state, Look(), library)
+    assert result.state.outcome is Outcome.WON
+
+
+def test_the_shipped_games_deadline_can_actually_be_missed() -> None:
+    """Seven days to reach the castle has to mean something."""
+    library = load_library(REPO_ROOT / "packs")
+    result = begin(library, "peasants-quest", seed="dawdle")
+    for _turn in range(400):
+        if result.state.outcome is not Outcome.PLAYING:
+            break
+        result = step(result.state, Wait(4), library)
+
+    assert result.state.outcome is Outcome.LOST
+    assert result.state.tick // 48 + 1 <= 9
 
 
 def test_nothing_happens_after_the_game_is_over(tmp_path: Path) -> None:

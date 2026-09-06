@@ -4,10 +4,21 @@ An action log plus a seed plus the pack list is a whole save file, so every
 action has to render to a plain record and read back from one. Anything a
 front-end can do must be expressible here; anything not expressible here is
 something a front-end is doing on its own, which is a bug.
+
+`Choose` addresses an option by **index**, and that stays the protocol: it is
+what a `choices` event's ordering means, and it needs no text matching in the
+engine. But an index is a terrible thing to *write down*. A recorded log of
+`choose 3` silently means something different the moment an author inserts an
+option above it — the log still replays, down a different road, and nothing
+says so. So `decode` also accepts a recorded choice written as the option's
+prompt, resolves it against what was actually offered, and fails loudly with
+the menu in the message when it is not there. Records are for people; the
+protocol is for machines.
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
@@ -135,13 +146,22 @@ ACTIONS: dict[str, type[BaseAction]] = {
 }
 
 
-def decode(record: dict[str, Any]) -> Action:
+def decode(record: dict[str, Any], *, offered: Sequence[str] | None = None) -> Action:
     """Rebuild an action from its record.
+
+    A `choose` record may name its option either way. `{"option": 2}` is the
+    protocol form and needs nothing else. `{"prompt": "Speak to the troll"}` is
+    the readable form, and is resolved against `offered` — which is what makes
+    a recorded playthrough survive an author inserting a menu entry above the
+    one it meant.
 
     Parameters
     ----------
     record : dict
         A record from `Action.record`.
+    offered : sequence of str or None
+        The prompts last offered, in order. Required to decode a choice
+        written as a prompt; ignored otherwise.
 
     Returns
     -------
@@ -151,13 +171,65 @@ def decode(record: dict[str, Any]) -> Action:
     Raises
     ------
     ValueError
-        If the record names no known action.
+        If the record names no known action, or names an option that was not
+        offered.
     """
     fields = dict(record)
     kind = fields.pop("kind", None)
     if kind not in ACTIONS:
         known = ", ".join(sorted(ACTIONS))
         raise ValueError(f"unknown action `{kind}`; known actions: {known}")
+
+    if kind == "choose" and "prompt" in fields:
+        fields = {"option": _index_of(str(fields.pop("prompt")), offered, fields)}
+
     built = ACTIONS[kind](**fields)
     assert isinstance(built, Look | Choose | Interact | Travel | Wait)
     return built
+
+
+def _index_of(prompt: str, offered: Sequence[str] | None, rest: dict[str, Any]) -> int:
+    """Find which option a recorded prompt meant.
+
+    Parameters
+    ----------
+    prompt : str
+        The option as it was written down.
+    offered : sequence of str or None
+        What was actually offered, in order.
+    rest : dict
+        Whatever else the record carried, so an unusable extra field is
+        reported rather than silently dropped.
+
+    Returns
+    -------
+    int
+        The index to choose.
+
+    Raises
+    ------
+    ValueError
+        If nothing was offered, nothing matches, or two things do.
+    """
+    if rest:
+        extra = ", ".join(sorted(rest))
+        raise ValueError(f"a choice named by `prompt` takes nothing else; got {extra}")
+    if offered is None:
+        raise ValueError(
+            f"cannot resolve the choice `{prompt}`: nothing was on offer. A "
+            "choice recorded by prompt needs the options it is chosen from."
+        )
+
+    matches = [index for index, text in enumerate(offered) if text == prompt]
+    if len(matches) == 1:
+        return matches[0]
+
+    menu = "\n  ".join(f"{index}. {text}" for index, text in enumerate(offered))
+    if not matches:
+        raise ValueError(
+            f"no option `{prompt}` was offered. These were:\n  {menu or '(none)'}"
+        )
+    raise ValueError(
+        f"`{prompt}` was offered {len(matches)} times, so naming it is "
+        f"ambiguous. The options were:\n  {menu}"
+    )

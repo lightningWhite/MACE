@@ -139,6 +139,19 @@ Replaying that triple reproduces the playthrough exactly. Save files store the
 triple plus a periodic state snapshot for fast loading; the snapshot is an
 optimization, never the source of truth.
 
+A logged choice may name its option two ways. `{"kind": "choose", "option": 2}`
+is the protocol form — an index into the last `choices` event, which is what
+the engine takes and what a live front-end sends. `{"kind": "choose", "prompt":
+"Speak to the troll"}` is the **recorded** form, resolved against the options
+that were actually offered.
+
+The difference matters whenever a log outlives the content that produced it.
+An index silently means something else the moment an author inserts a menu
+entry above it: the log still replays, down a different road, and nothing says
+so. A prompt walks the same road, or fails loudly with the menu that *was* on
+offer in the message. Golden recordings use prompts for exactly that reason;
+so should anything else written down for a human to read.
+
 Randomness comes from **named streams**:
 
 ```python
