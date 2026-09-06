@@ -1,0 +1,4 @@
+# Playable game packs live here and ARE committed — this file only keeps the
+# directory in git until the first pack lands (packs/games/peasants-quest,
+# phase 1). Deliberately no blanket ignore: the v0 version of this file ignored
+# everything, which would silently swallow real content packs.

@@ -75,8 +75,7 @@ def defineConditions():
     boolean operator to use, and the value to compare against.
     ret: The list of condition strings
     """
-    print(
-        """
+    print("""
 Conditions should be specified in the following form:
 
 <componentId.attribute> <booleanOperator> <value>
@@ -89,8 +88,7 @@ Multiple conditions can be specified by pressing enter between each one.
 
 Note: This will be made easier for the user in the future by
 presenting a list of available attributes the user can select.
-"""
-    )
+""")
     # TODO: Present the user with a list of
     # components that they can choose from, and then select the
     # attribute of that component and what the value should be
@@ -144,14 +142,12 @@ def createWinLoseInteraction():
     description = ""
     conditions = ""
 
-    print(
-        """Write up the dialog sentences that should be displayed to the player.
+    print("""Write up the dialog sentences that should be displayed to the player.
 If you want a pause between blocks of text displayed to the player, simply hit
 enter. This will allow the player to press enter to continue to the next
 sentence. When you're done writing the dialog, press enter with an empty
 sentence.
-"""
-    )
+""")
     dialog = getInputList()
     clear()
 
@@ -159,8 +155,7 @@ sentence.
     modifiers = []
 
     # Get the nextInteractions if the conditions were met
-    print(
-        """Additional options?
+    print("""Additional options?
 
 Once the player has finished the game, if you want to present
 some additional options, such as "Play again?" or something, we can
@@ -168,8 +163,7 @@ create those now. The next set of instructions from the wizard will
 direct you through creating one or more standard options. As you follow
 the instructions for creating a standard option, keep in mind you can
 leave some of the fields blank if they don't apply.
-"""
-    )
+""")
     nextInteractions = []
     another = True
     while another:
@@ -206,35 +200,30 @@ def createInteraction():
     clear()
 
     # Get the description
-    print(
-        """ Write the option
+    print(""" Write the option
 
 Enter a word or sentence that presents this interaction as an option.
 For example, "Talk to the blacksmith?", or "Open the door?".
 Note that if this will be the only available action for the interactive element,
 you can leave this blank to just execute the action.
 
-    """
-    )
+    """)
     description = input("> ")
     clear()
 
     # Get the conditions
-    print(
-        """Define the conditions to execute the action
+    print("""Define the conditions to execute the action
 
 Now define the conditions that must be met for the changes defined in this
 action to take place. These conditions must also be met for the next
 options to be presented. Otherwise, the fallback actions, if any, will be
 presented instead.
-      """
-    )
+      """)
     conditions = defineConditions()
     clear()
 
     # Get the dialog
-    print(
-        """Write the dialog
+    print("""Write the dialog
 
 Now, write up the dialog sentences that should be displayed to the player when
 this option is selected and the conditions ARE met. If you want a pause between
@@ -242,14 +231,12 @@ blocks of text displayed to the player, simply hit enter. This will allow the
 player to press enter to continue to the next sentence. When you're done writing
 the dialog, press enter with an empty sentence. You can leave this blank if dialog
 doesn't make sense here.
-"""
-    )
+""")
     dialog = getInputList()
     clear()
 
     # Get the modifiers
-    print(
-        """Define the modifiers
+    print("""Define the modifiers
 
 Now it's time to establish what should happen when this action
 is selected and the conditions are met. This involves changing
@@ -272,14 +259,12 @@ following ways:
 
 - Set the value of an attribute to the value of another attribute:
   <componentId.attribute>: <componentId.attribute>
-"""
-    )
+""")
     modifiers = getInputList()
     clear()
 
     # Get the nextInteractions if the conditions were met
-    print(
-        """Create the next interactions
+    print("""Create the next interactions
 
 Now we need to define any additional options that should be
 presented to the user that should follow the previous action.
@@ -287,8 +272,7 @@ For example, if you opened a chest, maybe you now want to ask
 the user if they want to pick up the potion inside. To create
 a subsequent action, we'll repeat the same steps, once for each
 additional option you want to present.
-"""
-    )
+""")
     nextInteractions = []
     another = True
     while another:
@@ -303,8 +287,7 @@ additional option you want to present.
     clear()
 
     # Get the fallback actions for if the conditions weren't met
-    print(
-        """Define the fallback interactions
+    print("""Define the fallback interactions
 
 We're almost done with this interaction! Now that we've defined what should
 happen if the conditions were met for the '{description}' option, we
@@ -315,8 +298,7 @@ chest must be unlocked. Perhaps in this case, you'd want to present
 an option to "Try picking the lock". To create a subsequent fallback
 option, we'll again repeat the same steps, once for each additional
 fallback option you want to present.
-"""
-    )
+""")
     fallbacks = []
     another = True
     while another:
@@ -345,30 +327,26 @@ def createSummary():
     print("Overarching Game Setting Creation\n")
 
     # Get the list of introduction sentences
-    print(
-        """Write the introduction
+    print("""Write the introduction
 
 Now, write up the introduction sentences that should be displayed to the player
 when beginning the game. If you want a pause between sentences displayed to the
 player, simply hit enter after a sentence or sentences. This will allow the
 player to press enter to continue to the next portion of the introduction.
 When you're done writing the introduction, press enter with an empty sentence.
-    """
-    )
+    """)
     introduction = getInputList()
     clear()
 
     # Get the list of conditions defining a loss
-    print(
-        """Define the lose conditions
+    print("""Define the lose conditions
 
 Great work!
 
 Now it's time to specify what conditions will result in a lost game.
 Specify any attribute values that you want checked between each turn
 to determine if the game was lost.
-        """
-    )
+        """)
     loseConditions = defineConditions()
     clear()
 
@@ -428,8 +406,9 @@ about something, you can just come back to it later once more of the game is bui
     # Get the game name so the game's directory can be created
     name = input("What would you like your game to be named?\n> ")
     gameObj = game.Game()
-    # Get the path to the current file being executed, plus the games path
-    gameDir = Path(__file__).parent.resolve() / "games" / name.replace(" ", "")
+    # Get the repo root from the current file being executed, plus the packs path
+    repoRoot = Path(__file__).parent.parent.resolve()
+    gameDir = repoRoot / "packs" / "games" / name.replace(" ", "")
     os.makedirs(gameDir, exist_ok=True)
     clear()
 

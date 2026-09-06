@@ -6,19 +6,19 @@ allowed to be pure infrastructure.
 
 ---
 
-## Phase 0 — Foundation *(current)*
+## Phase 0 — Foundation *(done)*
 
 Design settled and written down. This document set.
 
 - [x] Audit the v0 prototype and templates
 - [x] Design docs and decision records
-- [ ] Package skeleton `src/mace/`, `pyproject.toml` with real packaging
-- [ ] Move `src/games/` → `packs/games/`
-- [ ] `pytest`, `ruff`, `mypy` wired into pre-commit
+- [x] Package skeleton `src/mace/`, `pyproject.toml` with real packaging
+- [x] Move `src/games/` → `packs/games/`
+- [x] `pytest`, `ruff`, `mypy` wired into pre-commit
 
 ---
 
-## Phase 1 — The content pipeline
+## Phase 1 — The content pipeline *(current)*
 
 **Playable at the end:** a linear, three-location game you can walk through in a
 terminal, with scenes, choices, items, and win/lose.

@@ -126,16 +126,21 @@ cd MACE
 python3 -m venv env                 # apt install python3-venv, if needed
 source env/bin/activate
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -e '.[dev]'             # or: pip install -r requirements.txt
 
-pre-commit install
+pre-commit install --hook-type pre-commit --hook-type pre-push
 pre-commit run --all-files
+pytest
 ```
 
 Deactivate with `deactivate` when you're done.
 
+Requires **Python 3.12+**. `black`, `ruff`, and `mypy` run on commit; `pytest`
+runs on push.
+
 **Running the v0 prototype wizard** (superseded by the design in
-[docs/09](docs/09-authoring-and-wizard.md), but it runs):
+[docs/09](docs/09-authoring-and-wizard.md), but it runs). It writes generated
+games into `packs/games/`:
 
 ```bash
 cd src && python3 wizard.py
