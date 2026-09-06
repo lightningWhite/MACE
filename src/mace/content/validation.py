@@ -29,7 +29,15 @@ from mace.content.errors import ContentError
 from mace.content.ids import qualify
 from mace.content.library import COLLECTION_MODELS, Library, LoadedPack
 from mace.content.loader import load_library
-from mace.model import Calendar, ClimateOverride, Condition, Entity, Move, Scene
+from mace.model import (
+    Calendar,
+    ClimateOverride,
+    Condition,
+    Entity,
+    Location,
+    Move,
+    Scene,
+)
 from mace.model.base import RESERVED_ACTORS, ContentModel, Reference
 from mace.model.calendar import STANDARD_YEAR
 from mace.model.conditions import DayPartIs
@@ -404,7 +412,7 @@ def validate_library(library: Library) -> Report:
         problems.extend(_check_event_references(library, pack))
         problems.extend(_check_reachable_scenes(library, pack))
         problems.extend(_check_combat(library, pack))
-        problems.extend(_check_notes(pack))
+        problems.extend(_check_notes(library, pack))
     return Report(tuple(problems))
 
 
@@ -912,6 +920,142 @@ def _scene_targets(
     return targets
 
 
+def _check_dead_ends(library: Library, pack: LoadedPack) -> Iterator[Problem]:
+    """A place with no way out is a place a playthrough can end in by accident.
+
+    "No exits" on its own is not the problem, and saying it was produced a
+    permanent false positive on every route waypoint in the repo — the middle
+    of a bridge is not a place with roads leading off it, and the journey menu
+    is how you leave. A note nobody can act on teaches people to ignore notes.
+
+    So the question asked here is the useful one: **can the player get out?**
+    Three answers count — an exit, being a waypoint on some route, or a scene
+    reachable from here that moves them, restarts, or ends the game.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs, for resolution.
+    pack : LoadedPack
+        The pack to check.
+
+    Yields
+    ------
+    Problem
+        One note per place with no way out of it.
+    """
+    if not pack.manifest.is_game:
+        # A library's locations are meant to be built on, and the pack that
+        # builds on them is the one that adds the exits and lays the roads —
+        # which this pack cannot see. The same reason `_check_reachable_scenes`
+        # skips libraries.
+        return
+
+    waypoints = {
+        _resolve(library, pack, stop.location, "locations")
+        for route in pack.routes.values()
+        for stop in route.waypoints
+    }
+    for local_id, location in pack.locations.items():
+        if location.exits or qualify(pack.id, local_id) in waypoints:
+            continue
+        if _leads_away(library, pack, location):
+            continue
+        yield Problem(
+            severity=Severity.NOTE,
+            message=(
+                "has no exits, is on no route, and nothing here moves the "
+                "player on — a playthrough that arrives cannot leave"
+            ),
+            pack=pack.id,
+            collection="locations",
+            object_id=local_id,
+        )
+
+
+def _leads_away(library: Library, pack: LoadedPack, location: Location) -> bool:
+    """Whether any scene reachable from a location gets the player out of it.
+
+    Deliberately generous: it follows every scene reference out of every scene
+    it reaches, which over-approximates reachability. Over-approximating means
+    fewer false notes, and a false note is the thing this check exists to stop
+    producing.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs, for resolution.
+    pack : LoadedPack
+        The pack the location belongs to.
+    location : Location
+        The place in question.
+
+    Returns
+    -------
+    bool
+        Whether a `move`, `restart`, or `endGame` is reachable from here.
+    """
+    seeds = [*location.scenes]
+    if location.on_arrive is not None:
+        seeds.append(location.on_arrive)
+    for reference in location.entities:
+        qualified = _resolve(library, pack, reference, "entities")
+        if qualified is None:
+            continue
+        found = library.find(qualified, "entities", within=pack.id)
+        if isinstance(found, Entity):
+            seeds.extend(found.scenes)
+
+    seen: set[str] = set()
+    frontier = [
+        resolved
+        for reference in seeds
+        if (resolved := _resolve(library, pack, reference, "scenes")) is not None
+    ]
+    while frontier:
+        scene_id = frontier.pop()
+        if scene_id in seen:
+            continue
+        seen.add(scene_id)
+        pack_id, local_id = scene_id.split(":", 1)
+        scene = library.pack(pack_id).scenes.get(local_id)
+        if scene is None:  # pragma: no cover — the reference resolved
+            continue
+        if _gets_out(scene):
+            return True
+        frontier.extend(
+            resolved
+            for found in references(scene)
+            if found.collection == "scenes"
+            and (resolved := _resolve(library, pack, found.reference, "scenes"))
+            is not None
+        )
+    return False
+
+
+#: Effect tags that take the player out of wherever they are standing.
+WAYS_OUT = frozenset({"move", "restart", "endGame"})
+
+
+def _gets_out(scene: Scene) -> bool:
+    """Whether a scene contains an effect that leaves the location.
+
+    Parameters
+    ----------
+    scene : Scene
+        The scene to search.
+
+    Returns
+    -------
+    bool
+        Whether anything in it moves the player, restarts, or ends the game.
+    """
+    effects = [*scene.effects]
+    for choice in scene.choices:
+        effects.extend(choice.effects)
+    return any(effect.tag in WAYS_OUT for effect in effects)
+
+
 def _check_combat(library: Library, pack: LoadedPack) -> Iterator[Problem]:
     """A fighter must be able to fight, and a pattern must be playable.
 
@@ -1076,11 +1220,13 @@ def _move(library: Library, qualified: str) -> Move:
     return found
 
 
-def _check_notes(pack: LoadedPack) -> Iterator[Problem]:
+def _check_notes(library: Library, pack: LoadedPack) -> Iterator[Problem]:
     """Observations that are usually worth a look and sometimes deliberate.
 
     Parameters
     ----------
+    library : Library
+        The loaded packs, for resolution.
     pack : LoadedPack
         The pack to check.
 
@@ -1113,15 +1259,4 @@ def _check_notes(pack: LoadedPack) -> Iterator[Problem]:
                 object_id=local_id,
             )
 
-    for local_id, location in pack.locations.items():
-        if not location.exits and not location.on_arrive:
-            yield Problem(
-                severity=Severity.NOTE,
-                message=(
-                    "has no exits — reachable only as a route waypoint or by a "
-                    "`move` effect"
-                ),
-                pack=pack.id,
-                collection="locations",
-                object_id=local_id,
-            )
+    yield from _check_dead_ends(library, pack)

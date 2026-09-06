@@ -267,6 +267,72 @@ def test_a_scene_that_does_nothing_is_a_warning(tmp_path: Path) -> None:
     assert any("changes nothing" in p.message for p in report.warnings)
 
 
+def test_a_place_you_cannot_leave_is_a_note(tmp_path: Path) -> None:
+    game_pack(
+        tmp_path,
+        world={
+            "locations": [
+                {"id": "home", "name": "Home", "exits": [{"to": "castle"}]},
+                {"id": "castle", "name": "The Castle"},
+            ],
+            "routes": [],
+            "scenes": [],
+        },
+    )
+    report = validate_paths(tmp_path / "tiny")
+    assert any(p.object_id == "castle" for p in report.notes)
+
+
+def test_a_route_waypoint_needs_no_exits_of_its_own(tmp_path: Path) -> None:
+    """The middle of a bridge is not a place with roads leading off it.
+
+    Saying otherwise produced a permanent note on every waypoint in the repo,
+    which is how people learn to ignore notes.
+    """
+    game_pack(
+        tmp_path,
+        world={
+            "locations": [
+                {"id": "home", "name": "Home", "exits": [{"to": "castle"}]},
+                {"id": "castle", "name": "The Castle", "exits": [{"to": "home"}]},
+                {"id": "bridge", "name": "The Bridge"},
+            ],
+            "routes": [
+                {
+                    "id": "road",
+                    "from": "home",
+                    "to": "castle",
+                    "ticks": 4,
+                    "waypoints": [{"location": "bridge"}],
+                }
+            ],
+            "scenes": [],
+        },
+    )
+    assert validate_paths(tmp_path / "tiny").problems == ()
+
+
+def test_a_place_whose_scene_moves_you_on_is_not_a_dead_end(tmp_path: Path) -> None:
+    game_pack(
+        tmp_path,
+        world={
+            "locations": [
+                {"id": "home", "name": "Home", "exits": [{"to": "castle"}]},
+                {"id": "castle", "name": "The Castle", "onArrive": "wake"},
+            ],
+            "routes": [],
+            "scenes": [
+                {"id": "wake", "say": "You wake somewhere else.", "goto": "elsewhere"},
+                {
+                    "id": "elsewhere",
+                    "effects": [{"move": {"actor": "player", "to": "home"}}],
+                },
+            ],
+        },
+    )
+    assert validate_paths(tmp_path / "tiny").problems == ()
+
+
 def test_a_dangerous_road_with_no_encounters_is_a_note(tmp_path: Path) -> None:
     write_pack(
         tmp_path,
