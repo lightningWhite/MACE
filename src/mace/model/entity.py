@@ -18,10 +18,13 @@ from pydantic import Field, model_validator
 
 from mace.model.base import (
     ContentModel,
+    EntityRef,
     Flag,
     Id,
     Name,
     Ref,
+    RouteRef,
+    SceneRef,
     SlotName,
     Tag,
 )
@@ -142,7 +145,7 @@ class InventoryEntry(ContentModel):
         How many.
     """
 
-    item: Ref
+    item: EntityRef
     qty: int = Field(default=1, ge=1)
 
 
@@ -243,8 +246,8 @@ class PortalProps(ContentModel):
         A key, a writ, a password token.
     """
 
-    route: Ref
-    requires_item: Ref | None = None
+    route: RouteRef
+    requires_item: EntityRef | None = None
 
 
 class CombatAssignment(ContentModel):
@@ -263,7 +266,7 @@ class Entity(ContentModel):
     """Anything the world contains that content can refer to by id."""
 
     id: Id
-    extends: Ref | None = None
+    extends: EntityRef | None = None
     kind: EntityKind = "fixture"
     name: str
     description: Description | None = None
@@ -274,12 +277,12 @@ class Entity(ContentModel):
     stats: Mapping[Name, Stat] | None = None
     pools: Mapping[Name, float] | None = None
     inventory: tuple[InventoryEntry, ...] = ()
-    equipment: Mapping[SlotName, Ref] | None = None
-    skills: Mapping[Ref, int] | None = None
+    equipment: Mapping[SlotName, EntityRef] | None = None
+    skills: Mapping[EntityRef, int] | None = None
     disposition: Disposition | None = None
     combat: CombatAssignment | None = None
     env: tuple[EnvResponse, ...] = ()
-    scenes: tuple[Ref, ...] = ()
+    scenes: tuple[SceneRef, ...] = ()
     flags: tuple[Flag, ...] = ()
 
     item: ItemProps | None = None

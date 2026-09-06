@@ -7,7 +7,16 @@ which is why the same model covers a village and the middle of a bridge.
 
 from __future__ import annotations
 
-from mace.model.base import ContentModel, Flag, Id, Ref
+from mace.model.base import (
+    ContentModel,
+    EntityRef,
+    Flag,
+    Id,
+    LocationRef,
+    Ref,
+    RouteRef,
+    SceneRef,
+)
 from mace.model.conditions import Conditions
 from mace.model.text import Description
 
@@ -70,8 +79,8 @@ class Exit(ContentModel):
         Conditions revealing a secret passage.
     """
 
-    to: Ref
-    route: Ref | None = None
+    to: LocationRef
+    route: RouteRef | None = None
     label: str | None = None
     when: Conditions | None = None
     hidden_until: Conditions | None = None
@@ -81,7 +90,7 @@ class Location(ContentModel):
     """A place in the world."""
 
     id: Id
-    extends: Ref | None = None
+    extends: LocationRef | None = None
     name: str
     type: Id | None = None
     description: Description | None = None
@@ -94,9 +103,9 @@ class Location(ContentModel):
     visible: bool = True
     discovered: bool | None = None
 
-    entities: tuple[Ref, ...] = ()
-    scenes: tuple[Ref, ...] = ()
-    on_arrive: Ref | None = None
+    entities: tuple[EntityRef, ...] = ()
+    scenes: tuple[SceneRef, ...] = ()
+    on_arrive: SceneRef | None = None
 
     encounters: Ref | None = None
     safe: bool = False

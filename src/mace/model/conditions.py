@@ -23,10 +23,13 @@ from pydantic import BeforeValidator, Field, WithJsonSchema, model_validator
 
 from mace.model.base import (
     ContentModel,
+    EntityRef,
     ExpressionField,
     Flag,
     Id,
+    LocationRef,
     Name,
+    QuestRef,
     Ref,
     Tag,
     one_or_many_schema,
@@ -67,22 +70,22 @@ class ConditionPayload(ContentModel):
 class HasItem(ConditionPayload):
     """The actor carries at least `qty` of an item."""
 
-    actor: Ref = "player"
-    item: Ref
+    actor: EntityRef = "player"
+    item: EntityRef
     qty: int = Field(default=1, ge=1)
 
 
 class AtLocation(ConditionPayload):
     """The actor is at a location."""
 
-    actor: Ref = "player"
-    location: Ref
+    actor: EntityRef = "player"
+    location: LocationRef
 
 
 class FlagIs(ConditionPayload):
     """An entity's boolean flag has a given value."""
 
-    entity: Ref
+    entity: EntityRef
     flag: Flag
     is_: bool = Field(default=True, alias="is")
 
@@ -90,7 +93,7 @@ class FlagIs(ConditionPayload):
 class StatCompare(ConditionPayload):
     """An actor's effective stat is at or beyond a threshold."""
 
-    actor: Ref = "player"
+    actor: EntityRef = "player"
     stat: Name
     value: float
 
@@ -98,16 +101,16 @@ class StatCompare(ConditionPayload):
 class QuestAtStage(ConditionPayload):
     """A quest is currently at a given stage."""
 
-    quest: Ref
+    quest: QuestRef
     stage: Id
 
 
-class QuestRef(ConditionPayload):
+class QuestOutcome(ConditionPayload):
     """A quest has completed, or failed."""
 
     shorthand_field: ClassVar[str] = "quest"
 
-    quest: Ref
+    quest: QuestRef
 
 
 class Chance(ConditionPayload):
@@ -184,8 +187,8 @@ CONDITION_PAYLOADS: dict[ConditionTag, type[ConditionPayload]] = {
     "flag": FlagIs,
     "hasItem": HasItem,
     "not": ConditionNegation,
-    "questComplete": QuestRef,
-    "questFailed": QuestRef,
+    "questComplete": QuestOutcome,
+    "questFailed": QuestOutcome,
     "questStage": QuestAtStage,
     "statAtLeast": StatCompare,
     "statAtMost": StatCompare,

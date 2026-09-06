@@ -138,6 +138,16 @@ Deactivate with `deactivate` when you're done.
 Requires **Python 3.12+**. `black`, `ruff`, and `mypy` run on commit; `pytest`
 runs on push.
 
+**Checking content.** The first working command. It loads every pack under a
+directory, resolves inheritance and references, and reports what's wrong at
+three severities — errors break the game, warnings are almost certainly
+mistakes, notes are worth a look:
+
+```bash
+mace validate packs/
+mace validate --errors-only packs/     # what CI cares about
+```
+
 **Running the v0 prototype wizard** (superseded by the design in
 [docs/09](docs/09-authoring-and-wizard.md), but it runs). It writes generated
 games into `packs/games/`:
@@ -146,8 +156,9 @@ games into `packs/games/`:
 cd src && python3 wizard.py
 ```
 
-**The v0 templates** in [`templates/`](templates/) document the original design.
-They're kept for reference until the schemas in `schemas/` replace them.
+**The v0 templates** in [`templates/`](templates/) documented the original
+design. The generated JSON Schemas in [`schemas/`](schemas/) now describe the
+real one — point your editor at them for completion while authoring.
 
 ---
 

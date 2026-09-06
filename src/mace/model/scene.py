@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pydantic import Field, model_validator
 
-from mace.model.base import ContentModel, Id, Ref, Tag
+from mace.model.base import ContentModel, Id, SceneRef, Tag
 from mace.model.conditions import Conditions
 from mace.model.effects import Effect
 from mace.model.text import Say
@@ -46,7 +46,7 @@ class Choice(ContentModel):
     when: Conditions | None = None
     show_when_unavailable: bool = False
     unavailable_hint: str | None = None
-    goto: Ref | None = None
+    goto: SceneRef | None = None
     effects: tuple[Effect, ...] = ()
 
     @model_validator(mode="after")
@@ -67,8 +67,8 @@ class Scene(ContentModel):
     say: Say = ()
     effects: tuple[Effect, ...] = ()
     choices: tuple[Choice, ...] = ()
-    goto: Ref | None = None
-    otherwise: Ref | None = Field(default=None, alias="else")
+    goto: SceneRef | None = None
+    otherwise: SceneRef | None = Field(default=None, alias="else")
     once: bool = False
     tags: tuple[Tag, ...] = ()
 

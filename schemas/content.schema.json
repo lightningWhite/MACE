@@ -558,7 +558,7 @@
           "type": "object",
           "properties": {
             "questComplete": {
-              "$ref": "#/$defs/QuestRef"
+              "$ref": "#/$defs/QuestOutcome"
             }
           },
           "required": [
@@ -570,7 +570,7 @@
           "type": "object",
           "properties": {
             "questFailed": {
-              "$ref": "#/$defs/QuestRef"
+              "$ref": "#/$defs/QuestOutcome"
             }
           },
           "required": [
@@ -2349,7 +2349,7 @@
       "title": "QuestAtStage",
       "type": "object"
     },
-    "QuestRef": {
+    "QuestOutcome": {
       "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
       "type": "string",
       "description": "A quest has completed, or failed."

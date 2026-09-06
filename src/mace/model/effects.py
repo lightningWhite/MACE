@@ -23,10 +23,13 @@ from pydantic import Field, model_validator
 from mace.model.base import (
     AuthoredValue,
     ContentModel,
+    EntityRef,
     Flag,
     Id,
+    LocationRef,
     Name,
-    Ref,
+    QuestRef,
+    SceneRef,
     SlotName,
     unwrap_tagged,
 )
@@ -68,7 +71,7 @@ class EffectPayload(ContentModel):
 class AdjustStat(EffectPayload):
     """Move a stat or pool by a relative amount."""
 
-    actor: Ref = "player"
+    actor: EntityRef = "player"
     stat: Name
     delta: AuthoredValue
     reason: str | None = None
@@ -77,7 +80,7 @@ class AdjustStat(EffectPayload):
 class SetStat(EffectPayload):
     """Set a stat or pool to an absolute value."""
 
-    actor: Ref = "player"
+    actor: EntityRef = "player"
     stat: Name
     value: AuthoredValue
 
@@ -85,14 +88,14 @@ class SetStat(EffectPayload):
 class SetDisposition(EffectPayload):
     """Change how an entity feels about the player."""
 
-    actor: Ref
+    actor: EntityRef
     to: Literal["friendly", "neutral", "hostile"]
 
 
 class ApplyModifier(EffectPayload):
     """Apply a temporary stat modifier, the way a potion or a spell would."""
 
-    actor: Ref = "player"
+    actor: EntityRef = "player"
     stat: Name
     add: float | None = None
     mult: float | None = None
@@ -110,29 +113,29 @@ class ApplyModifier(EffectPayload):
 class ItemTransfer(EffectPayload):
     """Give an actor items, or take them away."""
 
-    actor: Ref = "player"
-    item: Ref
+    actor: EntityRef = "player"
+    item: EntityRef
     qty: int = Field(default=1, ge=1)
 
 
 class TransferContents(EffectPayload):
     """Move everything in one container or actor into another."""
 
-    source: Ref = Field(alias="from")
-    target: Ref = Field(alias="to")
+    source: EntityRef = Field(alias="from")
+    target: EntityRef = Field(alias="to")
 
 
 class Move(EffectPayload):
     """Put an actor somewhere else, without travelling there."""
 
-    actor: Ref = "player"
-    to: Ref
+    actor: EntityRef = "player"
+    to: LocationRef
 
 
 class SetFlag(EffectPayload):
     """Set or clear a boolean flag on an entity."""
 
-    entity: Ref
+    entity: EntityRef
     flag: Flag
     value: bool = True
 
@@ -147,22 +150,22 @@ class SetVar(EffectPayload):
 class Reveal(EffectPayload):
     """Make a location known, so it appears on the map and in travel menus."""
 
-    location: Ref
+    location: LocationRef
 
 
 class AdvanceQuest(EffectPayload):
     """Move a quest to a given stage, or to its next one."""
 
-    quest: Ref
+    quest: QuestRef
     stage: Id | None = None
 
 
 class StartCombat(EffectPayload):
     """Hand control to the combat system."""
 
-    against: tuple[Ref, ...] = Field(min_length=1)
+    against: tuple[EntityRef, ...] = Field(min_length=1)
     can_flee: bool = True
-    on_flee: Ref | None = None
+    on_flee: SceneRef | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -176,14 +179,14 @@ class StartCombat(EffectPayload):
 class AttachAlly(EffectPayload):
     """Add an entity to the player's party, optionally until a condition holds."""
 
-    entity: Ref
+    entity: EntityRef
     until: Condition | None = None
 
 
 class DismissAlly(EffectPayload):
     """Remove an entity from the player's party."""
 
-    entity: Ref
+    entity: EntityRef
 
 
 class AdvanceTime(EffectPayload):
@@ -197,7 +200,7 @@ class PlayScene(EffectPayload):
 
     shorthand_field: ClassVar[str] = "scene"
 
-    scene: Ref
+    scene: SceneRef
 
 
 class NoArguments(EffectPayload):

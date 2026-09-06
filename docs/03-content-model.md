@@ -103,6 +103,17 @@ Resolution order for a bare reference inside a pack:
 Always write the qualified form when referring to another pack. The wizard emits
 qualified ids automatically.
 
+### Reserved names
+
+`player` is not an id. Wherever content names an actor — `{actor: player}`,
+`{hasItem: {actor: player, ...}}` — it means whichever entity
+`game.player.entity` names, so a scene written once works for any protagonist
+and any background. An entity with the id `player` is a validation error rather
+than a shadowing surprise.
+
+`player` and `world` are also the roots an expression reads from; see
+[Schema Reference § Paths](04-schema-reference.md#paths).
+
 ## Inheritance (`extends`)
 
 This is the reuse mechanism that makes the library worth having.

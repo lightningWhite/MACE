@@ -11,7 +11,16 @@ from typing import Literal
 
 from pydantic import Field
 
-from mace.model.base import ContentModel, Id, Name, Ref
+from mace.model.base import (
+    ContentModel,
+    EntityRef,
+    Id,
+    LocationRef,
+    Name,
+    QuestRef,
+    Ref,
+    SceneRef,
+)
 from mace.model.conditions import Conditions
 from mace.model.text import Say
 
@@ -42,8 +51,8 @@ class PlayerSetup(ContentModel):
         Optional starting variants offered at character creation.
     """
 
-    entity: Ref
-    start_location: Ref
+    entity: EntityRef
+    start_location: LocationRef
     creation_points: int = Field(default=0, ge=0)
     backgrounds: tuple[Ref, ...] = ()
 
@@ -116,8 +125,8 @@ class Game(ContentModel):
     world: WorldSetup = WorldSetup()
     rules: GameRules = GameRules()
 
-    quests: tuple[Ref, ...] = ()
+    quests: tuple[QuestRef, ...] = ()
     win_conditions: Conditions = ()
     lose_conditions: Conditions = ()
-    on_win: Ref | None = None
-    on_lose: Ref | None = None
+    on_win: SceneRef | None = None
+    on_lose: SceneRef | None = None

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import difflib
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import Annotated, Any, ClassVar
 
 from pydantic import (
@@ -32,6 +33,13 @@ from mace.engine.expr import Expression, ExprSyntaxError, parse
 
 __all__ = [
     "AuthoredValue",
+    "EntityRef",
+    "LocationRef",
+    "QuestRef",
+    "RESERVED_ACTORS",
+    "Reference",
+    "RouteRef",
+    "SceneRef",
     "ContentModel",
     "ExpressionField",
     "Flag",
@@ -78,6 +86,39 @@ Tag = Id
 
 #: An equipment slot or a game variable: `mainHand`, `kingWarned`.
 SlotName = Annotated[str, StringConstraints(pattern=rf"^{CAMEL_NAME_PATTERN}$")]
+
+
+@dataclass(frozen=True, slots=True)
+class Reference:
+    """Marks a reference field with the collection it points into.
+
+    The models cannot check that `troll-bridge` is a real location — that needs
+    a whole library, loaded, with its dependency order settled. What they can
+    do is say what a field means, once, next to the field, so the validator
+    never has to keep a second list in step with them.
+
+    Attributes
+    ----------
+    collection : str
+        The collection the reference resolves against.
+    """
+
+    collection: str
+
+
+#: References, by what they point at. A reference into a collection no model
+#: covers yet — a terrain, an encounter table — stays a plain `Ref` until the
+#: phase that models it can check it.
+EntityRef = Annotated[Ref, Reference("entities")]
+LocationRef = Annotated[Ref, Reference("locations")]
+RouteRef = Annotated[Ref, Reference("routes")]
+SceneRef = Annotated[Ref, Reference("scenes")]
+QuestRef = Annotated[Ref, Reference("quests")]
+
+#: Names that stand for something the game supplies rather than an id an author
+#: defined. `player` is whichever entity `game.player.entity` names, so content
+#: can be written once and reused by any protagonist.
+RESERVED_ACTORS = frozenset({"player"})
 
 Version = Annotated[
     str,

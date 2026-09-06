@@ -11,6 +11,13 @@ from mace.content.ids import QUALIFIER, is_qualified, qualify, split
 from mace.content.library import COLLECTION_MODELS, SINGULAR, Library, LoadedPack
 from mace.content.loader import load_library, load_pack_manifest
 from mace.content.merge import APPEND, REMOVE, find_sentinels, merge
+from mace.content.validation import (
+    Problem,
+    Report,
+    Severity,
+    validate_library,
+    validate_paths,
+)
 
 __all__ = [
     "APPEND",
@@ -19,9 +26,12 @@ __all__ = [
     "Library",
     "LoadedPack",
     "MANIFEST_NAME",
+    "Problem",
     "QUALIFIER",
     "REMOVE",
+    "Report",
     "SINGULAR",
+    "Severity",
     "content_files",
     "find_packs",
     "find_sentinels",
@@ -32,4 +42,6 @@ __all__ = [
     "qualify",
     "read_yaml",
     "split",
+    "validate_library",
+    "validate_paths",
 ]

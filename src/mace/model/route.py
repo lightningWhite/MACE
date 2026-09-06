@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from mace.model.base import ContentModel, Id, Ref
+from mace.model.base import ContentModel, Id, LocationRef, Ref
 from mace.model.conditions import Conditions
 from mace.model.text import Description
 
@@ -35,7 +35,7 @@ class Waypoint(ContentModel):
         A waypoint-specific table, rolled in addition to the route's.
     """
 
-    location: Ref
+    location: LocationRef
     at_tick: int | None = Field(default=None, ge=0)
     stop_if: Conditions | None = None
     encounters: Ref | None = None
@@ -46,8 +46,8 @@ class Route(ContentModel):
 
     id: Id
     name: str | None = None
-    origin: Ref = Field(alias="from")
-    destination: Ref = Field(alias="to")
+    origin: LocationRef = Field(alias="from")
+    destination: LocationRef = Field(alias="to")
     bidirectional: bool = True
     ticks: int = Field(gt=0)
 
