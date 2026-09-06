@@ -1,0 +1,45 @@
+game:
+  name: "A Peasant's Quest"
+  tagline: "Seven days, one road, no choice."
+  difficulty: standard
+  estimatedMinutes: 45
+
+  introduction:
+    - "You are a peasant. You have worked your old friend's farm for twenty-five years."
+    - "One morning, as you cut barley in the low field, a host of the king's guard rides through the standing crop as though it were water."
+    - "They tell you the king has called every man between twenty-two and thirty-five to the Dark Mountain."
+    - "You have heard that those who go to the Dark Mountain do not come back."
+    - "You have seven days to reach Hagan's Castle."
+
+  player:
+    entity: letholin
+    startLocation: fenmoor
+    creationPoints: 20
+    backgrounds: [farmhand, poacher, old-soldier]   # optional, author-defined
+
+  world:
+    minutesPerTick: 30
+    calendar: mace.core:standard-year
+    startTick: 20          # mid-morning, day 1
+    startSeason: autumn
+    startRegion: the-lowlands
+
+  rules:
+    vitalPool: hitpoints
+    effortPool: stamina
+    combatMode: reflex     # the player may override this in settings
+    deathIsPermanent: false
+    survival: [exposure, rest]
+    economy: market
+
+  quests: [the-kings-summons]
+
+  winConditions:
+    - {questComplete: the-kings-summons}
+
+  loseConditions:
+    - {expr: "player.pools.hitpoints <= 0"}
+    - {questFailed: the-kings-summons}
+
+  onWin: victory
+  onLose: defeat

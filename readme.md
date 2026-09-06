@@ -1,106 +1,168 @@
-# MACE - Magic and Combat Environment
+# MACE — Modular Adventure Creation Engine
 
-Magic and Combat Environment is a Dungeons and Dragons-like game creation wizard and engine for creating and playing D&D-like games defined by YAML files.
-The idea is that maps, characters, objects, objectives, and more can be defined in a series of YAML files through the use of the game creation wizard, and then loaded and presented to the user as a Dungeons and Dragons-like game through text-based interactions.
+**An engine and authoring toolkit for living, text-driven adventure worlds.**
+
+MACE lets anyone build a text adventure by answering questions instead of writing
+code — and lets anyone else play it, in a terminal or a browser. Games are
+**data, not code**: a folder of YAML describing a map, its people, its weather,
+and its trouble.
+
+The engine is genre-neutral. Medieval fantasy is the first content library, not a
+constraint — a generation ship, a drowned city, or a dust-bowl noir are the same
+structures with different packs.
+
+> **Status: early.** The design is settled and written down in [`docs/`](docs/);
+> the code is a v0 prototype catching up to it. See the
+> [roadmap](docs/12-roadmap.md) for what exists and what's next.
+
+---
+
+## What makes it different
+
+**The world runs whether you act or not.** A tick of world time passes; weather
+transitions along a real climate model; storm fronts cross the map from region to
+region. Travelling the north road takes six ticks — three hours — so leaving at
+dusk means arriving in the dark, and a storm coming down out of the range means
+arriving late, soaked, and slow. Play the same game twice and the journeys
+differ. → [World Simulation](docs/05-world-simulation.md)
+
+**Some things you can see coming. Some you can only feel building.** An eclipse
+is on the calendar — find an almanac and you'll know the date, and can plan a
+quest around it. The volcano is not on any calendar. It has a hidden pressure
+that has been rising all game, and all you get is omens: a grey cast on the snow,
+a tremor you could almost doubt, the birds leaving the range all at once. You
+can know it's close. You can't know it's Tuesday. That's the decision.
+→ [World Events](docs/05-world-simulation.md#layer-5--world-events)
+
+**Roads are dangerous, plausibly.** Every route carries an encounter table.
+Sometimes an ogre — but only at dusk, and only when it isn't raining. Five
+percent of the time, a troll. Most of the time, a caravan, a shrine, a change in
+the weather, or nothing at all. Tuned so a journey feels alive rather than like a
+grind. → [Travel & Encounters](docs/06-travel-and-encounters.md)
+
+**Combat rewards skill, not dice.** Enemies telegraph their moves; you read the
+tell, pick the counter that beats it, and commit within a timing window. Enemies
+have *patterns* you can learn. Your stats set how wide the window is and how hard
+you hit — you decide what happens inside it. The design target is explicit: a
+player who has fought three trolls should beat the fourth more reliably than one
+who hasn't, with an identical character sheet. (A no-timing `tactical` mode keeps
+all the depth for players who don't want reflex play.)
+→ [Combat](docs/07-combat.md)
+
+**Nothing gets built twice.** Content lives in versioned, namespaced packs.
+Import `fantasy.core:bridge-troll`, override the two fields you want different,
+and get on with your story. → [Content Library](docs/11-library-and-community.md)
+
+**Authoring is answering questions.** The wizard is the product, not a
+convenience wrapper. Every reference is picked from a list of things that exist,
+every mistake is caught when you make it, and you can playtest from any point in
+your world at any time — "start me at the bridge, at midnight, in a blizzard."
+→ [Authoring & the Wizard](docs/09-authoring-and-wizard.md)
+
+---
+
+## What a game looks like
+
+```yaml
+# The road north: six ticks of travel, a troll halfway, and weather that bites.
+- id: north-road
+  from: fenmoor
+  to: hagans-castle
+  ticks: 6
+  waypoints:
+    - {location: troll-bridge, atTick: 3, encounters: bridge-encounters}
+  encounters: forest-road-encounters
+  legDescriptions:
+    - {text: "Crows argue in the branches overhead.", when: {dayPart: [day]}}
+    - {text: "The rain finds every gap in your cloak.", when: {weatherTag: [wet]}}
+```
+
+```yaml
+# Sometimes an ogre. Five percent of the time, a troll. Usually, nothing much.
+- id: forest-road-encounters
+  chance: 0.30
+  minGapTicks: 4
+  entries:
+    - {id: quiet-stretch,  weight: 40, scene: nothing-much-happens}
+    - {id: caravan,        weight: 30, when: [{dayPart: [dawn, day]}], scene: caravan-offers-a-ride}
+    - {id: ogre-ambush,    weight: 20, when: [{dayPart: [dusk, night]}], scene: ogre-ambush}
+    - {id: wandering-troll, weight: 5, once: true, scene: troll-on-the-road}
+```
+
+A full worked example is in
+[`docs/examples/peasants-quest/`](docs/examples/peasants-quest/).
+
+---
+
+## Documentation
+
+Start with the [documentation index](docs/README.md).
+
+| | |
+|---|---|
+| [Vision & Principles](docs/01-vision.md) | What this is for, and the values that settle arguments |
+| [Architecture](docs/02-architecture.md) | The deterministic core, the event protocol, repo layout |
+| [Content Model](docs/03-content-model.md) | Packs, ids, inheritance, conditions and effects |
+| [Schema Reference](docs/04-schema-reference.md) | Every content type, field by field |
+| [World Simulation](docs/05-world-simulation.md) | Clock, climate, weather fronts, world events |
+| [Travel & Encounters](docs/06-travel-and-encounters.md) | Routes, journeys, probability tuning |
+| [Combat](docs/07-combat.md) | Tempo combat |
+| [Economy](docs/08-economy.md) | Goods, markets, trade flow, haggling |
+| [Authoring & the Wizard](docs/09-authoring-and-wizard.md) | How games get made |
+| [Clients & Interface](docs/10-clients-and-interface.md) | CLI, the PWA, the map, offline play |
+| [Library & Community](docs/11-library-and-community.md) | Reuse, contribution, review |
+| [Roadmap](docs/12-roadmap.md) | Phased plan |
+| [Open Questions](docs/13-open-questions.md) | What's deliberately still undecided |
+| [Decision Records](docs/decisions/) | Forks in the road, and why we went the way we did |
+
+---
 
 ## Development
 
-To begin development on this project, perform the following steps:
+```bash
+git clone git@github.com:lightningWhite/MACE.git
+cd MACE
 
-1. Clone the repository:
-   ```bash
-   git clone git@github.com:lightningWhite/MACE.git
-   ```
-1. Create a Python 3 virtual environment within the cloned repo directory:
-   ```bash
-   apt install python3-venv
-   python3 -m venv env
-   ```
-1. Activate the virtual environment and install the required packages:
-   ```bash
-   source env/bin/activate
-   pip3 install --upgrade pip
-   pip install -r requirements.txt
-   ```
-1. Run the following for pre-commit checks:
-   ```bash
-   pre-commit install
-   pre-commit run --all-files
-   ```
+python3 -m venv env                 # apt install python3-venv, if needed
+source env/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
 
-You are now ready to begin developing!
-Be sure to activate the environment with `source env/bin/activate` in the terminal you will be running the program in.
-To deactivate it when done, simply type `deactivate` in the terminal where it was activated.
+pre-commit install
+pre-commit run --all-files
+```
 
-## Design
+Deactivate with `deactivate` when you're done.
 
-This project consists of several main components:
+**Running the v0 prototype wizard** (superseded by the design in
+[docs/09](docs/09-authoring-and-wizard.md), but it runs):
 
-### Game Creation Wizard
+```bash
+cd src && python3 wizard.py
+```
 
-The Game Creation Wizard will present an interactive text-based environment to facilitate the creation of a MACE game.
-The wizard will present various categories of the game that need to be defined, and then help the user to define and validate everything.
-While users could define everything manually in YAML files, it would be difficult to get all of the needed options correct.
-By using the wizard, the user can simply answer the questions, fill out the sections, etc., and the wizard will generate the necessary YAML files that can be read in by the engine to present the game.
-Components that will need to be managed by the wizard include the following:
+**The v0 templates** in [`templates/`](templates/) document the original design.
+They're kept for reference until the schemas in `schemas/` replace them.
 
-#### Game Objectives and Intro
+---
 
-This is where the user will identify the following:
+## Contributing
 
-* The intro summary that will be presented to the player that sets the stage for the quest
-* The conditions that define failure
-* The conditions that define success
-* Other general constraints, such as number of lives
+Not yet accepting outside content packs — the schemas aren't stable, so anything
+built now would break. Once [phase 1](docs/12-roadmap.md#phase-1--the-content-pipeline)
+lands, the plan is a repo full of worlds anyone can clone and play, with CI that
+validates and autoplays every submitted pack.
 
-#### World Map
+Ideas and design arguments are very welcome in the meantime, especially against
+the [open questions](docs/13-open-questions.md).
 
-This is where the user will specify the world in which the game will be played.
-This includes the following:
+## License
 
-* Towns, landmarks, or other locations
-* Links between locations
-  * This is what determines what directional choices are presented to a player as far as to which destination they want to head
-* Intermediary locations
-  * These are locations that aren't directly presented to a player, but that are encountered while in transit to a location to which the player is heading (e.g. Troll Bridges, robber ambush spot, etc.)
+Engine: [MIT](LICENSE). Content packs declare their own license in `pack.yml`,
+defaulting to CC-BY-4.0.
 
-#### Characters
+---
 
-This is where the user will define the various characters that may be encountered during game play, including the main character.
-This includes the following:
-
-* Character name
-* Whether the characters is the player or other (only one player can be specified)
-* Friend, enemy, or neutral starting stance toward the main player
-* Starting location (as defined in the World Map)
-* Attributes
-  * Hit points
-  * Strength
-  * Speed
-  * Endurance
-  * Wisdom
-  * Stealth
-  * Charisma
-
-#### Objects
-
-This is where the user will define various objects that may be encountered or used throughout the game.
-This includes the following:
-
-* Object name
-* Where the object is located (as defined in the World Map)
-* Obtainment result
-  * Possess
-  * Reduce health
-  * Increase health
-TODO: This needs to be defined differently...
-
-#### Environmental Factors
-
-This is where the user will define environmental factors that may be encountered during game play.
-This may include things like the following:
-
-* Weather
-  * Snow, rain, wind, daytime, nighttime, etc. These may affect the abilities of objects or characters.
-* Other
-  * Volcanic erruptions, earthquakes, etc.
+<sub>MACE originally stood for "Magic and Combat Environment." It was re-expanded
+to "Modular Adventure Creation Engine" once the engine stopped being about only
+magic and combat.</sub>

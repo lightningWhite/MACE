@@ -1,0 +1,73 @@
+# Two-stage resolution:
+#   1. `chance` decides whether ANYTHING happens on this leg.
+#   2. Weights are normalised among entries whose `when` passes, and one is drawn.
+# See docs/06-travel-and-encounters.md.
+encounterTables:
+
+  - id: forest-road-encounters
+    chance: 0.30          # roughly two events on a six-tick crossing
+    minGapTicks: 4        # never two in a row
+    entries:
+
+      # Atmosphere should outweigh threat, or the road becomes a grind.
+      - id: quiet-stretch
+        weight: 40
+        scene: fantasy.core:nothing-much-happens
+
+      - id: merchant-caravan
+        weight: 30
+        when:
+          - {dayPart: [dawn, day]}
+          - {not: {weatherTag: [severe]}}
+        scene: caravan-offers-a-ride
+
+      - id: wolves
+        weight: 25
+        when:
+          - {any: [{weatherTag: [cold]}, {dayPart: [night]}]}
+        cooldownTicks: 30
+        combat: {against: [fantasy.core:wolf, fantasy.core:wolf, fantasy.core:wolf]}
+
+      - id: ogre-ambush
+        weight: 20
+        when: [{dayPart: [dusk, night]}]
+        cooldownTicks: 60
+        scene: ogre-ambush
+
+      # The 5% troll: 5 of ~100 eligible weight on a typical daytime leg.
+      - id: wandering-troll
+        weight: 5
+        once: true
+        scene: fantasy.core:troll-on-the-road
+
+      - id: washed-out-ford
+        weight: 15
+        when: [{weatherTag: [wet]}]
+        scene: fantasy.core:hazard-detour     # costs ticks, not hitpoints
+
+  - id: bridge-encounters
+    chance: 1.0           # you always meet what lives under this bridge
+    entries:
+      - id: gorm-appears
+        weight: 100
+        when: [{flag: {entity: gorm, flag: has-been-paid, is: false}}]
+        scene: talk-to-gorm
+
+  - id: mountain-encounters
+    chance: 0.60          # the pass is genuinely dangerous
+    minGapTicks: 3
+    entries:
+      - id: whiteout
+        weight: 30
+        when: [{weather: [fantasy.core:blizzard]}]
+        scene: fantasy.core:whiteout-hazard
+      - id: rockfall
+        weight: 20
+        scene: fantasy.core:rockfall
+      - id: something-in-the-snow
+        weight: 25
+        when: [{dayPart: [night]}]
+        combat: {against: [fantasy.core:snow-troll]}
+      - id: bitter-cold
+        weight: 25
+        scene: fantasy.core:exposure

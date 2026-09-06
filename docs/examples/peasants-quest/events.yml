@@ -1,0 +1,83 @@
+# Celestial events are scheduled by the calendar — the player can learn the date.
+# Pressure events build toward a threshold — the player can only read the omens.
+# See docs/05-world-simulation.md, Layer 5.
+
+celestialEvents:
+  - id: the-swallowing
+    name: "The Swallowing"
+    period: {days: 431}
+    phase: {day: 5}              # falls on day 5 of this seven-day game
+    durationTicks: 3
+    warnTicks: 200               # rumour starts a few days out
+    global: true
+    announce:
+      - "The sun goes out. Not dims — goes out, like a lamp under a cloth."
+      - "Somewhere behind you a horse starts screaming and does not stop."
+    while:
+      - {setLight: 0.05}
+    aftermath:
+      - {setVar: {name: sawTheSwallowing, value: true}}
+
+pressureEvents:
+
+  # The big one. Bounded so it can't fire before the player understands the
+  # world, and can't be missed entirely — but the exact tick stays unknown.
+  - id: ashfell-eruption
+    name: "The Ashfell"
+    regions: [the-range, the-northwood]
+    epicenter: dark-mountain
+    earliestDay: 3
+    latestDay: 12
+    pressure:
+      start: {min: 0.0, max: 0.35}
+      ratePerTick: 0.0035
+      variance: 0.4
+      modifiers:
+        - {when: {season: [autumn]}, mult: 1.2}
+        - {when: {var: warnedAboutWood}, mult: 1.0}   # knowing changes nothing
+    omens:
+      - {atPressure: 0.30, weight: 30, regions: [the-range],
+         text: "The snow on the Ashfell has a grey cast to it that it did not have."}
+      - {atPressure: 0.50, weight: 40,
+         text: "A tremor, small enough to doubt. The water in your flask disagrees."}
+      - {atPressure: 0.70, weight: 60,
+         text: "Birds are leaving the range. All of them, and all at once."}
+      - {atPressure: 0.85, weight: 90,
+         text: "The ground will not stop shaking, and the mountain is lit from inside."}
+    imminentAtPressure: 0.9
+    imminent:
+      announce: ["The Ashfell draws a long breath."]
+      effects:
+        - {closeRoute: {route: mountain-pass, reason: "The pass is shaking itself apart."}}
+    onset:
+      announce: ["The mountain opens."]
+      effects:
+        - {spawnFront: {kind: fantasy.core:ash-fall, intensity: 0.9, at: the-range,
+                        heading: [the-range, the-northwood, the-lowlands],
+                        lifespanTicks: 400}}
+        - {damage: {inRegion: the-range, amount: 40, reason: "the mountain"}}
+    activeTicks: 60
+    while:
+      encounters: fantasy.core:ashfall-hazards
+      travelMultiplier: 1.8
+    aftermath:
+      - {closeRoute: {route: mountain-pass, permanent: true}}
+      - {setVar: {name: ashfellErupted, value: true}}
+
+  # A small one. Cheap to author, and it permanently lengthens the main road.
+  - id: hillside-slip
+    name: "The Cutting"
+    scope: route
+    route: north-road
+    pressure:
+      ratePerTick: 0.004
+      variance: 0.5
+      modifiers:
+        - {when: {weatherTag: [wet]}, mult: 3.0}     # rain brings it down
+    omens:
+      - {atPressure: 0.6, weight: 50,
+         text: "The cutting above the road has shed a fan of loose stone since you last passed."}
+    onset:
+      announce: ["The hillside comes down behind you, unhurried and enormous."]
+    aftermath:
+      - {setRouteTicks: {route: north-road, ticks: 9}}
