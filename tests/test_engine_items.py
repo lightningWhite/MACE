@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from conftest import game_pack
 
+from conftest import game_pack
 from mace.content import Library, load_library
 from mace.engine.actions import Choose, Respond, Travel, Use
 from mace.engine.conditions import RuleError

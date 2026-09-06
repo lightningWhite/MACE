@@ -114,6 +114,42 @@ The top level is a resumable task list, not a linear interview:
 You can work on anything in any order, leave things half-done, and come back.
 That's how hobby projects actually get built.
 
+## The project, and loading content that is still wrong
+
+A `Library` is finished content: immutable, validated, and useless to an author
+halfway through a sentence. A **Project** is the other thing — the raw authored
+mappings, editable, compiled on demand, and perfectly willing to be wrong for a
+while.
+
+Three rules shape it:
+
+- **The YAML is canonical.** Objects are held as the mappings the author wrote,
+  not as validated models, so an object the models would reject is still
+  something the wizard can hold, show, and let you fix.
+- **Every object remembers its file.** An author who split their world into
+  `locations.yml` and `people.yml` keeps that arrangement, and objects keep the
+  position they were read in. Saving rewrites only files that actually changed.
+- **Compiling never touches the disk**, so "playtest with unsaved changes" is
+  true rather than approximately true.
+
+This needed a change underneath. The loader used to stop at the first object it
+could not build, which meant one misspelled field hid every other problem in the
+pack — a world got fixed one invisible error at a time. Loading now carries a
+**tolerance**: playing still stops at the first failure, because content that
+will not compile cannot be played, while authoring collects failures, drops the
+objects that caused them, and carries on. `mace validate` uses the collecting
+form too, since reporting one error and hiding the rest is no better for CI than
+it is for an author.
+
+**A known cost.** Saved files are written with `yaml.safe_dump`, which does not
+preserve comments or an author's chosen layout: a file the wizard rewrites comes
+back tidy and uncommented. Only rewriting changed files keeps that blast radius
+small, and a pack the wizard created has no comments to lose — but editing a
+hand-written pack like `fantasy.core` in the wizard *will* flatten the file it
+touches. Fixing it properly means a round-tripping YAML library, which is a
+dependency decision rather than an implementation detail;
+`mace.content.writing` is the one-function seam where that change would happen.
+
 ## Validation
 
 Runs on save and on demand. Three severities:

@@ -11,6 +11,8 @@ from conftest import write_pack
 from mace.cli import main
 from mace.cli.play import keys_for
 from mace.cli.timing import Keypress
+from mace.content import validate_paths
+from mace.wizard.project import Project
 
 
 def test_no_command_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
@@ -292,3 +294,86 @@ def test_a_timed_window_records_what_it_measured(
     printed = capsys.readouterr().out
     assert "Clean counter" in printed
     assert "(too slow)" in printed
+
+
+# ── Starting a pack ───────────────────────────────────────────────────────────
+
+
+def test_new_creates_a_pack(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert (
+        main(
+            [
+                "new",
+                str(tmp_path / "my-world"),
+                "--requires",
+                "--packs",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
+    assert (tmp_path / "my-world" / "pack.yml").is_file()
+    assert "created" in capsys.readouterr().out
+
+
+def test_new_names_the_pack_after_its_directory(tmp_path: Path) -> None:
+    main(["new", str(tmp_path / "my-world"), "--requires", "--packs", str(tmp_path)])
+    assert Project.open(tmp_path / "my-world").manifest.id == "my-world"
+
+
+def test_new_warns_when_a_required_pack_is_not_there(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """It is still required, so the author needs to know now rather than later."""
+    assert (
+        main(
+            [
+                "new",
+                str(tmp_path / "my-world"),
+                "--requires",
+                "fantasy.core",
+                "--packs",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
+    assert "was not found" in capsys.readouterr().err
+
+
+def test_new_refuses_to_overwrite_a_pack(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    args = ["new", str(tmp_path / "my-world"), "--requires", "--packs", str(tmp_path)]
+    assert main(args) == 0
+    assert main(args) == 1
+    assert "already a pack" in capsys.readouterr().err
+
+
+def test_new_reports_an_unusable_id(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert (
+        main(
+            [
+                "new",
+                str(tmp_path / "world"),
+                "--id",
+                "Not A Valid Id",
+                "--requires",
+                "--packs",
+                str(tmp_path),
+            ]
+        )
+        == 1
+    )
+    assert "error" in capsys.readouterr().err
+
+
+def test_a_new_pack_validates_as_far_as_an_empty_game_can(tmp_path: Path) -> None:
+    """Empty is not the same as broken, and the difference should be legible."""
+    main(["new", str(tmp_path / "my-world"), "--requires", "--packs", str(tmp_path)])
+    report = validate_paths(tmp_path / "my-world")
+    assert [problem.message for problem in report.errors] == [
+        "is a game pack but has no `game:` manifest"
+    ]

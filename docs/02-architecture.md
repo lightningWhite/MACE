@@ -253,6 +253,7 @@ MACE/
 | `modules/objects/game.py` | `mace/model/game.py` (frozen) + `mace/engine/state.py` |
 | `modules/objects/interaction.py` | `mace/model/scene.py` — with ids, so scenes are referenceable rather than only nested |
 | `wizard.py` prompt helpers | `mace/cli/prompt.py` |
+| `modules/objects/*` mutable state | `mace/wizard/project.py` — raw authored mappings, compiled on demand |
 | `wizard.py` `create*` functions | `mace/wizard/flows/*.py` as declarative steps |
 | `src/games/` | `packs/games/` |
 

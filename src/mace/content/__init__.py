@@ -9,21 +9,30 @@ from mace.content.discovery import MANIFEST_NAME, content_files, find_packs, rea
 from mace.content.errors import ContentError
 from mace.content.ids import QUALIFIER, is_qualified, qualify, split
 from mace.content.library import COLLECTION_MODELS, SINGULAR, Library, LoadedPack
-from mace.content.loader import load_library, load_pack_manifest
+from mace.content.loader import (
+    Loaded,
+    load_best_effort,
+    load_library,
+    load_pack_manifest,
+)
 from mace.content.merge import APPEND, REMOVE, find_sentinels, merge
+from mace.content.tolerance import STRICT, Tolerance, collecting
 from mace.content.validation import (
     Problem,
     Report,
     Severity,
+    as_problem,
     validate_library,
     validate_paths,
 )
+from mace.content.writing import dump, write_document
 
 __all__ = [
     "APPEND",
     "COLLECTION_MODELS",
     "ContentError",
     "Library",
+    "Loaded",
     "LoadedPack",
     "MANIFEST_NAME",
     "Problem",
@@ -31,11 +40,17 @@ __all__ = [
     "REMOVE",
     "Report",
     "SINGULAR",
+    "STRICT",
     "Severity",
+    "Tolerance",
+    "as_problem",
+    "collecting",
     "content_files",
+    "dump",
     "find_packs",
     "find_sentinels",
     "is_qualified",
+    "load_best_effort",
     "load_library",
     "load_pack_manifest",
     "merge",
@@ -44,4 +59,5 @@ __all__ = [
     "split",
     "validate_library",
     "validate_paths",
+    "write_document",
 ]

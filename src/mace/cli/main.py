@@ -5,9 +5,12 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from mace import __version__
 from mace.cli.play import play
-from mace.content import Severity, validate_paths
+from mace.content import ContentError, Severity, validate_paths
+from mace.wizard.project import Project
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -82,7 +85,86 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     player.set_defaults(run=run_play)
+
+    started = commands.add_parser(
+        "new",
+        help="start a new content pack",
+        description=(
+            "Create a pack directory with a manifest, ready to author. The "
+            "pack is empty: `mace author` is what fills it in."
+        ),
+    )
+    started.add_argument("directory", type=Path, help="where to create the pack")
+    started.add_argument(
+        "--id",
+        dest="pack_id",
+        help="the pack's namespaced id (default: the directory name)",
+    )
+    started.add_argument("--name", help="its title (default: the directory name)")
+    started.add_argument(
+        "--library",
+        action="store_true",
+        help="make a library to build on rather than a playable game",
+    )
+    started.add_argument(
+        "--requires",
+        nargs="*",
+        default=["fantasy.core"],
+        metavar="PACK",
+        help=(
+            "packs to build on (default: fantasy.core; pass none to depend "
+            "on nothing)"
+        ),
+    )
+    started.add_argument(
+        "--packs",
+        type=Path,
+        default=Path("packs"),
+        help="where the packs it requires live (default: packs/)",
+    )
+    started.set_defaults(run=run_new)
     return parser
+
+
+def run_new(options: argparse.Namespace) -> int:
+    """Run `mace new`.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    directory = options.directory
+    fallback = directory.name
+    try:
+        project = Project.create(
+            directory,
+            options.packs,
+            pack_id=options.pack_id or fallback,
+            name=options.name or fallback,
+            kind="library" if options.library else "game",
+            requires={needed: "^0.1" for needed in options.requires},
+        )
+    except (ContentError, ValidationError) as error:
+        print(f"error   {error}", file=sys.stderr)
+        return 1
+
+    print(f"created {project.root}")
+    missing = {needed for needed in options.requires} - {
+        pack.id for pack in project.dependencies.packs
+    }
+    for needed in sorted(missing):
+        print(
+            f"warning `{needed}` was not found under {options.packs}; "
+            "it is still required, so put it there before playing",
+            file=sys.stderr,
+        )
+    return 0
 
 
 def run_play(options: argparse.Namespace) -> int:

@@ -28,7 +28,7 @@ from typing import Annotated, Any, Union, get_args, get_origin
 from mace.content.errors import ContentError
 from mace.content.ids import qualify
 from mace.content.library import COLLECTION_MODELS, Library, LoadedPack
-from mace.content.loader import load_library
+from mace.content.loader import load_best_effort
 from mace.model import (
     Calendar,
     ClimateOverride,
@@ -47,6 +47,7 @@ __all__ = [
     "Problem",
     "Report",
     "Severity",
+    "as_problem",
     "references",
     "validate_library",
     "validate_paths",
@@ -359,8 +360,11 @@ def _marker_of(annotation: Any) -> Reference | None:
 def validate_paths(*roots: Path) -> Report:
     """Load and validate everything under the given roots.
 
-    A load failure becomes an error in the report rather than an exception, so
-    `mace validate` prints one thing whatever went wrong.
+    The load is best-effort: an object that will not compile becomes an error
+    in the report and the rest of the pack is checked anyway. Stopping at the
+    first one meant a single misspelled field hid every other problem behind
+    it, so a world got fixed one invisible error at a time — which is bad for
+    an author and no better for CI.
 
     Parameters
     ----------
@@ -370,24 +374,41 @@ def validate_paths(*roots: Path) -> Report:
     Returns
     -------
     Report
-        Everything found.
+        Everything found, load failures first.
     """
     try:
-        library = load_library(*roots)
+        loaded = load_best_effort(*roots)
     except ContentError as error:
-        return Report(
-            (
-                Problem(
-                    severity=Severity.ERROR,
-                    message=error.message,
-                    pack=error.pack or "?",
-                    path=error.path,
-                    collection=error.collection,
-                    object_id=error.object_id,
-                ),
-            )
-        )
-    return validate_library(library)
+        # Discovery itself failed — a root that is not there. Nothing was
+        # loaded, so there is nothing further to check.
+        return Report((as_problem(error),))
+
+    problems = [as_problem(error) for error in loaded.problems]
+    problems.extend(validate_library(loaded.library).problems)
+    return Report(tuple(problems))
+
+
+def as_problem(error: ContentError) -> Problem:
+    """Render a load failure as a report entry.
+
+    Parameters
+    ----------
+    error : ContentError
+        What would not build.
+
+    Returns
+    -------
+    Problem
+        The same thing, at error severity.
+    """
+    return Problem(
+        severity=Severity.ERROR,
+        message=error.message,
+        pack=error.pack or "?",
+        path=error.path,
+        collection=error.collection,
+        object_id=error.object_id,
+    )
 
 
 def validate_library(library: Library) -> Report:

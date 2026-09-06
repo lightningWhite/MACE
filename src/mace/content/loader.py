@@ -12,12 +12,18 @@ The order matters and is the whole job:
 Steps 4 and 5 are in that order on purpose — see docs/03-content-model.md
 § Inheritance. Everything here is at the content layer: it reads the
 filesystem, which the engine may never do.
+
+Every step takes a `Tolerance`, which decides whether a thing that cannot be
+built stops the load or is recorded and stepped over. Playing wants the former;
+authoring wants the latter, because a half-written pack is the normal state of
+a pack being written. See `mace.content.tolerance`.
 """
 
 from __future__ import annotations
 
 import difflib
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -33,11 +39,12 @@ from mace.content.errors import ContentError
 from mace.content.ids import split
 from mace.content.library import COLLECTION_MODELS, SINGULAR, Library, LoadedPack
 from mace.content.merge import find_sentinels, merge
+from mace.content.tolerance import STRICT, Tolerance, collecting
 from mace.model import Game, Pack
 from mace.model.base import ContentModel
 from mace.model.jsonschema import UNMODELLED_COLLECTIONS
 
-__all__ = ["load_library", "load_pack_manifest"]
+__all__ = ["Loaded", "load_best_effort", "load_library", "load_pack_manifest"]
 
 #: A content file's top-level key for the game manifest.
 GAME_KEY = "game"
@@ -91,95 +98,194 @@ def load_pack_manifest(pack_root: Path) -> Pack:
         raise ContentError(_readable(error), path=path) from error
 
 
-def load_library(*roots: Path) -> Library:
+def load_library(*roots: Path, tolerance: Tolerance = STRICT) -> Library:
     """Load every pack under the given roots.
 
     Parameters
     ----------
     *roots : Path
         Directories to search. A root that is itself a pack loads just that one.
+    tolerance : Tolerance
+        Whether to stop at the first thing that cannot be built. Defaults to
+        stopping; `load_best_effort` is the other way round.
 
     Returns
     -------
     Library
-        The loaded packs, in dependency order.
+        The loaded packs, in dependency order. Under a collecting tolerance,
+        packs and objects that failed are simply absent.
 
     Raises
     ------
     ContentError
-        If discovery, ordering, inheritance, or validation fails.
+        If discovery, ordering, inheritance, or validation fails and the
+        tolerance is strict.
     """
     directories: dict[str, Path] = {}
     manifests: dict[str, Pack] = {}
     for root in roots:
         for pack_root in find_packs(root):
-            manifest = load_pack_manifest(pack_root)
+            try:
+                manifest = load_pack_manifest(pack_root)
+            except ContentError as error:
+                tolerance.fail(error)
+                continue
             if manifest.id in manifests:
-                raise ContentError(
-                    f"pack id `{manifest.id}` is claimed twice: "
-                    f"{directories[manifest.id]} and {pack_root}",
-                    path=pack_root,
+                tolerance.fail(
+                    ContentError(
+                        f"pack id `{manifest.id}` is claimed twice: "
+                        f"{directories[manifest.id]} and {pack_root}",
+                        path=pack_root,
+                    )
                 )
+                continue
             manifests[manifest.id] = manifest
             directories[manifest.id] = pack_root
 
     loaded: dict[str, LoadedPack] = {}
-    for pack_id in _dependency_order(manifests):
+    for pack_id in _dependency_order(manifests, tolerance):
         loaded[pack_id] = _load_pack(
-            manifests[pack_id], directories[pack_id], Library(tuple(loaded.values()))
+            manifests[pack_id],
+            directories[pack_id],
+            Library(tuple(loaded.values())),
+            tolerance,
         )
     return Library(tuple(loaded.values()))
 
 
-def _dependency_order(manifests: Mapping[str, Pack]) -> list[str]:
+@dataclass(frozen=True, slots=True)
+class Loaded:
+    """A best-effort load: what compiled, and what did not.
+
+    Attributes
+    ----------
+    library : Library
+        Everything that built. Objects that failed are absent from it, so what
+        is here is as usable as any strictly-loaded library.
+    problems : tuple of ContentError
+        Everything that did not, in the order it was found.
+    """
+
+    library: Library
+    problems: tuple[ContentError, ...] = ()
+
+    @property
+    def ok(self) -> bool:
+        """Whether everything built.
+
+        Returns
+        -------
+        bool
+            True when nothing was skipped.
+        """
+        return not self.problems
+
+
+def load_best_effort(*roots: Path) -> Loaded:
+    """Load everything that can be loaded, and report what could not.
+
+    What the wizard opens a project with. One misspelled field on one location
+    should cost the author that location, not the rest of their world.
+
+    Parameters
+    ----------
+    *roots : Path
+        Directories to search.
+
+    Returns
+    -------
+    Loaded
+        The library, and every failure found building it.
+    """
+    tolerance = collecting()
+    library = load_library(*roots, tolerance=tolerance)
+    return Loaded(library, tuple(tolerance.problems))
+
+
+def _dependency_order(
+    manifests: Mapping[str, Pack], tolerance: Tolerance = STRICT
+) -> list[str]:
     """Order packs so each comes after everything it requires.
+
+    A pack whose dependency is missing, or which is caught in a cycle, is left
+    out of the order entirely rather than loaded without it. Loading it anyway
+    would make every bare reference into that dependency resolve to nothing,
+    and bury the one real problem — "this pack requires `fantasy.core`, which
+    is not here" — under a hundred consequences of it.
 
     Parameters
     ----------
     manifests : mapping
         Pack id to manifest.
+    tolerance : Tolerance
+        Whether a missing dependency or a cycle stops the load.
 
     Returns
     -------
     list of str
-        Pack ids, dependencies first.
+        Pack ids, dependencies first. Packs that could not be ordered are
+        absent.
 
     Raises
     ------
     ContentError
-        If a dependency is missing, or the graph has a cycle.
+        If a dependency is missing or the graph has a cycle, and the tolerance
+        is strict.
     """
     ordered: list[str] = []
     settled: set[str] = set()
+    unusable: set[str] = set()
     visiting: list[str] = []
 
-    def visit(pack_id: str) -> None:
+    def visit(pack_id: str) -> bool:
         if pack_id in settled:
-            return
+            return True
+        if pack_id in unusable:
+            return False
         if pack_id in visiting:
             cycle = " → ".join([*visiting[visiting.index(pack_id) :], pack_id])
-            raise ContentError(f"packs depend on each other in a cycle: {cycle}")
+            tolerance.fail(
+                ContentError(f"packs depend on each other in a cycle: {cycle}")
+            )
+            unusable.update(visiting[visiting.index(pack_id) :])
+            return False
 
         visiting.append(pack_id)
-        for requirement in manifests[pack_id].requires:
-            if requirement.id not in manifests:
-                raise ContentError(
-                    f"requires `{requirement.id}`, which was not found. Is it "
-                    "in one of the pack directories being loaded?",
-                    pack=pack_id,
-                )
-            visit(requirement.id)
-        visiting.pop()
+        try:
+            for requirement in manifests[pack_id].requires:
+                if requirement.id not in manifests:
+                    tolerance.fail(
+                        ContentError(
+                            f"requires `{requirement.id}`, which was not found. "
+                            "Is it in one of the pack directories being loaded?",
+                            pack=pack_id,
+                        )
+                    )
+                    unusable.add(pack_id)
+                    return False
+                if not visit(requirement.id):
+                    unusable.add(pack_id)
+                    return False
+        finally:
+            visiting.pop()
 
+        if pack_id in unusable:
+            return False
         settled.add(pack_id)
         ordered.append(pack_id)
+        return True
 
     for pack_id in sorted(manifests):
         visit(pack_id)
     return ordered
 
 
-def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
+def _load_pack(
+    manifest: Pack,
+    root: Path,
+    dependencies: Library,
+    tolerance: Tolerance = STRICT,
+) -> LoadedPack:
     """Load one pack, given everything it depends on.
 
     Parameters
@@ -190,6 +296,80 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
         The pack directory.
     dependencies : Library
         The already-loaded packs this one may reference.
+    tolerance : Tolerance
+        Whether one bad object stops the pack.
+
+    Returns
+    -------
+    LoadedPack
+        The loaded pack. Under a collecting tolerance, objects that failed are
+        absent from it.
+
+    Raises
+    ------
+    ContentError
+        If any of the pack's content is invalid and the tolerance is strict.
+    """
+    raw, unmodelled, game_data, game_path = _gather(manifest, root, tolerance)
+    return compile_pack(
+        manifest,
+        root,
+        {
+            collection: {name: entry.data for name, entry in objects.items()}
+            for collection, objects in raw.items()
+        },
+        unmodelled,
+        game_data,
+        dependencies,
+        tolerance,
+        homes={
+            name: entry.path
+            for objects in raw.values()
+            for name, entry in objects.items()
+        },
+        game_path=game_path,
+    )
+
+
+def compile_pack(
+    manifest: Pack,
+    root: Path,
+    raw: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    unmodelled: Mapping[str, tuple[Any, ...]],
+    game_data: Any,
+    dependencies: Library,
+    tolerance: Tolerance = STRICT,
+    *,
+    homes: Mapping[str, Path] | None = None,
+    game_path: Path | None = None,
+) -> LoadedPack:
+    """Turn already-gathered raw objects into a loaded pack.
+
+    Split out from reading the filesystem so the wizard can compile what it is
+    holding rather than what is on disk. "Playtest from anywhere, unsaved
+    changes included" is the single feature that keeps authors iterating, and
+    a compile step that could only see saved files would make it a lie.
+
+    Parameters
+    ----------
+    manifest : Pack
+        The pack's validated manifest.
+    root : Path
+        The pack directory, for error messages.
+    raw : mapping
+        Collection name to local id to authored mapping.
+    unmodelled : mapping
+        Collections no model covers yet, kept as they were written.
+    game_data : object
+        The `game:` manifest's raw body, or None.
+    dependencies : Library
+        The already-loaded packs this one may reference.
+    tolerance : Tolerance
+        Whether one bad object stops the pack.
+    homes : mapping or None
+        Local id to the file it came from, for error messages.
+    game_path : Path or None
+        The file the game manifest came from.
 
     Returns
     -------
@@ -199,13 +379,19 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
     Raises
     ------
     ContentError
-        If any of the pack's content is invalid.
+        If any of the content is invalid and the tolerance is strict.
     """
-    raw, unmodelled, game_data, game_path = _gather(manifest, root)
+    indexed: dict[str, dict[str, _RawObject]] = {
+        collection: {
+            name: _RawObject(data, (homes or {}).get(name, root))
+            for name, data in objects.items()
+        }
+        for collection, objects in raw.items()
+    }
 
     built: dict[str, dict[str, ContentModel]] = {
         collection: _build_collection(
-            manifest, collection, raw.get(collection, {}), dependencies
+            manifest, collection, indexed.get(collection, {}), dependencies, tolerance
         )
         for collection in COLLECTION_MODELS
     }
@@ -215,12 +401,21 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
         try:
             game = Game.model_validate(game_data)
         except ValidationError as error:
-            raise ContentError(
-                _readable(error), pack=manifest.id, path=game_path, collection=GAME_KEY
-            ) from error
+            tolerance.fail(
+                ContentError(
+                    _readable(error),
+                    pack=manifest.id,
+                    path=game_path,
+                    collection=GAME_KEY,
+                )
+            )
     elif manifest.is_game:
-        raise ContentError(
-            "is a game pack but has no `game:` manifest", pack=manifest.id, path=root
+        tolerance.fail(
+            ContentError(
+                "is a game pack but has no `game:` manifest",
+                pack=manifest.id,
+                path=root,
+            )
         )
 
     return LoadedPack(
@@ -243,11 +438,11 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
         weather_conditions=built["weatherConditions"],  # type: ignore[arg-type]
         weather_fronts=built["weatherFronts"],  # type: ignore[arg-type]
         game=game,
-        unmodelled=unmodelled,
+        unmodelled=dict(unmodelled),
     )
 
 
-def _gather(manifest: Pack, root: Path) -> tuple[
+def _gather(manifest: Pack, root: Path, tolerance: Tolerance = STRICT) -> tuple[
     dict[str, dict[str, _RawObject]],
     dict[str, tuple[Any, ...]],
     Any,
@@ -261,6 +456,8 @@ def _gather(manifest: Pack, root: Path) -> tuple[
         The pack's manifest, for error messages.
     root : Path
         The pack directory.
+    tolerance : Tolerance
+        Whether one malformed file stops the pack.
 
     Returns
     -------
@@ -271,7 +468,8 @@ def _gather(manifest: Pack, root: Path) -> tuple[
     Raises
     ------
     ContentError
-        If a file is shaped wrong, or two objects claim the same id.
+        If a file is shaped wrong or two objects claim the same id, and the
+        tolerance is strict.
     """
     raw: dict[str, dict[str, _RawObject]] = {}
     unmodelled: dict[str, list[Any]] = {}
@@ -279,25 +477,36 @@ def _gather(manifest: Pack, root: Path) -> tuple[
     game_path: Path | None = None
 
     for path in content_files(root):
-        document = read_yaml(path)
+        try:
+            document = read_yaml(path)
+        except ContentError as error:
+            tolerance.fail(error)
+            continue
         if document is None:
             continue
         if not isinstance(document, Mapping):
-            raise ContentError(
-                "a content file must be a mapping of collection names to "
-                f"their objects; this one is a {type(document).__name__}",
-                pack=manifest.id,
-                path=path,
+            tolerance.fail(
+                ContentError(
+                    "a content file must be a mapping of collection names to "
+                    f"their objects; this one is a {type(document).__name__}",
+                    pack=manifest.id,
+                    path=path,
+                )
             )
+            continue
 
         for collection, body in document.items():
             if collection == GAME_KEY:
                 if game_data is not None:
-                    raise ContentError(
-                        f"a second `game:` manifest; the first was in {game_path}",
-                        pack=manifest.id,
-                        path=path,
+                    tolerance.fail(
+                        ContentError(
+                            f"a second `game:` manifest; the first was in "
+                            f"{game_path}",
+                            pack=manifest.id,
+                            path=path,
+                        )
                     )
+                    continue
                 game_data, game_path = body, path
                 continue
 
@@ -306,13 +515,23 @@ def _gather(manifest: Pack, root: Path) -> tuple[
                 continue
 
             if collection not in COLLECTION_MODELS:
-                raise ContentError(
-                    _unknown_collection(str(collection)),
-                    pack=manifest.id,
-                    path=path,
+                tolerance.fail(
+                    ContentError(
+                        _unknown_collection(str(collection)),
+                        pack=manifest.id,
+                        path=path,
+                    )
                 )
+                continue
 
-            _index(raw.setdefault(collection, {}), collection, body, path, manifest)
+            _index(
+                raw.setdefault(collection, {}),
+                collection,
+                body,
+                path,
+                manifest,
+                tolerance,
+            )
 
     return (
         raw,
@@ -328,6 +547,7 @@ def _index(
     body: Any,
     path: Path,
     manifest: Pack,
+    tolerance: Tolerance = STRICT,
 ) -> None:
     """Add one file's objects for a collection to the pack-wide index.
 
@@ -343,41 +563,53 @@ def _index(
         The file, for error messages.
     manifest : Pack
         The pack, for error messages.
+    tolerance : Tolerance
+        Whether one malformed entry stops the file.
 
     Raises
     ------
     ContentError
-        If the body is not a list of objects with ids, or an id repeats.
+        If the body is not a list of objects with ids or an id repeats, and
+        the tolerance is strict.
     """
     if body is None:
         return
     if not isinstance(body, list):
-        raise ContentError(
-            f"`{collection}:` must be a list of definitions, not a "
-            f"{type(body).__name__}",
-            pack=manifest.id,
-            path=path,
-            collection=collection,
+        tolerance.fail(
+            ContentError(
+                f"`{collection}:` must be a list of definitions, not a "
+                f"{type(body).__name__}",
+                pack=manifest.id,
+                path=path,
+                collection=collection,
+            )
         )
+        return
 
     for entry in body:
         if not isinstance(entry, Mapping) or "id" not in entry:
-            raise ContentError(
-                "every definition needs an `id`",
-                pack=manifest.id,
-                path=path,
-                collection=collection,
+            tolerance.fail(
+                ContentError(
+                    "every definition needs an `id`",
+                    pack=manifest.id,
+                    path=path,
+                    collection=collection,
+                )
             )
+            continue
         local_id = str(entry["id"])
         if local_id in target:
-            raise ContentError(
-                f"is defined twice — also in {target[local_id].path}. Ids are "
-                "unique within a pack, however the files are organized.",
-                pack=manifest.id,
-                path=path,
-                collection=collection,
-                object_id=local_id,
+            tolerance.fail(
+                ContentError(
+                    f"is defined twice — also in {target[local_id].path}. Ids "
+                    "are unique within a pack, however the files are organized.",
+                    pack=manifest.id,
+                    path=path,
+                    collection=collection,
+                    object_id=local_id,
+                )
             )
+            continue
         target[local_id] = _RawObject(entry, path)
 
 
@@ -386,8 +618,15 @@ def _build_collection(
     collection: str,
     raw: Mapping[str, _RawObject],
     dependencies: Library,
+    tolerance: Tolerance = STRICT,
 ) -> dict[str, ContentModel]:
     """Resolve inheritance and validate every object in one collection.
+
+    Under a collecting tolerance an object that fails is left out and the next
+    one is tried, so an author gets their whole problem list rather than its
+    first entry. A child of a failed object fails in its turn and is reported
+    separately — a consequence, but an honest one, and saying "the parent you
+    extend did not build" is more use than silence.
 
     Parameters
     ----------
@@ -399,32 +638,41 @@ def _build_collection(
         Local id to raw object.
     dependencies : Library
         Already-loaded packs, for cross-pack `extends`.
+    tolerance : Tolerance
+        Whether one bad object stops the collection.
 
     Returns
     -------
     dict
-        Local id to validated definition.
+        Local id to validated definition. Objects that failed are absent.
 
     Raises
     ------
     ContentError
-        If inheritance or validation fails.
+        If inheritance or validation fails and the tolerance is strict.
     """
     model = COLLECTION_MODELS[collection]
     resolved: dict[str, ContentModel] = {}
     merged: dict[str, Mapping[str, Any]] = {}
+    failed: set[str] = set()
 
-    def build(local_id: str, chain: tuple[str, ...]) -> Mapping[str, Any]:
+    def build(local_id: str, chain: tuple[str, ...]) -> Mapping[str, Any] | None:
         if local_id in merged:
             return merged[local_id]
+        if local_id in failed:
+            return None
         if local_id in chain:
             trail = " → ".join([*chain[chain.index(local_id) :], local_id])
-            raise ContentError(
-                f"extends itself in a cycle: {trail}",
-                pack=manifest.id,
-                collection=collection,
-                object_id=local_id,
+            failed.add(local_id)
+            tolerance.fail(
+                ContentError(
+                    f"extends itself in a cycle: {trail}",
+                    pack=manifest.id,
+                    collection=collection,
+                    object_id=local_id,
+                )
             )
+            return None
 
         entry = raw[local_id]
         data: Mapping[str, Any] = entry.data
@@ -433,15 +681,19 @@ def _build_collection(
         if parent_reference is None:
             stray = find_sentinels(data)
             if stray:
-                raise ContentError(
-                    f"uses the merge sentinel at {stray[0]} but extends "
-                    "nothing. Sentinels only mean something against an "
-                    "inherited definition.",
-                    pack=manifest.id,
-                    path=entry.path,
-                    collection=collection,
-                    object_id=local_id,
+                failed.add(local_id)
+                tolerance.fail(
+                    ContentError(
+                        f"uses the merge sentinel at {stray[0]} but extends "
+                        "nothing. Sentinels only mean something against an "
+                        "inherited definition.",
+                        pack=manifest.id,
+                        path=entry.path,
+                        collection=collection,
+                        object_id=local_id,
+                    )
                 )
+                return None
         else:
             parent = _parent_definition(
                 manifest,
@@ -452,20 +704,29 @@ def _build_collection(
                 raw,
                 dependencies,
                 lambda parent_id: build(parent_id, (*chain, local_id)),
+                tolerance,
             )
+            if parent is None:
+                failed.add(local_id)
+                return None
             data = merge(parent, data)
 
-        merged[local_id] = data
         try:
             resolved[local_id] = model.model_validate(data)
         except ValidationError as error:
-            raise ContentError(
-                _readable(error),
-                pack=manifest.id,
-                path=entry.path,
-                collection=collection,
-                object_id=local_id,
-            ) from error
+            failed.add(local_id)
+            tolerance.fail(
+                ContentError(
+                    _readable(error),
+                    pack=manifest.id,
+                    path=entry.path,
+                    collection=collection,
+                    object_id=local_id,
+                )
+            )
+            return None
+
+        merged[local_id] = data
         return data
 
     for local_id in raw:
@@ -482,7 +743,8 @@ def _parent_definition(
     raw: Mapping[str, _RawObject],
     dependencies: Library,
     build_local: Any,
-) -> Mapping[str, Any]:
+    tolerance: Tolerance = STRICT,
+) -> Mapping[str, Any] | None:
     """Find the definition an object extends, wherever it lives.
 
     A parent in the same pack is resolved first — and built first, so a child
@@ -506,36 +768,54 @@ def _parent_definition(
     dependencies : Library
         The already-loaded packs.
     build_local : callable
-        Builds and returns a same-pack parent's merged mapping.
+        Builds and returns a same-pack parent's merged mapping, or None when
+        the parent itself could not be built.
+    tolerance : Tolerance
+        Whether a missing parent stops the load.
 
     Returns
     -------
-    mapping
-        The parent's definition, in authoring shape.
+    mapping or None
+        The parent's definition in authoring shape, or None when it could not
+        be found and the tolerance is collecting.
 
     Raises
     ------
     ContentError
-        If the parent cannot be found, or is in a pack this one does not require.
+        If the parent cannot be found, or is in a pack this one does not
+        require, and the tolerance is strict.
     """
     pack_id, parent_local = split(reference)
 
     if pack_id in (None, manifest.id) and parent_local in raw:
-        parent: Mapping[str, Any] = build_local(parent_local)
+        parent: Mapping[str, Any] | None = build_local(parent_local)
+        if parent is None:
+            tolerance.fail(
+                ContentError(
+                    f"extends `{reference}`, which did not build",
+                    pack=manifest.id,
+                    path=path,
+                    collection=collection,
+                    object_id=local_id,
+                )
+            )
         return parent
 
     if pack_id is None:
         candidates = [requirement.id for requirement in manifest.requires]
     else:
         if pack_id not in {requirement.id for requirement in manifest.requires}:
-            raise ContentError(
-                f"extends `{reference}`, but this pack does not `require` "
-                f"`{pack_id}`",
-                pack=manifest.id,
-                path=path,
-                collection=collection,
-                object_id=local_id,
+            tolerance.fail(
+                ContentError(
+                    f"extends `{reference}`, but this pack does not `require` "
+                    f"`{pack_id}`",
+                    pack=manifest.id,
+                    path=path,
+                    collection=collection,
+                    object_id=local_id,
+                )
             )
+            return None
         candidates = [pack_id]
 
     for candidate in candidates:
@@ -543,14 +823,17 @@ def _parent_definition(
         if parent_local in definitions:
             return dict(definitions[parent_local].authored())
 
-    raise ContentError(
-        f"extends `{reference}`, which is not a {SINGULAR[collection]} here or in "
-        f"{', '.join(f'`{name}`' for name in candidates) or 'any dependency'}",
-        pack=manifest.id,
-        path=path,
-        collection=collection,
-        object_id=local_id,
+    tolerance.fail(
+        ContentError(
+            f"extends `{reference}`, which is not a {SINGULAR[collection]} here "
+            f"or in {', '.join(f'`{n}`' for n in candidates) or 'any dependency'}",
+            pack=manifest.id,
+            path=path,
+            collection=collection,
+            object_id=local_id,
+        )
     )
+    return None
 
 
 def _unknown_collection(collection: str) -> str:
