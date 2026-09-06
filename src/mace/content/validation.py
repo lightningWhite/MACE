@@ -429,6 +429,7 @@ def validate_library(library: Library) -> Report:
         problems.extend(_check_references(library, pack))
         problems.extend(_check_reserved_names(pack))
         problems.extend(_check_game(library, pack))
+        problems.extend(_check_backgrounds(library, pack))
         problems.extend(_check_calendar(library, pack))
         problems.extend(_check_event_references(library, pack))
         problems.extend(_check_reachable_scenes(library, pack))
@@ -614,6 +615,89 @@ def _check_game(library: Library, pack: LoadedPack) -> Iterator[Problem]:
                 collection="quests",
                 object_id=local_id,
             )
+
+
+def _check_backgrounds(library: Library, pack: LoadedPack) -> Iterator[Problem]:
+    """Backgrounds must grant things the protagonist can actually hold.
+
+    A background is a variation on one particular person, so a grant naming a
+    stat that person does not have is dead content: the engine skips it and
+    the player never finds out why the poacher is not sneakier. The same goes
+    for a background nothing offers — it is written, it validates, and it is
+    unreachable, which is exactly the class of mistake the wizard exists to
+    stop happening silently.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs, for resolution.
+    pack : LoadedPack
+        The pack to check.
+
+    Yields
+    ------
+    Problem
+        Warnings for grants and backgrounds that go nowhere.
+    """
+    game = pack.game
+    protagonist: Entity | None = None
+    if game is not None:
+        try:
+            found = library.find(game.player.entity, "entities", within=pack.id)
+            protagonist = found if isinstance(found, Entity) else None
+        except ContentError:
+            protagonist = None
+
+    offered = set()
+    if game is not None:
+        for reference in game.player.backgrounds:
+            try:
+                offered.add(library.resolve(reference, "backgrounds", within=pack.id))
+            except ContentError:
+                continue
+
+    if game is not None and game.player.creation_points and protagonist is not None:
+        if not any(stat.customizable for stat in (protagonist.stats or {}).values()):
+            yield Problem(
+                severity=Severity.WARNING,
+                message=(
+                    f"offers {game.player.creation_points} creation points and "
+                    f"`{protagonist.id}` has no `customizable: true` stat to "
+                    "spend them on"
+                ),
+                pack=pack.id,
+                collection="game",
+                field="player.creationPoints",
+            )
+
+    for local_id, background in sorted(pack.backgrounds.items()):
+        if game is not None and qualify(pack.id, local_id) not in offered:
+            yield Problem(
+                severity=Severity.WARNING,
+                message=(
+                    "is never offered — add it to `game.player.backgrounds`, "
+                    "or nobody can ever play it"
+                ),
+                pack=pack.id,
+                collection="backgrounds",
+                object_id=local_id,
+            )
+        if protagonist is None:
+            continue
+        stats = protagonist.stats or {}
+        for name in background.stats:
+            if name not in stats:
+                yield Problem(
+                    severity=Severity.WARNING,
+                    message=(
+                        f"grants `{name}`, which `{protagonist.id}` does not "
+                        f"have; they have {', '.join(sorted(stats)) or 'none'}"
+                    ),
+                    pack=pack.id,
+                    collection="backgrounds",
+                    object_id=local_id,
+                    field=f"stats.{name}",
+                )
 
 
 def _check_event_references(library: Library, pack: LoadedPack) -> Iterator[Problem]:

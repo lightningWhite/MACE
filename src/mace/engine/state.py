@@ -779,6 +779,11 @@ class GameState:
         default. A session setting rather than an action: it belongs with the
         seed, in the parameters a save opens with, because changing it midway
         would change what a recorded elapsed time means.
+    background : str or None
+        The qualified background the protagonist was created with, kept
+        because conditions ask about it and a save has to reopen as the same
+        person. What it *granted* is already in the pools, inventory, skills,
+        and flags around it; this is the answer, not the consequences.
     pending : PendingChoices or None
         Choices awaiting an answer.
     outcome : Outcome
@@ -811,6 +816,7 @@ class GameState:
     combat: CombatState | None = None
     combats_begun: int = 0
     combat_mode: str | None = None
+    background: str | None = None
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING
     ended_because: str | None = None

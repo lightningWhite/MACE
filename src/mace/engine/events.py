@@ -13,10 +13,12 @@ See docs/02-architecture.md § Boundary 3.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
 __all__ = [
+    "CharacterCreated",
     "ChoiceOffered",
     "ChoicesOffered",
     "CombatBegan",
@@ -76,6 +78,33 @@ class Event:
             The kind, then the payload.
         """
         return {"kind": self.kind, **self.payload()}
+
+
+@dataclass(frozen=True, slots=True)
+class CharacterCreated(Event):
+    """The protagonist was made before the first tick.
+
+    Emitted only when the player answered something — a game that offers
+    neither backgrounds nor creation points opens on its first line of prose,
+    the way it always did.
+
+    Attributes
+    ----------
+    background : str or None
+        The qualified background chosen.
+    spend : dict
+        Stat name to creation points put into it.
+    """
+
+    kind: ClassVar[str] = "character.created"
+    background: str | None = None
+    spend: Mapping[str, int] = field(default_factory=dict)
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "background": self.background,
+            "spend": {name: self.spend[name] for name in sorted(self.spend)},
+        }
 
 
 @dataclass(frozen=True, slots=True)

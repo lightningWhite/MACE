@@ -103,7 +103,7 @@ writing YAML.
 - [ ] Playtest-from-anywhere with seed and start-state control
 - [ ] Debug overlay: condition evaluation, encounter rolls, active modifiers
 - [ ] World starter and encounter-table suggestions
-- [ ] Backgrounds and creation-point allocation at character creation
+- [x] Backgrounds and creation-point allocation at character creation
 - [ ] Retire `src/wizard.py`
 
 ---

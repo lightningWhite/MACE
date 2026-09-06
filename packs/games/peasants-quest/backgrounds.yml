@@ -1,0 +1,47 @@
+# Who Letholin was before the riders came through the barley. The player picks
+# one at character creation and then spends game.player.creationPoints on the
+# stats marked `customizable` in entities.yml.
+#
+# A background is a variation on the protagonist, not a class: `add` moves
+# Letholin's own numbers, so raising his base strength raises all three of
+# these with it. The flags are the interesting part — each one is a door in a
+# scene somewhere further up the road.
+backgrounds:
+
+  - id: farmhand
+    name: "Farmhand"
+    description: "Twenty-five years of barley. Your hands are the strongest part of you."
+    stats:
+      strength: 8
+      endurance: 6
+      charisma: -3
+    inventory:
+      - {item: fantasy.core:bread, qty: 2}
+    grantsFlag: knows-the-land
+
+  - id: poacher
+    name: "Poacher"
+    description: "You know the wood better than the man who claims to own it."
+    stats:
+      stealth: 15
+      speed: 5
+      charisma: -5
+    inventory:
+      - {item: fantasy.core:rope, qty: 1}
+      - {item: fantasy.core:dagger, qty: 1}
+    skills:
+      fantasy.core:dagger: 20
+    grantsFlag: knows-the-wood
+
+  - id: old-soldier
+    name: "Old Soldier"
+    description: "You did this once already, a long time ago, for a different king."
+    stats:
+      strength: 4
+      endurance: 8
+      speed: -4
+    inventory:
+      - {item: fantasy.core:dagger, qty: 1}
+    skills:
+      fantasy.core:dagger: 30
+    grantsFlag: served-before       # Captain Orin looks at you twice

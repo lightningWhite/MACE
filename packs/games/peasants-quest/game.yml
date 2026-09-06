@@ -13,6 +13,8 @@ game:
   player:
     entity: letholin
     startLocation: fenmoor
+    creationPoints: 15
+    backgrounds: [farmhand, poacher, old-soldier]
 
   world:
     minutesPerTick: 30

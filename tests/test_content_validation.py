@@ -593,7 +593,6 @@ UNTARGETED_REFERENCES = {
     ("SetPressure", "event"),
     ("Location", "biome"),  # phase 2 — biomes
     ("Region", "biome"),  # phase 2 — biomes
-    ("PlayerSetup", "backgrounds"),  # phase 4 — backgrounds
 }
 
 

@@ -16,6 +16,7 @@ with a caret under it), and shorthands are expanded — a bare string where a
 description was expected, a lone condition where a list was expected.
 """
 
+from mace.model.background import Background, StatGrant
 from mace.model.base import (
     AuthoredValue,
     ContentModel,
@@ -96,6 +97,7 @@ from mace.model.weather import WeatherCondition
 __all__ = [
     "AuthoredValue",
     "STANDARD_YEAR",
+    "Background",
     "Calendar",
     "CelestialEvent",
     "Choice",
@@ -169,6 +171,7 @@ __all__ = [
     "SeasonProfile",
     "SlotName",
     "Stat",
+    "StatGrant",
     "StatModifier",
     "Tag",
     "TemperatureRange",

@@ -33,9 +33,12 @@ from mace.engine.actions import (
 from mace.engine.combat import fight as combat
 from mace.engine.conditions import RuleError, all_hold, holds
 from mace.engine.context import RuleContext
+from mace.engine.creation import Character, check
+from mace.engine.creation import offer as creation_offer
 from mace.engine.effects import EffectOutcome, apply_all
 from mace.engine.encounter import Rolled, roll, table_for
 from mace.engine.events import (
+    CharacterCreated,
     ChoiceOffered,
     ChoicesOffered,
     EncounterFired,
@@ -73,6 +76,7 @@ from mace.engine.stats import pool_bounds, starting_pools
 from mace.engine.world import Clock, advance, region_of
 from mace.engine.world import events as world_events
 from mace.model import (
+    Background,
     Calendar,
     Entity,
     Game,
@@ -140,6 +144,7 @@ def begin(
     seed: str = "mace",
     *,
     combat_mode: str | None = None,
+    character: Character | None = None,
 ) -> StepResult:
     """Start a playthrough.
 
@@ -155,6 +160,12 @@ def begin(
         The player's choice of combat presentation, overriding the game's
         default. Part of what a session opens with, like the seed, because
         changing it midway would change what a recorded elapsed time means.
+    character : Character or None
+        What the player answered at character creation — which background,
+        and where the creation points went. None takes the protagonist as the
+        author wrote them, which is what a game offering neither of those has
+        always meant. Setup rather than a turn, so a seed replays a poacher as
+        exactly as it replays a farmhand (`mace.engine.creation`).
 
     Returns
     -------
@@ -165,16 +176,28 @@ def begin(
     Raises
     ------
     ContentError
-        If the pack is not a playable game.
+        If the pack is not a playable game, or the allocation is not one the
+        game offers.
     """
     pack = library.pack(pack_id)
     if pack.game is None:
         raise ContentError("is not a playable game pack", pack=pack_id)
 
+    if character is not None:
+        problems = check(creation_offer(library, pack_id), character)
+        if problems:
+            raise ContentError("; ".join(problems), pack=pack_id)
+
     state = _initial_state(library, pack_id, pack.game, seed)
     state.combat_mode = combat_mode
+    opening = _create_character(library, pack_id, state, character)
     context = _context(library, state, pack.game)
     events: list[Event] = []
+
+    if character is not None and (character.background or character.spend):
+        events.append(
+            CharacterCreated(background=state.background, spend=dict(character.spend))
+        )
 
     for line in pack.game.introduction:
         events.append(Narrated(line.text, line.pause))
@@ -182,7 +205,7 @@ def begin(
     where = state.location
     assert where is not None
     events.append(Moved(None, where))
-    _arrive(where, context, events)
+    _arrive(where, context, events, instead=opening)
     _after_action(context, events)
     return StepResult(state, tuple(events))
 
@@ -1370,7 +1393,13 @@ def _follow(context: RuleContext, events: list[Event]) -> None:
         entity.location = where
 
 
-def _arrive(location_id: str, context: RuleContext, events: list[Event]) -> bool:
+def _arrive(
+    location_id: str,
+    context: RuleContext,
+    events: list[Event],
+    *,
+    instead: str | None = None,
+) -> bool:
     """Describe a place and run its arrival scene.
 
     Parameters
@@ -1381,6 +1410,10 @@ def _arrive(location_id: str, context: RuleContext, events: list[Event]) -> bool
         The playthrough.
     events : list of Event
         Accumulator.
+    instead : str or None
+        A scene to run in place of the location's own `onArrive`. This is how
+        a background overrides the game's opening: the old soldier still walks
+        into Fenmoor and still sees it, and what happens next is his.
 
     Returns
     -------
@@ -1390,8 +1423,11 @@ def _arrive(location_id: str, context: RuleContext, events: list[Event]) -> bool
     _sync_weather(context, events)
     _describe_here(context, events)
     here = _location(location_id, context)
-    if here is not None and here.on_arrive is not None:
-        return _run_scene(context.qualify(here.on_arrive, "scenes"), context, events)
+    arrival = (
+        instead if instead is not None else (None if here is None else here.on_arrive)
+    )
+    if arrival is not None:
+        return _run_scene(context.qualify(arrival, "scenes"), context, events)
     return False
 
 
@@ -2030,6 +2066,80 @@ def _initial_state(library: Library, pack_id: str, game: Game, seed: str) -> Gam
             started_at_tick=state.tick,
         )
     return state
+
+
+def _create_character(
+    library: Library,
+    pack_id: str,
+    state: GameState,
+    character: Character | None,
+) -> str | None:
+    """Make the protagonist the person the player asked for.
+
+    Everything here writes into *state*, never into content: a background's
+    `strength +8` moves the stored value the stat pipeline starts from, so the
+    poacher and the farmhand share one authored protagonist and differ only in
+    this playthrough (architecture boundary 1).
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    pack_id : str
+        The game pack.
+    state : GameState
+        The opening state, mutated in place.
+    character : Character or None
+        What the player answered, or None to take the protagonist as authored.
+
+    Returns
+    -------
+    str or None
+        The qualified scene the chosen background opens on, if it names one.
+        Qualified here because it is written inside the *background's* pack,
+        which need not be the game's.
+    """
+    if character is None:
+        return None
+
+    player = state.protagonist
+    definition = library.find(player.definition, "entities", within=pack_id)
+    assert isinstance(definition, Entity)
+    declared = definition.stats or {}
+
+    opening: str | None = None
+    background = None
+    if character.background is not None:
+        state.background = library.resolve(
+            character.background, "backgrounds", within=pack_id
+        )
+        found = library.find(character.background, "backgrounds", within=pack_id)
+        assert isinstance(found, Background)
+        background = found
+        home = state.background.split(":", 1)[0]
+
+        for name, grant in background.stats.items():
+            if name not in declared:
+                # Validation reports this; play should not also crash over it.
+                continue
+            player.pools[name] = grant.apply(player.pools.get(name, 0.0))
+        for entry in background.inventory:
+            item = library.resolve(entry.item, "entities", within=home)
+            player.inventory[item] = player.inventory.get(item, 0) + entry.qty
+        for item, level in background.skills.items():
+            player.skills[library.resolve(item, "entities", within=home)] = float(level)
+        if background.grants_flag is not None:
+            player.flags.add(background.grants_flag)
+        if background.opening_scene is not None:
+            opening = library.resolve(background.opening_scene, "scenes", within=home)
+
+    for name, points in character.spend.items():
+        if name not in declared:
+            continue
+        _low, high = pool_bounds(definition, name)
+        player.pools[name] = min(player.pools.get(name, 0.0) + points, high)
+
+    return opening
 
 
 def _instantiate(

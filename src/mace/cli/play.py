@@ -14,9 +14,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO
 
+from mace.cli.create import ask
 from mace.cli.timing import Keypress, raw_terminal_available, read_key
 from mace.content import ContentError, Library, load_library
 from mace.engine.actions import Action, Choose, Respond
+from mace.engine.creation import Character
+from mace.engine.creation import offer as creation_offer
 from mace.engine.events import Event
 from mace.engine.state import Outcome
 from mace.engine.step import StepResult, begin, step
@@ -618,6 +621,7 @@ def play(
     pack_id: str | None = None,
     seed: str = "mace",
     combat_mode: str | None = None,
+    character: Character | None = None,
     out: TextIO | None = None,
 ) -> int:
     """Load some packs and play one of them.
@@ -632,6 +636,9 @@ def play(
         The session seed. The same seed and the same choices replay identically.
     combat_mode : str or None
         Override the game's default combat presentation.
+    character : Character or None
+        Skip character creation and start as this. None asks, for a game that
+        has something to ask.
     out : TextIO or None
         Where to write. Defaults to standard output.
 
@@ -641,12 +648,21 @@ def play(
         The process exit code.
     """
     stream = out or sys.stdout
-    renderer = Renderer(stream, interactive=sys.stdin.isatty())
+    interactive = sys.stdin.isatty()
+    renderer = Renderer(stream, interactive=interactive)
 
     try:
         library = load_library(*paths)
         chosen = _pick_game(library, pack_id)
-        result = begin(library, chosen, seed=seed, combat_mode=combat_mode)
+        if character is None and creation_offer(library, chosen).asks_anything:
+            character = ask(library, chosen, stream, interactive=interactive)
+        result = begin(
+            library,
+            chosen,
+            seed=seed,
+            combat_mode=combat_mode,
+            character=character,
+        )
     except ContentError as error:
         print(f"error   {error}", file=sys.stderr)
         return 1

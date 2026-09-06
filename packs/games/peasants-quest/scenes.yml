@@ -215,6 +215,8 @@ scenes:
     prompt: "Report to the captain"
     say:
       - "The captain looks at your hands, then at your face, and writes something down."
+      - text: "He stops writing. \"I know that face. You stood on the left at the ford.\""
+        when: [{flag: {entity: player, flag: served-before}}]
       - "\"Late,\" he says. \"But here.\""
     effects:
       - {giveItem: {actor: player, item: kings-token, qty: 1}}

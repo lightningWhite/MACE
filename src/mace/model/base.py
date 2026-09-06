@@ -33,6 +33,7 @@ from mace.engine.expr import Expression, ExprSyntaxError, parse
 
 __all__ = [
     "AuthoredValue",
+    "BackgroundRef",
     "CalendarRef",
     "CelestialRef",
     "ClimateRef",
@@ -120,6 +121,7 @@ class Reference:
 #: References, by what they point at. A reference into a collection no model
 #: covers yet — a terrain, an encounter table — stays a plain `Ref` until the
 #: phase that models it can check it.
+BackgroundRef = Annotated[Ref, Reference("backgrounds")]
 CalendarRef = Annotated[Ref, Reference("calendars")]
 CelestialRef = Annotated[Ref, Reference("celestialEvents")]
 EncounterRef = Annotated[Ref, Reference("encounterTables")]

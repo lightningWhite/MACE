@@ -8,8 +8,10 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from mace import __version__
+from mace.cli.create import parse_spend
 from mace.cli.play import play
 from mace.content import ContentError, Severity, validate_paths
+from mace.engine.creation import Character
 from mace.wizard.project import Project
 
 
@@ -82,6 +84,24 @@ def build_parser() -> argparse.ArgumentParser:
             "how combat is played: `reflex` runs a timing window, `tactical` "
             "is untimed and loses none of the reading, `auto` plays both "
             "sides. Overrides the game's own default."
+        ),
+    )
+    player.add_argument(
+        "--background",
+        help=(
+            "start with this background instead of being asked; the games "
+            "that offer none ignore it"
+        ),
+    )
+    player.add_argument(
+        "--spend",
+        nargs="*",
+        default=None,
+        metavar="STAT=POINTS",
+        help=(
+            "spend creation points without being asked, as `strength=5 "
+            "speed=10`. Implies the first background unless --background says "
+            "otherwise."
         ),
     )
     player.set_defaults(run=run_play)
@@ -180,11 +200,21 @@ def run_play(options: argparse.Namespace) -> int:
     int
         The process exit code.
     """
+    character = None
+    if options.background is not None or options.spend is not None:
+        try:
+            spend = parse_spend(options.spend or ())
+        except ValueError as error:
+            print(f"error   {error}", file=sys.stderr)
+            return 1
+        character = Character(background=options.background, spend=spend)
+
     return play(
         options.paths,
         pack_id=options.pack,
         seed=options.seed,
         combat_mode=options.combat,
+        character=character,
     )
 
 

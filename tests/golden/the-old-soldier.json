@@ -1,0 +1,682 @@
+{
+  "name": "the-old-soldier",
+  "summary": "The same short way north, walked by somebody who has answered a muster before: the background moves his stats, arms him with the blade he kept, and makes Captain Orin look at him twice.",
+  "pack": "peasants-quest",
+  "seed": "autumn",
+  "character": {
+    "background": "old-soldier",
+    "spend": {
+      "endurance": 10,
+      "speed": 5
+    }
+  },
+  "packs": {
+    "mace.core": "0.1.0",
+    "fantasy.core": "0.1.0",
+    "peasants-quest": "0.1.0"
+  },
+  "actions": [
+    {
+      "kind": "choose",
+      "prompt": "Say goodbye to Hallam"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Take the north road"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Speak to the troll"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Offer it your bread (4 loaves)"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Carry on to Hagan's Castle"
+    },
+    {
+      "kind": "choose",
+      "prompt": "Report to the captain"
+    }
+  ],
+  "stream": [
+    {
+      "action": null,
+      "events": [
+        {
+          "kind": "character.created",
+          "background": "peasants-quest:old-soldier",
+          "spend": {
+            "endurance": 10,
+            "speed": 5
+          }
+        },
+        {
+          "kind": "narrate",
+          "text": "You are a peasant. You have worked your old friend's farm for twenty-five years.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "One morning, as you cut barley in the low field, a host of the king's guard rides through the standing crop as though it were water.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "They tell you the king has called every man between twenty-two and thirty-five to the Dark Mountain. You have seven days to reach Hagan's Castle.",
+          "pause": true
+        },
+        {
+          "kind": "moved",
+          "from": null,
+          "to": "peasants-quest:fenmoor",
+          "route": null,
+          "ticks": 0
+        },
+        {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-lowlands",
+          "condition": "fantasy.core:clear",
+          "name": "clear",
+          "intensity": 0.5119,
+          "tags": [],
+          "visibility": 1.0,
+          "temperature": 15.6,
+          "text": "The cloud breaks up and the sky comes through behind it."
+        },
+        {
+          "kind": "narrate",
+          "text": "Fenmoor",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "Six houses, a well, and more geese than people. The barley stands unfinished in the low field.",
+          "pause": false
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:fenmoor-arrival"
+        },
+        {
+          "kind": "narrate",
+          "text": "The geese scatter. Nobody else looks up.",
+          "pause": false
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Say goodbye to Hallam",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to Trader's Post",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Take the north road",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Use Bread",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 20,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "10:00",
+          "location": "peasants-quest:fenmoor",
+          "place": "Fenmoor",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 15.6,
+          "light": 1.0,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Say goodbye to Hallam"
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:say-goodbye-to-hallam"
+        },
+        {
+          "kind": "narrate",
+          "text": "He doesn't say much. He gives you bread, and holds on a moment too long.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"The Trader's Post is south,\" he says. \"If you've coin, spend it before the road does.\"",
+          "pause": false
+        },
+        {
+          "kind": "inventory.changed",
+          "actor": "peasants-quest:letholin",
+          "item": "fantasy.core:bread",
+          "delta": 2,
+          "quantity": 4
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:old-hallam",
+          "flag": "has-spoken",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Travel to Trader's Post",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Take the north road",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Use Bread",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 20,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "10:00",
+          "location": "peasants-quest:fenmoor",
+          "place": "Fenmoor",
+          "region": "peasants-quest:the-lowlands",
+          "weather": "fantasy.core:clear",
+          "sky": "clear",
+          "temperature": 15.6,
+          "light": 1.0,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Take the north road"
+      },
+      "events": [
+        {
+          "kind": "narrate",
+          "text": "You set out on the rutted track north, under oaks that have given up their leaves.",
+          "pause": false
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 1,
+          "of": 6,
+          "waypoint": null,
+          "text": "The road climbs, and the barley country falls away behind you."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 2,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "encounter",
+          "table": "peasants-quest:forest-road",
+          "entry": "the-weather-turns",
+          "chance": 0.34,
+          "where": "peasants-quest:north-road"
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "fantasy.core:the-road-notices-you"
+        },
+        {
+          "kind": "narrate",
+          "text": "The road has been going up for longer than it looked like it would.",
+          "pause": false
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 3,
+          "of": 6,
+          "waypoint": "peasants-quest:troll-bridge",
+          "text": "The road climbs, and the barley country falls away behind you."
+        },
+        {
+          "kind": "narrate",
+          "text": "The Old Bridge",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "A stone span over black water, older than the road it carries.",
+          "pause": false
+        },
+        {
+          "kind": "travel.interrupted",
+          "route": "peasants-quest:north-road",
+          "at": "peasants-quest:troll-bridge",
+          "destination": "peasants-quest:hagans-castle",
+          "remaining": 2.522,
+          "reason": "the way is barred"
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Rest a while",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Speak to the troll",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Carry on to Hagan's Castle",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Turn back to Fenmoor",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Use Bread",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:overcast",
+          "sky": "overcast",
+          "temperature": 12.55,
+          "light": 0.85,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Speak to the troll"
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:talk-to-gorm"
+        },
+        {
+          "kind": "narrate",
+          "text": "The troll unfolds itself from beneath the bridge, and the bridge seems glad to be rid of the weight.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Toll,\" it says. \"Ten gold, or swim.\"",
+          "pause": true
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:gorm",
+          "flag": "has-spoken",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "peasants-quest:talk-to-gorm",
+          "options": [
+            {
+              "prompt": "Pay the toll (10 gold)",
+              "available": false,
+              "hint": "You don't have ten gold."
+            },
+            {
+              "prompt": "Try to talk it down",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Offer it your bread (4 loaves)",
+              "available": true,
+              "hint": "You have nothing like four loaves."
+            },
+            {
+              "prompt": "Ask about the road north",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Refuse, and put a hand on your hook",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:overcast",
+          "sky": "overcast",
+          "temperature": 12.55,
+          "light": 0.85,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Offer it your bread (4 loaves)"
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:pay-in-bread"
+        },
+        {
+          "kind": "narrate",
+          "text": "You hold out the cloth bundle. The troll considers it for a long, geological moment.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Bread,\" it says, as though naming a thing it had forgotten existed, and steps aside.",
+          "pause": false
+        },
+        {
+          "kind": "inventory.changed",
+          "actor": "peasants-quest:letholin",
+          "item": "fantasy.core:bread",
+          "delta": -4,
+          "quantity": 0
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:gorm",
+          "flag": "has-been-paid",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Rest a while",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Sleep until morning",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Speak to the troll",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Carry on to Hagan's Castle",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Turn back to Fenmoor",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 24,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "12:00",
+          "location": "peasants-quest:troll-bridge",
+          "place": "The Old Bridge",
+          "region": "peasants-quest:the-northwood",
+          "weather": "fantasy.core:overcast",
+          "sky": "overcast",
+          "temperature": 12.55,
+          "light": 0.85,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Carry on to Hagan's Castle"
+      },
+      "events": [
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 4,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 5,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
+          "leg": 6,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "world.time",
+          "tick": 27,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "elapsed": 3
+        },
+        {
+          "kind": "moved",
+          "from": "peasants-quest:troll-bridge",
+          "to": "peasants-quest:hagans-castle",
+          "route": "peasants-quest:north-road",
+          "ticks": 3
+        },
+        {
+          "kind": "narrate",
+          "text": "Hagan's Castle",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "Grey walls on a grey hill, and a muster yard full of men who look as unwilling as you feel.",
+          "pause": false
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:castle-arrival"
+        },
+        {
+          "kind": "narrate",
+          "text": "The muster yard is full of men who look as unwilling as you feel. It is a small comfort, and it does not last.",
+          "pause": false
+        },
+        {
+          "kind": "quest.updated",
+          "quest": "peasants-quest:the-kings-summons",
+          "status": "active",
+          "stage": "report",
+          "journal": "Find the captain of the guard and answer the muster."
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Report to the captain",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Take the road south again",
+              "available": true,
+              "hint": null
+            }
+          ]
+        },
+        {
+          "kind": "world.status",
+          "tick": 27,
+          "day": 1,
+          "dayPart": "day",
+          "season": "autumn",
+          "time": "13:30",
+          "location": "peasants-quest:hagans-castle",
+          "place": "Hagan's Castle",
+          "region": "peasants-quest:the-marches",
+          "weather": "fantasy.core:overcast",
+          "sky": "overcast",
+          "temperature": 0.83,
+          "light": 0.85,
+          "indoors": false,
+          "exposure": 0.0
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "prompt": "Report to the captain"
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:report-to-orin"
+        },
+        {
+          "kind": "narrate",
+          "text": "The captain looks at your hands, then at your face, and writes something down.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "He stops writing. \"I know that face. You stood on the left at the ford.\"",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Late,\" he says. \"But here.\"",
+          "pause": false
+        },
+        {
+          "kind": "inventory.changed",
+          "actor": "peasants-quest:letholin",
+          "item": "peasants-quest:kings-token",
+          "delta": 1,
+          "quantity": 1
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:captain-orin",
+          "flag": "has-spoken",
+          "value": true
+        },
+        {
+          "kind": "quest.updated",
+          "quest": "peasants-quest:the-kings-summons",
+          "status": "complete",
+          "stage": "report",
+          "journal": null
+        },
+        {
+          "kind": "game.over",
+          "outcome": "won",
+          "reason": "won on the conditions the game sets"
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:victory"
+        },
+        {
+          "kind": "narrate",
+          "text": "You answered the summons. Whatever that turns out to be worth.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "The Dark Mountain is nine days north of here, and nobody has said what happens after that.",
+          "pause": false
+        }
+      ]
+    }
+  ]
+}

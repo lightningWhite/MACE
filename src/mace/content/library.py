@@ -15,6 +15,7 @@ from typing import Any
 from mace.content.errors import ContentError
 from mace.content.ids import qualify, split
 from mace.model import (
+    Background,
     Calendar,
     CelestialEvent,
     Climate,
@@ -42,6 +43,7 @@ __all__ = ["COLLECTION_MODELS", "SINGULAR", "LoadedPack", "Library"]
 #: resolver both key off this, so adding a content type is one entry here plus
 #: a field on `LoadedPack`.
 COLLECTION_MODELS: dict[str, type[ContentModel]] = {
+    "backgrounds": Background,
     "calendars": Calendar,
     "celestialEvents": CelestialEvent,
     "climates": Climate,
@@ -65,6 +67,7 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
 #: plurals are not a rule you can apply, and `entitie` in an error message
 #: undermines everything else the message is trying to do.
 SINGULAR: dict[str, str] = {
+    "backgrounds": "background",
     "calendars": "calendar",
     "celestialEvents": "celestial event",
     "climates": "climate",
@@ -107,7 +110,8 @@ class LoadedPack:
         The pack's `pack.yml`.
     root : Path
         The directory it was read from.
-    calendars, celestialEvents, climates, combatProfiles, encounterTables,
+    backgrounds, calendars, celestialEvents, climates, combatProfiles,
+    encounterTables,
     entities, locations, moves, pressureEvents, regions, routes, scenes,
     quests, terrains, weatherConditions, weatherFronts : mapping
         Local id to definition, for each modelled collection.
@@ -120,6 +124,7 @@ class LoadedPack:
 
     manifest: Pack
     root: Path
+    backgrounds: Mapping[str, Background]
     calendars: Mapping[str, Calendar]
     celestial_events: Mapping[str, CelestialEvent]
     climates: Mapping[str, Climate]

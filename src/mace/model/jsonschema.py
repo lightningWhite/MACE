@@ -34,6 +34,7 @@ from typing import Any
 
 from pydantic.json_schema import models_json_schema
 
+from mace.model.background import Background, StatGrant
 from mace.model.base import ContentModel
 from mace.model.calendar import Calendar
 from mace.model.climate import Climate
@@ -69,6 +70,7 @@ DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 #: The top-level key each modelled content type lives under in a pack file.
 CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
+    "backgrounds": Background,
     "calendars": Calendar,
     "celestialEvents": CelestialEvent,
     "climates": Climate,
@@ -91,7 +93,6 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
 #: misspelled collection key an error while leaving room for the phase that
 #: models them — see docs/12-roadmap.md.
 UNMODELLED_COLLECTIONS: dict[str, str] = {
-    "backgrounds": "phase 4 — character creation",
     "goods": "phase 5 — economy",
     "markets": "phase 5 — economy",
 }
@@ -134,6 +135,7 @@ def _models() -> list[type[ContentModel]]:
         Effect,
         DescriptionLine,
         SayLine,
+        StatGrant,
         *CONTENT_COLLECTIONS.values(),
         *CONDITION_PAYLOADS.values(),
         *EFFECT_PAYLOADS.values(),

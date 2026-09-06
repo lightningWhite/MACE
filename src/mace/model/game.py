@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import Field
 
 from mace.model.base import (
+    BackgroundRef,
     CalendarRef,
     ContentModel,
     EntityRef,
@@ -19,7 +20,6 @@ from mace.model.base import (
     LocationRef,
     Name,
     QuestRef,
-    Ref,
     RegionRef,
     SceneRef,
 )
@@ -56,7 +56,7 @@ class PlayerSetup(ContentModel):
     entity: EntityRef
     start_location: LocationRef
     creation_points: int = Field(default=0, ge=0)
-    backgrounds: tuple[Ref, ...] = ()
+    backgrounds: tuple[BackgroundRef, ...] = ()
 
 
 class WorldSetup(ContentModel):

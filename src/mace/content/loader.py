@@ -421,6 +421,7 @@ def compile_pack(
     return LoadedPack(
         manifest=manifest,
         root=root,
+        backgrounds=built["backgrounds"],  # type: ignore[arg-type]
         calendars=built["calendars"],  # type: ignore[arg-type]
         celestial_events=built["celestialEvents"],  # type: ignore[arg-type]
         climates=built["climates"],  # type: ignore[arg-type]

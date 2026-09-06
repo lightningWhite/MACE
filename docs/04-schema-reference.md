@@ -696,12 +696,23 @@ Optional starting variants for the protagonist. Listed in `game.player.backgroun
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | | |
+| `extends` | Ref? | A background to inherit from. |
 | `description` | str | Shown at character creation. |
-| `stats` | {stat: {add?: number, set?: number}}? | Applied to the protagonist's base stats. |
+| `stats` | {stat: {add?: number, set?: number}}? | Applied to the protagonist's base stats. A bare number is `add`. |
 | `inventory` | [{item, qty}]? | Extra starting items. |
 | `skills` | {Ref: int}? | Starting proficiencies. |
 | `grantsFlag` | str? | A flag scenes can check later, for background-specific dialog. |
-| `openingScene` | Ref? | Overrides the game's opening scene. |
+| `openingScene` | Ref? | Played instead of the start location's `onArrive`. |
+
+A background is a variation on the protagonist rather than a replacement for
+them, which is why `add` is the ordinary form: raising the protagonist's own
+base raises every background's with it. `set` fixes a value outright, and where
+both appear `set` lands first.
+
+Creation is **session setup**, not a turn. Which background and where the
+creation points went are passed in when a playthrough opens, alongside the seed
+— so a golden replay covers a poacher as exactly as it covers a farmhand, and
+`mace play --background poacher --spend stealth=10` starts without a menu.
 
 ---
 

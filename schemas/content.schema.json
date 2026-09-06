@@ -5,6 +5,12 @@
   "description": "Any file in a pack other than its manifest. Every key is optional and a file may mix collections freely; the loader merges by id.",
   "type": "object",
   "properties": {
+    "backgrounds": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Background"
+      }
+    },
     "calendars": {
       "type": "array",
       "items": {
@@ -103,10 +109,6 @@
     },
     "game": {
       "$ref": "#/$defs/Game"
-    },
-    "backgrounds": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 4 \u2014 character creation."
     },
     "goods": {
       "type": "array",
@@ -335,6 +337,118 @@
         "entity"
       ],
       "title": "AttachAlly",
+      "type": "object"
+    },
+    "Background": {
+      "additionalProperties": false,
+      "description": "A starting variant of the protagonist, offered at character creation.\n\nAttributes\n----------\nid, name : str\n    Identity. `name` is what the player is offered.\nextends : str or None\n    A background to inherit from.\ndescription : str\n    Shown at character creation. This is the whole of the pitch, so it is\n    the one field worth writing properly.\nstats : mapping\n    Stat name to the grant applied to the protagonist's base.\ninventory : tuple of InventoryEntry\n    Items the protagonist starts with, on top of their own.\nskills : mapping\n    Item reference to starting proficiency, merged over the entity's own.\ngrants_flag : str or None\n    A flag set on the protagonist, so scenes can recognise them later.\nopening_scene : str or None\n    Played instead of arriving at the start location.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "stats": {
+          "patternProperties": {
+            "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "$ref": "#/$defs/StatGrant"
+            }
+          },
+          "title": "Stats",
+          "type": "object"
+        },
+        "inventory": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/InventoryEntry"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Inventory",
+          "type": "array"
+        },
+        "skills": {
+          "patternProperties": {
+            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "type": "integer"
+            }
+          },
+          "title": "Skills",
+          "type": "object"
+        },
+        "grantsFlag": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grantsflag"
+        },
+        "openingScene": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Openingscene"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Background",
       "type": "object"
     },
     "Calendar": {
@@ -5281,6 +5395,55 @@
       ],
       "title": "StatCompare",
       "type": "object"
+    },
+    "StatGrant": {
+      "description": "What a background does to one of the protagonist's stats.\n\n`add` is the ordinary case, because a background is a variation on a person\nrather than a replacement for them: the poacher is *the protagonist, plus\nfifteen stealth*, so an author who later raises the protagonist's base\nstealth raises every background's with it. `set` exists for the case where\na background genuinely fixes a value regardless of the entity it modifies.\n\nAttributes\n----------\nadd : float or None\n    A relative adjustment to the stat's base.\nset_ : float or None\n    An absolute base, replacing whatever the entity declared.",
+      "oneOf": [
+        {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What a background does to one of the protagonist's stats.\n\n`add` is the ordinary case, because a background is a variation on a person\nrather than a replacement for them: the poacher is *the protagonist, plus\nfifteen stealth*, so an author who later raises the protagonist's base\nstealth raises every background's with it. `set` exists for the case where\na background genuinely fixes a value regardless of the entity it modifies.\n\nAttributes\n----------\nadd : float or None\n    A relative adjustment to the stat's base.\nset_ : float or None\n    An absolute base, replacing whatever the entity declared."
+        },
+        {
+          "additionalProperties": false,
+          "description": "May be written as the bare value shown, which is the same as the mapping form with every other field left out.",
+          "properties": {
+            "add": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Add"
+            },
+            "set": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Set"
+            }
+          },
+          "title": "StatGrant",
+          "type": "object"
+        }
+      ]
     },
     "StatModifier": {
       "additionalProperties": false,

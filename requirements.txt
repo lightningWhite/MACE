@@ -1,1 +1,11 @@
+# Everything needed to work on MACE, in one line: the package itself, in
+# editable mode, with its dev extras. `pyproject.toml` stays the canonical
+# list — this file exists so `pip install -r requirements.txt` does the
+# right thing for anyone who reaches for it first.
 -e .[dev]
+
+# Named here as well because it is easy to miss: the wizard writes packs back
+# out in round-trip mode so hand-written comments survive an edit, and an
+# environment without it cannot save a project at all. Keep the floor in step
+# with `pyproject.toml`.
+ruamel.yaml>=0.18
