@@ -23,6 +23,13 @@ encounterTables:
         when: [{dayPart: [dawn, day]}]
         scene: riders-going-north
 
+      # News travels. This entry is only eligible when there is something to
+      # tell, so the road stays quiet when nothing has happened.
+      - id: someone-with-news
+        weight: 25
+        when: [{expr: "world.news > 0"}]
+        scene: a-traveller-with-news
+
   - id: the-quiet-track
     extends: fantasy.core:quiet-road
     name: "The Trader's Track"

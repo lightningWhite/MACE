@@ -28,10 +28,36 @@ __all__ = [
     "PendingChoice",
     "PendingChoices",
     "QuestState",
+    "NewsItem",
     "QuestStatus",
+    "EventPhase",
+    "EventState",
     "FrontState",
     "RegionWeather",
+    "RouteState",
 ]
+
+
+class EventPhase(Enum):
+    """Where a world event has got to.
+
+    The same lifecycle for every kind of event, so front-ends and content hook
+    the same names whether the thing coming is an eclipse or a landslide.
+
+    - `DORMANT` — not yet anything.
+    - `BUILDING` — omens fire. The player's only information channel.
+    - `IMMINENT` — unambiguous. Routes close, people flee. The last exit, and
+      it should be *late*: the tension lives in the gap between probably and
+      certainly.
+    - `ACTIVE` — it has happened, and the world is different for a while.
+    - `SPENT` — over, its aftermath applied. Permanently.
+    """
+
+    DORMANT = "dormant"
+    BUILDING = "building"
+    IMMINENT = "imminent"
+    ACTIVE = "active"
+    SPENT = "spent"
 
 
 class Outcome(Enum):
@@ -158,6 +184,99 @@ class EntityState:
     modifiers: list[Modifier] = field(default_factory=list)
     disposition: str | None = None
     exposure: float = 0.0
+
+
+@dataclass(slots=True)
+class EventState:
+    """One world event's progress through its own life.
+
+    Attributes
+    ----------
+    event : str
+        Qualified id of the event definition.
+    phase : EventPhase
+        Where it has got to.
+    pressure : float
+        The hidden accumulator, as a share of the threshold. Meaningless for
+        a celestial event, whose timing is a pure function of the calendar.
+    onset_tick : int or None
+        When it happened.
+    ends_at_tick : int or None
+        When `active` runs out.
+    fired : int
+        How many times it has happened, for `maxPerGame`.
+    omens_seen : set of str
+        Which omens have been shown, for `once`.
+    last_omen_tick : int or None
+        When the last one showed. Two omens in a row read as a weather
+        report; the gap between them is part of what makes one land.
+    """
+
+    event: str
+    phase: EventPhase = EventPhase.DORMANT
+    pressure: float = 0.0
+    onset_tick: int | None = None
+    ends_at_tick: int | None = None
+    fired: int = 0
+    omens_seen: set[str] = field(default_factory=set)
+    last_omen_tick: int | None = None
+
+
+@dataclass(slots=True)
+class RouteState:
+    """What has happened to a road since the game started.
+
+    Attributes
+    ----------
+    route : str
+        Qualified route id.
+    closed : bool
+        Whether it is shut.
+    permanent : bool
+        Whether the closure outlives whatever caused it.
+    reason : str or None
+        What to tell a player who tries it.
+    ticks : int or None
+        A new length, when something has lengthened or shortened it.
+    """
+
+    route: str
+    closed: bool = False
+    permanent: bool = False
+    reason: str | None = None
+    ticks: int | None = None
+
+
+@dataclass(slots=True)
+class NewsItem:
+    """Something that happened somewhere the player was not.
+
+    Events fire whether or not the player is watching, and a world where
+    things only happen in your presence is not a world. News carries its age
+    and its distance, so a rumour three days old and two regions away can
+    arrive garbled — which is free atmosphere and makes the player's
+    information imperfect in a way that feels like a medieval world rather
+    than like a notification.
+
+    Attributes
+    ----------
+    event : str
+        Qualified id of what happened.
+    tick : int
+        When it happened.
+    region : str or None
+        Where.
+    text : str
+        The plainest telling of it.
+    told : bool
+        Whether the player has heard it.
+    """
+
+    event: str
+    tick: int
+    region: str | None
+    text: str
+    told: bool = False
 
 
 @dataclass(slots=True)
@@ -435,6 +554,15 @@ class GameState:
         How many have ever formed, so instance ids stay unique.
     encounters : dict
         Qualified table id to what that table remembers.
+    events : dict
+        Qualified event id to how far along it is.
+    routes : dict
+        Qualified route id to what has happened to that road.
+    news : list of NewsItem
+        Things that happened out of sight, waiting to travel.
+    light_override : float or None
+        An override on the sky's light, set by an eclipse and cleared by its
+        aftermath. Night, at noon.
     journey : Journey or None
         A road part-walked, if one was interrupted.
     pending : PendingChoices or None
@@ -461,6 +589,10 @@ class GameState:
     fronts: list[FrontState] = field(default_factory=list)
     fronts_spawned: int = 0
     encounters: dict[str, EncounterMemory] = field(default_factory=dict)
+    events: dict[str, EventState] = field(default_factory=dict)
+    routes: dict[str, RouteState] = field(default_factory=dict)
+    news: list[NewsItem] = field(default_factory=list)
+    light_override: float | None = None
     journey: Journey | None = None
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING

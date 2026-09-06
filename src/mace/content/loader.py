@@ -227,10 +227,12 @@ def _load_pack(manifest: Pack, root: Path, dependencies: Library) -> LoadedPack:
         manifest=manifest,
         root=root,
         calendars=built["calendars"],  # type: ignore[arg-type]
+        celestial_events=built["celestialEvents"],  # type: ignore[arg-type]
         climates=built["climates"],  # type: ignore[arg-type]
         encounter_tables=built["encounterTables"],  # type: ignore[arg-type]
         entities=built["entities"],  # type: ignore[arg-type]
         locations=built["locations"],  # type: ignore[arg-type]
+        pressure_events=built["pressureEvents"],  # type: ignore[arg-type]
         regions=built["regions"],  # type: ignore[arg-type]
         routes=built["routes"],  # type: ignore[arg-type]
         scenes=built["scenes"],  # type: ignore[arg-type]

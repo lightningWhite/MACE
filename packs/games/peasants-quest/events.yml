@@ -1,0 +1,103 @@
+# Celestial events are scheduled by the calendar, so the player can learn the
+# date and plan around one. Pressure events build toward a threshold with
+# jitter, so the player can only read the omens — you can know it is close,
+# never that it is Tuesday. That difference produces two genuinely different
+# kinds of play: a deadline, and a risk assessment.
+
+celestialEvents:
+
+  - id: the-swallowing
+    name: "The Swallowing"
+    period: 431              # a once-in-a-lifetime thing, and it is this week
+    phase: 5                 # day 5 of a seven-day journey
+    durationTicks: 3
+    warnTicks: 96            # two days of unease beforehand
+    global: true
+    warning:
+      - "The old people have started saying a thing you have not heard before, and stopping when you come near."
+    announce:
+      - "The sun goes out. Not dims — goes out, like a lamp under a cloth."
+      - {text: "Somewhere behind you a horse starts screaming and does not stop.", pause: true}
+    while:
+      light: 0.05
+      weatherTags: [dark]
+    aftermath:
+      # `while.light` reverts on its own when the event ends; the only thing
+      # the aftermath has to leave behind is that it happened at all.
+      - {setVar: {name: sawTheSwallowing, value: true}}
+
+pressureEvents:
+
+  # A small event, and where most of the value is: cheap to author, and it
+  # leaves the main road permanently longer. Rain is what brings it down, so a
+  # wet week genuinely raises the odds — and the omen is honest about it.
+  - id: hillside-slip
+    name: "The Cutting"
+    scope: route
+    route: north-road
+    regions: [the-northwood]
+    earliestDay: 2
+    pressure:
+      ratePerTick: 0.004
+      variance: 0.5
+      modifiers:
+        - {when: {weatherTag: [wet]}, mult: 3.0}
+        - {when: {season: [winter]}, mult: 1.4}
+    omens:
+      - {atPressure: 0.45, weight: 50,
+         text: "The cutting above the road has shed a fan of loose stone since you last passed."}
+      - {atPressure: 0.75, weight: 70,
+         text: "There is a crack in the bank above the road that you would swear was not there."}
+    imminentAtPressure: 0.92
+    imminent:
+      announce:
+        - "Above the road, something lets go, and stops, and does not quite settle."
+    onset:
+      announce:
+        - "The hillside comes down behind you, unhurried and enormous."
+    activeTicks: 12
+    while:
+      travelMultiplier: 1.6
+    aftermath:
+      - {setRouteTicks: {route: north-road, ticks: 9}}
+      - {setVar: {name: theCuttingFell, value: true}}
+
+  # The big one, bounded at both ends: it cannot fire before the player has
+  # seen the world, and it cannot be missed entirely. The exact tick stays
+  # unknown, which is the part that matters.
+  - id: the-marches-storm
+    name: "The Marches Storm"
+    regions: [the-marches, the-northwood]
+    epicenter: hagans-castle
+    earliestDay: 2
+    latestDay: 6
+    pressure:
+      start: {min: 0.0, max: 0.3}
+      ratePerTick: 0.006
+      variance: 0.45
+      modifiers:
+        - {when: {season: [autumn, winter]}, mult: 1.3}
+    omens:
+      - {atPressure: 0.35, weight: 30, regions: [the-northwood, the-marches],
+         text: "The birds over the high country are going the wrong way, and all of them at once."}
+      - {atPressure: 0.60, weight: 50,
+         text: "The air has gone thick and still, the way it does before it stops being still."}
+      - {atPressure: 0.85, weight: 80,
+         text: "Away north the cloud has stopped moving across the sky and started moving down it."}
+    imminentAtPressure: 0.88
+    imminent:
+      announce:
+        - "The wind drops entirely. Nothing on the road makes any sound at all."
+    onset:
+      announce:
+        - "It comes over the Marches like something falling, and the road goes white."
+      effects:
+        - {spawnFront: {front: fantasy.core:autumn-gale, at: the-marches,
+                        heading: [the-marches, the-northwood, the-lowlands],
+                        intensity: 1.0, lifespanTicks: 90}}
+    activeTicks: 40
+    while:
+      travelMultiplier: 1.5
+      weatherTags: [severe]
+    aftermath:
+      - {setVar: {name: theStormPassed, value: true}}

@@ -23,11 +23,13 @@ __all__ = [
     "Event",
     "FlagChanged",
     "GameOver",
+    "NewsHeard",
     "LocationRevealed",
     "InventoryChanged",
     "Moved",
     "Narrated",
     "QuestUpdated",
+    "RouteChanged",
     "RuleFailed",
     "SceneEntered",
     "TravelInterrupted",
@@ -36,6 +38,7 @@ __all__ = [
     "TimePassed",
     "Unsupported",
     "VariableChanged",
+    "WorldEvent",
     "FrontMoved",
     "WeatherChanged",
     "WorldStatus",
@@ -635,6 +638,41 @@ class LocationRevealed(Event):
 
 
 @dataclass(frozen=True, slots=True)
+class RouteChanged(Event):
+    """A road closed, reopened, or got longer.
+
+    The aftermath of a world event is what separates it from a weather
+    condition: a landslide that shuts a pass for the rest of the game leaves
+    the map permanently different, and the map view has to know.
+
+    Attributes
+    ----------
+    route : str
+        Qualified route id.
+    closed : bool
+        Whether it is shut.
+    ticks : int or None
+        Its length now, if something changed it.
+    reason : str or None
+        What to tell a player who tries it.
+    """
+
+    kind: ClassVar[str] = "route.changed"
+    route: str
+    closed: bool = False
+    ticks: int | None = None
+    reason: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "route": self.route,
+            "closed": self.closed,
+            "ticks": self.ticks,
+            "reason": self.reason,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class QuestUpdated(Event):
     """A quest started, advanced, finished, or failed.
 
@@ -662,6 +700,73 @@ class QuestUpdated(Event):
             "status": self.status,
             "stage": self.stage,
             "journal": self.journal,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class WorldEvent(Event):
+    """A world event moved through one beat of its life.
+
+    The narration that comes with it arrives as ordinary `narrate` events, on
+    purpose. An omen surfaced as a system message is not an omen; there is no
+    pressure bar, and the player should never see a number. This event is for
+    the map, the journal, and the debug overlay.
+
+    Attributes
+    ----------
+    event : str
+        Qualified id of the event.
+    phase : str
+        `building`, `omen`, `imminent`, `onset`, or `aftermath`.
+    region : str or None
+        Where it happened.
+    visible : bool
+        Whether the player was somewhere they would have noticed.
+    """
+
+    kind: ClassVar[str] = "world.event"
+    event: str
+    phase: str
+    region: str | None = None
+    visible: bool = True
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "event": self.event,
+            "phase": self.phase,
+            "region": self.region,
+            "visible": self.visible,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class NewsHeard(Event):
+    """Something that happened out of sight has reached the player.
+
+    News carries its age, because a rumour three days old and two regions away
+    should arrive imperfect — which is free atmosphere and makes the player's
+    information feel like a medieval world's rather than like a notification.
+
+    Attributes
+    ----------
+    event : str
+        Qualified id of what happened.
+    days_old : int
+        How long ago, in days.
+    region : str or None
+        Where it happened.
+    """
+
+    kind: ClassVar[str] = "world.news"
+    event: str
+    days_old: int = 0
+    region: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "event": self.event,
+            "daysOld": self.days_old,
+            "region": self.region,
         }
 
 

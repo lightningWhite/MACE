@@ -34,6 +34,7 @@ from mace.model.conditions import (
     HasItem,
     QuestAtStage,
     QuestOutcome,
+    SeasonIs,
     StatCompare,
     WeatherIs,
     WeatherTagIs,
@@ -133,6 +134,9 @@ def holds(condition: Condition, context: RuleContext) -> bool:
 
     if isinstance(payload, DayPartIs):
         return context.clock.day_part(context.state.tick) in payload.parts
+
+    if isinstance(payload, SeasonIs):
+        return context.clock.season(context.state.tick).id in payload.seasons
 
     if isinstance(payload, QuestAtStage):
         quest = context.state.quests.get(_quest(payload.quest, context))

@@ -34,6 +34,7 @@ from mace.engine.expr import Expression, ExprSyntaxError, parse
 __all__ = [
     "AuthoredValue",
     "CalendarRef",
+    "CelestialRef",
     "ClimateRef",
     "EncounterRef",
     "FrontRef",
@@ -51,6 +52,7 @@ __all__ = [
     "Id",
     "Name",
     "PackId",
+    "PressureRef",
     "Ref",
     "SlotName",
     "Tag",
@@ -116,6 +118,7 @@ class Reference:
 #: covers yet — a terrain, an encounter table — stays a plain `Ref` until the
 #: phase that models it can check it.
 CalendarRef = Annotated[Ref, Reference("calendars")]
+CelestialRef = Annotated[Ref, Reference("celestialEvents")]
 EncounterRef = Annotated[Ref, Reference("encounterTables")]
 FrontRef = Annotated[Ref, Reference("weatherFronts")]
 ClimateRef = Annotated[Ref, Reference("climates")]
@@ -124,6 +127,7 @@ LocationRef = Annotated[Ref, Reference("locations")]
 RouteRef = Annotated[Ref, Reference("routes")]
 SceneRef = Annotated[Ref, Reference("scenes")]
 QuestRef = Annotated[Ref, Reference("quests")]
+PressureRef = Annotated[Ref, Reference("pressureEvents")]
 RegionRef = Annotated[Ref, Reference("regions")]
 WeatherRef = Annotated[Ref, Reference("weatherConditions")]
 

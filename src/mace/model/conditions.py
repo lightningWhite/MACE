@@ -56,6 +56,7 @@ ConditionTag = Literal[
     "questComplete",
     "questFailed",
     "questStage",
+    "season",
     "statAtLeast",
     "statAtMost",
     "weather",
@@ -151,6 +152,14 @@ class WeatherTagIs(ConditionPayload):
     tags: tuple[Tag, ...] = Field(min_length=1)
 
 
+class SeasonIs(ConditionPayload):
+    """The calendar is in one of these seasons."""
+
+    shorthand_field: ClassVar[str] = "seasons"
+
+    seasons: tuple[Id, ...] = Field(min_length=1)
+
+
 class DayPartIs(ConditionPayload):
     """The world clock is in one of these parts of the day."""
 
@@ -190,6 +199,7 @@ CONDITION_PAYLOADS: dict[ConditionTag, type[ConditionPayload]] = {
     "questComplete": QuestOutcome,
     "questFailed": QuestOutcome,
     "questStage": QuestAtStage,
+    "season": SeasonIs,
     "statAtLeast": StatCompare,
     "statAtMost": StatCompare,
     "weather": WeatherIs,

@@ -72,6 +72,14 @@ class Observation:
         Whether the player is indoors. Shelter suppresses the weather's stat
         effects and its bite on visibility, but not the fact of it — you can
         still hear the rain on the inn roof.
+    extra_tags : tuple of str
+        Tags an active world event has added on top of the weather's own.
+    extra_travel : float
+        A travel multiplier an active world event is adding.
+    event_blocks_travel : bool
+        Whether an active world event has closed the roads.
+    light_override : float or None
+        An active world event's override on the sky's light. Night, at noon.
     """
 
     region: str | None = None
@@ -80,6 +88,43 @@ class Observation:
     intensity: float = 0.0
     temperature: float | None = None
     sheltered: bool = False
+    extra_tags: tuple[str, ...] = ()
+    extra_travel: float = 1.0
+    event_blocks_travel: bool = False
+    light_override: float | None = None
+
+    def under(self, standing: object) -> Observation:
+        """This weather, with an active world event's standing changes folded in.
+
+        Parameters
+        ----------
+        standing : Standing
+            The combined `while` blocks of every active event that reaches here.
+
+        Returns
+        -------
+        Observation
+            A new observation. The original is untouched, because a rule that
+            read the weather twice in one step must get the same answer.
+        """
+        tags = tuple(sorted(getattr(standing, "weather_tags", ())))
+        travel = float(getattr(standing, "travel_multiplier", 1.0))
+        blocks = bool(getattr(standing, "blocks_travel", False))
+        light = getattr(standing, "light", None)
+        if not tags and travel == 1.0 and not blocks and light is None:
+            return self
+        return Observation(
+            region=self.region,
+            condition=self.condition,
+            qualified=self.qualified,
+            intensity=self.intensity,
+            temperature=self.temperature,
+            sheltered=self.sheltered,
+            extra_tags=tags,
+            extra_travel=travel,
+            event_blocks_travel=blocks,
+            light_override=light,
+        )
 
     @property
     def id(self) -> str | None:
@@ -116,9 +161,10 @@ class Observation:
             The tags, or empty when there is no weather or the player is
             under a roof.
         """
-        if self.condition is None or self.sheltered:
+        if self.sheltered:
             return ()
-        return tuple(self.condition.tags)
+        own = tuple(self.condition.tags) if self.condition is not None else ()
+        return (*own, *(tag for tag in self.extra_tags if tag not in own))
 
     @property
     def visibility(self) -> float:
@@ -144,9 +190,8 @@ class Observation:
         float
             A multiplier on route ticks.
         """
-        if self.condition is None:
-            return 1.0
-        return self.condition.travel_multiplier
+        own = 1.0 if self.condition is None else self.condition.travel_multiplier
+        return own * self.extra_travel
 
     @property
     def blocks_travel(self) -> bool:
@@ -157,6 +202,8 @@ class Observation:
         bool
             True when a hurricane or a blizzard means the player must shelter.
         """
+        if self.event_blocks_travel:
+            return True
         return self.condition is not None and self.condition.blocks_travel
 
 

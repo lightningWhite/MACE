@@ -53,8 +53,8 @@ through, and the road between towns is dangerous.
 - [x] Weather fronts propagating across the region graph, with omens
 - [x] Weather effects: visibility, travel multiplier, stat modifiers, tags
 - [x] Entity `env` responses
-- [ ] World events: celestial (scheduled), pressure (building, with omens), triggered
-- [ ] Event phases, aftermath world changes, and the news queue
+- [x] World events: celestial (scheduled), pressure (building, with omens), triggered
+- [x] Event phases, aftermath world changes, and the news queue
 - [x] Routes, waypoints, leg-by-leg travel resolution, interruption and resumption
 - [x] Encounter tables: two-stage resolution, cooldowns, anti-clumping pressure
 - [x] Exposure and rest — the mechanics that make weather bite

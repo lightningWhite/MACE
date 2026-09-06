@@ -26,6 +26,7 @@ __all__ = [
     "FRONT_STREAM",
     "biases_for",
     "occupying",
+    "plot",
     "step",
 ]
 
@@ -140,7 +141,7 @@ def _maybe_form(
     definition = _definition(library, kind)
     assert definition is not None
 
-    heading = _plot(library, stream, region_id, definition, regions)
+    heading = plot(library, stream, region_id, definition, regions)
     low, high = definition.intensity_range
 
     state.fronts_spawned += 1
@@ -157,7 +158,7 @@ def _maybe_form(
     return [front]
 
 
-def _plot(
+def plot(
     library: Library,
     stream: RandomStream,
     origin: str,

@@ -41,6 +41,7 @@ from mace.model.conditions import CONDITION_PAYLOADS, Condition
 from mace.model.effects import EFFECT_PAYLOADS, Effect
 from mace.model.encounter import EncounterTable
 from mace.model.entity import Entity
+from mace.model.event import CelestialEvent, PressureEvent
 from mace.model.front import WeatherFront
 from mace.model.game import Game
 from mace.model.location import Location
@@ -67,10 +68,12 @@ DIALECT = "https://json-schema.org/draft/2020-12/schema"
 #: The top-level key each modelled content type lives under in a pack file.
 CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
+    "celestialEvents": CelestialEvent,
     "climates": Climate,
     "encounterTables": EncounterTable,
     "entities": Entity,
     "locations": Location,
+    "pressureEvents": PressureEvent,
     "regions": Region,
     "routes": Route,
     "weatherConditions": WeatherCondition,
@@ -84,8 +87,6 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
 #: models them — see docs/12-roadmap.md.
 UNMODELLED_COLLECTIONS: dict[str, str] = {
     "terrains": "phase 2 — travel",
-    "celestialEvents": "phase 2 — world events",
-    "pressureEvents": "phase 2 — world events",
     "combatProfiles": "phase 3 — combat",
     "moves": "phase 3 — combat",
     "backgrounds": "phase 4 — character creation",

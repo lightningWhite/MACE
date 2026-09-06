@@ -323,43 +323,54 @@ on the road.
 
 ### CelestialEvent
 
-Scheduled by the calendar. Fully deterministic — the player can learn the date.
+Files under `celestialEvents/`. Scheduled by the calendar and **fully
+deterministic** — the same seed is not even required. That is the point: a
+date that can be known can be planned around, which is what makes an almanac
+worth gold and an astronomer worth finding.
 
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | | |
-| `period` | {days} | Recurrence cycle. Long periods make it a once-a-campaign wonder. |
-| `phase` | {day} | Day of the first occurrence. |
-| `durationTicks` | int | |
-| `warnTicks` | int? | How far ahead omens and forecasts start. |
+| `extends` | Ref? | |
+| `period` | int \| {days} | Recurrence cycle in days. Long periods make an event a once-a-campaign wonder most playthroughs never see. |
+| `phase` | int \| {day} | Day of the first occurrence. Default 1. |
+| `durationTicks` | int? | Default 1. |
+| `warnTicks` | int? | How far ahead the world starts saying so. |
 | `global` | bool? | Visible everywhere, vs. `regions`-limited. |
 | `regions` | [Ref]? | |
-| `announce` | [str]? | Narration at onset. |
-| `while` | [Effect]? | Applied for the duration (`setLight`, weather tags, modifiers). |
-| `effects` | [Effect]? | One-shot at onset. |
-| `aftermath` | [Effect]? | On completion. |
 | `forecastable` | bool? | Default true. Whether almanacs and NPCs can name the date. |
+| `warning` | str \| [Descr]? | Narrated once when the warning window opens. |
+| `announce` | [str \| Say]? | Narrated at onset. |
+| `while` | EventWhile? | How the world is different while it runs. Reverts on its own when it ends. |
+| `effects` | [Effect]? | One-shot at onset. |
+| `aftermath` | [Effect]? | One-shot on completion. |
 
 ### PressureEvent
 
-Uncertain timing. Builds toward a threshold and telegraphs itself through omens.
+Files under `pressureEvents/`. Timing is uncertain, builds toward a threshold,
+and telegraphs itself through omens. A flat per-tick probability is memoryless —
+the volcano is exactly as likely to erupt on day one as day thirty, nothing can
+foreshadow it honestly, and the player never learns anything. A rising
+accumulator gives the event a *direction*, and direction is what makes the omens
+truthful.
 
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | | |
-| `scope` | `region`\|`route`\|`location`? | What it affects. Default `region`. |
-| `regions` / `route` / `location` | Ref(s) | Per `scope`. |
+| `extends` | Ref? | |
+| `scope` | `region`\|`route`\|`location`? | Default `region`. |
+| `regions` / `route` / `location` | Ref(s) | Per `scope`. `regions` also decides where the event can be seen and where its omens show. |
 | `epicenter` | Ref? | Where it visibly originates. |
 | `pressure` | Pressure | See below. |
-| `omens` | [Omen] | The player's only information channel while building. |
-| `imminentAtPressure` | number? | Threshold for the `imminent` phase. Default 0.9. |
-| `imminent` | Phase? | `announce` + `effects` for the last-warning phase. |
-| `onset` | Phase | `announce` + `effects` for the moment itself. |
+| `omens` | [Omen]? | The player's only information channel while building. |
+| `imminentAtPressure` | number? | Default 0.9. Should be *late*: the tension lives between "probably" and "certainly". |
+| `imminent` | {announce?, effects?}? | The last-warning beat. |
+| `onset` | {announce?, effects?} | The moment itself. |
 | `activeTicks` | int? | How long the world stays disrupted. |
-| `while` | {encounters?, travelMultiplier?, effects?}? | Applied during `active`. |
-| `aftermath` | [Effect]? | **Permanent** world change. Required in practice — see the budget guidance. |
-| `earliestDay` / `latestDay` | int? | Bound the window without scheduling it. |
-| `requires` | [Condition]? | Gate the event on story state. |
+| `while` | EventWhile? | How it stays disrupted. |
+| `aftermath` | [Effect]? | **Permanent** world change, and the thing that separates an event from a weather condition. If you can't name what's different afterward, cut it. |
+| `earliestDay` / `latestDay` | int? | Bound the window without scheduling it. `latestDay` forces the climb through `imminent` first, so the backstop never ambushes anyone. |
+| `requires` | [Condition]? | Gate on story state, so the payoff always lands. |
 | `maxPerGame` | int? | Default 1. |
 
 #### Pressure
@@ -367,23 +378,61 @@ Uncertain timing. Builds toward a threshold and telegraphs itself through omens.
 | Field | Type | Notes |
 |---|---|---|
 | `start` | {min, max}? | Seeded starting value — some worlds begin closer to the edge. |
-| `ratePerTick` | number | Baseline accumulation. |
-| `variance` | number? | Per-tick jitter, 0–1. Without it the player can count ticks and derive the date. |
+| `ratePerTick` | number? | Baseline accumulation. |
+| `variance` | number? | Per-tick jitter, 0–1, as a fraction of the rate. Without it a player could count ticks and derive the date, which turns the volcano back into a scheduled event. |
 | `threshold` | number? | Default 1.0. |
-| `modifiers` | [{when: Condition, mult: number}]? | Season, weather, and game vars can accelerate or hold it off. |
+| `modifiers` | [{when: [Condition], mult: number}]? | Season, weather, and game vars can accelerate or hold it off. A quest that multiplies the rate by 0.1 genuinely buys the valley years. |
 
 #### Omen
 
 | Field | Type | Notes |
 |---|---|---|
-| `atPressure` | number | Minimum pressure before this omen is eligible. |
-| `weight` | number | Relative frequency among eligible omens. |
+| `id` | str? | For `once`. Defaults to the text. |
+| `atPressure` | number | Share of the threshold before this omen is eligible. |
+| `weight` | number | Relative frequency among eligible omens. An omen already shown weighs a quarter, so a long build cycles rather than repeating. |
 | `regions` | [Ref]? | Where it can be observed. Defaults to the event's regions. |
 | `text` | str | |
 | `once` | bool? | |
 
-Omen frequency scales with current pressure, so more omens genuinely means
-closer. That honesty is what makes reading them a skill rather than a guess.
+Omen frequency rises with the **square** of the accumulator, and no two come
+within six hours of each other. A linear ramp gives a steady drip that reads as
+background noise; the squared curve stays almost silent early and gets
+insistent near the end, which is the shape of the signal the player learns to
+read. A whole game should see two or three, escalating.
+
+#### EventWhile
+
+Standing changes, held for as long as the event is active and undone when it
+ends. A typed block rather than a list of effects, because an effect list is
+one-way and these have to be reverted.
+
+| Field | Type | Notes |
+|---|---|---|
+| `light` | number? | Overrides the sky's light entirely. Night, at noon. |
+| `weatherTags` | [str]? | Added to whatever the weather already carries, so `env` responses and encounter conditions see them. |
+| `travelMultiplier` | number? | Multiplied into the roads' own. |
+| `blocksTravel` | bool? | |
+| `encounters` | Ref? | A hazard table rolled on top of the ordinary ones. |
+
+#### The phases
+
+    dormant ──► building ──► imminent ──► onset ──► active ──► aftermath
+                (omens)      (announce,   (the      (hazards,   (permanent
+                              last         moment)   modified    world
+                              chance)                weather)    change)
+
+Each beat emits a `world.event` with the phase name. Its narration arrives as
+ordinary `narrate` events on purpose: an omen surfaced as a system message is
+not an omen, and there is no pressure bar anywhere in the design.
+
+#### News
+
+An event that reaches onset somewhere the player is not goes into a **news
+queue** instead of being narrated. `world.news` reads how many items are
+waiting, so an encounter entry can be eligible only when there is something to
+tell, and the `tellNews` effect passes items on with their age. That is how a
+world where things happen out of sight tells you about them: through a
+traveller on the road, not a notification.
 
 ### Calendar
 

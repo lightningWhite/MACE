@@ -33,6 +33,7 @@ from mace.model import Calendar, ClimateOverride, Condition, Entity, Scene
 from mace.model.base import RESERVED_ACTORS, ContentModel, Reference
 from mace.model.calendar import STANDARD_YEAR
 from mace.model.conditions import DayPartIs
+from mace.model.effects import FireEvent, SetPressure
 
 __all__ = [
     "Problem",
@@ -400,6 +401,7 @@ def validate_library(library: Library) -> Report:
         problems.extend(_check_reserved_names(pack))
         problems.extend(_check_game(library, pack))
         problems.extend(_check_calendar(library, pack))
+        problems.extend(_check_event_references(library, pack))
         problems.extend(_check_reachable_scenes(library, pack))
         problems.extend(_check_notes(pack))
     return Report(tuple(problems))
@@ -582,6 +584,126 @@ def _check_game(library: Library, pack: LoadedPack) -> Iterator[Problem]:
                 collection="quests",
                 object_id=local_id,
             )
+
+
+def _check_event_references(library: Library, pack: LoadedPack) -> Iterator[Problem]:
+    """`fireEvent` and `setPressure` must name an event of one kind or the other.
+
+    The generic reference check works off a field's `Reference` marker, which
+    names exactly one collection. These two fields name either, so they are
+    checked here rather than being left as a runtime surprise.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs.
+    pack : LoadedPack
+        The pack to check.
+
+    Yields
+    ------
+    Problem
+        One error per reference that names nothing.
+    """
+    for collection, local_id, definition in _each_definition(pack):
+        for path, reference in _events_named(definition):
+            if any(
+                _resolves(library, pack, reference, target)
+                for target in ("celestialEvents", "pressureEvents")
+            ):
+                continue
+            yield Problem(
+                severity=Severity.ERROR,
+                message=(
+                    f"`{reference}` is not a celestial or pressure event, "
+                    "here or in this pack's dependencies"
+                ),
+                pack=pack.id,
+                collection=collection,
+                object_id=local_id,
+                field=path,
+            )
+
+
+def _resolves(
+    library: Library, pack: LoadedPack, reference: str, collection: str
+) -> bool:
+    """Whether a reference names something in one collection.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs.
+    pack : LoadedPack
+        The pack the reference was written in.
+    reference : str
+        As the author wrote it.
+    collection : str
+        Where to look.
+
+    Returns
+    -------
+    bool
+        Whether it resolves.
+    """
+    try:
+        library.resolve(reference, collection, within=pack.id)
+    except ContentError:
+        return False
+    return True
+
+
+def _events_named(
+    definition: ContentModel, path: str = ""
+) -> Iterator[tuple[str, str]]:
+    """Every world event a definition names, and where it named it.
+
+    Parameters
+    ----------
+    definition : ContentModel
+        The definition to walk.
+    path : str
+        The field path reached so far.
+
+    Yields
+    ------
+    tuple of (str, str)
+        The field path, and the event named there.
+    """
+    for name, field in type(definition).model_fields.items():
+        yield from _events_in(
+            getattr(definition, name), f"{path}.{field.alias or name}".lstrip(".")
+        )
+
+
+def _events_in(value: Any, path: str) -> Iterator[tuple[str, str]]:
+    """Find world-event references in a validated value.
+
+    Parameters
+    ----------
+    value : object
+        A model, collection, or scalar.
+    path : str
+        The field path it was reached by.
+
+    Yields
+    ------
+    tuple of (str, str)
+        The field path, and the event named there.
+    """
+    if isinstance(value, FireEvent | SetPressure):
+        yield f"{path}.event", value.event
+        return
+    if isinstance(value, ContentModel):
+        yield from _events_named(value, path)
+        return
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            yield from _events_in(item, f"{path}.{key}")
+        return
+    if isinstance(value, tuple | list):
+        for index, item in enumerate(value):
+            yield from _events_in(item, f"{path}[{index}]")
 
 
 def _check_calendar(library: Library, pack: LoadedPack) -> Iterator[Problem]:

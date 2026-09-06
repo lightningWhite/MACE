@@ -106,7 +106,9 @@ Selected event types (the full list lives with the code):
 | `weather.changed` | `region`, `condition`, `intensity`, `tags`, `visibility` | "The rain thickens into sleet." |
 | `world.status` | `day`, `dayPart`, `season`, `place`, `sky`, `light` | The standing status line, above the prompt |
 | `encounter` | `table`, `entry`, `chance`, `where` | Nothing on its own — the scene that follows is the encounter |
-| `world.event` | `kind`, `region`, `severity` | Earthquake, eruption, meteor shower |
+| `world.event` | `event`, `phase`, `region`, `visible` | Map marker and journal entry; the prose comes as `narrate` |
+| `world.news` | `event`, `daysOld`, `region` | Something that happened out of sight, arriving late |
+| `route.changed` | `route`, `closed`, `ticks`, `reason` | The map is different now, and stays that way |
 | `stat.changed` | `actor`, `stat`, `delta`, `reason` | Health bar animation, "(-8 hp)" |
 | `inventory.changed` | `actor`, `item`, `delta` | Inventory panel |
 | `quest.updated` | `questId`, `stage`, `status` | Journal entry |

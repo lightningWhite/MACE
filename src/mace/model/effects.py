@@ -25,10 +25,14 @@ from mace.model.base import (
     ContentModel,
     EntityRef,
     Flag,
+    FrontRef,
     Id,
     LocationRef,
     Name,
     QuestRef,
+    Ref,
+    RegionRef,
+    RouteRef,
     SceneRef,
     SlotName,
     unwrap_tagged,
@@ -47,20 +51,29 @@ EffectTag = Literal[
     "advanceTime",
     "applyModifier",
     "attachAlly",
+    "closeRoute",
+    "damage",
     "dismissAlly",
     "endGame",
+    "fireEvent",
     "giveItem",
     "move",
+    "openRoute",
     "playScene",
     "rest",
     "restart",
     "reveal",
     "setDisposition",
     "setFlag",
+    "setLight",
+    "setPressure",
+    "setRouteTicks",
     "setStat",
     "setVar",
+    "spawnFront",
     "startCombat",
     "takeItem",
+    "tellNews",
     "transferContents",
 ]
 
@@ -221,6 +234,170 @@ class Rest(EffectPayload):
     fraction: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
+class CloseRoute(EffectPayload):
+    """Shut a road, for a while or for good.
+
+    The aftermath of an event is the thing that separates it from a weather
+    condition: a landslide that closes a route for the rest of the game leaves
+    the world permanently different, which is what an event is for.
+
+    Attributes
+    ----------
+    route : str
+        The road.
+    permanent : bool
+        Whether it stays shut. A temporary closure is lifted by `openRoute`,
+        or by the event's own aftermath.
+    reason : str or None
+        What to tell a player who tries it.
+    """
+
+    shorthand_field: ClassVar[str] = "route"
+
+    route: RouteRef
+    permanent: bool = False
+    reason: str | None = None
+
+
+class OpenRoute(EffectPayload):
+    """Reopen a road something closed."""
+
+    shorthand_field: ClassVar[str] = "route"
+
+    route: RouteRef
+
+
+class SetRouteTicks(EffectPayload):
+    """Change how long a road takes, for the rest of the game.
+
+    Twelve lines of content and a detour that is genuinely longer now. This is
+    how a world gets a memory.
+
+    Attributes
+    ----------
+    route : str
+        The road.
+    ticks : int
+        Its new length.
+    """
+
+    route: RouteRef
+    ticks: int = Field(gt=0)
+
+
+class SpawnFront(EffectPayload):
+    """Put a weather system on the map, without waiting for one to form.
+
+    An eruption's ash cloud is a front: it has an origin, a direction, and a
+    life, and everything downwind of it gets the weather it brings.
+
+    Attributes
+    ----------
+    front : str
+        The kind of front.
+    at : str
+        The region it forms over.
+    heading : tuple of str
+        The regions it crosses. Empty walks the neighbour graph as usual.
+    intensity : float or None
+        Overrides the kind's own band.
+    lifespan_ticks : int or None
+        Overrides the kind's own lifespan.
+    """
+
+    front: FrontRef
+    at: RegionRef
+    heading: tuple[RegionRef, ...] = ()
+    intensity: float | None = Field(default=None, ge=0.0, le=1.0)
+    lifespan_ticks: int | None = Field(default=None, gt=0)
+
+
+class DealDamage(EffectPayload):
+    """Hurt whoever is in the way.
+
+    Named `DealDamage` rather than `Damage` because a weapon's damage range is
+    already `Damage`, and the generated JSON Schema keys its definitions by
+    class name — two of them would collide and one would silently vanish.
+
+    Attributes
+    ----------
+    actor : str or None
+        One entity. Omitted with `in_region` set, everyone there.
+    in_region : str or None
+        A region. The player is hurt if they are in it.
+    amount : float
+        How much comes off the vital pool.
+    reason : str or None
+        What did it.
+    """
+
+    actor: EntityRef | None = None
+    in_region: RegionRef | None = None
+    amount: float = Field(gt=0.0)
+    reason: str | None = None
+
+
+class SetLight(EffectPayload):
+    """Override how much light the sky gives, until something clears it."""
+
+    shorthand_field: ClassVar[str] = "light"
+
+    light: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class FireEvent(EffectPayload):
+    """Make a world event happen now, whatever its own clock was doing.
+
+    The third kind of event: one the story causes. A quest that wakes the
+    mountain is this effect, and nothing else about the event changes.
+    """
+
+    shorthand_field: ClassVar[str] = "event"
+
+    event: Ref
+
+
+class SetPressure(EffectPayload):
+    """Nudge a pressure event toward its threshold, or back from it.
+
+    An act-two beat that puts the volcano on the brink and lets the simulation
+    deliver act three.
+
+    Attributes
+    ----------
+    event : str
+        The pressure event.
+    value : float
+        Its new accumulator, as a share of the threshold.
+    """
+
+    event: Ref
+    value: float = Field(ge=0.0, le=1.0)
+
+
+class TellNews(EffectPayload):
+    """Pass on something that happened somewhere the player was not.
+
+    Events fire whether or not anyone is watching, and a world where things
+    only happen in your presence is not a world. News waits in a queue and
+    arrives through ordinary channels — a traveller on the road, a rider, a
+    refugee, an innkeeper — which is what this effect is for.
+
+    Attributes
+    ----------
+    count : int
+        How many items to pass on at once.
+    max_days_old : int or None
+        Ignore anything older. A rumour that has been going round for a month
+        is not news any more.
+    """
+
+    shorthand_field: ClassVar[str] = "count"
+
+    count: int = Field(default=1, ge=1)
+    max_days_old: int | None = Field(default=None, ge=0)
+
+
 class PlayScene(EffectPayload):
     """Run another scene."""
 
@@ -246,20 +423,29 @@ EFFECT_PAYLOADS: dict[EffectTag, type[EffectPayload]] = {
     "advanceTime": AdvanceTime,
     "applyModifier": ApplyModifier,
     "attachAlly": AttachAlly,
+    "closeRoute": CloseRoute,
+    "damage": DealDamage,
     "dismissAlly": DismissAlly,
     "endGame": NoArguments,
+    "fireEvent": FireEvent,
     "giveItem": ItemTransfer,
     "move": Move,
+    "openRoute": OpenRoute,
     "playScene": PlayScene,
     "rest": Rest,
     "restart": NoArguments,
     "reveal": Reveal,
     "setDisposition": SetDisposition,
     "setFlag": SetFlag,
+    "setLight": SetLight,
+    "setPressure": SetPressure,
+    "setRouteTicks": SetRouteTicks,
     "setStat": SetStat,
     "setVar": SetVar,
+    "spawnFront": SpawnFront,
     "startCombat": StartCombat,
     "takeItem": ItemTransfer,
+    "tellNews": TellNews,
     "transferContents": TransferContents,
 }
 

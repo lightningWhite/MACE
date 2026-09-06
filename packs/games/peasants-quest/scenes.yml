@@ -202,3 +202,13 @@ scenes:
     say:
       - "Six riders come up behind you at a trot, in the king's colours, and do not slow down."
       - '"Muster''s at the castle," one calls back. "Walk faster."'
+
+  - id: a-traveller-with-news
+    visible: false
+    say:
+      - {text: "Somebody comes down the road at a pace nobody keeps for pleasure, and stops when they see you.",
+         when: {dayPart: [dawn, day, dusk]}}
+      - {text: "A shape resolves into a man, walking fast, who starts talking before he is close enough to hear.",
+         when: {dayPart: [night]}}
+    effects:
+      - {tellNews: 1}

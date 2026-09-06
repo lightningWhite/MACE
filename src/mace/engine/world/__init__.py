@@ -1,4 +1,8 @@
-"""Clock, calendar, day parts, seasons, climate, weather fronts, world events.
+"""Clock, calendar, day parts, seasons, climate, and weather fronts.
+
+`mace.engine.world.events` is deliberately not re-exported here: world
+events evaluate author conditions, so they sit above the rule layer that
+this package sits below. Import it directly.
 
 See docs/05-world-simulation.md.
 """

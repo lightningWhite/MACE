@@ -149,10 +149,12 @@ class RuleContext:
         Returns
         -------
         Observation
-            The weather, with the location's override and its roof already
-            taken into account.
+            The weather, with the location's override, its roof, and any
+            active world event's standing changes already taken into account.
         """
-        return observe(
+        from mace.engine.world import events  # noqa: PLC0415
+
+        observed = observe(
             self.library,
             self.state,
             self.clock,
@@ -160,6 +162,27 @@ class RuleContext:
             self.here(),
             self.game.world.start_region,
         )
+        if not self.state.events:
+            return observed
+        return observed.under(events.standing(self, observed.region))
+
+    def light(self) -> float:
+        """How much light there is, all told.
+
+        The day part's own light, cut by what the sky is doing, unless an
+        event has put it out entirely — which is what an eclipse is.
+
+        Returns
+        -------
+        float
+            0 to 1.
+        """
+        observed = self.weather()
+        if self.state.light_override is not None:
+            return self.state.light_override
+        if observed.light_override is not None:
+            return observed.light_override
+        return self.clock.light(self.state.tick) * observed.visibility
 
     def item_id(self, reference: str) -> str | None:
         """Qualify an item reference for inventory keys.
@@ -236,10 +259,11 @@ class RuleContext:
             # The day part's light, cut by what the sky is doing. One number
             # for stealth, ranged accuracy, encounter detection, and which
             # description variant is shown.
-            "light": self.clock.light(tick) * weather.visibility,
+            "light": self.light(),
             "skyLight": self.clock.light(tick),
             # A list, so `'rain' in world.weather` reads naturally and a place
             # with no weather answers false rather than erroring.
+            "news": sum(1 for item in self.state.news if not item.told),
             "weather": [weather.id] if weather.id else [],
             "weatherTags": list(weather.tags),
             "temperature": weather.temperature,

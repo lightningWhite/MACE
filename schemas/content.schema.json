@@ -11,6 +11,12 @@
         "$ref": "#/$defs/Calendar"
       }
     },
+    "celestialEvents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CelestialEvent"
+      }
+    },
     "climates": {
       "type": "array",
       "items": {
@@ -33,6 +39,12 @@
       "type": "array",
       "items": {
         "$ref": "#/$defs/Location"
+      }
+    },
+    "pressureEvents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PressureEvent"
       }
     },
     "regions": {
@@ -77,14 +89,6 @@
     "terrains": {
       "type": "array",
       "description": "Not yet modelled \u2014 phase 2 \u2014 travel."
-    },
-    "celestialEvents": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 world events."
-    },
-    "pressureEvents": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 2 \u2014 world events."
     },
     "combatProfiles": {
       "type": "array",
@@ -454,6 +458,185 @@
         ]
       }
     },
+    "CelestialEvent": {
+      "additionalProperties": false,
+      "description": "An event the calendar decides, and therefore one the player can learn.\n\nTiming is a pure function of the calendar \u2014 no randomness at all, not even\na seed \u2014 which is the whole point. An almanac is worth gold and an\nastronomer is worth finding because the date is *knowable*, and a quest\nthat requires the eclipse gives the player a hard deadline, a journey of\nknown length, and a road with weather on it. That is a plot, produced by\nthree systems agreeing with each other.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    An event to inherit from.\nperiod : Period\n    How often it recurs.\nphase : Phase\n    The day of its first occurrence.\nduration_ticks : int\n    How long it lasts.\nwarn_ticks : int\n    How far ahead the world starts saying so.\neverywhere : bool\n    Visible from anywhere, rather than only from `regions`.\nregions : tuple of str\n    Where it can be seen, when it is not global.\nforecastable : bool\n    Whether almanacs and astronomers can name the date.\nwarning : Description or None\n    Narrated once when the warning window opens.\nannounce : Say\n    Narrated at onset.\nwhile_ : EventWhile or None\n    How the world is different while it runs.\neffects : tuple of Effect\n    One-shot changes at onset.\naftermath : tuple of Effect\n    One-shot changes when it ends.\n\nExtending another definition makes period optional here \u2014 the parent supplies them.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "period": {
+          "$ref": "#/$defs/Period"
+        },
+        "phase": {
+          "$ref": "#/$defs/Phase",
+          "default": 1
+        },
+        "durationTicks": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Durationticks",
+          "type": "integer"
+        },
+        "warnTicks": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Warnticks",
+          "type": "integer"
+        },
+        "global": {
+          "default": false,
+          "title": "Global",
+          "type": "boolean"
+        },
+        "regions": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Regions",
+          "type": "array"
+        },
+        "forecastable": {
+          "default": true,
+          "title": "Forecastable",
+          "type": "boolean"
+        },
+        "warning": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Warning"
+        },
+        "announce": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SayLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/SayLine"
+              },
+              "type": "array"
+            }
+          ],
+          "default": [],
+          "title": "Announce"
+        },
+        "while": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EventWhile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "effects": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Effect"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Effects",
+          "type": "array"
+        },
+        "aftermath": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Effect"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Aftermath",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "CelestialEvent",
+      "type": "object",
+      "if": {
+        "not": {
+          "required": [
+            "extends"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "period"
+        ]
+      }
+    },
     "Chance": {
       "maximum": 1.0,
       "minimum": 0.0,
@@ -766,6 +949,49 @@
       "title": "ClimateStep",
       "type": "object"
     },
+    "CloseRoute": {
+      "description": "Shut a road, for a while or for good.\n\nThe aftermath of an event is the thing that separates it from a weather\ncondition: a landslide that closes a route for the rest of the game leaves\nthe world permanently different, which is what an event is for.\n\nAttributes\n----------\nroute : str\n    The road.\npermanent : bool\n    Whether it stays shut. A temporary closure is lifted by `openRoute`,\n    or by the event's own aftermath.\nreason : str or None\n    What to tell a player who tries it.",
+      "oneOf": [
+        {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "type": "string",
+          "description": "Shut a road, for a while or for good.\n\nThe aftermath of an event is the thing that separates it from a weather\ncondition: a landslide that closes a route for the rest of the game leaves\nthe world permanently different, which is what an event is for.\n\nAttributes\n----------\nroute : str\n    The road.\npermanent : bool\n    Whether it stays shut. A temporary closure is lifted by `openRoute`,\n    or by the event's own aftermath.\nreason : str or None\n    What to tell a player who tries it."
+        },
+        {
+          "additionalProperties": false,
+          "description": "May be written as the bare value shown, which is the same as the mapping form with every other field left out.",
+          "properties": {
+            "route": {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "title": "Route",
+              "type": "string"
+            },
+            "permanent": {
+              "default": false,
+              "title": "Permanent",
+              "type": "boolean"
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Reason"
+            }
+          },
+          "required": [
+            "route"
+          ],
+          "title": "CloseRoute",
+          "type": "object"
+        }
+      ]
+    },
     "CombatAssignment": {
       "additionalProperties": false,
       "description": "How an actor fights.\n\nAttributes\n----------\nprofile : str\n    The combat profile that supplies moves, patterns, and temperament.",
@@ -965,6 +1191,18 @@
         {
           "type": "object",
           "properties": {
+            "season": {
+              "$ref": "#/$defs/SeasonIs"
+            }
+          },
+          "required": [
+            "season"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "statAtLeast": {
               "$ref": "#/$defs/StatCompare"
             }
@@ -1136,6 +1374,60 @@
       "type": "array",
       "description": "The world clock is in one of these parts of the day."
     },
+    "DealDamage": {
+      "additionalProperties": false,
+      "description": "Hurt whoever is in the way.\n\nNamed `DealDamage` rather than `Damage` because a weapon's damage range is\nalready `Damage`, and the generated JSON Schema keys its definitions by\nclass name \u2014 two of them would collide and one would silently vanish.\n\nAttributes\n----------\nactor : str or None\n    One entity. Omitted with `in_region` set, everyone there.\nin_region : str or None\n    A region. The player is hurt if they are in it.\namount : float\n    How much comes off the vital pool.\nreason : str or None\n    What did it.",
+      "properties": {
+        "actor": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actor"
+        },
+        "inRegion": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Inregion"
+        },
+        "amount": {
+          "exclusiveMinimum": 0.0,
+          "title": "Amount",
+          "type": "number"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "title": "DealDamage",
+      "type": "object"
+    },
     "DescriptionLine": {
       "description": "One candidate line of description.\n\nAttributes\n----------\ntext : str\n    What the player reads.\nwhen : tuple of Condition or None\n    Conditions that must hold for this line to be chosen. `None` makes it\n    the fallback.",
       "oneOf": [
@@ -1260,6 +1552,30 @@
         {
           "type": "object",
           "properties": {
+            "closeRoute": {
+              "$ref": "#/$defs/CloseRoute"
+            }
+          },
+          "required": [
+            "closeRoute"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "damage": {
+              "$ref": "#/$defs/DealDamage"
+            }
+          },
+          "required": [
+            "damage"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "dismissAlly": {
               "$ref": "#/$defs/DismissAlly"
             }
@@ -1284,6 +1600,18 @@
         {
           "type": "object",
           "properties": {
+            "fireEvent": {
+              "$ref": "#/$defs/FireEvent"
+            }
+          },
+          "required": [
+            "fireEvent"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "giveItem": {
               "$ref": "#/$defs/ItemTransfer"
             }
@@ -1302,6 +1630,18 @@
           },
           "required": [
             "move"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "openRoute": {
+              "$ref": "#/$defs/OpenRoute"
+            }
+          },
+          "required": [
+            "openRoute"
           ],
           "additionalProperties": false
         },
@@ -1380,6 +1720,42 @@
         {
           "type": "object",
           "properties": {
+            "setLight": {
+              "$ref": "#/$defs/SetLight"
+            }
+          },
+          "required": [
+            "setLight"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "setPressure": {
+              "$ref": "#/$defs/SetPressure"
+            }
+          },
+          "required": [
+            "setPressure"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "setRouteTicks": {
+              "$ref": "#/$defs/SetRouteTicks"
+            }
+          },
+          "required": [
+            "setRouteTicks"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "setStat": {
               "$ref": "#/$defs/SetStat"
             }
@@ -1404,6 +1780,18 @@
         {
           "type": "object",
           "properties": {
+            "spawnFront": {
+              "$ref": "#/$defs/SpawnFront"
+            }
+          },
+          "required": [
+            "spawnFront"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "startCombat": {
               "$ref": "#/$defs/StartCombat"
             }
@@ -1422,6 +1810,18 @@
           },
           "required": [
             "takeItem"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "tellNews": {
+              "$ref": "#/$defs/TellNews"
+            }
+          },
+          "required": [
+            "tellNews"
           ],
           "additionalProperties": false
         },
@@ -1964,6 +2364,92 @@
       "title": "EnvResponse",
       "type": "object"
     },
+    "EventPhaseBody": {
+      "additionalProperties": false,
+      "description": "What an event says and does at one moment of its life.\n\nAttributes\n----------\nannounce : Say\n    Narration, for a player who is somewhere it can be seen or heard.\neffects : tuple of Effect\n    One-shot changes.",
+      "properties": {
+        "announce": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SayLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/SayLine"
+              },
+              "type": "array"
+            }
+          ],
+          "default": [],
+          "title": "Announce"
+        },
+        "effects": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Effects",
+          "type": "array"
+        }
+      },
+      "title": "EventPhaseBody",
+      "type": "object"
+    },
+    "EventWhile": {
+      "additionalProperties": false,
+      "description": "How the world is different while an event is running.\n\nA typed block rather than a list of effects, because everything in it is a\n*standing* change that has to be undone when the event ends \u2014 and an\neffect list is a set of one-shot changes with no way back.\n\nAttributes\n----------\nlight : float or None\n    Overrides the sky's light entirely. Night, at noon.\nweather_tags : tuple of str\n    Added to whatever the weather is already tagged with, so `env`\n    responses and encounter conditions see them.\ntravel_multiplier : float\n    Multiplied into the roads' own.\nblocks_travel : bool\n    Whether the roads close.\nencounters : str or None\n    A hazard table rolled on top of the ordinary ones.",
+      "properties": {
+        "light": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Light"
+        },
+        "weatherTags": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Weathertags",
+          "type": "array"
+        },
+        "travelMultiplier": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Travelmultiplier",
+          "type": "number"
+        },
+        "blocksTravel": {
+          "default": false,
+          "title": "Blockstravel",
+          "type": "boolean"
+        },
+        "encounters": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Encounters"
+        }
+      },
+      "title": "EventWhile",
+      "type": "object"
+    },
     "Exit": {
       "additionalProperties": false,
       "description": "A way out of a location.\n\nAttributes\n----------\nto : str\n    The destination location.\nroute : str or None\n    The route taken. Omitted, the loader synthesizes a one-tick route.\nlabel : str or None\n    Overrides the default \"Travel to X\".\nwhen : tuple of Condition or None\n    Conditions gating the exit \u2014 a locked gate, a quest requirement.\nhidden_until : tuple of Condition or None\n    Conditions revealing a secret passage.",
@@ -2044,6 +2530,11 @@
     "ExprCondition": {
       "description": "An author expression, parsed at load time.",
       "type": "string"
+    },
+    "FireEvent": {
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "type": "string",
+      "description": "Make a world event happen now, whatever its own clock was doing.\n\nThe third kind of event: one the story causes. A quest that wakes the\nmountain is this effect, and nothing else about the event changes."
     },
     "FlagIs": {
       "additionalProperties": false,
@@ -2779,6 +3270,96 @@
       "title": "NoArguments",
       "type": "object"
     },
+    "Omen": {
+      "additionalProperties": false,
+      "description": "A sign that something is coming, and how close it has to be to show.\n\nOmens are the player's only information channel while an event builds, and\ntheir frequency scales with the current pressure \u2014 so more omens genuinely\ndoes mean closer. That honesty is what makes reading them a skill rather\nthan a guess, and it is why the player never sees a number.\n\nAttributes\n----------\nid : str or None\n    Names it, for `once`.\nat_pressure : float\n    The share of the threshold this omen needs before it is eligible.\nweight : float\n    Relative frequency among eligible omens.\nregions : tuple of str\n    Where it can be observed. Empty means the event's own regions.\ntext : str\n    What the player reads. Ordinary narration, never a system message.\nonce : bool\n    Whether it shows only once in a playthrough.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "atPressure": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Atpressure",
+          "type": "number"
+        },
+        "weight": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "regions": {
+          "default": [],
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Regions",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "once": {
+          "default": false,
+          "title": "Once",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Omen",
+      "type": "object"
+    },
+    "OpenRoute": {
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "type": "string",
+      "description": "Reopen a road something closed."
+    },
+    "Period": {
+      "additionalProperties": false,
+      "description": "How often a celestial event comes round.\n\nAttributes\n----------\ndays : int\n    The cycle length. Long periods make an event a once-a-campaign\n    wonder that most playthroughs never see, which is a legitimate thing\n    to want: set the period long and let the seed decide whether this\n    world's story includes the comet.",
+      "properties": {
+        "days": {
+          "exclusiveMinimum": 0,
+          "title": "Days",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "days"
+      ],
+      "title": "Period",
+      "type": "object"
+    },
+    "Phase": {
+      "additionalProperties": false,
+      "description": "The day a celestial event's cycle is anchored to.\n\nAttributes\n----------\nday : int\n    The day of its first occurrence, counting from one.",
+      "properties": {
+        "day": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Day",
+          "type": "integer"
+        }
+      },
+      "title": "Phase",
+      "type": "object"
+    },
     "PlayScene": {
       "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
       "type": "string",
@@ -2848,6 +3429,332 @@
         "route"
       ],
       "title": "PortalProps",
+      "type": "object"
+    },
+    "Pressure": {
+      "additionalProperties": false,
+      "description": "A hidden accumulator, and what makes it rise.\n\nA flat per-tick probability is memoryless: the volcano is exactly as likely\nto erupt on day one as on day thirty, nothing can foreshadow it honestly,\nand the player can never learn anything. A rising accumulator gives the\nevent a *direction*, and direction is what makes omens truthful.\n\n`variance` is why it is not simply a countdown. Without jitter, an\nattentive player could count ticks and derive the date, which turns the\nvolcano back into a scheduled event. With it, omens narrow the window\nwithout ever closing it: you can know it is close, never that it is\nTuesday.\n\nAttributes\n----------\nstart : PressureStart\n    The band the accumulator is seeded within.\nrate_per_tick : float\n    Baseline accumulation.\nvariance : float\n    Per-tick jitter, 0 to 1, as a fraction of the rate.\nthreshold : float\n    What it has to reach.\nmodifiers : tuple of PressureModifier\n    Season, weather, and game vars, accelerating or holding it off.",
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/PressureStart",
+          "default": {}
+        },
+        "ratePerTick": {
+          "default": 0.001,
+          "minimum": 0.0,
+          "title": "Ratepertick",
+          "type": "number"
+        },
+        "variance": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Variance",
+          "type": "number"
+        },
+        "threshold": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "modifiers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PressureModifier"
+          },
+          "title": "Modifiers",
+          "type": "array"
+        }
+      },
+      "title": "Pressure",
+      "type": "object"
+    },
+    "PressureEvent": {
+      "additionalProperties": false,
+      "description": "An event whose timing is uncertain, and which telegraphs itself.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    An event to inherit from.\nscope : {'region', 'route', 'location'}\n    What it affects. A hillside that comes down on one road is the same\n    machinery as a volcano, scaled down \u2014 and most of the value is there,\n    because a landslide that permanently lengthens your main road is\n    twelve lines and gives the world a memory.\nregions, route, location : ...\n    What it affects, per `scope`.\nepicenter : str or None\n    Where it visibly originates.\npressure : Pressure\n    The accumulator.\nomens : tuple of Omen\n    The player's information channel.\nimminent_at_pressure : float\n    The share of the threshold at which the last warning fires. It should\n    be *late*: the tension lives in the gap between probably and\n    certainly.\nimminent : EventPhaseBody or None\n    The unambiguous last warning. Routes close, people flee.\nonset : EventPhaseBody\n    The moment itself. One dramatic beat.\nactive_ticks : int\n    How long the world stays disrupted afterward.\nwhile_ : EventWhile or None\n    How it stays disrupted.\naftermath : tuple of Effect\n    **Permanent** change, and the thing that separates an event from a\n    weather condition. If an event leaves nothing behind it was a\n    cutscene, and should have been a scene.\nearliest_day, latest_day : int or None\n    Bound the window without scheduling it. A volcano that cannot fire\n    before day five and must fire by day thirty is still uncertain in the\n    part that matters.\nrequires : tuple of Condition or None\n    Gate it on story state, so the payoff always lands.\nmax_per_game : int\n    How many times it may fire.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "scope": {
+          "default": "region",
+          "enum": [
+            "region",
+            "route",
+            "location"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "regions": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Regions",
+          "type": "array"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location"
+        },
+        "epicenter": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Epicenter"
+        },
+        "pressure": {
+          "$ref": "#/$defs/Pressure",
+          "default": {}
+        },
+        "omens": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Omen"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Omens",
+          "type": "array"
+        },
+        "imminentAtPressure": {
+          "default": 0.9,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Imminentatpressure",
+          "type": "number"
+        },
+        "imminent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EventPhaseBody"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "onset": {
+          "$ref": "#/$defs/EventPhaseBody",
+          "default": {}
+        },
+        "activeTicks": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Activeticks",
+          "type": "integer"
+        },
+        "while": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EventWhile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "aftermath": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Effect"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Aftermath",
+          "type": "array"
+        },
+        "earliestDay": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Earliestday"
+        },
+        "latestDay": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latestday"
+        },
+        "requires": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requires"
+        },
+        "maxPerGame": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Maxpergame",
+          "type": "integer"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "PressureEvent",
+      "type": "object"
+    },
+    "PressureModifier": {
+      "additionalProperties": false,
+      "description": "Something that makes an event build faster or slower.\n\nThis is the strongest reason to simulate an event rather than script it: a\nquest to appease the mountain that multiplies the rate by 0.1 genuinely\nbuys the valley years, and a player who performs the wrong ritual has to\nlive with a four-times multiplier.\n\nAttributes\n----------\nwhen : tuple of Condition\n    When it applies.\nmult : float\n    What it multiplies the rate by.",
+      "properties": {
+        "when": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Condition"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "When"
+        },
+        "mult": {
+          "exclusiveMinimum": 0.0,
+          "title": "Mult",
+          "type": "number"
+        }
+      },
+      "required": [
+        "when",
+        "mult"
+      ],
+      "title": "PressureModifier",
+      "type": "object"
+    },
+    "PressureStart": {
+      "additionalProperties": false,
+      "description": "The band a pressure event's hidden accumulator starts within.\n\nAttributes\n----------\nmin, max : float\n    Some worlds begin closer to the edge than others, which is what makes\n    two playthroughs of the same content different stories.",
+      "properties": {
+        "min": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Max",
+          "type": "number"
+        }
+      },
+      "title": "PressureStart",
       "type": "object"
     },
     "Quest": {
@@ -3565,6 +4472,15 @@
       "title": "Season",
       "type": "object"
     },
+    "SeasonIs": {
+      "items": {
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "description": "The calendar is in one of these seasons."
+    },
     "SeasonProfile": {
       "additionalProperties": false,
       "description": "What one season is like in one climate.\n\nAttributes\n----------\ntemperature : TemperatureRange or None\n    The daily band. Without one, nothing ever freezes here.\nweights : mapping\n    Relative preference for each weather condition this season. These\n    multiply the transition matrix, so a condition weighted 0 cannot\n    happen this season however the chain gets there.",
@@ -3644,6 +4560,65 @@
         "flag"
       ],
       "title": "SetFlag",
+      "type": "object"
+    },
+    "SetLight": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override how much light the sky gives, until something clears it."
+    },
+    "SetPressure": {
+      "additionalProperties": false,
+      "description": "Nudge a pressure event toward its threshold, or back from it.\n\nAn act-two beat that puts the volcano on the brink and lets the simulation\ndeliver act three.\n\nAttributes\n----------\nevent : str\n    The pressure event.\nvalue : float\n    Its new accumulator, as a share of the threshold.",
+      "properties": {
+        "event": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Event",
+          "type": "string"
+        },
+        "value": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "event",
+        "value"
+      ],
+      "title": "SetPressure",
+      "type": "object"
+    },
+    "SetRouteTicks": {
+      "additionalProperties": false,
+      "description": "Change how long a road takes, for the rest of the game.\n\nTwelve lines of content and a detour that is genuinely longer now. This is\nhow a world gets a memory.\n\nAttributes\n----------\nroute : str\n    The road.\nticks : int\n    Its new length.",
+      "properties": {
+        "route": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Route",
+          "type": "string"
+        },
+        "ticks": {
+          "exclusiveMinimum": 0,
+          "title": "Ticks",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "route",
+        "ticks"
+      ],
+      "title": "SetRouteTicks",
       "type": "object"
     },
     "SetStat": {
@@ -3734,6 +4709,64 @@
         "value"
       ],
       "title": "SetVar",
+      "type": "object"
+    },
+    "SpawnFront": {
+      "additionalProperties": false,
+      "description": "Put a weather system on the map, without waiting for one to form.\n\nAn eruption's ash cloud is a front: it has an origin, a direction, and a\nlife, and everything downwind of it gets the weather it brings.\n\nAttributes\n----------\nfront : str\n    The kind of front.\nat : str\n    The region it forms over.\nheading : tuple of str\n    The regions it crosses. Empty walks the neighbour graph as usual.\nintensity : float or None\n    Overrides the kind's own band.\nlifespan_ticks : int or None\n    Overrides the kind's own lifespan.",
+      "properties": {
+        "front": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Front",
+          "type": "string"
+        },
+        "at": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "At",
+          "type": "string"
+        },
+        "heading": {
+          "default": [],
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Heading",
+          "type": "array"
+        },
+        "intensity": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intensity"
+        },
+        "lifespanTicks": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lifespanticks"
+        }
+      },
+      "required": [
+        "front",
+        "at"
+      ],
+      "title": "SpawnFront",
       "type": "object"
     },
     "StartCombat": {
@@ -3888,6 +4921,44 @@
       ],
       "title": "StatModifier",
       "type": "object"
+    },
+    "TellNews": {
+      "description": "Pass on something that happened somewhere the player was not.\n\nEvents fire whether or not anyone is watching, and a world where things\nonly happen in your presence is not a world. News waits in a queue and\narrives through ordinary channels \u2014 a traveller on the road, a rider, a\nrefugee, an innkeeper \u2014 which is what this effect is for.\n\nAttributes\n----------\ncount : int\n    How many items to pass on at once.\nmax_days_old : int or None\n    Ignore anything older. A rumour that has been going round for a month\n    is not news any more.",
+      "oneOf": [
+        {
+          "default": 1,
+          "minimum": 1,
+          "type": "integer",
+          "description": "Pass on something that happened somewhere the player was not.\n\nEvents fire whether or not anyone is watching, and a world where things\nonly happen in your presence is not a world. News waits in a queue and\narrives through ordinary channels \u2014 a traveller on the road, a rider, a\nrefugee, an innkeeper \u2014 which is what this effect is for.\n\nAttributes\n----------\ncount : int\n    How many items to pass on at once.\nmax_days_old : int or None\n    Ignore anything older. A rumour that has been going round for a month\n    is not news any more."
+        },
+        {
+          "additionalProperties": false,
+          "description": "May be written as the bare value shown, which is the same as the mapping form with every other field left out.",
+          "properties": {
+            "count": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Count",
+              "type": "integer"
+            },
+            "maxDaysOld": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Maxdaysold"
+            }
+          },
+          "title": "TellNews",
+          "type": "object"
+        }
+      ]
     },
     "TemperatureRange": {
       "additionalProperties": false,

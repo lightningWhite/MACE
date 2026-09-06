@@ -13,8 +13,12 @@ celestialEvents:
     announce:
       - "The sun goes out. Not dims — goes out, like a lamp under a cloth."
       - "Somewhere behind you a horse starts screaming and does not stop."
+    # `while` is a typed block of *standing* changes, not a list of effects:
+    # everything in it has to be undone when the event ends, and an effect
+    # list is one-way.
     while:
-      - {setLight: 0.05}
+      light: 0.05
+      weatherTags: [ominous]
     aftermath:
       - {setVar: {name: sawTheSwallowing, value: true}}
 
@@ -34,7 +38,7 @@ pressureEvents:
       variance: 0.4
       modifiers:
         - {when: {season: [autumn]}, mult: 1.2}
-        - {when: {var: warnedAboutWood}, mult: 1.0}   # knowing changes nothing
+        - {when: {expr: "vars.warnedAboutWood"}, mult: 1.0}  # knowing changes nothing
     omens:
       - {atPressure: 0.30, weight: 30, regions: [the-range],
          text: "The snow on the Ashfell has a grey cast to it that it did not have."}
@@ -52,7 +56,7 @@ pressureEvents:
     onset:
       announce: ["The mountain opens."]
       effects:
-        - {spawnFront: {kind: fantasy.core:ash-fall, intensity: 0.9, at: the-range,
+        - {spawnFront: {front: fantasy.core:ash-fall, intensity: 0.9, at: the-range,
                         heading: [the-range, the-northwood, the-lowlands],
                         lifespanTicks: 400}}
         - {damage: {inRegion: the-range, amount: 40, reason: "the mountain"}}

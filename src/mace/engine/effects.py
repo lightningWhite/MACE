@@ -25,13 +25,23 @@ from mace.engine.events import (
     InventoryChanged,
     LocationRevealed,
     Moved,
+    Narrated,
+    NewsHeard,
     QuestUpdated,
+    RouteChanged,
     StatChanged,
     Unsupported,
     VariableChanged,
 )
 from mace.engine.expr import Expression
-from mace.engine.state import EntityState, Modifier, QuestState, QuestStatus
+from mace.engine.state import (
+    EntityState,
+    FrontState,
+    Modifier,
+    QuestState,
+    QuestStatus,
+    RouteState,
+)
 from mace.engine.stats import pool_bounds
 from mace.model import Effect, Quest
 from mace.model.effects import (
@@ -40,18 +50,27 @@ from mace.model.effects import (
     AdvanceTime,
     ApplyModifier,
     AttachAlly,
+    CloseRoute,
+    DealDamage,
     DismissAlly,
+    FireEvent,
     ItemTransfer,
     Move,
     NoArguments,
+    OpenRoute,
     PlayScene,
     Rest,
     Reveal,
     SetDisposition,
     SetFlag,
+    SetLight,
+    SetPressure,
+    SetRouteTicks,
     SetStat,
     SetVar,
+    SpawnFront,
     StartCombat,
+    TellNews,
     TransferContents,
 )
 
@@ -89,6 +108,12 @@ class EffectOutcome:
         A rest to carry out once the time has passed. After, not before: a
         player who sits out a blizzard in the open should find it has not
         helped very much.
+    fire : list of str
+        World events an effect asked to happen now. Requested rather than
+        done here for the same reason as time: firing one runs its own
+        announcements and effects, and that is the step runner's loop.
+    pressure : list of tuple
+        Pressure events an effect nudged, and where to.
     """
 
     events: list[Event] = field(default_factory=list)
@@ -97,6 +122,8 @@ class EffectOutcome:
     restart: bool = False
     elapsed: int = 0
     rest: Rest | None = None
+    fire: list[str] = field(default_factory=list)
+    pressure: list[tuple[str, float]] = field(default_factory=list)
 
 
 def apply_all(
@@ -257,6 +284,61 @@ def apply(
             return
         outcome.elapsed += payload.ticks
         outcome.rest = payload
+        return
+
+    if isinstance(payload, CloseRoute | OpenRoute):
+        route = _reference(payload.route, "routes", context)
+        road = state.routes.setdefault(route, RouteState(route=route))
+        if isinstance(payload, CloseRoute):
+            road.closed = True
+            road.permanent = payload.permanent
+            road.reason = payload.reason
+        else:
+            road.closed = False
+            road.permanent = False
+            road.reason = None
+        outcome.events.append(
+            RouteChanged(
+                route, closed=road.closed, ticks=road.ticks, reason=road.reason
+            )
+        )
+        return
+
+    if isinstance(payload, SetRouteTicks):
+        route = _reference(payload.route, "routes", context)
+        road = state.routes.setdefault(route, RouteState(route=route))
+        road.ticks = payload.ticks
+        outcome.events.append(
+            RouteChanged(
+                route, closed=road.closed, ticks=road.ticks, reason=road.reason
+            )
+        )
+        return
+
+    if isinstance(payload, SetLight):
+        state.light_override = payload.light
+        return
+
+    if isinstance(payload, SpawnFront):
+        _spawn_front(payload, context)
+        return
+
+    if isinstance(payload, DealDamage):
+        _damage(payload, context, outcome)
+        return
+
+    if isinstance(payload, FireEvent):
+        outcome.fire.append(_event_reference(payload.event, context))
+        return
+
+    if isinstance(payload, SetPressure):
+        outcome.pressure.append(
+            (_event_reference(payload.event, context), payload.value)
+        )
+        return
+
+    if isinstance(payload, TellNews):
+        _tell_news(payload, context, outcome)
         return
 
     if isinstance(payload, PlayScene):
@@ -554,3 +636,155 @@ def _evaluate(expression: Expression, context: RuleContext, where: str) -> objec
         return expression.evaluate(context.expression_context())
     except ExprEvaluationError as error:
         raise RuleError(f"{where}: {error}") from error
+
+
+def _spawn_front(payload: SpawnFront, context: RuleContext) -> None:
+    """Put a weather front on the map because something made one.
+
+    An eruption's ash cloud is a front like any other: it has an origin, a
+    heading, and a life, and everything downwind gets the weather it brings.
+
+    Parameters
+    ----------
+    payload : SpawnFront
+        What to spawn.
+    context : RuleContext
+        The playthrough.
+    """
+    from mace.engine.world import fronts, prepare  # noqa: PLC0415
+
+    state = context.state
+    kind = _reference(payload.front, "weatherFronts", context)
+    origin = _reference(payload.at, "regions", context)
+    definition = context.library.pack(kind.split(":", 1)[0]).weather_fronts.get(
+        kind.split(":", 1)[1]
+    )
+    if definition is None:
+        return
+
+    known = prepare(context.library)
+    heading = tuple(
+        _reference(name, "regions", context) for name in payload.heading
+    ) or fronts.plot(
+        context.library,
+        state.rng.stream(fronts.FRONT_STREAM),
+        origin,
+        definition,
+        known,
+    )
+
+    low, high = definition.intensity_range
+    state.fronts_spawned += 1
+    front = FrontState(
+        id=f"{kind.split(':', 1)[1]}#{state.fronts_spawned}",
+        kind=kind,
+        heading=heading,
+        intensity=(
+            payload.intensity
+            if payload.intensity is not None
+            else low + state.rng.stream(fronts.FRONT_STREAM).fraction() * (high - low)
+        ),
+        born_at_tick=state.tick,
+        expires_at_tick=state.tick
+        + (payload.lifespan_ticks or definition.lifespan_ticks),
+        hops_at_tick=state.tick + definition.speed_ticks,
+    )
+    state.fronts.append(front)
+
+
+def _damage(payload: DealDamage, context: RuleContext, outcome: EffectOutcome) -> None:
+    """Hurt whoever an effect said to hurt.
+
+    Parameters
+    ----------
+    payload : DealDamage
+        Who, and how much.
+    context : RuleContext
+        The playthrough.
+    outcome : EffectOutcome
+        Accumulator.
+    """
+    from mace.engine.world import region_of  # noqa: PLC0415
+
+    state = context.state
+    pool = context.game.rules.vital_pool
+    targets: list[EntityState] = []
+
+    if payload.actor is not None:
+        targets.append(_actor(payload.actor, context))
+    elif payload.in_region is not None:
+        where = region_of(
+            context.library, state.pack, context.here(), context.game.world.start_region
+        )
+        if where == _reference(payload.in_region, "regions", context):
+            targets.append(state.protagonist)
+    else:
+        targets.append(state.protagonist)
+
+    for target in targets:
+        _write_stat(target, pool, -payload.amount, context, outcome, payload.reason)
+
+
+def _event_reference(reference: str, context: RuleContext) -> str:
+    """Qualify a world-event reference, whichever kind of event it names.
+
+    Parameters
+    ----------
+    reference : str
+        As the author wrote it.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    str
+        The qualified id.
+
+    Raises
+    ------
+    RuleError
+        If it names neither kind of event.
+    """
+    for collection in ("celestialEvents", "pressureEvents"):
+        try:
+            return context.qualify(reference, collection)
+        except ContentError:
+            continue
+    raise RuleError(f"`{reference}` is not a world event")
+
+
+def _tell_news(payload: TellNews, context: RuleContext, outcome: EffectOutcome) -> None:
+    """Pass on what the queue is holding, oldest first.
+
+    News carries its age deliberately. A rumour three days old and two regions
+    away arriving imperfect is free atmosphere, and it makes the player's
+    information feel like a medieval world's rather than like a notification.
+
+    Parameters
+    ----------
+    payload : TellNews
+        How much to pass on, and how stale is too stale.
+    context : RuleContext
+        The playthrough.
+    outcome : EffectOutcome
+        Accumulator.
+    """
+    state = context.state
+    now = context.clock.day(state.tick)
+    told = 0
+
+    for item in state.news:
+        if told >= payload.count:
+            break
+        if item.told:
+            continue
+        age = now - context.clock.day(item.tick)
+        if payload.max_days_old is not None and age > payload.max_days_old:
+            item.told = True
+            continue
+        item.told = True
+        told += 1
+        outcome.events.append(Narrated(item.text))
+        outcome.events.append(
+            NewsHeard(event=item.event, days_old=age, region=item.region)
+        )

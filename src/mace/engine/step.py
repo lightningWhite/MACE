@@ -42,6 +42,7 @@ from mace.engine.events import (
     TravelLeg,
     Unsupported,
     WeatherChanged,
+    WorldEvent,
     WorldStatus,
 )
 from mace.engine.rng import RandomSource
@@ -57,6 +58,7 @@ from mace.engine.state import (
 )
 from mace.engine.stats import pool_bounds, starting_pools
 from mace.engine.world import Clock, advance, region_of
+from mace.engine.world import events as world_events
 from mace.model import (
     Calendar,
     Entity,
@@ -343,8 +345,9 @@ def _travel(destination: str, context: RuleContext, events: list[Event]) -> bool
         events.append(Moved(origin, destination, None, 1))
         return _arrive(destination, context, events)
 
-    _refuse_if_closed(context)
     route_id = context.qualify(exit_taken.route or route.id, "routes")
+    _refuse_if_shut(context, route_id)
+    _refuse_if_closed(context)
 
     line = _first_matching(route.description, context)
     if line is not None:
@@ -382,6 +385,53 @@ def _refuse_if_closed(context: RuleContext) -> None:
     )
 
 
+def _refuse_if_shut(context: RuleContext, route_id: str) -> None:
+    """Stop a journey down a road something has closed.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    route_id : str
+        Qualified route id.
+
+    Raises
+    ------
+    RuleError
+        If the road is shut.
+    """
+    road = context.state.routes.get(route_id)
+    if road is None or not road.closed:
+        return
+    raise RuleError(road.reason or "that road is closed")
+
+
+def _length(route: Route, context: RuleContext) -> int:
+    """How long a road is now, which is not always how it was written.
+
+    Parameters
+    ----------
+    route : Route
+        The road.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    int
+        Its length in route ticks.
+    """
+    pack_id = context.state.pack
+    try:
+        route_id = context.library.resolve(route.id, "routes", within=pack_id)
+    except ContentError:
+        return route.ticks
+    road = context.state.routes.get(route_id)
+    if road is not None and road.ticks is not None:
+        return road.ticks
+    return route.ticks
+
+
 def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
     """Resolve a journey leg by leg until it ends or something stops it.
 
@@ -409,6 +459,7 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
     journey = state.journey
     assert journey is not None
 
+    length = _length(route, context)
     stops = _waypoints(route, journey, context)
     began_at = state.tick
     leg = int(journey.progress)
@@ -417,20 +468,20 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
         _interrupt(route, context, events, "the way is still barred")
         return False
 
-    while journey.progress < route.ticks:
+    while journey.progress < length:
         leg_before = int(journey.progress)
         _tick(context, events)
         journey.progress += 1.0 / max(0.01, context.weather().travel_multiplier)
 
         reached = _next_waypoint(stops, journey)
-        crossed = min(int(journey.progress), route.ticks)
+        crossed = min(int(journey.progress), length)
         if crossed > leg or reached is not None:
             leg = crossed
             events.append(
                 TravelLeg(
                     route=journey.route,
-                    leg=min(leg, route.ticks),
-                    of=route.ticks,
+                    leg=min(leg, length),
+                    of=length,
                     waypoint=reached[0] if reached is not None else None,
                     text=_leg_line(route, context),
                 )
@@ -569,7 +620,7 @@ def _interrupt(
             route=journey.route,
             at=where,
             destination=journey.destination,
-            remaining=round(route.ticks - journey.progress, 3),
+            remaining=round(_length(route, context) - journey.progress, 3),
             reason=reason,
         )
     )
@@ -623,7 +674,7 @@ def _resume(context: RuleContext, events: list[Event], *, onward: bool) -> bool:
             route=journey.route,
             origin=journey.destination,
             destination=journey.origin,
-            progress=route.ticks - journey.progress,
+            progress=_length(route, context) - journey.progress,
             passed=behind,
         )
     return _walk(route, context, events)
@@ -1039,6 +1090,12 @@ def _settle(outcome: EffectOutcome, context: RuleContext, events: list[Event]) -
         _end(context, outcome.ended, "the story ended", events)
         return True
 
+    for event_id, share in outcome.pressure:
+        world_events.set_pressure(context, event_id, share)
+    for event_id in outcome.fire:
+        for happening in world_events.fire(context, event_id):
+            _happened(context, happening, events)
+
     if outcome.elapsed:
         _advance(context, outcome.elapsed, events)
     if outcome.rest is not None:
@@ -1207,7 +1264,7 @@ def _status(context: RuleContext) -> WorldStatus:
         temperature=(
             None if observed.temperature is None else round(observed.temperature, 2)
         ),
-        light=round(clock.light(state.tick) * observed.visibility, 4),
+        light=round(context.light(), 4),
         indoors=observed.sheltered,
         exposure=round(state.protagonist.exposure, 4),
     )
@@ -1741,6 +1798,7 @@ def _sync_weather(context: RuleContext, events: list[Event]) -> None:
     """
     state = context.state
     changes = advance(context.library, state, context.clock, state.pack)
+    _world_events(context, events, changes.ticks)
     _expire_modifiers(context)
     environment.apply(context, events, ticks=changes.ticks)
 
@@ -1788,6 +1846,84 @@ def _sync_weather(context: RuleContext, events: list[Event]) -> None:
             text=line.text if line is not None else None,
         )
     )
+
+
+def _world_events(context: RuleContext, events: list[Event], ticks: int) -> None:
+    """Move every world event along, and surface what the player can perceive.
+
+    What is narrated is deliberately narrower than what happened. An event that
+    fires two regions away does not interrupt the player; it goes into the news
+    queue and arrives later, garbled, through somebody's mouth. An omen is
+    ordinary narration and never a system message, because a pressure bar would
+    destroy the only thing pressure events are for.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    ticks : int
+        How many ticks just passed. Zero still lets a fired event resolve, but
+        nothing accumulates.
+    """
+    for happening in world_events.step(context, ticks):
+        _happened(context, happening, events)
+
+
+def _happened(
+    context: RuleContext, happening: world_events.Happening, events: list[Event]
+) -> None:
+    """Narrate one beat of a world event, or queue it as news.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    happening : Happening
+        What the event did.
+    events : list of Event
+        Accumulator.
+    """
+    events.append(
+        WorldEvent(
+            event=happening.event,
+            phase=happening.phase,
+            region=happening.region,
+            visible=happening.visible,
+        )
+    )
+
+    lines = [_text(line) for line in happening.announce]
+    if happening.visible:
+        for line in lines:
+            events.append(Narrated(line))
+    elif happening.phase == "onset" and lines:
+        # It happened whether or not anyone was watching. A world where things
+        # only happen in your presence is not a world.
+        world_events.queue_news(context, happening, lines[0])
+
+    if not happening.effects:
+        return
+    outcome = apply_all(happening.effects, context, source=happening.event)
+    events.extend(outcome.events)
+    _settle(outcome, context, events)
+
+
+def _text(line: Any) -> str:
+    """The text of an announcement line, however the author wrote it.
+
+    Parameters
+    ----------
+    line : SayLine or str
+        The line.
+
+    Returns
+    -------
+    str
+        Its text.
+    """
+    return str(getattr(line, "text", line))
 
 
 def _read_the_sky(context: RuleContext, region: str, events: list[Event]) -> None:

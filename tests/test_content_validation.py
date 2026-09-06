@@ -412,6 +412,10 @@ def reference_fields() -> list[tuple[str, str, bool]]:
 #: because no model covers that collection yet. Each disappears when its phase
 #: lands — see docs/12-roadmap.md.
 UNTARGETED_REFERENCES = {
+    # These two name an event of *either* kind, and a `Reference` marker
+    # only points at one collection. `_check_event_references` covers them.
+    ("FireEvent", "event"),
+    ("SetPressure", "event"),
     ("CombatAssignment", "profile"),  # phase 3 — combat profiles
     ("ItemProps", "moves"),  # phase 3 — moves
     ("Location", "biome"),  # phase 2 — biomes

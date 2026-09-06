@@ -16,12 +16,14 @@ from mace.content.errors import ContentError
 from mace.content.ids import qualify, split
 from mace.model import (
     Calendar,
+    CelestialEvent,
     Climate,
     EncounterTable,
     Entity,
     Game,
     Location,
     Pack,
+    PressureEvent,
     Quest,
     Region,
     Route,
@@ -38,10 +40,12 @@ __all__ = ["COLLECTION_MODELS", "SINGULAR", "LoadedPack", "Library"]
 #: a field on `LoadedPack`.
 COLLECTION_MODELS: dict[str, type[ContentModel]] = {
     "calendars": Calendar,
+    "celestialEvents": CelestialEvent,
     "climates": Climate,
     "encounterTables": EncounterTable,
     "entities": Entity,
     "locations": Location,
+    "pressureEvents": PressureEvent,
     "regions": Region,
     "routes": Route,
     "weatherConditions": WeatherCondition,
@@ -56,10 +60,12 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
 #: undermines everything else the message is trying to do.
 SINGULAR: dict[str, str] = {
     "calendars": "calendar",
+    "celestialEvents": "celestial event",
     "climates": "climate",
     "encounterTables": "encounter table",
     "entities": "entity",
     "locations": "location",
+    "pressureEvents": "pressure event",
     "regions": "region",
     "routes": "route",
     "weatherConditions": "weather condition",
@@ -73,7 +79,9 @@ SINGULAR: dict[str, str] = {
 #: `weatherConditions:` in YAML stays camelCase and the attribute stays
 #: snake_case like every other attribute in the codebase.
 _FIELDS: dict[str, str] = {
+    "celestialEvents": "celestial_events",
     "encounterTables": "encounter_tables",
+    "pressureEvents": "pressure_events",
     "weatherConditions": "weather_conditions",
     "weatherFronts": "weather_fronts",
 }
@@ -89,8 +97,8 @@ class LoadedPack:
         The pack's `pack.yml`.
     root : Path
         The directory it was read from.
-    calendars, climates, encounterTables, entities, locations, regions, routes,
-    scenes, quests,
+    calendars, celestialEvents, climates, encounterTables, entities, locations,
+    pressureEvents, regions, routes, scenes, quests,
     weatherConditions, weatherFronts : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
@@ -103,10 +111,12 @@ class LoadedPack:
     manifest: Pack
     root: Path
     calendars: Mapping[str, Calendar]
+    celestial_events: Mapping[str, CelestialEvent]
     climates: Mapping[str, Climate]
     encounter_tables: Mapping[str, EncounterTable]
     entities: Mapping[str, Entity]
     locations: Mapping[str, Location]
+    pressure_events: Mapping[str, PressureEvent]
     regions: Mapping[str, Region]
     routes: Mapping[str, Route]
     scenes: Mapping[str, Scene]
