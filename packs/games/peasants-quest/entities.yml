@@ -1,0 +1,77 @@
+# One Entity type covers the player, the people, and the things. `extends`
+# takes the shared work from fantasy.core and leaves only what is ours.
+entities:
+
+  - id: letholin
+    kind: actor
+    playable: true
+    name: "Letholin"
+    description: "Twenty-five years of barley have left you stronger than you look."
+    tags: [human, peasant]
+    stats:
+      hitpoints: {base: 50, max: 50}
+      stamina:   {base: 40, max: 40, growth: normal}
+      strength:  {base: 32, customizable: true, growth: slow}
+      speed:     {base: 41, customizable: true, growth: slow}
+      endurance: {base: 30, customizable: true, growth: normal}
+      charisma:  {base: 22, customizable: true}
+      stealth:   {base: 18, customizable: true}
+    inventory:
+      - {item: fantasy.core:gold, qty: 4}
+      - {item: fantasy.core:bread, qty: 2}
+      - {item: reaping-hook, qty: 1}
+    equipment:
+      mainHand: reaping-hook
+    skills:
+      reaping-hook: 15
+
+  - id: old-hallam
+    extends: fantasy.core:villager
+    name: "Old Hallam"
+    description: "Your friend, your employer, and the reason you stayed."
+    scenes: [say-goodbye-to-hallam]
+
+  - id: peddler
+    extends: fantasy.core:travelling-merchant
+    name: "The Peddler"
+    description: "A stooped man with a pack twice his size and no visible curiosity about where he is."
+    inventory:
+      - {item: fantasy.core:gold, qty: 30}
+      - {item: fantasy.core:bread, qty: 6}
+      - {item: fantasy.core:rope, qty: 2}
+    scenes: [talk-to-peddler, buy-bread, buy-rope, sell-rope, sell-reaping-hook]
+
+  - id: gorm
+    extends: fantasy.core:bridge-troll
+    name: "Gorm"
+    description: "It has moss in its hair and the patient look of something that gets paid eventually."
+    tags: [$append, named]
+    stats:
+      strength: {base: 85}
+    inventory:
+      - {item: fantasy.core:gold, qty: 120}
+    scenes: [talk-to-gorm]
+
+  - id: captain-orin
+    extends: fantasy.core:soldier
+    name: "Captain Orin"
+    description: "He looks at your hands before he looks at your face."
+    scenes: [report-to-orin]
+
+  - id: reaping-hook
+    kind: item
+    name: "Reaping Hook"
+    description: "Not a weapon. It will have to do."
+    tags: [weapon, improvised]
+    item:
+      weight: 2
+      equipSlot: mainHand
+      baseValue: 3
+      damage: {min: 2, max: 6, type: slash}
+
+  - id: kings-token
+    kind: item
+    name: "The King's Token"
+    description: "A lead disc stamped with a crown. Proof you answered the summons."
+    tags: [quest]
+    item: {weight: 0, stackable: false, baseValue: 0}

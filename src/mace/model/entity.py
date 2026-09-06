@@ -206,8 +206,10 @@ class ItemProps(ContentModel):
         Combat moves this item grants its wielder.
     use : ItemUse or None
         What using it from the inventory does.
-    value : float or None
-        Base trade value, the anchor a market prices from.
+    base_value : float or None
+        The price anchor. `simple` economies use it as the price; `market`
+        economies price around it. Same name as a good's, because it is the
+        same idea.
     """
 
     weight: float | None = None
@@ -217,7 +219,7 @@ class ItemProps(ContentModel):
     armor: float | None = None
     moves: tuple[Ref, ...] = ()
     use: ItemUse | None = None
-    value: float | None = None
+    base_value: float | None = None
 
 
 class ContainerProps(ContentModel):

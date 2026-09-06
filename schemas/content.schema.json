@@ -1734,7 +1734,7 @@
     },
     "ItemProps": {
       "additionalProperties": false,
-      "description": "The `kind: item` block.\n\nAttributes\n----------\nweight : float or None\n    Carried weight.\nstackable : bool or None\n    Whether copies collapse into one inventory entry.\nequip_slot : str or None\n    Which slot it occupies when equipped.\ndamage : Damage or None\n    For weapons.\narmor : float or None\n    Damage reduction when worn.\nmoves : tuple of str\n    Combat moves this item grants its wielder.\nuse : ItemUse or None\n    What using it from the inventory does.\nvalue : float or None\n    Base trade value, the anchor a market prices from.",
+      "description": "The `kind: item` block.\n\nAttributes\n----------\nweight : float or None\n    Carried weight.\nstackable : bool or None\n    Whether copies collapse into one inventory entry.\nequip_slot : str or None\n    Which slot it occupies when equipped.\ndamage : Damage or None\n    For weapons.\narmor : float or None\n    Damage reduction when worn.\nmoves : tuple of str\n    Combat moves this item grants its wielder.\nuse : ItemUse or None\n    What using it from the inventory does.\nbase_value : float or None\n    The price anchor. `simple` economies use it as the price; `market`\n    economies price around it. Same name as a good's, because it is the\n    same idea.",
       "properties": {
         "weight": {
           "anyOf": [
@@ -1816,7 +1816,7 @@
           ],
           "default": null
         },
-        "value": {
+        "baseValue": {
           "anyOf": [
             {
               "type": "number"
@@ -1826,7 +1826,7 @@
             }
           ],
           "default": null,
-          "title": "Value"
+          "title": "Basevalue"
         }
       },
       "title": "ItemProps",

@@ -80,7 +80,7 @@ The universal noun. Files under `entities/`.
 | `armor` | number? | Damage reduction. |
 | `moves` | [Ref]? | Combat moves this weapon grants its wielder. |
 | `use` | {effects: [Effect], consumed?: bool}? | What happens when used from inventory. |
-| `value` | number? | Base trade value. |
+| `baseValue` | number? | The price anchor. A `simple` economy uses it as the price; a `market` one prices around it. |
 
 ### EnvResponse
 

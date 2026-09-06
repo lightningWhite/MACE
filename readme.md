@@ -138,7 +138,14 @@ Deactivate with `deactivate` when you're done.
 Requires **Python 3.12+**. `black`, `ruff`, and `mypy` run on commit; `pytest`
 runs on push.
 
-**Checking content.** The first working command. It loads every pack under a
+**Playing.** The first playable game pack, and the first working commands:
+
+```bash
+mace play packs/ --pack peasants-quest
+mace play packs/ --pack peasants-quest --seed autumn   # replays identically
+```
+
+**Checking content.**  It loads every pack under a
 directory, resolves inheritance and references, and reports what's wrong at
 three severities — errors break the game, warnings are almost certainly
 mistakes, notes are worth a look:

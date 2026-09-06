@@ -596,6 +596,12 @@ def _check_reachable_scenes(library: Library, pack: LoadedPack) -> Iterator[Prob
     Problem
         One warning per unreachable scene.
     """
+    if not pack.manifest.is_game:
+        # A library pack's scenes are meant to be reached from packs that
+        # depend on it, which this pack cannot see. Warning about them would
+        # make every library noisy and teach people to ignore the warning.
+        return
+
     reached: set[str] = set()
     for _collection, _local_id, definition in _each_definition(pack):
         reached.update(_scene_targets(library, pack, definition))

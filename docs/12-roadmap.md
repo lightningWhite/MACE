@@ -18,7 +18,7 @@ Design settled and written down. This document set.
 
 ---
 
-## Phase 1 — The content pipeline *(current)*
+## Phase 1 — The content pipeline *(done)*
 
 **Playable at the end:** a linear, three-location game you can walk through in a
 terminal, with scenes, choices, items, and win/lose.
@@ -31,14 +31,18 @@ terminal, with scenes, choices, items, and win/lose.
 - [x] Structured condition and effect evaluation
 - [x] `GameState`, `Action`, `Event`, and the `step()` function
 - [x] Seeded named RNG streams
-- [ ] Minimal CLI player: `mace play <pack>`
-- [ ] First golden replay test
-- [ ] Items carry `baseValue`; `mace.core` buy/sell scenes (`economy: simple`)
-- [ ] `packs/games/peasants-quest` — the first three locations
+- [x] Minimal CLI player: `mace play <pack>`
+- [x] First golden replay test
+- [x] Items carry `baseValue`; authored buy/sell scenes (`economy: simple`)
+      *A **parameterised** shop scene needs the merchant block to exist, so it
+      moves to phase 5 with the rest of the economy. What phase 1 gives is a
+      price anchor on every item and trades written as ordinary structured
+      effects — enough for a merchant to be worth talking to.*
+- [x] `packs/games/peasants-quest` — four locations and a winnable road north
 
 ---
 
-## Phase 2 — A world that moves
+## Phase 2 — A world that moves *(current)*
 
 **Playable at the end:** the same game, but journeys take days, storms roll
 through, and the road between towns is dangerous.

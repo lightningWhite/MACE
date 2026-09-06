@@ -1,0 +1,28 @@
+# Six ticks is three hours at thirty minutes a tick, so a journey that starts
+# at dusk finishes in the dark — and that will matter once weather does.
+routes:
+
+  - id: north-road
+    name: "The North Road"
+    from: fenmoor
+    to: troll-bridge
+    ticks: 6
+    dangerLevel: 5
+    description:
+      - "You set out on the rutted track north, under oaks that drip on you for company."
+
+  - id: bridge-road
+    name: "The Castle Road"
+    from: troll-bridge
+    to: hagans-castle
+    ticks: 6
+    dangerLevel: 4
+    description:
+      - "The road climbs, and the barley country falls away behind you."
+
+  - id: south-track
+    name: "The Trader's Track"
+    from: fenmoor
+    to: traders-post
+    ticks: 2
+    dangerLevel: 1

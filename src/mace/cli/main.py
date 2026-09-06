@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from mace import __version__
+from mace.cli.play import play
 from mace.content import Severity, validate_paths
 
 
@@ -49,7 +50,46 @@ def build_parser() -> argparse.ArgumentParser:
         help="report only what breaks the game, hiding warnings and notes",
     )
     validate.set_defaults(run=run_validate)
+
+    player = commands.add_parser(
+        "play",
+        help="play a game pack in the terminal",
+        description=(
+            "Load the packs under the given paths and play one of them. The "
+            "same seed and the same choices replay identically."
+        ),
+    )
+    player.add_argument(
+        "paths",
+        nargs="*",
+        type=Path,
+        default=[Path("packs")],
+        help="pack directories to load (default: packs/)",
+    )
+    player.add_argument("--pack", help="which game to play, if more than one loaded")
+    player.add_argument(
+        "--seed",
+        default="mace",
+        help="the session seed; the same seed replays the same world",
+    )
+    player.set_defaults(run=run_play)
     return parser
+
+
+def run_play(options: argparse.Namespace) -> int:
+    """Run `mace play`.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    return play(options.paths, pack_id=options.pack, seed=options.seed)
 
 
 def run_validate(options: argparse.Namespace) -> int:
@@ -90,8 +130,6 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if not hasattr(options, "run"):
         parser.print_help()
-        # `play` lands with the engine, later in phase 1. See docs/12-roadmap.md.
-        print("\nNo game to play yet — `mace validate` is what works.", file=sys.stderr)
         return 0
 
     exit_code: int = options.run(options)

@@ -88,14 +88,14 @@ entities:
       equipSlot: mainHand
       damage: {min: 2, max: 6, type: slash}
       moves: [fantasy.core:wild-swing, fantasy.core:desperate-hack]
-      value: 3
+      baseValue: 3
 
   - id: kings-token
     kind: item
     name: "The King's Token"
     description: "A lead disc stamped with a crown. Proof you answered the summons."
     tags: [quest]
-    item: {weight: 0, stackable: false, value: 0}
+    item: {weight: 0, stackable: false, baseValue: 0}
 
   # ── A fixture and a container ─────────────────────────────────────────────
   - id: fenmoor-well

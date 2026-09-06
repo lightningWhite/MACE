@@ -8,7 +8,7 @@ protagonist who cannot be played.
 from pathlib import Path
 from typing import Any
 
-from conftest import write_pack
+from conftest import game_pack, write_pack
 from mace.content import Severity, load_library, validate_library, validate_paths
 from mace.content.validation import references
 from mace.model import Entity, Scene
@@ -204,17 +204,19 @@ def test_a_load_failure_is_reported_rather_than_raised(tmp_path: Path) -> None:
 
 
 def test_an_unreachable_scene_is_a_warning(tmp_path: Path) -> None:
-    write_pack(
+    """Only in a game pack — a library's scenes are reached from elsewhere."""
+    game_pack(
         tmp_path,
-        "orphan",
-        files={
-            "a.yml": {
-                "scenes": [
-                    {"id": "reachable", "say": ["Hello."]},
-                    {"id": "lonely", "say": ["Nobody comes here."]},
-                ],
-                "locations": [{"id": "home", "name": "Home", "onArrive": "reachable"}],
-            }
+        pack_id="orphan",
+        world={
+            "scenes": [
+                {"id": "reachable", "say": ["Hello."]},
+                {"id": "lonely", "say": ["Nobody comes here."]},
+            ],
+            "locations": [
+                {"id": "home", "name": "Home", "onArrive": "reachable"},
+                {"id": "castle", "name": "The Castle"},
+            ],
         },
     )
     report = validate_paths(tmp_path / "orphan")
@@ -224,12 +226,10 @@ def test_an_unreachable_scene_is_a_warning(tmp_path: Path) -> None:
 
 
 def test_a_scene_reaching_only_itself_is_still_unreachable(tmp_path: Path) -> None:
-    write_pack(
+    game_pack(
         tmp_path,
-        "selfish",
-        files={
-            "a.yml": {"scenes": [{"id": "loop", "say": ["Again."], "else": "loop"}]}
-        },
+        pack_id="selfish",
+        world={"scenes": [{"id": "loop", "say": ["Again."], "else": "loop"}]},
     )
     report = validate_paths(tmp_path / "selfish")
     assert [p for p in report.warnings if p.object_id == "loop"]

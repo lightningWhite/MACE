@@ -1,0 +1,13 @@
+id: fantasy.core
+name: Core Fantasy Library
+version: 0.1.0
+kind: library
+maceVersion: "^0.1"
+authors: ["lightningWhite"]
+license: CC-BY-4.0
+description: >
+  Trolls, bread, gold, and the other furniture of a medieval-fantasy world.
+  The first proof that a game pack can be mostly other people's work.
+tags: [fantasy, medieval]
+requires:
+  - {id: mace.core, version: "^0.1"}

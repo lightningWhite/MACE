@@ -1,0 +1,12 @@
+id: mace.core
+name: MACE Core
+version: 0.1.0
+kind: library
+maceVersion: "^0.1"
+authors: ["lightningWhite"]
+license: CC-BY-4.0
+description: >
+  The genre-neutral floor every other pack stands on. Nothing here is fantasy,
+  science fiction, or anything else — a rest, a wait, and a moment where
+  nothing happens are the same in every world.
+tags: [core, genre-neutral]

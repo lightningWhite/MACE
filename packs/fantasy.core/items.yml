@@ -1,0 +1,56 @@
+# `baseValue` is the price anchor. Under `economy: simple` it is the price;
+# under `economy: market` a market prices around it. See docs/08-economy.md.
+entities:
+
+  - id: gold
+    kind: item
+    name: "Gold"
+    description: "Small, heavy, and never quite enough."
+    tags: [currency]
+    item: {weight: 0, stackable: true, baseValue: 1}
+
+  - id: bread
+    kind: item
+    name: "Bread"
+    description: "Dense, dark, and a day past its best."
+    tags: [food]
+    item:
+      weight: 1
+      stackable: true
+      baseValue: 2
+      use:
+        consumed: true
+        effects:
+          - {adjustStat: {actor: player, stat: stamina, delta: 6, reason: "bread"}}
+
+  - id: rope
+    kind: item
+    name: "Rope"
+    description: "Forty feet of it, coiled and only slightly frayed."
+    tags: [tool]
+    item: {weight: 3, stackable: true, baseValue: 6}
+
+  - id: dagger
+    kind: item
+    name: "Dagger"
+    description: "A working knife that has been sharpened into a weapon."
+    tags: [weapon]
+    item:
+      weight: 1
+      equipSlot: mainHand
+      baseValue: 12
+      damage: {min: 2, max: 5, type: pierce}
+
+  - id: healing-draught
+    kind: item
+    name: "Healing Draught"
+    description: "Cloudy, bitter, and worth every coin when it matters."
+    tags: [potion]
+    item:
+      weight: 1
+      baseValue: 25
+      use:
+        consumed: true
+        effects:
+          - {adjustStat: {actor: player, stat: hitpoints, delta: 15,
+                          reason: "healing draught"}}

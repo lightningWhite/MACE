@@ -1,0 +1,450 @@
+{
+  "name": "bread-toll",
+  "summary": "The short way north: pay the troll in bread and answer the muster on day one.",
+  "pack": "peasants-quest",
+  "seed": "autumn",
+  "packs": {
+    "mace.core": "0.1.0",
+    "fantasy.core": "0.1.0",
+    "peasants-quest": "0.1.0"
+  },
+  "actions": [
+    {
+      "kind": "choose",
+      "option": 0
+    },
+    {
+      "kind": "choose",
+      "option": 1
+    },
+    {
+      "kind": "choose",
+      "option": 1
+    },
+    {
+      "kind": "choose",
+      "option": 2
+    },
+    {
+      "kind": "choose",
+      "option": 3
+    },
+    {
+      "kind": "choose",
+      "option": 0
+    }
+  ],
+  "stream": [
+    {
+      "action": null,
+      "events": [
+        {
+          "kind": "narrate",
+          "text": "You are a peasant. You have worked your old friend's farm for twenty-five years.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "One morning, as you cut barley in the low field, a host of the king's guard rides through the standing crop as though it were water.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "They tell you the king has called every man between twenty-two and thirty-five to the Dark Mountain. You have seven days to reach Hagan's Castle.",
+          "pause": true
+        },
+        {
+          "kind": "moved",
+          "from": null,
+          "to": "peasants-quest:fenmoor",
+          "route": null,
+          "ticks": 0
+        },
+        {
+          "kind": "narrate",
+          "text": "Fenmoor",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "Six houses, a well, and more geese than people. The barley stands unfinished in the low field.",
+          "pause": false
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:fenmoor-arrival"
+        },
+        {
+          "kind": "narrate",
+          "text": "The geese scatter. Nobody else looks up.",
+          "pause": false
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Say goodbye to Hallam",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to Trader's Post",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to The Old Bridge",
+              "available": true,
+              "hint": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "option": 0
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:say-goodbye-to-hallam"
+        },
+        {
+          "kind": "narrate",
+          "text": "He doesn't say much. He gives you bread, and holds on a moment too long.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"The Trader's Post is south,\" he says. \"If you've coin, spend it before the road does.\"",
+          "pause": false
+        },
+        {
+          "kind": "inventory.changed",
+          "actor": "peasants-quest:letholin",
+          "item": "fantasy.core:bread",
+          "delta": 2,
+          "quantity": 4
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:old-hallam",
+          "flag": "has-spoken",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Travel to Trader's Post",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to The Old Bridge",
+              "available": true,
+              "hint": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "option": 1
+      },
+      "events": [
+        {
+          "kind": "world.time",
+          "tick": 26,
+          "day": 1,
+          "dayPart": "day",
+          "elapsed": 6
+        },
+        {
+          "kind": "moved",
+          "from": "peasants-quest:fenmoor",
+          "to": "peasants-quest:troll-bridge",
+          "route": "peasants-quest:north-road",
+          "ticks": 6
+        },
+        {
+          "kind": "narrate",
+          "text": "The Old Bridge",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "A stone span over black water, older than the road it carries.",
+          "pause": false
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Rest a while",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Speak to the troll",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to Fenmoor",
+              "available": true,
+              "hint": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "option": 1
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:talk-to-gorm"
+        },
+        {
+          "kind": "narrate",
+          "text": "The troll unfolds itself from beneath the bridge, and the bridge seems glad to be rid of the weight.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Toll,\" it says. \"Ten gold, or swim.\"",
+          "pause": true
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:gorm",
+          "flag": "has-spoken",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "peasants-quest:talk-to-gorm",
+          "options": [
+            {
+              "prompt": "Pay the toll (10 gold)",
+              "available": false,
+              "hint": "You don't have ten gold."
+            },
+            {
+              "prompt": "Try to talk it down",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Offer it your bread (4 loaves)",
+              "available": true,
+              "hint": "You have nothing like four loaves."
+            },
+            {
+              "prompt": "Ask about the road north",
+              "available": true,
+              "hint": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "option": 2
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:pay-in-bread"
+        },
+        {
+          "kind": "narrate",
+          "text": "You hold out the cloth bundle. The troll considers it for a long, geological moment.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Bread,\" it says, as though naming a thing it had forgotten existed, and steps aside.",
+          "pause": false
+        },
+        {
+          "kind": "inventory.changed",
+          "actor": "peasants-quest:letholin",
+          "item": "fantasy.core:bread",
+          "delta": -4,
+          "quantity": 0
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:gorm",
+          "flag": "has-been-paid",
+          "value": true
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Rest a while",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Speak to the troll",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to Fenmoor",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to Hagan's Castle",
+              "available": true,
+              "hint": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "option": 3
+      },
+      "events": [
+        {
+          "kind": "world.time",
+          "tick": 32,
+          "day": 1,
+          "dayPart": "day",
+          "elapsed": 6
+        },
+        {
+          "kind": "moved",
+          "from": "peasants-quest:troll-bridge",
+          "to": "peasants-quest:hagans-castle",
+          "route": "peasants-quest:bridge-road",
+          "ticks": 6
+        },
+        {
+          "kind": "narrate",
+          "text": "Hagan's Castle",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "Grey walls on a grey hill, and a muster yard full of men who look as unwilling as you feel.",
+          "pause": false
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:castle-arrival"
+        },
+        {
+          "kind": "narrate",
+          "text": "The muster yard is full of men who look as unwilling as you feel. It is a small comfort, and it does not last.",
+          "pause": false
+        },
+        {
+          "kind": "quest.updated",
+          "quest": "peasants-quest:the-kings-summons",
+          "status": "active",
+          "stage": "report",
+          "journal": "Find the captain of the guard and answer the muster."
+        },
+        {
+          "kind": "choices",
+          "scene": "",
+          "options": [
+            {
+              "prompt": "Report to the captain",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Travel to The Old Bridge",
+              "available": true,
+              "hint": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "choose",
+        "option": 0
+      },
+      "events": [
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:report-to-orin"
+        },
+        {
+          "kind": "narrate",
+          "text": "The captain looks at your hands, then at your face, and writes something down.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "\"Late,\" he says. \"But here.\"",
+          "pause": false
+        },
+        {
+          "kind": "inventory.changed",
+          "actor": "peasants-quest:letholin",
+          "item": "peasants-quest:kings-token",
+          "delta": 1,
+          "quantity": 1
+        },
+        {
+          "kind": "flag.changed",
+          "entity": "peasants-quest:captain-orin",
+          "flag": "has-spoken",
+          "value": true
+        },
+        {
+          "kind": "quest.updated",
+          "quest": "peasants-quest:the-kings-summons",
+          "status": "complete",
+          "stage": "report",
+          "journal": null
+        },
+        {
+          "kind": "game.over",
+          "outcome": "won",
+          "reason": "won on the conditions the game sets"
+        },
+        {
+          "kind": "scene.entered",
+          "scene": "peasants-quest:victory"
+        },
+        {
+          "kind": "narrate",
+          "text": "You answered the summons. Whatever that turns out to be worth.",
+          "pause": false
+        },
+        {
+          "kind": "narrate",
+          "text": "The Dark Mountain is nine days north of here, and nobody has said what happens after that.",
+          "pause": false
+        }
+      ]
+    }
+  ]
+}

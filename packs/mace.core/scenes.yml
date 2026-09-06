@@ -1,0 +1,22 @@
+# Scenes any game can `goto` into. Reusable content has to be content that
+# doesn't know where it is: none of these name a place, a person, or a genre.
+scenes:
+
+  - id: nothing-happens
+    say:
+      - "Nothing comes of it."
+
+  - id: rest-a-while
+    prompt: "Rest a while"
+    say:
+      - "You sit down out of the wind and let the ache go out of your legs."
+    effects:
+      - {advanceTime: {ticks: 2}}
+      - {adjustStat: {actor: player, stat: stamina, delta: 10, reason: "rest"}}
+
+  - id: wait-here
+    prompt: "Wait"
+    say:
+      - "Time goes by, in its usual way."
+    effects:
+      - {advanceTime: {ticks: 1}}

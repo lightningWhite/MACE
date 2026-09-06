@@ -131,7 +131,7 @@ def game_pack(
                 },
                 "inventory": [{"item": "gold", "qty": 5}],
             },
-            {"id": "gold", "kind": "item", "name": "Gold", "item": {"value": 1}},
+            {"id": "gold", "kind": "item", "name": "Gold", "item": {"baseValue": 1}},
         ],
         "locations": [
             {

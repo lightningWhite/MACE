@@ -1,0 +1,57 @@
+# Four places and the roads between them. The bridge is on the way north
+# whether you like it or not; the Trader's Post is a detour that costs you a
+# day and might be worth it.
+locations:
+
+  - id: fenmoor
+    name: "Fenmoor"
+    type: settlement
+    safe: true
+    description:
+      - "Six houses, a well, and more geese than people. The barley stands unfinished in the low field."
+    entities: [old-hallam]
+    onArrive: fenmoor-arrival
+    mapPosition: {x: 0, y: 120}
+    exits:
+      - {to: traders-post, route: south-track}
+      - {to: troll-bridge, route: north-road}
+
+  - id: traders-post
+    name: "Trader's Post"
+    type: settlement
+    safe: true
+    description:
+      - "A crossroads with ambitions. Three stalls, a shuttered inn, and a peddler who has been here longer than the stalls."
+    entities: [peddler]
+    scenes: [mace.core:rest-a-while]
+    mapPosition: {x: -60, y: 160}
+    exits:
+      - {to: fenmoor, route: south-track}
+
+  - id: troll-bridge
+    name: "The Old Bridge"
+    type: wilderness
+    description:
+      - {text: "A stone span over black water, older than the road it carries.",
+         when: {dayPart: [dawn, day]}}
+      - "You hear the river well before you see the bridge."
+    entities: [gorm]
+    scenes: [mace.core:rest-a-while]
+    mapPosition: {x: 10, y: 60}
+    exits:
+      - {to: fenmoor, route: north-road}
+      - {to: hagans-castle, route: bridge-road,
+         when: [{flag: {entity: gorm, flag: has-been-paid}}]}
+
+  - id: hagans-castle
+    name: "Hagan's Castle"
+    type: settlement
+    safe: true
+    discovered: true
+    description:
+      - "Grey walls on a grey hill, and a muster yard full of men who look as unwilling as you feel."
+    entities: [captain-orin]
+    onArrive: castle-arrival
+    mapPosition: {x: 20, y: 0}
+    exits:
+      - {to: troll-bridge, route: bridge-road}
