@@ -19,6 +19,10 @@ from typing import Any, ClassVar
 __all__ = [
     "ChoiceOffered",
     "ChoicesOffered",
+    "CombatBegan",
+    "CombatEnded",
+    "CombatResolved",
+    "CombatTell",
     "EncounterFired",
     "Event",
     "FlagChanged",
@@ -29,6 +33,7 @@ __all__ = [
     "Moved",
     "Narrated",
     "QuestUpdated",
+    "ResponseOffered",
     "RouteChanged",
     "RuleFailed",
     "SceneEntered",
@@ -767,6 +772,250 @@ class NewsHeard(Event):
             "event": self.event,
             "daysOld": self.days_old,
             "region": self.region,
+        }
+
+
+# ── Combat ────────────────────────────────────────────────────────────────────
+#
+# Four events carry a whole fight, and between them they say everything a
+# front-end needs without it ever asking the engine what the state is. The CLI
+# renders `combat.tell` as a line of text with a keypress deadline; the browser
+# renders the same event as a shrinking bar with the sweet zone marked. Same
+# event, same engine, same fairness — which is the point of the arrangement.
+
+
+@dataclass(frozen=True, slots=True)
+class CombatBegan(Event):
+    """A fight started.
+
+    Attributes
+    ----------
+    combat : str
+        The fight's session id, which also names its random stream.
+    mode : str
+        `reflex`, `tactical`, or `auto`.
+    combatants : tuple of tuple
+        Instance id, name, side, and profile id for everyone in it.
+    can_flee : bool
+        Whether running is allowed at all.
+    """
+
+    kind: ClassVar[str] = "combat.begin"
+    combat: str
+    mode: str = "tactical"
+    combatants: tuple[tuple[str, str, str, str], ...] = ()
+    can_flee: bool = True
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "combat": self.combat,
+            "mode": self.mode,
+            "combatants": [
+                {"actor": actor, "name": name, "side": side, "profile": profile}
+                for actor, name, side, profile in self.combatants
+            ],
+            "canFlee": self.can_flee,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CombatTell(Event):
+    """Something is winding up, and the defender has `windowMs` to answer.
+
+    The prose is the tell. `type` names the move's type only when the
+    telegraph was legible — that is the whole of what a low `tellClarity`
+    costs a reader, and a front-end that shows the type regardless has given
+    the difficulty dial away.
+
+    Attributes
+    ----------
+    combat : str
+        The fight's session id.
+    attacker, defender : str
+        Instance ids.
+    move : str
+        Qualified move id. For the debug overlay; a player-facing UI should
+        read the prose instead.
+    type : str
+        The move's type, or empty when the tell was not legible.
+    text : str
+        The telegraph, as the player reads it.
+    window_ms : int
+        How long the defender has, their speed already accounted for.
+    clear : bool
+        Whether the telegraph was legible.
+    """
+
+    kind: ClassVar[str] = "combat.tell"
+    combat: str
+    attacker: str
+    defender: str
+    move: str
+    type: str = ""
+    text: str = ""
+    window_ms: int = 0
+    clear: bool = True
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "combat": self.combat,
+            "attacker": self.attacker,
+            "defender": self.defender,
+            "move": self.move,
+            "type": self.type,
+            "text": self.text,
+            "windowMs": self.window_ms,
+            "clear": self.clear,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ResponseOffered(Event):
+    """The engine is waiting for the player's answer, and here is what they have.
+
+    The combat counterpart of `choices`, and it exists for the same reason:
+    without it a front-end would have to reach into engine state to find out
+    what the player can do, which is the boundary this protocol holds. It
+    carries stamina and momentum too, because those are the resources being
+    managed and a UI has to show them somewhere permanent.
+
+    Attributes
+    ----------
+    combat : str
+        The fight's session id.
+    options : tuple of str
+        Response names, in presentation order. A `combat.input` action names
+        one of these.
+    stamina : float
+        What the player has left to spend.
+    momentum : float
+        The damage multiplier a streak has earned, 1.0 at rest.
+    streak : int
+        Consecutive correct reads.
+    """
+
+    kind: ClassVar[str] = "combat.responses"
+    combat: str
+    options: tuple[str, ...] = ()
+    stamina: float = 0.0
+    momentum: float = 1.0
+    streak: int = 0
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "combat": self.combat,
+            "options": list(self.options),
+            "stamina": self.stamina,
+            "momentum": self.momentum,
+            "streak": self.streak,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CombatResolved(Event):
+    """One exchange resolved, and here is why it went the way it did.
+
+    Every field a front-end needs to say "Clean parry — you read the thrust"
+    rather than "-8 hp". Attribution is what turns an outcome into learning,
+    and learning is the entire design target.
+
+    Attributes
+    ----------
+    combat : str
+        The fight's session id.
+    exchange : int
+        Which exchange this was, counting from one.
+    attacker, defender : str
+        Instance ids.
+    move : str
+        Qualified id of what was thrown.
+    response : str
+        What the defender answered with.
+    read : str
+        `correct` or `wrong`.
+    result : str
+        `counter`, `absorbed`, `glancing`, or `clean`.
+    precision : float
+        How well it was timed, 0 to 1.
+    damage_taken, damage_dealt : float
+        What landed, each way.
+    critical : bool
+        Whether the opening was a critical one.
+    momentum : float
+        The defender's damage multiplier after this exchange.
+    stamina : float
+        What the defender has left.
+    feint : bool
+        Whether the windup meant nothing.
+    """
+
+    kind: ClassVar[str] = "combat.resolve"
+    combat: str
+    exchange: int
+    attacker: str
+    defender: str
+    move: str
+    response: str
+    read: str = "wrong"
+    result: str = "clean"
+    precision: float = 0.0
+    damage_taken: float = 0.0
+    damage_dealt: float = 0.0
+    critical: bool = False
+    momentum: float = 1.0
+    stamina: float = 0.0
+    feint: bool = False
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "combat": self.combat,
+            "exchange": self.exchange,
+            "attacker": self.attacker,
+            "defender": self.defender,
+            "move": self.move,
+            "response": self.response,
+            "read": self.read,
+            "result": self.result,
+            "precision": self.precision,
+            "damageTaken": self.damage_taken,
+            "damageDealt": self.damage_dealt,
+            "critical": self.critical,
+            "momentum": self.momentum,
+            "stamina": self.stamina,
+            "feint": self.feint,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CombatEnded(Event):
+    """The fight is over.
+
+    Attributes
+    ----------
+    combat : str
+        The fight's session id.
+    outcome : str
+        `won`, `lost`, or `fled`.
+    exchanges : int
+        How many it took. The measure the acceptance test is read off: a
+        skilled player finishes a troll in eight where a novice takes
+        twenty-five.
+    spoils : tuple of tuple
+        Qualified item id and quantity taken from the defeated.
+    """
+
+    kind: ClassVar[str] = "combat.end"
+    combat: str
+    outcome: str
+    exchanges: int = 0
+    spoils: tuple[tuple[str, int], ...] = ()
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "combat": self.combat,
+            "outcome": self.outcome,
+            "exchanges": self.exchanges,
+            "spoils": [{"item": item, "qty": qty} for item, qty in self.spoils],
         }
 
 

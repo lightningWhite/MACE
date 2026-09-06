@@ -14,12 +14,22 @@ the v0 model unreadable.
 
 from __future__ import annotations
 
+from collections.abc import Container
 from dataclasses import dataclass
 from typing import Any
 
 from mace.content import ContentError, Library
 from mace.engine import environment
-from mace.engine.actions import Action, Choose, Interact, Look, Travel, Wait
+from mace.engine.actions import (
+    Action,
+    Choose,
+    Interact,
+    Look,
+    Respond,
+    Travel,
+    Wait,
+)
+from mace.engine.combat import fight as combat
 from mace.engine.conditions import RuleError, all_hold, holds
 from mace.engine.context import RuleContext
 from mace.engine.effects import EffectOutcome, apply_all
@@ -40,13 +50,13 @@ from mace.engine.events import (
     TimePassed,
     TravelInterrupted,
     TravelLeg,
-    Unsupported,
     WeatherChanged,
     WorldEvent,
     WorldStatus,
 )
 from mace.engine.rng import RandomSource
 from mace.engine.state import (
+    CombatState,
     EntityState,
     GameState,
     Journey,
@@ -230,6 +240,16 @@ def _perform(action: Action, context: RuleContext, events: list[Event]) -> bool:
     """
     state = context.state
 
+    if isinstance(action, Respond):
+        combat.respond(context, action.response, events, elapsed_ms=action.elapsed_ms)
+        return _after_combat(context, events)
+
+    if state.combat is not None and state.combat.outcome is None:
+        # A fight is the one situation where the world stops offering options.
+        # Looking around is free; everything else has to wait until it is over.
+        if not isinstance(action, Look):
+            raise RuleError("you are in the middle of a fight")
+
     if isinstance(action, Look):
         state.pending = None
         _describe_here(context, events)
@@ -305,6 +325,130 @@ def _choose(action: Choose, context: RuleContext, events: list[Event]) -> bool:
 
     if option.goto is not None:
         return _run_scene(option.goto, context, events)
+    return False
+
+
+def _start_combat(
+    context: RuleContext,
+    against: list[str],
+    events: list[Event],
+    *,
+    spawned: set[str] | None = None,
+    can_flee: bool = True,
+    after: dict[str, str] | None = None,
+    flee_to: str | None = None,
+) -> bool:
+    """Hand control to the combat system, and pick it back up when it lets go.
+
+    A fight is not a scene and does not nest inside one: it takes over until
+    it ends. In `auto` mode it ends inside this call, which is why the same
+    function has to handle both a fight that is waiting for a keypress and a
+    fight that is already over.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    against : list of str
+        Instance ids of the opponents.
+    events : list of Event
+        Accumulator.
+    spawned : set of str or None
+        Which of them this fight put there.
+    can_flee : bool
+        Whether running is allowed.
+    after : dict or None
+        Outcome name to the qualified scene played once the fight ends.
+    flee_to : str or None
+        Qualified location id to put them down at.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+    """
+    combat.begin(
+        context,
+        against,
+        events,
+        spawned=spawned,
+        can_flee=can_flee,
+        after=after,
+        flee_to=flee_to,
+    )
+    return _after_combat(context, events)
+
+
+def _after_combat(context: RuleContext, events: list[Event]) -> bool:
+    """Clear away a finished fight and do whatever its outcome asked for.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+    """
+    state = context.state
+    fight = state.combat
+    if fight is None or fight.outcome is None:
+        return False
+
+    state.combat = None
+    for combatant in fight.combatants:
+        gone = state.entities.get(combatant.actor)
+        if gone is None or not (combatant.defeated or combatant.routed):
+            continue
+        if combatant.spawned:
+            # A fight tidies away what it made. What it *found* stays where it
+            # was: the troll who lives under the bridge is still under the
+            # bridge afterwards, and `onWin` decides what it says now.
+            del state.entities[combatant.actor]
+        elif combatant.defeated:
+            gone.location = None
+
+    if fight.outcome == "fled" and _fled(fight, context, events):
+        return True
+    scene = fight.after.get(fight.outcome)
+    if scene is not None:
+        return _run_scene(scene, context, events)
+    return False
+
+
+def _fled(fight: CombatState, context: RuleContext, events: list[Event]) -> bool:
+    """Put the player down somewhere after they have run.
+
+    Running away should be a decision with a story attached, so it costs
+    position: without an explicit `fleeTo` the player ends up back the way
+    they came, which mid-journey means partway along the road they were on.
+
+    Parameters
+    ----------
+    fight : CombatState
+        The finished fight.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Returns
+    -------
+    bool
+        Whether the game should restart.
+    """
+    state = context.state
+    if fight.flee_to is None:
+        return False
+    origin = state.location
+    state.protagonist.location = fight.flee_to
+    state.revealed.add(fight.flee_to)
+    state.journey = None
+    events.append(Moved(origin, fight.flee_to))
     return False
 
 
@@ -501,6 +645,9 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
 
         if crossed > leg_before and _encounters(context, events, on=route):
             return True
+        if state.combat is not None:
+            _interrupt(route, context, events, "something on the road")
+            return False
         if state.pending is not None:
             _interrupt(route, context, events, "something on the road")
             return False
@@ -527,6 +674,9 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
             return False
 
         journey.passed = (*journey.passed, where)
+        if state.combat is not None:
+            _interrupt(route, context, events, "something here wants a fight")
+            return False
         if state.pending is not None:
             # The waypoint's own scene is asking the player something. The
             # journey waits on the answer rather than walking through it.
@@ -916,8 +1066,19 @@ def _happens(
     )
     if fired.entry.scene is not None:
         return _run_scene(context.qualify(fired.entry.scene, "scenes"), context, events)
-    events.append(Unsupported("a combat encounter", "phase 3"))
-    return False
+
+    assert fired.entry.combat is not None
+    spawned = [
+        _spawn(reference, context, context.state.location)
+        for reference in fired.entry.combat.against
+    ]
+    flee_to = fired.entry.combat.flee_to
+    return _start_combat(
+        context,
+        spawned,
+        events,
+        flee_to=(None if flee_to is None else context.qualify(flee_to, "locations")),
+    )
 
 
 def _leg_line(route: Route, context: RuleContext) -> str | None:
@@ -980,6 +1141,25 @@ def _find_exit(
             route = found if isinstance(found, Route) else None
         return way, route
     return None, None
+
+
+def _follow(context: RuleContext) -> None:
+    """Bring the player's allies along.
+
+    An escort that stayed in Fenmoor while you walked to the castle would not
+    be an escort. Kept as its own step rather than folded into movement so
+    that every way of moving — walking a road, a `move` effect, fleeing a
+    fight — brings them without each remembering to.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    """
+    where = context.state.location
+    for _key, entity in sorted(context.state.entities.items()):
+        if entity.ally:
+            entity.location = where
 
 
 def _arrive(location_id: str, context: RuleContext, events: list[Event]) -> bool:
@@ -1138,6 +1318,32 @@ def _settle(outcome: EffectOutcome, context: RuleContext, events: list[Event]) -
         _advance(context, outcome.elapsed, events)
     if outcome.rest is not None:
         _recover(outcome.rest, context, events)
+
+    if outcome.combat is not None:
+        asked = outcome.combat
+        actors, spawned = _opponents(asked.against, context)
+        if _start_combat(
+            context,
+            actors,
+            events,
+            spawned=spawned,
+            can_flee=asked.can_flee,
+            after={
+                name: context.qualify(scene, "scenes")
+                for name, scene in (
+                    ("won", asked.on_win),
+                    ("lost", asked.on_lose),
+                    ("fled", asked.on_flee),
+                )
+                if scene is not None
+            },
+        ):
+            return True
+        # A fight that is still waiting for an answer stops the scene it came
+        # from: there is nothing to say while somebody is swinging at you.
+        if context.state.combat is not None:
+            return True
+
     return context.state.outcome is not Outcome.PLAYING
 
 
@@ -1258,12 +1464,15 @@ def _after_action(context: RuleContext, events: list[Event]) -> None:
     if state.outcome is not Outcome.PLAYING:
         return
 
+    _follow(context)
     _sync_weather(context, events)
     _expire_modifiers(context)
     _advance_quests(context, events)
     if _judge(context, events):
         return
-    if state.pending is None:
+    # A fight offers its own options through `combat.responses`, and a menu of
+    # roads to walk down in the middle of one would be a lie.
+    if state.pending is None and state.combat is None:
         _offer_options(context, events)
     # Last, always: the status line sits above the prompt, and computing it
     # after the menu means it describes the world the menu belongs to.
@@ -1610,7 +1819,12 @@ def _initial_state(library: Library, pack_id: str, game: Game, seed: str) -> Gam
 
 
 def _instantiate(
-    library: Library, definition_id: str, location: str | None, within: str
+    library: Library,
+    definition_id: str,
+    location: str | None,
+    within: str,
+    *,
+    taken: Container[str] = (),
 ) -> EntityState:
     """Make a session instance of a content entity.
 
@@ -1624,6 +1838,8 @@ def _instantiate(
         Where it starts.
     within : str
         The pack whose references its inventory resolves against.
+    taken : container of str
+        Instance ids already in use, so a second wolf gets its own.
 
     Returns
     -------
@@ -1639,7 +1855,7 @@ def _instantiate(
         inventory[item] = inventory.get(item, 0) + entry.qty
 
     return EntityState(
-        instance_id=_instance_id(definition_id),
+        instance_id=_instance_id(definition_id, taken),
         definition=definition_id,
         location=location,
         pools=starting_pools(definition),
@@ -1650,27 +1866,112 @@ def _instantiate(
         },
         flags=set(definition.flags),
         disposition=definition.disposition,
+        skills={
+            library.resolve(item, "entities", within=within): float(level)
+            for item, level in (definition.skills or {}).items()
+        },
     )
 
 
-def _instance_id(definition_id: str) -> str:
-    """Name an instance after its definition.
+def _instance_id(definition_id: str, taken: Container[str] = ()) -> str:
+    """Name an instance after its definition, disambiguating repeats.
 
-    Phase 1 places one of each entity, so an instance's id is its definition's.
-    Spawning several — an encounter with three wolves — appends `#n`, which is
-    why this is a function rather than an assumption spread through the code.
+    The first of a kind takes its definition's id, which is what content that
+    says `gorm` means and what keeps a one-of-each world readable. A second
+    appends `#2` — an encounter with three wolves is three instances of one
+    definition, and they need to be told apart.
 
     Parameters
     ----------
     definition_id : str
         Qualified entity id.
+    taken : container of str
+        Instance ids already in use.
 
     Returns
     -------
     str
-        The instance id.
+        An unused instance id.
     """
-    return definition_id
+    if definition_id not in taken:
+        return definition_id
+    number = 2
+    while f"{definition_id}#{number}" in taken:
+        number += 1
+    return f"{definition_id}#{number}"
+
+
+def _spawn(reference: str, context: RuleContext, location: str | None) -> str:
+    """Put a new instance of an entity into the session.
+
+    Parameters
+    ----------
+    reference : str
+        The entity reference, as content wrote it.
+    context : RuleContext
+        The playthrough.
+    location : str or None
+        Where it appears.
+
+    Returns
+    -------
+    str
+        The new instance's id.
+    """
+    state = context.state
+    qualified = context.qualify(reference, "entities")
+    instance = _instantiate(
+        context.library, qualified, location, state.pack, taken=state.entities
+    )
+    state.entities[instance.instance_id] = instance
+    return instance.instance_id
+
+
+def _opponents(
+    against: tuple[str, ...], context: RuleContext
+) -> tuple[list[str], set[str]]:
+    """Find or make the entities a fight is against.
+
+    An opponent already standing where the player is fights as *itself*:
+    `startCombat: {against: gorm}` in the scene where Gorm has just refused
+    you means that troll, with the hitpoints this playthrough has given it and
+    the hundred and twenty gold in its pocket. Spawning a second Gorm instead
+    would leave two of him on the bridge, which is a bug you notice in the
+    menu rather than in the fight.
+
+    Anything not already here is made, which is what an encounter on an empty
+    road wants — and repeating a reference makes another, so
+    `against: [wolf, wolf]` is two wolves.
+
+    Parameters
+    ----------
+    against : tuple of str
+        Entity references, as content wrote them.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    tuple
+        The instance ids to fight, and which of them were newly made.
+    """
+    state = context.state
+    actors: list[str] = []
+    spawned: set[str] = set()
+    for reference in against:
+        standing = context.actor(reference)
+        if (
+            standing is not None
+            and standing.location == state.location
+            and standing.instance_id != state.player
+            and standing.instance_id not in actors
+        ):
+            actors.append(standing.instance_id)
+            continue
+        made = _spawn(reference, context, state.location)
+        actors.append(made)
+        spawned.add(made)
+    return actors, spawned
 
 
 def _first_stage(library: Library, quest_id: str) -> str | None:

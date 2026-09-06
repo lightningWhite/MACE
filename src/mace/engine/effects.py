@@ -76,14 +76,6 @@ from mace.model.effects import (
 
 __all__ = ["EffectOutcome", "apply", "apply_all"]
 
-#: Effects whose implementation belongs to a later phase. Content that uses one
-#: still loads and still plays; it just says so rather than pretending.
-LATER_PHASES = {
-    "startCombat": "phase 3 — combat",
-    "attachAlly": "phase 3 — allies",
-    "dismissAlly": "phase 3 — allies",
-}
-
 
 @dataclass(slots=True)
 class EffectOutcome:
@@ -114,6 +106,10 @@ class EffectOutcome:
         announcements and effects, and that is the step runner's loop.
     pressure : list of tuple
         Pressure events an effect nudged, and where to.
+    combat : StartCombat or None
+        A fight an effect asked for. Requested rather than started here for
+        the same reason as time: a fight takes over the loop until it is
+        over, and the loop belongs to the step runner.
     """
 
     events: list[Event] = field(default_factory=list)
@@ -124,6 +120,7 @@ class EffectOutcome:
     rest: Rest | None = None
     fire: list[str] = field(default_factory=list)
     pressure: list[tuple[str, float]] = field(default_factory=list)
+    combat: StartCombat | None = None
 
 
 def apply_all(
@@ -182,10 +179,6 @@ def apply(
     """
     payload = effect.payload
     state = context.state
-
-    if effect.tag in LATER_PHASES:
-        outcome.events.append(Unsupported(effect.tag, LATER_PHASES[effect.tag]))
-        return
 
     if isinstance(payload, AdjustStat):
         actor = _actor(payload.actor, context)
@@ -352,11 +345,64 @@ def apply(
             outcome.ended = "lost" if state.outcome.value == "lost" else "won"
         return
 
-    if isinstance(payload, StartCombat | AttachAlly | DismissAlly):  # pragma: no cover
-        outcome.events.append(Unsupported(effect.tag, "phase 3"))
+    if isinstance(payload, StartCombat):
+        if outcome.combat is not None:
+            raise RuleError(
+                "two fights were asked for in one list of effects; the second "
+                "would start before the first had finished"
+            )
+        outcome.combat = payload
+        return
+
+    if isinstance(payload, AttachAlly | DismissAlly):
+        _set_ally(payload, context, outcome, joining=isinstance(payload, AttachAlly))
         return
 
     raise RuleError(f"effect `{effect.tag}` is not applicable yet")
+
+
+def _set_ally(
+    payload: AttachAlly | DismissAlly,
+    context: RuleContext,
+    outcome: EffectOutcome,
+    *,
+    joining: bool,
+) -> None:
+    """Take somebody along, or send them home.
+
+    An ally is an ordinary entity with a flag on it: they follow the player
+    from place to place and fight on the player's side, on their own combat
+    profile. That is deliberately cheap — combat already resolves M-vs-N and
+    `disposition` already exists, so an escort needs no new machinery
+    (docs/13-open-questions.md § 2).
+
+    Parameters
+    ----------
+    payload : AttachAlly or DismissAlly
+        Who, and until when.
+    context : RuleContext
+        The playthrough.
+    outcome : EffectOutcome
+        Accumulator.
+    joining : bool
+        Whether they are joining rather than leaving.
+
+    Raises
+    ------
+    RuleError
+        If the entity named is not in the session.
+    """
+    entity = context.actor(payload.entity)
+    if entity is None:
+        raise RuleError(f"`{payload.entity}` is not here to travel with you")
+    if entity.ally == joining:
+        return
+    entity.ally = joining
+    if joining:
+        entity.location = context.state.location
+    outcome.events.append(
+        FlagChanged(entity=entity.instance_id, flag="ally", value=joining)
+    )
 
 
 def _write_stat(

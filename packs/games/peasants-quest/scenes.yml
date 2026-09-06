@@ -114,6 +114,8 @@ scenes:
         goto: pay-in-bread
       - prompt: "Ask about the road north"
         goto: gorm-on-the-road
+      - prompt: "Refuse, and put a hand on your hook"
+        goto: fight-gorm
     else: gorm-has-been-paid
 
   - id: pay-the-toll
@@ -159,6 +161,46 @@ scenes:
     effects:
       - {setVar: {name: warnedAboutWood, value: true}}
 
+  - id: fight-gorm
+    say:
+      - "\"Swim, then,\" it says, and reaches for the club."
+      - {text: "It is a great deal bigger than you, and it has done this before.", pause: true}
+    effects:
+      # `onFlee` is the whole reason fleeing is worth writing: running away is
+      # allowed, costs you the bridge, and leaves you somewhere with a story.
+      - startCombat:
+          against: gorm
+          canFlee: true
+          onWin: gorm-beaten
+          onLose: beaten-by-gorm
+          onFlee: fled-from-gorm
+
+  - id: gorm-beaten
+    visible: false
+    say:
+      - "The troll sits down in the shallows, which is what trolls do instead of falling."
+      - "\"Cross, then,\" it says, to nobody in particular."
+    effects:
+      - {setFlag: {entity: gorm, flag: has-been-paid}}
+      - {setDisposition: {actor: gorm, to: neutral}}
+
+  - id: beaten-by-gorm
+    visible: false
+    say:
+      - "You come to in the shallows, some distance downstream, with your hook gone and the light going."
+      - "The troll is a shape on the bridge, and it is not looking for you."
+    effects:
+      # Losing a fight is a setback, not an ending: the game's own lose
+      # conditions decide what death means, and this one leaves you alive.
+      - {setStat: {actor: player, stat: hitpoints, value: 8}}
+      - {move: {actor: player, to: fenmoor}}
+
+  - id: fled-from-gorm
+    visible: false
+    say:
+      - "You are twenty yards back down the road before you decide to be, and the troll does not follow."
+      - "The bridge is still there. So is it."
+
   - id: gorm-has-been-paid
     say:
       - "The troll watches you cross, and goes back to being part of the bridge."
@@ -196,6 +238,14 @@ scenes:
     say:
       - "Something keeps pace with you in the trees for a hundred yards, and then does not."
       - {text: "You do not see it. You hear it decide against you.", pause: true}
+
+  - id: the-wolves-decide-otherwise
+    visible: false
+    say:
+      - "Two of them come out of the trees ahead of you, unhurried, and a third does not bother with the trees at all."
+      - {text: "There is nowhere to put your back.", pause: true}
+    effects:
+      - {startCombat: {against: [fantasy.core:wolf, fantasy.core:wolf], canFlee: true}}
 
   - id: riders-going-north
     visible: false

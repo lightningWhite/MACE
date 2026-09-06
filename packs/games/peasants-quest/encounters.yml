@@ -17,6 +17,23 @@ encounterTables:
         cooldownTicks: 40
         scene: wolves-on-the-road
 
+      # The same wood, in the dark, having made up its mind. A `combat:` entry
+      # rather than a scene, because a scene here would only be ceremony.
+      - id: wolves-that-mean-it
+        weight: 6
+        when: [{dayPart: [night]}]
+        cooldownTicks: 60
+        maxPerGame: 2
+        scene: the-wolves-decide-otherwise
+
+      # No scene: a lone wolf in the dark needs no ceremony, and a `combat:`
+      # entry is what an author writes when a scene would only be one.
+      - id: a-wolf-alone
+        weight: 5
+        when: [{dayPart: [night]}]
+        cooldownTicks: 80
+        combat: {against: [fantasy.core:wolf]}
+
       - id: the-kings-riders
         weight: 8
         once: true

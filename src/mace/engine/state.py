@@ -19,6 +19,8 @@ from typing import Any
 from mace.engine.rng import RandomSource
 
 __all__ = [
+    "Combatant",
+    "CombatState",
     "EncounterMemory",
     "EntityState",
     "GameState",
@@ -30,6 +32,7 @@ __all__ = [
     "QuestState",
     "NewsItem",
     "QuestStatus",
+    "PendingTell",
     "EventPhase",
     "EventState",
     "FrontState",
@@ -172,6 +175,16 @@ class EntityState:
         player accumulates it — it exists for the decision a player makes, and
         a wandering NPC's cold-weather death spiral is simulation for its own
         sake.
+    skills : dict
+        Qualified item id to skill, 0 to 100, raised by using the thing. What
+        a character has learned to do with a particular weapon.
+    familiarity : dict
+        Qualified combat-profile id to how many correct reads this entity has
+        made against it. The character learning trolls, as distinct from the
+        *player* learning trolls — both are meant to matter, and only one of
+        them can be stored (docs/07-combat.md § Growth).
+    ally : bool
+        Whether this entity travels with the player and fights on their side.
     """
 
     instance_id: str
@@ -184,6 +197,9 @@ class EntityState:
     modifiers: list[Modifier] = field(default_factory=list)
     disposition: str | None = None
     exposure: float = 0.0
+    skills: dict[str, float] = field(default_factory=dict)
+    familiarity: dict[str, int] = field(default_factory=dict)
+    ally: bool = False
 
 
 @dataclass(slots=True)
@@ -458,6 +474,179 @@ class Journey:
 
 
 @dataclass(slots=True)
+class Combatant:
+    """One fighter in a fight, and where its habits have got to.
+
+    Everything durable about a combatant — hitpoints, effort, what it is
+    holding — lives in its `EntityState` and is not copied here. What is here
+    is what only exists while the fight does.
+
+    Attributes
+    ----------
+    actor : str
+        The entity's instance id.
+    side : str
+        `player` or `enemy`. Allies fight on the player's side.
+    profile : str or None
+        Qualified id of the combat profile it is fighting on. None means it
+        has none, and can only take the hit.
+    meter : float
+        The action meter, filling in proportion to speed. At 1.0 the
+        combatant is ready to act. This is where multi-combatant pressure
+        comes from: three wolves are three meters filling at once, not one
+        enemy with bigger numbers.
+    pattern : tuple of str
+        The qualified moves of the sequence being played out.
+    pattern_step : int
+        How far through it. A pattern is played to the end before another is
+        picked, which is what makes a habit observable.
+    momentum : int
+        Index into the momentum ladder. Rises on a clean read, resets on a
+        clean hit taken.
+    streak : int
+        Consecutive successful reads, for the front-end to celebrate.
+    routed : bool
+        Whether this combatant has run.
+    defeated : bool
+        Whether it is down.
+    spawned : bool
+        Whether this fight put it in the world. A fight tidies away what it
+        made and leaves alone what it found: two wolves conjured by a road
+        leave when they are beaten, and the troll who lives under the bridge
+        is still under the bridge afterwards.
+    """
+
+    actor: str
+    side: str = "enemy"
+    profile: str | None = None
+    meter: float = 0.0
+    pattern: tuple[str, ...] = ()
+    pattern_step: int = 0
+    momentum: int = 0
+    streak: int = 0
+    routed: bool = False
+    defeated: bool = False
+    spawned: bool = False
+
+
+@dataclass(slots=True)
+class PendingTell:
+    """A move that has been telegraphed and is waiting for an answer.
+
+    The window is computed once, when the tell is emitted, and stored — so a
+    replay resolves against the same window the live session did even if the
+    defender's speed has moved since.
+
+    Attributes
+    ----------
+    attacker : str
+        Instance id of whoever is winding up.
+    defender : str
+        Instance id of whoever has to answer.
+    move : str
+        Qualified id of the move being played.
+    feint : bool
+        Whether the windup means nothing.
+    clear : bool
+        Whether the telegraph was legible. A vague tell withholds the move's
+        type, which is the whole of what `tellClarity` costs the reader.
+    window_ms : int
+        How long the defender has, their speed already taken into account.
+    """
+
+    attacker: str
+    defender: str
+    move: str
+    feint: bool = False
+    clear: bool = True
+    window_ms: int = 0
+
+
+@dataclass(slots=True)
+class CombatState:
+    """A fight in progress.
+
+    A fight happens *inside* a tick: its clock is milliseconds of simulated
+    exchange time and it never moves the world clock. That is what keeps a
+    forty-exchange fight from aging the world more than a twelve-exchange one
+    (docs/02-architecture.md § Time).
+
+    Attributes
+    ----------
+    id : str
+        Session-unique — `combat#2`. Names this fight's random stream, so a
+        long fight cannot shift what any other subsystem draws.
+    mode : str
+        `reflex`, `tactical`, or `auto`. How the response is collected, and
+        the only thing the three modes differ in.
+    combatants : list of Combatant
+        Everyone in it, in a stable order.
+    tell : PendingTell or None
+        The move awaiting an answer.
+    exchange : int
+        How many exchanges have resolved.
+    can_flee : bool
+        Whether running is allowed at all.
+    after : dict
+        Outcome name — `won`, `lost`, `fled` — to the qualified scene played
+        once the fight ends. A fight with consequences rather than just an
+        outcome is a fight worth writing.
+    flee_to : str or None
+        Qualified location id to put them down at. None leaves them where the
+        journey left them, which for a road is partway along it.
+    spoils : dict
+        Qualified item id to quantity, taken from the defeated.
+    outcome : str or None
+        `won`, `lost`, or `fled`, once it is over.
+    """
+
+    id: str
+    mode: str = "tactical"
+    combatants: list[Combatant] = field(default_factory=list)
+    tell: PendingTell | None = None
+    exchange: int = 0
+    can_flee: bool = True
+    after: dict[str, str] = field(default_factory=dict)
+    flee_to: str | None = None
+    spoils: dict[str, int] = field(default_factory=dict)
+    outcome: str | None = None
+
+    def find(self, actor: str) -> Combatant | None:
+        """The combatant standing for one entity instance.
+
+        Parameters
+        ----------
+        actor : str
+            The instance id.
+
+        Returns
+        -------
+        Combatant or None
+            The combatant, or None when that entity is not in this fight.
+        """
+        return next((c for c in self.combatants if c.actor == actor), None)
+
+    def standing(self, side: str) -> list[Combatant]:
+        """Everyone on one side who is still in the fight.
+
+        Parameters
+        ----------
+        side : str
+            `player` or `enemy`.
+
+        Returns
+        -------
+        list of Combatant
+            Combatants who are neither down nor gone, in a stable order.
+        """
+        return [
+            c
+            for c in self.combatants
+            if c.side == side and not c.defeated and not c.routed
+        ]
+
+
+@dataclass(slots=True)
 class PendingChoice:
     """One option currently on offer.
 
@@ -565,6 +754,11 @@ class GameState:
         aftermath. Night, at noon.
     journey : Journey or None
         A road part-walked, if one was interrupted.
+    combat : CombatState or None
+        A fight in progress. While one is set, the only actions that mean
+        anything are combat responses.
+    combats_begun : int
+        How many fights have started, so a fight's stream name is unique.
     pending : PendingChoices or None
         Choices awaiting an answer.
     outcome : Outcome
@@ -594,6 +788,8 @@ class GameState:
     news: list[NewsItem] = field(default_factory=list)
     light_override: float | None = None
     journey: Journey | None = None
+    combat: CombatState | None = None
+    combats_begun: int = 0
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING
     ended_because: str | None = None

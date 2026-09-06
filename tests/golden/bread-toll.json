@@ -366,6 +366,11 @@
               "prompt": "Ask about the road north",
               "available": true,
               "hint": null
+            },
+            {
+              "prompt": "Refuse, and put a hand on your hook",
+              "available": true,
+              "hint": null
             }
           ]
         },

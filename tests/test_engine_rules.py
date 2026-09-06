@@ -296,13 +296,29 @@ def test_transferring_contents_empties_the_source(tmp_path: Path) -> None:
     assert state.entities["tiny:chest"].inventory == {}
 
 
-def test_effects_from_later_phases_say_so_rather_than_pretending(
-    tmp_path: Path,
-) -> None:
+def test_starting_a_fight_is_requested_rather_than_done(tmp_path: Path) -> None:
+    """A fight takes over the loop, and the loop belongs to the step runner."""
     context, _state, _library = playthrough(tmp_path)
     outcome = do(context, {"startCombat": {"against": "hero"}})
-    assert outcome.events[0].record() == {
-        "kind": "engine.unsupported",
-        "feature": "startCombat",
-        "arrives": "phase 3 — combat",
-    }
+    assert outcome.events == []
+    assert outcome.combat is not None
+    assert outcome.combat.against == ("hero",)
+
+
+def test_two_fights_in_one_block_is_refused(tmp_path: Path) -> None:
+    """The second would start before the first had finished."""
+    context, _state, _library = playthrough(tmp_path)
+    with pytest.raises(RuleError, match="two fights"):
+        do(
+            context,
+            {"startCombat": {"against": "hero"}},
+            {"startCombat": {"against": "hero"}},
+        )
+
+
+def test_an_ally_joins_and_leaves(tmp_path: Path) -> None:
+    context, state, _library = playthrough(tmp_path)
+    do(context, {"attachAlly": {"entity": "hero"}})
+    assert state.protagonist.ally is True
+    do(context, {"dismissAlly": {"entity": "hero"}})
+    assert state.protagonist.ally is False

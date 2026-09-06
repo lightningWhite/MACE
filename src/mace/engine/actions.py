@@ -27,6 +27,7 @@ __all__ = [
     "Choose",
     "Interact",
     "Look",
+    "Respond",
     "Travel",
     "Wait",
     "decode",
@@ -138,12 +139,45 @@ class Wait(BaseAction):
         return {"ticks": self.ticks}
 
 
-Action = Look | Choose | Interact | Travel | Wait
+@dataclass(frozen=True, slots=True)
+class Respond(BaseAction):
+    """Answer the move a fight has just telegraphed.
+
+    `elapsed_ms` is the one place a wall clock reaches the engine, and it does
+    so as a *recorded number* rather than as a measurement. The front-end
+    measures against a monotonic deadline and puts the result in the action
+    log; a replay resolves against that recorded value instead of measuring
+    again, and the engine quantizes it so two machines that read 812 ms and
+    814 ms resolve the same exchange (ADR-0004).
+
+    Attributes
+    ----------
+    response : str
+        A defense type from the last `combat.responses` event — or `recover`
+        or `flee`.
+    elapsed_ms : int or None
+        Milliseconds from the tell to the keypress. None in tactical mode,
+        where no clock is running and precision is fixed.
+    """
+
+    kind: ClassVar[str] = "combat.input"
+    response: str
+    elapsed_ms: int | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {"response": self.response, "elapsedMs": self.elapsed_ms}
+
+
+Action = Look | Choose | Interact | Respond | Travel | Wait
 
 #: Every action kind, for decoding a saved log.
 ACTIONS: dict[str, type[BaseAction]] = {
-    action.kind: action for action in (Look, Choose, Interact, Travel, Wait)
+    action.kind: action for action in (Look, Choose, Interact, Respond, Travel, Wait)
 }
+
+#: Fields whose recorded name differs from the constructor's, so an action log
+#: stays camelCase like everything else an author or a tool reads.
+RECORD_FIELDS: dict[str, str] = {"elapsedMs": "elapsed_ms"}
 
 
 def decode(record: dict[str, Any], *, offered: Sequence[str] | None = None) -> Action:
@@ -183,8 +217,9 @@ def decode(record: dict[str, Any], *, offered: Sequence[str] | None = None) -> A
     if kind == "choose" and "prompt" in fields:
         fields = {"option": _index_of(str(fields.pop("prompt")), offered, fields)}
 
+    fields = {RECORD_FIELDS.get(name, name): value for name, value in fields.items()}
     built = ACTIONS[kind](**fields)
-    assert isinstance(built, Look | Choose | Interact | Travel | Wait)
+    assert isinstance(built, Look | Choose | Interact | Respond | Travel | Wait)
     return built
 
 

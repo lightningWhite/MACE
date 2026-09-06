@@ -45,7 +45,10 @@ def test_a_tell_may_vary_with_the_world() -> None:
             "id": "thrust",
             "type": "thrust",
             "tell": [
-                {"text": "You barely see the point come up.", "when": {"dayPart": ["night"]}},
+                {
+                    "text": "You barely see the point come up.",
+                    "when": {"dayPart": ["night"]},
+                },
                 {"text": "The point comes up."},
             ],
         }

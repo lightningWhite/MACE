@@ -175,10 +175,30 @@ class AdvanceQuest(EffectPayload):
 
 
 class StartCombat(EffectPayload):
-    """Hand control to the combat system."""
+    """Hand control to the combat system.
+
+    A fight is not a scene and does not nest inside one: it takes over until
+    it ends, and then plays whichever of `onWin`, `onLose`, and `onFlee`
+    applies. Writing all three is how a fight has consequences rather than
+    just an outcome — the bridge you can now cross, the debt you now owe, the
+    twenty yards of road you gave up running.
+
+    Attributes
+    ----------
+    against : tuple of str
+        Who to fight. Repeat one to get several of it.
+    can_flee : bool
+        Whether running is allowed at all.
+    on_win, on_lose, on_flee : str or None
+        Scenes played after the fight. `onLose` is what a game with
+        `deathIsPermanent: false` uses instead of ending; without one, losing
+        leaves the vital pool empty and the game's own lose conditions decide.
+    """
 
     against: tuple[EntityRef, ...] = Field(min_length=1)
     can_flee: bool = True
+    on_win: SceneRef | None = None
+    on_lose: SceneRef | None = None
     on_flee: SceneRef | None = None
 
     @model_validator(mode="before")

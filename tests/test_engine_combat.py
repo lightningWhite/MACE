@@ -1,0 +1,855 @@
+"""Tempo combat: the arithmetic, the loop, and the claim it all exists for.
+
+The claim is in docs/07-combat.md and it is falsifiable:
+
+> A player who has fought three trolls beats the fourth more reliably than a
+> player who hasn't — with an identical character sheet.
+
+Most of what follows is machinery, but `test_reading_an_enemy_wins_fights` is
+the acceptance test. If it ever fails, the system has failed and the tuning
+constants are the thing to argue about, not the test.
+"""
+
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from conftest import write_pack
+from mace.content import Library, load_library
+from mace.engine.actions import Choose, Respond, Travel
+from mace.engine.combat import fight as combat
+from mace.engine.combat import resolution
+from mace.engine.combat.resolution import Outcome
+from mace.engine.conditions import RuleError
+from mace.engine.state import GameState
+from mace.engine.step import StepResult, begin, step
+
+# ── The arithmetic ────────────────────────────────────────────────────────────
+
+
+def test_speed_widens_the_window_and_nothing_else() -> None:
+    """Stats widen the door; the player still has to walk through it."""
+    assert resolution.window_ms(1400, 50) == 1400
+    assert resolution.window_ms(1400, 70) == 1540
+    assert resolution.window_ms(1400, 30) == 1260
+
+
+def test_the_sweet_spot_sits_late() -> None:
+    """The reflex asked for is holding your nerve, not twitching early."""
+    window = 1000
+    assert resolution.precision_of(750, window) == 1.0
+    assert resolution.precision_of(0, window) == 0.0
+    assert resolution.precision_of(375, window) < resolution.precision_of(700, window)
+
+
+def test_no_roll_decides_a_read_or_a_timing() -> None:
+    """The guarantee that makes practice worth it, checked as a signature.
+
+    There is nowhere to put a seed, which is the point: a player who reads and
+    times perfectly cannot lose to dice.
+    """
+    for _ in range(2):
+        assert resolution.outcome_of(correct=True, precision=1.0) is Outcome.COUNTER
+        assert resolution.outcome_of(correct=True, precision=0.0) is Outcome.ABSORBED
+        assert resolution.outcome_of(correct=False, precision=1.0) is Outcome.GLANCING
+        assert resolution.outcome_of(correct=False, precision=0.0) is Outcome.CLEAN
+
+
+def test_a_right_read_timed_late_beats_a_wrong_read_timed_well() -> None:
+    """The ordering the four outcomes promise, at the worst defense there is."""
+    worst_mitigation = 0.5
+    absorbed = resolution.damage_taken(
+        10.0, Outcome.ABSORBED, precision=0.0, mitigation=worst_mitigation
+    )
+    glancing = resolution.damage_taken(
+        10.0, Outcome.GLANCING, precision=1.0, mitigation=0.0
+    )
+    assert absorbed < glancing
+
+
+def test_a_counter_takes_nothing() -> None:
+    assert (
+        resolution.damage_taken(20.0, Outcome.COUNTER, precision=0.6, mitigation=0.0)
+        == 0.0
+    )
+
+
+def test_guessing_costs_more_than_knowing() -> None:
+    assert resolution.stamina_cost(8.0, correct=False) > resolution.stamina_cost(
+        8.0, correct=True
+    )
+
+
+def test_momentum_builds_on_reads_and_a_clean_hit_takes_it_all() -> None:
+    momentum = 0
+    for _ in range(5):
+        momentum = resolution.momentum_after(momentum, Outcome.COUNTER)
+    assert resolution.multiplier(momentum) == max(resolution.MOMENTUM_LADDER)
+    assert resolution.momentum_after(momentum, Outcome.CLEAN) == 0
+
+
+def test_elapsed_times_are_quantized_for_replay() -> None:
+    """Two machines that read 812 ms and 814 ms must resolve the same exchange."""
+    assert resolution.quantize(812) == resolution.quantize(814)
+    assert resolution.quantize(-5) == 0
+
+
+def test_skill_lifts_a_sloppy_answer_but_never_to_a_clean_one() -> None:
+    sloppy = 0.2
+    assert resolution.eased(sloppy, 0.0) == sloppy
+    assert sloppy < resolution.eased(sloppy, 100.0) < 1.0
+
+
+# ── A fight, end to end ───────────────────────────────────────────────────────
+
+
+def brawl_pack(root: Path, *, mode: str = "reflex", **overrides: Any) -> Library:
+    """A pack with one fighter, one enemy, and one move each way.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write it.
+    mode : str
+        The game's default combat mode.
+    **overrides
+        Collections to replace wholesale.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    content: dict[str, Any] = {
+        "moves": [
+            {"id": "guard", "kind": "defense", "type": "block", "cost": 4},
+            {"id": "duck", "kind": "defense", "type": "dodge", "cost": 3},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "vagueTell": "He moves.",
+                "windupMs": 1000,
+                "counters": ["block"],
+                "damage": {"min": 6, "max": 6},
+                "cost": 5,
+            },
+        ],
+        "combatProfiles": [
+            {"id": "hero-style", "moves": ["guard", "duck"]},
+            {
+                "id": "thug-style",
+                "moves": ["guard", "swing"],
+                "tellClarity": 0.6,
+                "patterns": [{"sequence": ["swing"]}],
+            },
+        ],
+        "entities": [
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Club",
+                "item": {"equipSlot": "mainHand", "damage": {"min": 4, "max": 4}},
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+        "locations": [
+            {
+                "id": "yard",
+                "name": "The Yard",
+                "scenes": ["pick-a-fight"],
+                "entities": ["thug"],
+                "exits": [],
+            }
+        ],
+        "scenes": [
+            {
+                "id": "pick-a-fight",
+                "prompt": "Start something",
+                "effects": [
+                    {
+                        "startCombat": {
+                            "against": "thug",
+                            "onWin": "you-won",
+                            "onFlee": "you-ran",
+                        }
+                    }
+                ],
+            },
+            {"id": "you-won", "visible": False, "say": "He stays down."},
+            {"id": "you-ran", "visible": False, "say": "You run."},
+        ],
+    }
+    content.update(overrides)
+    manifest = {
+        "name": "Brawl",
+        "player": {"entity": "hero", "startLocation": "yard"},
+        "rules": {"combatMode": mode},
+        "winConditions": [{"flag": {"entity": "hero", "flag": "done"}}],
+    }
+    write_pack(
+        root,
+        "brawl",
+        kind="game",
+        files={"world.yml": content, "game.yml": {"game": manifest}},
+    )
+    return load_library(root / "brawl")
+
+
+def start(library: Library, seed: str = "brawl") -> StepResult:
+    """Begin a brawl and pick the fight.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded pack.
+    seed : str
+        The session seed.
+
+    Returns
+    -------
+    StepResult
+        The step that started the fight.
+    """
+    result = begin(library, "brawl", seed=seed)
+    return step(result.state, Choose(0), library)
+
+
+def answer(
+    state: GameState, library: Library, response: str, *, share: float = 0.75
+) -> StepResult:
+    """Answer whatever is currently telegraphed.
+
+    Parameters
+    ----------
+    state : GameState
+        The playthrough.
+    library : Library
+        The loaded pack.
+    response : str
+        What to answer with.
+    share : float
+        Where in the window to commit, as a share of it. 0.75 is the sweet
+        spot; anything else is deliberately worse.
+
+    Returns
+    -------
+    StepResult
+        The step.
+    """
+    tell = state.combat.tell if state.combat else None
+    assert tell is not None
+    return step(state, Respond(response, int(tell.window_ms * share)), library)
+
+
+def kinds(result: StepResult) -> list[str]:
+    """The kinds of a step's events, in order.
+
+    Parameters
+    ----------
+    result : StepResult
+        The step.
+
+    Returns
+    -------
+    list of str
+        Event kinds.
+    """
+    return [event.kind for event in result.events]
+
+
+def resolved(result: StepResult) -> dict[str, Any]:
+    """The payload of a step's `combat.resolve` event.
+
+    Parameters
+    ----------
+    result : StepResult
+        The step.
+
+    Returns
+    -------
+    dict
+        The payload.
+    """
+    return next(e.payload() for e in result.events if e.kind == "combat.resolve")
+
+
+def test_a_fight_telegraphs_before_it_asks(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    assert "combat.begin" in kinds(result)
+    assert kinds(result).index("combat.tell") < kinds(result).index("combat.responses")
+
+
+def test_the_menu_is_replaced_by_the_fight(tmp_path: Path) -> None:
+    """A list of roads to walk down in the middle of a fight would be a lie."""
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    assert "choices" not in kinds(result)
+    assert result.state.pending is None
+
+
+def test_everything_but_looking_waits_until_the_fight_is_over(
+    tmp_path: Path,
+) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    refused = step(result.state, Choose(0), library)
+    assert any(
+        e.payload().get("message", "").startswith("you are in the middle")
+        for e in refused.events
+        if e.kind == "engine.rule-failed"
+    )
+
+
+def test_a_right_read_timed_well_takes_nothing_and_hits_back(
+    tmp_path: Path,
+) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    result = answer(result.state, library, "block")
+    payload = resolved(result)
+    assert payload["result"] == "counter"
+    assert payload["damageTaken"] == 0.0
+    assert payload["damageDealt"] > 0.0
+
+
+def test_a_wrong_read_timed_well_still_hurts_less_than_a_bad_one(
+    tmp_path: Path,
+) -> None:
+    library = brawl_pack(tmp_path)
+    sharp = answer(start(library).state, library, "dodge")
+    sloppy = answer(start(library).state, library, "dodge", share=0.05)
+    assert resolved(sharp)["result"] == "glancing"
+    assert resolved(sloppy)["result"] == "clean"
+    assert resolved(sharp)["damageTaken"] < resolved(sloppy)["damageTaken"]
+
+
+def test_committing_after_the_window_is_simply_too_late(tmp_path: Path) -> None:
+    """Late is not slow. An answer that lands after the blow was never made."""
+    library = brawl_pack(tmp_path)
+    result = answer(start(library).state, library, "block", share=1.5)
+    assert resolved(result)["precision"] == 0.0
+    assert resolved(result)["result"] == "absorbed"
+
+
+def test_an_answer_the_fighter_does_not_have_is_refused(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    refused = step(result.state, Respond("pirouette", 700), library)
+    assert any(e.kind == "engine.rule-failed" for e in refused.events)
+
+
+def test_winning_takes_what_the_loser_carried(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    for _ in range(40):
+        if result.state.combat is None:
+            break
+        result = answer(result.state, library, "block")
+    ended = next(e for e in result.events if e.kind == "combat.end")
+    assert ended.payload()["outcome"] == "won"
+    assert result.state.protagonist.inventory["brawl:purse"] == 3
+
+
+def test_the_winning_scene_plays_afterwards(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    for _ in range(40):
+        if result.state.combat is None:
+            break
+        result = answer(result.state, library, "block")
+    assert "He stays down." in [
+        e.payload()["text"] for e in result.events if e.kind == "narrate"
+    ]
+
+
+def test_a_fight_never_moves_the_world_clock(tmp_path: Path) -> None:
+    """Combat happens inside a tick; its clock is milliseconds, not hours."""
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    before = result.state.tick
+    for _ in range(40):
+        if result.state.combat is None:
+            break
+        result = answer(result.state, library, "block")
+    assert result.state.tick == before
+
+
+def test_a_defeated_enemy_that_the_fight_found_stays_where_it_was(
+    tmp_path: Path,
+) -> None:
+    """A fight tidies away what it made and leaves alone what it found."""
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    assert "brawl:thug" in result.state.entities
+    for _ in range(40):
+        if result.state.combat is None:
+            break
+        result = answer(result.state, library, "block")
+    assert "brawl:thug" in result.state.entities
+
+
+def test_fighting_something_standing_here_does_not_conjure_a_second_one(
+    tmp_path: Path,
+) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    thugs = [
+        entity
+        for entity in result.state.entities.values()
+        if entity.definition == "brawl:thug"
+    ]
+    assert len(thugs) == 1
+
+
+def test_repeating_a_reference_makes_another_of_it(tmp_path: Path) -> None:
+    """`against: [wolf, wolf]` is two wolves, not one wolf twice."""
+    library = brawl_pack(
+        tmp_path,
+        scenes=[
+            {
+                "id": "pick-a-fight",
+                "prompt": "Start something",
+                "effects": [{"startCombat": {"against": ["thug", "thug", "thug"]}}],
+            }
+        ],
+    )
+    result = start(library)
+    assert result.state.combat is not None
+    assert len(result.state.combat.standing("enemy")) == 3
+
+
+def test_a_correct_read_teaches_the_weapon_and_the_enemy(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = answer(start(library).state, library, "block")
+    player = result.state.protagonist
+    assert player.skills["brawl:club"] > 0.0
+    assert player.familiarity["brawl:thug-style"] == 1
+
+
+def test_fleeing_costs_effort_whether_or_not_it_works(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    before = result.state.protagonist.pools["stamina"]
+    result = step(result.state, Respond("flee", 700), library)
+    assert result.state.protagonist.pools["stamina"] < before
+
+
+def test_fleeing_is_not_offered_when_content_forbids_it(tmp_path: Path) -> None:
+    library = brawl_pack(
+        tmp_path,
+        scenes=[
+            {
+                "id": "pick-a-fight",
+                "prompt": "Start something",
+                "effects": [{"startCombat": {"against": "thug", "canFlee": False}}],
+            }
+        ],
+    )
+    result = start(library)
+    offered = next(e for e in result.events if e.kind == "combat.responses")
+    assert "flee" not in offered.payload()["options"]
+
+
+def test_an_enemy_with_no_effort_left_still_gets_answered(tmp_path: Path) -> None:
+    """At zero effort a defense fails automatically; it does not vanish."""
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    result.state.protagonist.pools["stamina"] = 0.0
+    result = answer(result.state, library, "block")
+    assert resolved(result)["result"] == "clean"
+
+
+def test_recovering_gives_effort_back_and_takes_the_hit(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    result.state.protagonist.pools["stamina"] = 5.0
+    result = answer(result.state, library, "recover")
+    payload = resolved(result)
+    assert payload["result"] == "clean"
+    assert result.state.protagonist.pools["stamina"] > 5.0
+
+
+# ── Modes ─────────────────────────────────────────────────────────────────────
+
+
+def test_tactical_mode_needs_no_clock(tmp_path: Path) -> None:
+    """No time is measured, and reading still decides the fight."""
+    library = brawl_pack(tmp_path, mode="tactical")
+    result = start(library)
+    result = step(result.state, Respond("block"), library)
+    assert resolved(result)["precision"] == pytest.approx(resolution.TACTICAL_PRECISION)
+    assert resolved(result)["result"] == "counter"
+
+
+def test_tactical_mode_reads_the_tells_less_legibly(tmp_path: Path) -> None:
+    """It gives up the execution half of skill, so the reading half is harder."""
+    timed = brawl_pack(tmp_path / "timed", mode="reflex")
+    untimed = brawl_pack(tmp_path / "untimed", mode="tactical")
+
+    def legible(library: Library) -> int:
+        return sum(
+            next(
+                e.payload()["clear"]
+                for e in start(library, seed=f"clarity{i}").events
+                if e.kind == "combat.tell"
+            )
+            for i in range(60)
+        )
+
+    assert legible(untimed) < legible(timed)
+
+
+def test_auto_mode_plays_the_whole_fight_in_one_step(tmp_path: Path) -> None:
+    """Nobody is waiting for a keypress, so there is nothing to wait for."""
+    library = brawl_pack(tmp_path, mode="auto")
+    result = start(library)
+    assert result.state.combat is None
+    assert "combat.end" in kinds(result)
+    assert "combat.responses" not in kinds(result)
+
+
+def test_a_fight_that_never_ends_is_stopped(tmp_path: Path) -> None:
+    """Content that cannot hurt anybody produces a draw rather than a hang."""
+    library = brawl_pack(
+        tmp_path,
+        moves=[
+            {"id": "guard", "kind": "defense", "type": "block", "cost": 0},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "counters": ["block"],
+                "cost": 0,
+            },
+        ],
+        combatProfiles=[
+            {"id": "hero-style", "moves": ["guard"]},
+            {
+                "id": "thug-style",
+                "moves": ["guard", "swing"],
+                "patterns": [{"sequence": ["swing"]}],
+            },
+        ],
+    )
+    result = begin(library, "brawl", seed="stale")
+    result = step(result.state, Choose(0), library)
+    # Neither side can land anything, so neither side can end it: `recover`
+    # never opens an opening, and `swing` carries no damage.
+    for _ in range(combat.MAX_EXCHANGES + 5):
+        if result.state.combat is None:
+            break
+        result = answer(result.state, library, "recover")
+    assert result.state.combat is None
+    ended = next(e for e in result.events if e.kind == "combat.end")
+    assert ended.payload()["outcome"] == "fled"
+
+
+# ── The acceptance test ───────────────────────────────────────────────────────
+
+
+COUNTERS = {
+    "overhead": "dodge",
+    "sweep": "jump",
+    "grapple": "strike",
+    "feint": "strike",
+    "slash": "block",
+    "thrust": "parry",
+}
+
+
+def play_a_troll(library: Library, seed: str, *, reads: float, aims: float) -> str:
+    """Fight Gorm with a given amount of skill, and report how it went.
+
+    Parameters
+    ----------
+    library : Library
+        The shipped packs.
+    seed : str
+        The session seed, which also seeds the simulated player.
+    reads : float
+        The chance the player picks the right counter — what they *know*.
+    aims : float
+        How tightly they hit the sweet spot, 0 to 1 — what they can *do*.
+
+    Returns
+    -------
+    str
+        `won`, `lost`, or `fled`.
+    """
+    import random  # noqa: PLC0415 — a simulated player, never the engine
+
+    dice = random.Random(seed)
+    result = begin(library, "peasants-quest", seed=seed)
+    result = step(result.state, Travel("hagans-castle"), library)
+    result = step(result.state, _named(result, "Speak to the troll"), library)
+    result = step(
+        result.state, _named(result, "Refuse, and put a hand on your hook"), library
+    )
+
+    for _ in range(200):
+        fight = result.state.combat
+        if fight is None or fight.tell is None:
+            break
+        pack_id, local = fight.tell.move.split(":")
+        move = library.pack(pack_id).moves[local]
+        right = COUNTERS.get(move.type)
+        if right is not None and dice.random() < reads:
+            response = right
+        else:
+            response = dice.choice(["block", "parry", "jump", "dodge"])
+        ideal = (3 * fight.tell.window_ms) // 4
+        slop = int((1.0 - aims) * fight.tell.window_ms * 0.5)
+        drift = dice.randint(-slop, slop) if slop else 0
+        result = step(result.state, Respond(response, max(0, ideal + drift)), library)
+
+    ended = [e for e in result.events if e.kind == "combat.end"]
+    if ended:
+        return str(ended[-1].payload()["outcome"])
+    return "lost"
+
+
+def _named(result: StepResult, prompt: str) -> Choose:
+    """Choose the offered option with a given prompt.
+
+    Parameters
+    ----------
+    result : StepResult
+        The step that offered it.
+    prompt : str
+        The option's text.
+
+    Returns
+    -------
+    Choose
+        The action.
+    """
+    assert result.state.pending is not None
+    prompts = [option.prompt for option in result.state.pending.options]
+    return Choose(prompts.index(prompt))
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def test_reading_an_enemy_wins_fights() -> None:
+    """The acceptance test for the whole system, on the shipped troll.
+
+    Two simulated players with an *identical character sheet*: one who has
+    learned what beats an overhead and one who has not. If knowing does not
+    win more fights, tempo combat has failed and the constants in
+    `mace.engine.combat.resolution` are the thing to argue about — not this
+    test.
+    """
+    library = load_library(REPO_ROOT / "packs")
+    rounds = 24
+    novice = sum(
+        play_a_troll(library, f"n{i}", reads=0.30, aims=0.25) == "won"
+        for i in range(rounds)
+    )
+    veteran = sum(
+        play_a_troll(library, f"n{i}", reads=0.90, aims=0.85) == "won"
+        for i in range(rounds)
+    )
+    assert veteran > novice + rounds // 3, (
+        f"knowing the troll won {veteran}/{rounds} and not knowing it won "
+        f"{novice}/{rounds}; the gap is what the whole system is for"
+    )
+
+
+def test_perfect_play_takes_no_damage_at_all() -> None:
+    """The guarantee, on real content: reads and timing beat dice outright."""
+    library = load_library(REPO_ROOT / "packs")
+    result = begin(library, "peasants-quest", seed="flawless")
+    result = step(result.state, Travel("hagans-castle"), library)
+    result = step(result.state, _named(result, "Speak to the troll"), library)
+    result = step(
+        result.state, _named(result, "Refuse, and put a hand on your hook"), library
+    )
+    full = result.state.protagonist.pools["hitpoints"]
+
+    for _ in range(60):
+        fight = result.state.combat
+        if fight is None or fight.tell is None:
+            break
+        pack_id, local = fight.tell.move.split(":")
+        move = library.pack(pack_id).moves[local]
+        result = step(
+            result.state,
+            Respond(move.counters[0], (3 * fight.tell.window_ms) // 4),
+            library,
+        )
+
+    assert result.state.protagonist.pools["hitpoints"] == full
+
+
+def test_the_shipped_troll_takes_about_eight_exchanges_to_beat() -> None:
+    """The number docs/07-combat.md promises, checked against the real pack."""
+    library = load_library(REPO_ROOT / "packs")
+    result = begin(library, "peasants-quest", seed="eight")
+    result = step(result.state, Travel("hagans-castle"), library)
+    result = step(result.state, _named(result, "Speak to the troll"), library)
+    result = step(
+        result.state, _named(result, "Refuse, and put a hand on your hook"), library
+    )
+    for _ in range(60):
+        fight = result.state.combat
+        if fight is None or fight.tell is None:
+            break
+        pack_id, local = fight.tell.move.split(":")
+        move = library.pack(pack_id).moves[local]
+        result = step(
+            result.state,
+            Respond(move.counters[0], (3 * fight.tell.window_ms) // 4),
+            library,
+        )
+    ended = next(e for e in result.events if e.kind == "combat.end")
+    assert ended.payload()["outcome"] == "won"
+    assert 5 <= ended.payload()["exchanges"] <= 12
+
+
+def test_a_fight_draws_only_from_its_own_stream() -> None:
+    """A forty-exchange fight must not change which encounter comes later."""
+    library = load_library(REPO_ROOT / "packs")
+    result = begin(library, "peasants-quest", seed="streams")
+    result = step(result.state, Travel("hagans-castle"), library)
+    result = step(result.state, _named(result, "Speak to the troll"), library)
+    before = dict(result.state.rng.positions())
+    result = step(
+        result.state, _named(result, "Refuse, and put a hand on your hook"), library
+    )
+    for _ in range(20):
+        fight = result.state.combat
+        if fight is None or fight.tell is None:
+            break
+        result = answer(result.state, library, "dodge")
+
+    after = result.state.rng.positions()
+    moved = {name for name in after if after[name] != before.get(name, 0)}
+    assert moved == {"combat.combat#1"}, moved
+
+
+def test_a_fight_replays_identically() -> None:
+    library = load_library(REPO_ROOT / "packs")
+
+    def run() -> list[Any]:
+        result = begin(library, "peasants-quest", seed="twice")
+        result = step(result.state, Travel("hagans-castle"), library)
+        result = step(result.state, _named(result, "Speak to the troll"), library)
+        result = step(
+            result.state,
+            _named(result, "Refuse, and put a hand on your hook"),
+            library,
+        )
+        stream = list(result.records())
+        for _ in range(20):
+            fight = result.state.combat
+            if fight is None or fight.tell is None:
+                break
+            result = answer(result.state, library, "dodge")
+            stream.extend(result.records())
+        return stream
+
+    assert run() == run()
+
+
+def test_an_answer_with_no_fight_is_refused() -> None:
+    library = load_library(REPO_ROOT / "packs")
+    result = begin(library, "peasants-quest", seed="nofight")
+    result = step(result.state, Respond("dodge", 500), library)
+    assert any(e.kind == "engine.rule-failed" for e in result.events)
+
+
+def test_the_engine_never_calls_random_during_a_fight() -> None:
+    """Every draw comes from the seeded source, or replay is a lie."""
+    import random  # noqa: PLC0415
+
+    library = load_library(REPO_ROOT / "packs")
+    result = begin(library, "peasants-quest", seed="pure")
+    result = step(result.state, Travel("hagans-castle"), library)
+    result = step(result.state, _named(result, "Speak to the troll"), library)
+
+    original = random.random
+    random.random = _forbidden  # type: ignore[assignment]
+    try:
+        result = step(
+            result.state,
+            _named(result, "Refuse, and put a hand on your hook"),
+            library,
+        )
+        for _ in range(10):
+            if result.state.combat is None or result.state.combat.tell is None:
+                break
+            result = answer(result.state, library, "dodge")
+    finally:
+        random.random = original  # type: ignore[assignment]
+
+
+def _forbidden(*_args: Any, **_kwargs: Any) -> float:
+    """Stand in for `random.random` so a direct call is a test failure.
+
+    Returns
+    -------
+    float
+        Never; it always raises.
+
+    Raises
+    ------
+    AssertionError
+        Always.
+    """
+    raise AssertionError("the engine called `random` directly")
+
+
+def test_combat_state_finds_and_counts_its_combatants(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    fight = result.state.combat
+    assert fight is not None
+    assert fight.find("brawl:hero") is not None
+    assert fight.find("nobody") is None
+    assert len(fight.standing("player")) == 1
+
+
+def test_a_fight_cannot_be_started_against_something_absent(
+    tmp_path: Path,
+) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    fight = result.state.combat
+    assert fight is not None
+    from mace.engine.step import _context  # noqa: PLC0415
+
+    game = library.pack("brawl").game
+    context = _context(library, result.state, game)
+    with pytest.raises(RuleError, match="cannot fight"):
+        combat.begin(context, ["nobody-at-all"], [])

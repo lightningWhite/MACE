@@ -5145,7 +5145,7 @@
     },
     "StartCombat": {
       "additionalProperties": false,
-      "description": "Hand control to the combat system.",
+      "description": "Hand control to the combat system.\n\nA fight is not a scene and does not nest inside one: it takes over until\nit ends, and then plays whichever of `onWin`, `onLose`, and `onFlee`\napplies. Writing all three is how a fight has consequences rather than\njust an outcome \u2014 the bridge you can now cross, the debt you now owe, the\ntwenty yards of road you gave up running.\n\nAttributes\n----------\nagainst : tuple of str\n    Who to fight. Repeat one to get several of it.\ncan_flee : bool\n    Whether running is allowed at all.\non_win, on_lose, on_flee : str or None\n    Scenes played after the fight. `onLose` is what a game with\n    `deathIsPermanent: false` uses instead of ending; without one, losing\n    leaves the vital pool empty and the game's own lose conditions decide.",
       "properties": {
         "against": {
           "items": {
@@ -5160,6 +5160,32 @@
           "default": true,
           "title": "Canflee",
           "type": "boolean"
+        },
+        "onWin": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Onwin"
+        },
+        "onLose": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Onlose"
         },
         "onFlee": {
           "anyOf": [
