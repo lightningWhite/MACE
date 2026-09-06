@@ -30,6 +30,7 @@ from mace.engine.combat import resolution
 from mace.engine.combat.resolution import Outcome
 from mace.engine.combat.roster import (
     FLEE,
+    FOCUS,
     RECOVER,
     Fighter,
     fighter_for,
@@ -379,6 +380,10 @@ def respond(
 
     if response == FLEE:
         _attempt_flight(context, roster, events)
+        return
+
+    if response == FOCUS:
+        _give_an_order(context, fight, roster, events)
         return
 
     _resolve(context, roster, tell, response, elapsed_ms, events)
@@ -748,6 +753,48 @@ def _grow(fighter: Fighter, stat: str) -> None:
     fighter.state.pools[stat] = round(min(float(ceiling), stored + step), 3)
 
 
+def _give_an_order(
+    context: RuleContext,
+    fight: CombatState,
+    roster: dict[str, Fighter],
+    events: list[Event],
+) -> None:
+    """Spend the exchange telling your allies who to concentrate on.
+
+    A real cost and a real tactical choice: the move that was coming still
+    lands, unanswered, and what you buy is your escort turning on the wounded
+    wolf rather than the nearest one. The order cycles through the standing
+    enemies rather than naming one, so the protocol stays a flat response and
+    a front-end needs no target picker — pressing it again moves along.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    fight : CombatState
+        The fight.
+    roster : dict
+        Instance id to fighter.
+    events : list of Event
+        Accumulator.
+    """
+    standing = [c.actor for c in fight.standing("enemy")]
+    if fight.focus in standing:
+        fight.focus = standing[(standing.index(fight.focus) + 1) % len(standing)]
+    else:
+        fight.focus = standing[0]
+
+    named = roster[fight.focus].name
+    events.append(Narrated(f'"{named}!" you call. "That one!"', pause=False))
+
+    tell = fight.tell
+    assert tell is not None
+    _resolve(context, roster, tell, CAUGHT, None, events)
+    if _settled(context, events):
+        return
+    _next_tell(context, events)
+
+
 # ── Fleeing ───────────────────────────────────────────────────────────────────
 
 
@@ -1005,10 +1052,11 @@ def _target(
     candidates = fight.standing(other)
     if not candidates:
         return None
-    chosen = next(
-        (c for c in candidates if c.actor == player and other == "player"),
-        candidates[0],
-    )
+    if other == "player":
+        chosen = next((c for c in candidates if c.actor == player), candidates[0])
+    else:
+        # An order the player paid an exchange for is what allies act on.
+        chosen = next((c for c in candidates if c.actor == fight.focus), candidates[0])
     return roster[chosen.actor]
 
 
@@ -1275,11 +1323,18 @@ def responses_for(fighter: Fighter, fight: CombatState) -> tuple[str, ...]:
     Returns
     -------
     tuple of str
-        Defense types, then `recover`, then `flee` where it is allowed.
+        Defense types, then `recover`, then `flee` and `focus` where each
+        would mean something. The order is presentation order, and it is the
+        engine's rather than a front-end's so that a terminal and a browser
+        bind the same keys to the same things.
     """
     options = [*fighter.responses, RECOVER]
-    if fight.can_flee and fighter.combatant.side == "player":
-        options.append(FLEE)
+    if fighter.combatant.side == "player":
+        if fight.can_flee:
+            options.append(FLEE)
+        allies = [c for c in fight.standing("player") if c.actor != fighter.actor]
+        if allies and len(fight.standing("enemy")) > 1:
+            options.append(FOCUS)
     return tuple(options)
 
 

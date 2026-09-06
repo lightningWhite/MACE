@@ -185,6 +185,11 @@ class EntityState:
         them can be stored (docs/07-combat.md § Growth).
     ally : bool
         Whether this entity travels with the player and fights on their side.
+    ally_until : object or None
+        The condition that ends the arrangement, when one was set. Held as the
+        authored `Condition` rather than re-derived, because the effect that
+        attached them is long gone by the time it comes true — "as far as the
+        castle" has to outlive the scene that said it.
     """
 
     instance_id: str
@@ -200,6 +205,7 @@ class EntityState:
     skills: dict[str, float] = field(default_factory=dict)
     familiarity: dict[str, int] = field(default_factory=dict)
     ally: bool = False
+    ally_until: Any = None
 
 
 @dataclass(slots=True)
@@ -594,6 +600,11 @@ class CombatState:
     flee_to : str or None
         Qualified location id to put them down at. None leaves them where the
         journey left them, which for a road is partway along it.
+    focus : str or None
+        The instance id the player's allies are concentrating on. Set by
+        spending an exchange on an order, which is why it lives here rather
+        than being recomputed: an order the player paid for has to outlast
+        the exchange they paid for it in.
     spoils : dict
         Qualified item id to quantity, taken from the defeated.
     outcome : str or None
@@ -608,6 +619,7 @@ class CombatState:
     can_flee: bool = True
     after: dict[str, str] = field(default_factory=dict)
     flee_to: str | None = None
+    focus: str | None = None
     spoils: dict[str, int] = field(default_factory=dict)
     outcome: str | None = None
 

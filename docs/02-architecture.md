@@ -112,14 +112,21 @@ Selected event types (the full list lives with the code):
 | `stat.changed` | `actor`, `stat`, `delta`, `reason` | Health bar animation, "(-8 hp)" |
 | `inventory.changed` | `actor`, `item`, `delta` | Inventory panel |
 | `quest.updated` | `questId`, `stage`, `status` | Journal entry |
-| `combat.begin` | `combatants`, `arena` | Switch to combat view |
-| `combat.tell` | `move`, `windowMs`, `cue` | The telegraph the player reacts to |
-| `combat.resolve` | `precision`, `read`, `damage`, `momentum` | Hit feedback |
-| `combat.end` | `outcome`, `spoils` | Return to exploration |
+| `combat.begin` | `combatants`, `mode`, `canFlee`, `matrix` | Switch to combat view; the matrix is the training wheels |
+| `combat.tell` | `move`, `type`, `text`, `windowMs`, `clear` | The telegraph the player reacts to. `type` is empty when the tell was not legible |
+| `combat.responses` | `options`, `stamina`, `momentum`, `streak` | What the player may answer with, and the resources they are spending |
+| `combat.resolve` | `read`, `result`, `precision`, `damageTaken`, `damageDealt`, `momentum` | Hit feedback that says *why* |
+| `combat.end` | `outcome`, `exchanges`, `spoils` | Return to exploration |
 | `game.over` | `outcome`, `reason` | Win/lose sequence |
 
 The CLI renders `combat.tell` as a line of text with a keypress deadline; the PWA
 renders it as a shrinking timing bar. Same event, same engine, same fairness.
+
+`combat.responses` is to a fight what `choices` is to a scene, and it exists for
+the same reason: without it a front-end would have to reach into engine state to
+find out what the player can do. It carries stamina and momentum because those
+are the resources being managed and a UI has to show them somewhere permanent —
+the same argument that produced `world.status`.
 
 `world.status` is the one event that is a projection rather than a happening.
 A status line has to be *standing* — `Day 3 · dusk · Fenmoor · light rain` —

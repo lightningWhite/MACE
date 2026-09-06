@@ -398,6 +398,7 @@ def _set_ally(
     if entity.ally == joining:
         return
     entity.ally = joining
+    entity.ally_until = payload.until if isinstance(payload, AttachAlly) else None
     if joining:
         entity.location = context.state.location
     outcome.events.append(

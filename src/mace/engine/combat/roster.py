@@ -30,7 +30,13 @@ __all__ = ["FLEE", "RECOVER", "RESERVED_RESPONSES", "Fighter", "fighter_for"]
 #: you spend catching your breath — the pacing half of the combat skill.
 FLEE = "flee"
 RECOVER = "recover"
-RESERVED_RESPONSES = frozenset({FLEE, RECOVER})
+
+#: Spend the exchange directing your allies instead of answering. Offered only
+#: when there is somebody to direct and more than one thing to direct them at
+#: — an order with one target and nobody to give it to is a button.
+FOCUS = "focus"
+
+RESERVED_RESPONSES = frozenset({FLEE, RECOVER, FOCUS})
 
 #: What a fighter hits with when it is holding nothing. Bare hands are worse
 #: than a billhook and better than nothing, which is the only thing this needs

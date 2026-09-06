@@ -65,25 +65,31 @@ through, and the road between towns is dangerous.
 
 ---
 
-## Phase 3 — Combat *(current)*
+## Phase 3 — Combat *(done)*
 
 **Playable at the end:** you can fight a troll in the terminal, lose, learn its
 pattern, and win.
 
-- [ ] Moves, counter matrix, combat profiles, patterns, feints
-- [ ] Exchange resolution: read × precision × stats × gear
-- [ ] Stamina and momentum
-- [ ] `auto` mode first (it's the testable one), then `tactical`, then `reflex`
-- [ ] CLI timed input against a monotonic deadline
-- [ ] Multi-combatant fights with per-combatant action meters
-- [ ] Temporary allies — `attachAlly`/`dismissAlly`, allies fighting on `auto` profiles
-- [ ] Fleeing, with route-aware consequences
-- [ ] Skill growth and enemy familiarity
-- [ ] Balance pass: verify the acceptance test with real play
+- [x] Moves, counter matrix, combat profiles, patterns, feints
+- [x] Exchange resolution: read × precision × stats × gear
+- [x] Stamina and momentum
+- [x] `auto` mode first (it's the testable one), then `tactical`, then `reflex`
+- [x] CLI timed input against a monotonic deadline
+- [x] Multi-combatant fights with per-combatant action meters
+- [x] Temporary allies — `attachAlly`/`dismissAlly`, allies fighting on `auto` profiles
+- [x] Fleeing, with route-aware consequences
+- [x] Skill growth and enemy familiarity
+- [x] Balance pass: verify the acceptance test with real play
+      *Numbers in [Combat](07-combat.md#where-the-balance-actually-sits), guarded
+      by `test_reading_an_enemy_wins_fights`.*
+- [x] [ADR-0008](decisions/0008-the-player-answers.md) — the player answers
+      rather than taking turns
+- [ ] **Deferred:** using an item mid-fight. The response vocabulary has room
+      for it; it is not built.
 
 ---
 
-## Phase 4 — The wizard, properly
+## Phase 4 — The wizard, properly *(current)*
 
 **Usable at the end:** someone who isn't you can build a small game without
 writing YAML.

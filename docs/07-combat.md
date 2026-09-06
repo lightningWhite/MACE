@@ -25,7 +25,7 @@ Combat is a sequence of **exchanges**. Each exchange:
 
    2. READ          You choose a response. The right response depends on
                     the move type — this is knowledge.
-                    [P]arry  [D]odge  [B]lock  [S]trike  [I]tem  [F]lee
+                    [P]arry  [D]odge  [B]lock  [S]trike  [R]ecover  [F]lee
 
    3. TIME          When you commit matters. Early is hesitant, late is
                     too late, and the sweet spot is near the end of the
@@ -110,6 +110,20 @@ the player still has to walk through it. This is the specific mechanism by which
 **character growth and player growth both matter without either making the other
 irrelevant** — and it's why stats can never be enough on their own.
 
+`difficultyScale` is where familiarity lands: a character who has read this
+profile forty times gets a window 20% wider, which is the character learning
+trolls alongside the player.
+
+Committing *after* the window is not a slow answer, it is no answer:
+`precision` is zero and the outcome is whatever a wrong read timed badly gets.
+Late is late.
+
+The arithmetic runs on integer milliseconds down to a single division, because
+an exchange that resolves one way in Python and another in a browser is not an
+exchange anybody can balance. Elapsed times are quantized to 10 ms before
+anything looks at them, so two machines reading 812 ms and 814 ms agree
+(ADR-0004).
+
 Front-ends express the same window differently:
 
 - **PWA:** a shrinking bar with a highlighted sweet zone. Direct, readable,
@@ -117,8 +131,18 @@ Front-ends express the same window differently:
 - **CLI:** the tell prints, a key is read with a monotonic deadline, precision is
   computed from elapsed time. Works in a plain terminal.
 
-Both send the same `combat.input {defense, elapsedMs}` action. The engine never
-sees a UI.
+Both send the same `combat.input {response, elapsedMs}` action. The engine never
+sees a UI, and it never measures anything: the front-end writes what it measured
+into the action log and the engine quantizes the recorded number, so a replay
+resolves against what was written down rather than against a fresh measurement.
+
+Where a terminal cannot be put in raw mode — a pipe, a recorded session — the
+CLI says so and drops to the untimed presentation. A window that is secretly
+unfair is worse than no window, and it is the exact failure this system exists
+to avoid.
+
+**Not yet built:** using an item mid-fight. The response vocabulary has room for
+it and nothing in the loop is in its way; it simply is not there.
 
 ## Resources — why you can't just spam
 
@@ -134,8 +158,14 @@ per-exchange one.
 
 **Momentum** rewards streaks: each consecutive successful read multiplies damage
 (1.0 → 1.15 → 1.3 → 1.5, capped) and grants openings. A clean hit taken resets it
-to 1.0. Streaks are how a fight builds, and how a skilled player finishes a troll
+to 1.0, a glance costs one step, and a right read timed late holds where it is.
+Streaks are how a fight builds, and how a skilled player finishes a troll
 in eight exchanges where a novice takes twenty-five and loses.
+
+**Recovering** is a response like any other: you spend the exchange breathing,
+take the blow that was coming, and get roughly a quarter of your effort pool
+back. That is the pacing skill made concrete — it is a *choice to be hit*, and
+knowing when to make it is the second, slower thing a player learns.
 
 ## Randomness — bounded, on purpose
 
@@ -143,13 +173,16 @@ Randomness exists only to keep fights from being solvable puzzles:
 
 - Pattern selection (from the profile's weights)
 - Feint occurrence (`feintChance`)
-- ±10% damage variance
+- Whether a telegraph is legible (`tellClarity`)
+- The roll inside a move's own `damage` band — that band *is* the variance, and
+  nothing multiplies another wobble on top of it
 - Critical openings (~5%, scaled by momentum)
 
 **Nothing rolls to decide whether your read was correct or your timing was good.**
-Those are pure functions of the player's input. A player who reads and times
-perfectly cannot lose to dice, and that guarantee is what makes practice feel
-worth it.
+Those are pure functions of the player's input — `outcome_of(correct, precision)`
+has nowhere to put a seed, which is the guarantee stated as a signature. A player
+who reads and times perfectly cannot lose to dice, and that is what makes
+practice feel worth it.
 
 ## Three modes, one engine
 
@@ -192,16 +225,68 @@ rate proportional to its speed; tells arrive from whoever is ready. Facing three
 wolves means three overlapping windows — the pressure comes from parallelism, not
 from bigger numbers.
 
-Allies act on their own profiles in `auto` mode. The player can spend an exchange
-issuing an order (`focus X`, `defend me`, `hold`) instead of acting, which is a
-real cost and a real tactical choice.
+**The player is not in the meter race** ([ADR-0008](decisions/0008-the-player-answers.md)).
+Enemies and allies race; the player answers. Their side of a fight is reading,
+and what a clean read buys is the opening they hit back through — `strike` is a
+defense that answers by hurting. Their speed is spent widening the window rather
+than filling a bar, which keeps a fight a conversation about the enemy's habits
+rather than two bars racing each other.
+
+Allies act on their own profiles in `auto` mode, and whatever they swing at
+answers on `auto` too, so nobody waits on a keypress for a fight they are
+watching. The player can spend an exchange on an order instead of answering:
+`focus` moves the party's attention to the next enemy still standing. It costs
+the exchange — the move that was coming lands unanswered — which is what makes
+it a decision rather than a button. It is offered only when there is somebody to
+direct and more than one thing to direct them at.
 
 ## Fleeing
 
 Always available, never free. Fleeing rolls against the fastest pursuer, costs
-stamina, and grants the enemy a free exchange if it fails. Fleeing mid-journey
-drops you back along the route you came from — with the ticks and the weather
-that implies. Running away should be a decision with a story attached.
+stamina, and grants the enemy a free exchange if it fails — and a failed break
+earns nothing back, unlike the deliberate choice to recover.
+
+Where it puts you is the author's call and then the road's. An encounter's
+`fleeTo` or an effect's own setting names a place. Without one, fleeing
+mid-journey pushes you back down the road you came up, with the ticks and the
+weather that implies; fleeing in a room leaves you in it, because a room has
+nowhere else to put you. Running away should be a decision with a story
+attached.
+
+## Where the balance actually sits
+
+Measured against the shipped `fantasy.core` profiles, with `peasants-quest`'s
+protagonist — a peasant with 50 hitpoints, strength 32, and a reaping hook.
+Four simulated players, identical character sheets, differing only in how often
+they pick the right counter and how tightly they hit the sweet spot. 120 fights
+per cell; win rate over mean exchanges.
+
+| | novice `.30/.25` | learning `.60/.55` | veteran `.85/.80` | expert `.98/.95` |
+|---|---|---|---|---|
+| Gorm the bridge troll | 1% / 8.5 | 25% / 9.6 | 69% / 8.1 | 92% / 6.6 |
+| one wolf | 30% / 11.1 | 86% / 4.7 | 98% / 3.0 | 100% / 2.5 |
+| two wolves | 4% / 14.5 | 49% / 10.5 | 85% / 6.5 | 98% / 4.7 |
+| Captain Orin | 0% / 9.1 | 25% / 9.1 | 57% / 7.4 | 81% / 5.9 |
+
+`auto` mode — the stats-only baseline, no player at all — wins 2% against Gorm,
+70% against one wolf, 24% against two, and 2% against Orin. It sits between
+novice and learning, which is what a stats-only baseline should do.
+
+Three things to read off this:
+
+- **The gradient is monotone in every matchup**, which is the acceptance test
+  passing rather than a claim about it. `test_reading_an_enemy_wins_fights`
+  guards it.
+- **A lone wolf is a fair fight for someone who has never fought.** Gorm and
+  Orin are not: they are things to talk past, pay off, or come back to. A
+  library whose every enemy is beatable by a novice has no difficulty dial.
+- **Perfect play takes no damage at all** and finishes Gorm in exactly eight
+  exchanges. Both are pinned by tests, because both are promises this document
+  makes.
+
+The tuning constants all live in `mace.engine.combat.resolution` and
+`mace.engine.combat.fight`, named and commented, so re-balancing is editing
+numbers in one place rather than hunting for them.
 
 ## What the author writes
 

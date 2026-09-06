@@ -40,6 +40,13 @@ that a permanent party demands.
 - The player may spend a combat exchange issuing an order instead of acting.
 - Not building: recruitment screens, party inventory, member equipment management.
 
+**Built in phase 3.** An ally is an entity with a flag: it follows the player,
+races the action meter alongside the enemies, and whatever it swings at answers
+on `auto` so nobody waits on a keypress for a fight they are watching. The one
+order is `focus`, which moves the party's attention to the next enemy still
+standing and costs the exchange it is given in. An ally attached `until` some
+condition leaves the moment it comes true, wherever that happens to be.
+
 ---
 
 ## 3. How much economy? — **RESOLVED**

@@ -588,6 +588,30 @@ sleep — which is what makes the inn worth the detour rather than the only
 option. `rest` needs `rest` in `game.rules.survival`, and reports
 `engine.unsupported` when a game has turned it off.
 
+### The ones that hand over the loop
+
+| Effect | Body | Notes |
+|---|---|---|
+| `startCombat` | `{against, canFlee?, onWin?, onLose?, onFlee?}` | Takes over until the fight ends, then plays whichever `on…` applies. |
+| `attachAlly` | `{entity, until?}` | They follow the player and fight on their own profile. `until` releases them the moment it comes true, wherever that happens. |
+| `dismissAlly` | `{entity}` | |
+
+`against` takes one reference or a list, and **repeating one makes another of
+it**: `[wolf, wolf]` is two wolves. A reference that names something already
+standing where the player is fights as *itself* — `{against: gorm}` in the
+scene where Gorm has just refused you means that troll, with this
+playthrough's hitpoints and the gold in its pocket. A fight tidies away what
+it made and leaves alone what it found.
+
+Only one fight may be asked for in a block of effects; a second would start
+before the first had finished, and that is a load-time-shaped mistake caught at
+runtime rather than a silent one.
+
+Writing all three `on…` scenes is how a fight has consequences rather than just
+an outcome — the bridge you can now cross, the twenty yards of road you gave up
+running. Without `onLose` the vital pool is simply left empty and the game's own
+`loseConditions` decide what that means.
+
 ---
 
 ## Scene

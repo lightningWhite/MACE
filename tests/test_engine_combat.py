@@ -854,3 +854,261 @@ def test_a_fight_cannot_be_started_against_something_absent(
     context = _context(library, result.state, game)
     with pytest.raises(RuleError, match="cannot fight"):
         combat.begin(context, ["nobody-at-all"], [])
+
+
+# ── Allies and orders ─────────────────────────────────────────────────────────
+
+
+def escort_pack(root: Path) -> Library:
+    """A pack with an escort you can take along and two things to fight.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write it.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    return brawl_pack(
+        root,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 60, "max": 60},
+                    "stamina": {"base": 40, "max": 40},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "escort",
+                "kind": "actor",
+                "name": "Escort",
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Club",
+                "item": {"equipSlot": "mainHand", "damage": {"min": 4, "max": 4}},
+            },
+        ],
+        locations=[
+            {
+                "id": "yard",
+                "name": "The Yard",
+                "scenes": ["hire", "pick-a-fight"],
+                "entities": ["escort"],
+                "exits": [],
+            }
+        ],
+        scenes=[
+            {
+                "id": "hire",
+                "prompt": "Hire the escort",
+                "effects": [{"attachAlly": {"entity": "escort"}}],
+            },
+            {
+                "id": "pick-a-fight",
+                "prompt": "Start something",
+                "effects": [{"startCombat": {"against": ["thug", "thug"]}}],
+            },
+        ],
+    )
+
+
+def test_an_ally_fights_on_the_players_side(tmp_path: Path) -> None:
+    library = escort_pack(tmp_path)
+    result = begin(library, "brawl", seed="escort")
+    result = step(result.state, Choose(0), library)  # hire
+    result = step(result.state, Choose(1), library)  # fight
+    fight = result.state.combat
+    assert fight is not None
+    assert {c.actor for c in fight.standing("player")} == {
+        "brawl:hero",
+        "brawl:escort",
+    }
+
+
+def test_an_ally_swings_without_the_player_being_asked(tmp_path: Path) -> None:
+    """Allies act on their own profiles; nobody waits on a keypress for them."""
+    library = escort_pack(tmp_path)
+    result = begin(library, "brawl", seed="escort")
+    result = step(result.state, Choose(0), library)
+    result = step(result.state, Choose(1), library)
+    for _ in range(30):
+        if result.state.combat is None:
+            break
+        result = answer(result.state, library, "block")
+        attackers = {
+            e.payload()["attacker"] for e in result.events if e.kind == "combat.resolve"
+        }
+        if "brawl:escort" in attackers:
+            return
+    raise AssertionError("the escort never took a swing of its own")
+
+
+def test_an_ally_follows_the_player(tmp_path: Path) -> None:
+    library = escort_pack(tmp_path)
+    result = begin(library, "brawl", seed="escort")
+    result = step(result.state, Choose(0), library)
+    result.state.protagonist.location = "brawl:elsewhere"
+    result = step(result.state, Choose(0), library)
+    assert result.state.entities["brawl:escort"].location == "brawl:elsewhere"
+
+
+def test_an_order_is_offered_only_when_it_would_mean_something(
+    tmp_path: Path,
+) -> None:
+    """Nobody to direct, or one thing to direct them at, is a button."""
+    alone = start(brawl_pack(tmp_path / "alone"))
+    offered = next(e for e in alone.events if e.kind == "combat.responses")
+    assert "focus" not in offered.payload()["options"]
+
+    library = escort_pack(tmp_path / "escorted")
+    result = begin(library, "brawl", seed="escort")
+    result = step(result.state, Choose(0), library)
+    result = step(result.state, Choose(1), library)
+    offered = next(e for e in result.events if e.kind == "combat.responses")
+    assert "focus" in offered.payload()["options"]
+
+
+def test_an_order_costs_the_exchange_it_is_given_in(tmp_path: Path) -> None:
+    library = escort_pack(tmp_path)
+    result = begin(library, "brawl", seed="escort")
+    result = step(result.state, Choose(0), library)
+    result = step(result.state, Choose(1), library)
+    before = result.state.protagonist.pools["hitpoints"]
+
+    result = step(result.state, Respond("focus", 700), library)
+    assert result.state.combat is not None
+    assert result.state.combat.focus is not None
+    assert result.state.protagonist.pools["hitpoints"] < before
+
+
+def test_repeating_an_order_moves_along_the_line(tmp_path: Path) -> None:
+    library = escort_pack(tmp_path)
+    result = begin(library, "brawl", seed="escort")
+    result = step(result.state, Choose(0), library)
+    result = step(result.state, Choose(1), library)
+
+    result = step(result.state, Respond("focus", 700), library)
+    first = result.state.combat.focus  # type: ignore[union-attr]
+    result = step(result.state, Respond("focus", 700), library)
+    assert result.state.combat is not None
+    assert result.state.combat.focus != first
+
+
+# ── Fleeing a road ────────────────────────────────────────────────────────────
+
+
+def test_running_mid_journey_costs_the_road_you_ran_back_down() -> None:
+    """Running away is a decision with a story attached, so it costs position."""
+    library = load_library(REPO_ROOT / "packs")
+    result = begin(library, "peasants-quest", seed="runaway")
+    result = step(result.state, Travel("hagans-castle"), library)
+    result = step(result.state, _named(result, "Speak to the troll"), library)
+    result = step(
+        result.state, _named(result, "Refuse, and put a hand on your hook"), library
+    )
+    assert result.state.journey is not None
+    before = result.state.journey.progress
+
+    for _ in range(30):
+        if result.state.combat is None:
+            break
+        result = step(result.state, Respond("flee", 700), library)
+
+    ended = next(e for e in result.events if e.kind == "combat.end")
+    if ended.payload()["outcome"] != "fled":
+        pytest.skip("the troll caught them every time on this seed")
+    assert result.state.journey is not None
+    assert result.state.journey.progress < before
+    assert result.state.journey.blocked_at is None
+
+
+def test_an_ally_attached_until_something_leaves_when_it_happens(
+    tmp_path: Path,
+) -> None:
+    """ "As far as the castle" has to be able to end at the castle."""
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {"hitpoints": {"base": 40, "max": 40}},
+                "combat": {"profile": "hero-style"},
+            },
+            {
+                "id": "escort",
+                "kind": "actor",
+                "name": "Escort",
+                "stats": {"hitpoints": {"base": 40, "max": 40}},
+            },
+        ],
+        locations=[
+            {
+                "id": "yard",
+                "name": "The Yard",
+                "scenes": ["hire", "arrive"],
+                "entities": ["escort"],
+                "exits": [],
+            }
+        ],
+        scenes=[
+            {
+                "id": "hire",
+                "prompt": "Hire the escort",
+                "effects": [
+                    {
+                        "attachAlly": {
+                            "entity": "escort",
+                            "until": {"flag": {"entity": "hero", "flag": "arrived"}},
+                        }
+                    }
+                ],
+            },
+            {
+                "id": "arrive",
+                "prompt": "Arrive",
+                "effects": [{"setFlag": {"entity": "hero", "flag": "arrived"}}],
+            },
+        ],
+    )
+    result = begin(library, "brawl", seed="escort")
+    result = step(result.state, Choose(0), library)
+    assert result.state.entities["brawl:escort"].ally is True
+
+    result = step(result.state, Choose(1), library)
+    assert result.state.entities["brawl:escort"].ally is False

@@ -39,6 +39,7 @@ from mace.engine.events import (
     ChoicesOffered,
     EncounterFired,
     Event,
+    FlagChanged,
     FrontMoved,
     GameOver,
     Moved,
@@ -96,6 +97,11 @@ OPTIONS_MENU = ""
 #: How much of a rest's exposure relief a player gets with no roof over
 #: them. Sleeping in a blizzard is still sleeping in a blizzard.
 OPEN_REST_RELIEF = 0.25
+
+#: How much road running away costs, in route ticks, when the author has not
+#: said where fleeing puts you. Running is always available and never free, and
+#: on a journey the price is the road you have to walk up again.
+FLED_ROUTE_TICKS = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -435,8 +441,10 @@ def _fled(fight: CombatState, context: RuleContext, events: list[Event]) -> bool
     """Put the player down somewhere after they have run.
 
     Running away should be a decision with a story attached, so it costs
-    position: without an explicit `fleeTo` the player ends up back the way
-    they came, which mid-journey means partway along the road they were on.
+    position rather than only effort. An explicit `fleeTo` says where; without
+    one, running mid-journey drops the player back down the road they came up,
+    with the ticks and the weather that implies. Running in a room leaves them
+    in it, because there is nowhere for the room to put them.
 
     Parameters
     ----------
@@ -453,13 +461,32 @@ def _fled(fight: CombatState, context: RuleContext, events: list[Event]) -> bool
         Whether the game should restart.
     """
     state = context.state
-    if fight.flee_to is None:
+    if fight.flee_to is not None:
+        origin = state.location
+        state.protagonist.location = fight.flee_to
+        state.revealed.add(fight.flee_to)
+        state.journey = None
+        events.append(Moved(origin, fight.flee_to))
         return False
-    origin = state.location
-    state.protagonist.location = fight.flee_to
-    state.revealed.add(fight.flee_to)
-    state.journey = None
-    events.append(Moved(origin, fight.flee_to))
+
+    journey = state.journey
+    if journey is None:
+        return False
+
+    lost = min(journey.progress, float(FLED_ROUTE_TICKS))
+    journey.progress = max(0.0, journey.progress - lost)
+    # Whatever stopped you is behind you now, and so is any waypoint you have
+    # been driven back past: the road has to be walked up again to meet them.
+    journey.blocked_at = None
+    events.append(
+        TravelInterrupted(
+            route=journey.route,
+            at=state.location or journey.origin,
+            destination=journey.destination,
+            remaining=round(lost, 3),
+            reason="you ran back the way you came",
+        )
+    )
     return False
 
 
@@ -1154,23 +1181,37 @@ def _find_exit(
     return None, None
 
 
-def _follow(context: RuleContext) -> None:
-    """Bring the player's allies along.
+def _follow(context: RuleContext, events: list[Event]) -> None:
+    """Bring the player's allies along, and let go of the ones who are done.
 
     An escort that stayed in Fenmoor while you walked to the castle would not
     be an escort. Kept as its own step rather than folded into movement so
     that every way of moving — walking a road, a `move` effect, fleeing a
     fight — brings them without each remembering to.
 
+    An ally attached `until` some condition leaves the moment it comes true,
+    wherever that happens to be. "As far as the castle" has to be able to end
+    at the castle, and the scene that said it is long gone by then.
+
     Parameters
     ----------
     context : RuleContext
         The playthrough.
+    events : list of Event
+        Accumulator.
     """
     where = context.state.location
     for _key, entity in sorted(context.state.entities.items()):
-        if entity.ally:
-            entity.location = where
+        if not entity.ally:
+            continue
+        if entity.ally_until is not None and holds(entity.ally_until, context):
+            entity.ally = False
+            entity.ally_until = None
+            events.append(
+                FlagChanged(entity=entity.instance_id, flag="ally", value=False)
+            )
+            continue
+        entity.location = where
 
 
 def _arrive(location_id: str, context: RuleContext, events: list[Event]) -> bool:
@@ -1475,7 +1516,7 @@ def _after_action(context: RuleContext, events: list[Event]) -> None:
     if state.outcome is not Outcome.PLAYING:
         return
 
-    _follow(context)
+    _follow(context, events)
     _sync_weather(context, events)
     _expire_modifiers(context)
     _advance_quests(context, events)
