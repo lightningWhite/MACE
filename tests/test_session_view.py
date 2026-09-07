@@ -41,7 +41,10 @@ WORLD: dict[str, Any] = {
             "name": "Home",
             "description": "A well.",
             "mapPosition": {"x": 0, "y": 100},
-            "exits": [{"to": "mill", "route": "lane"}, {"to": "castle", "route": "road"}],
+            "exits": [
+                {"to": "mill", "route": "lane"},
+                {"to": "castle", "route": "road"},
+            ],
         },
         {
             "id": "mill",
@@ -216,15 +219,11 @@ def test_the_map_knows_where_you_are_standing(session: Session) -> None:
 def test_somewhere_only_heard_of_is_not_somewhere_you_have_been(
     session: Session,
 ) -> None:
-    standing = {
-        place.location: place.standing for place in session.view().atlas.places
-    }
+    standing = {place.location: place.standing for place in session.view().atlas.places}
     assert standing["tiny:castle"] == "known"
 
     session.perform(Choose(session.offered.index("Travel to The Castle")))
-    walked = {
-        place.location: place.standing for place in session.view().atlas.places
-    }
+    walked = {place.location: place.standing for place in session.view().atlas.places}
     assert walked["tiny:castle"] == "here"
     assert walked["tiny:home"] == "visited"
 
@@ -242,9 +241,7 @@ def test_a_road_to_nowhere_known_is_not_drawn(session: Session) -> None:
 
 
 def test_a_road_carries_its_length_and_its_ends(session: Session) -> None:
-    (road,) = [
-        one for one in session.view().atlas.roads if one.route == "tiny:road"
-    ]
+    (road,) = [one for one in session.view().atlas.roads if one.route == "tiny:road"]
     assert (road.origin, road.destination, road.ticks) == (
         "tiny:home",
         "tiny:castle",
@@ -264,9 +261,7 @@ def test_a_road_that_is_shut_says_so_and_why(session: Session) -> None:
     session.state.routes["tiny:road"] = RouteState(
         route="tiny:road", closed=True, reason="The bridge is out."
     )
-    (road,) = [
-        one for one in session.view().atlas.roads if one.route == "tiny:road"
-    ]
+    (road,) = [one for one in session.view().atlas.roads if one.route == "tiny:road"]
     assert road.closed
     assert road.reason == "The bridge is out."
 

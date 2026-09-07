@@ -121,7 +121,9 @@ writing YAML.
       places and roads the player knows — the standing facts no event carries
 - [x] An ASCII map in the terminal, drawn from that atlas, so the map is
       engine data before it is a browser feature
-- [ ] FastAPI session service; WebSocket event stream
+- [x] FastAPI session service; WebSocket event stream. `mace serve`, one
+      frame shape for every reply, and [ADR-0009](decisions/0009-the-save-is-the-durability.md)
+      — the server holds no playthroughs, the save does
 - [ ] React + TS PWA: narrative pane, choices, character, inventory, journal
 - [ ] SVG map with fog of war, route lengths, weather overlay
 - [ ] Combat view with timing bar and momentum

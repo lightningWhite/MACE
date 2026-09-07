@@ -105,6 +105,44 @@ The map is SVG, which is cheap, accessible, themeable, and prints.
 
 See [ADR-0005](decisions/0005-python-core-with-pyodide.md).
 
+### The session service
+
+`mace serve packs/` runs it. It is a front-end like the terminal is a
+front-end: it drives a `mace.session.Session`, hands out the ordered event
+stream and the view-model, and holds no rules, no balance and no prose of its
+own. A bug that shows up here is a bug in the engine, or it is a bug in the
+JSON.
+
+| | |
+|---|---|
+| `GET /api/games` | What there is to play |
+| `GET /api/games/{pack}/creation` | The character-creation question, or `asksAnything: false` |
+| `POST /api/sessions` | Open one. `{pack, seed, combatMode, character}`, or `{save}` to carry one on |
+| `GET /api/sessions/{id}` | Where it stands, and what it last said |
+| `POST /api/sessions/{id}/actions` | Do one thing |
+| `GET /api/sessions/{id}/save` | The save record |
+| `DELETE /api/sessions/{id}` | Stop holding it open |
+| `WS /api/sessions/{id}/stream` | The same exchange, held open |
+
+Every reply is one **frame** — `{session, playing, events, choices, view}` —
+so a client has one renderer rather than one per endpoint. `events` is what
+happened, `view` is what stands, and `choices` is what may be done next, named
+the way a save names it. A reconnecting client is handed the last step's
+events again rather than being told to work out what it missed.
+
+The socket carries exactly the same frames, and exists because combat has a
+clock in it: a `combat.tell` opens a window measured in milliseconds, and
+spending a chunk of it on connection setup would make the fight unfair in a
+way the player would feel and could not name. An action the engine refuses
+comes back as an error frame and the connection stays open — a mistyped action
+is not a reason to reconnect mid-fight.
+
+**Sessions live in one process and die with it**, and the client's save is the
+only durability. That is [ADR-0009](decisions/0009-the-save-is-the-durability.md),
+and it is why the 404 for a missing session tells the client to post the save
+it was given. There is no authentication: a session id is a bearer token, so
+`mace serve` binds to localhost by default.
+
 ## Saves
 
 A save is `(pack ids + versions, seed, character, action log)`, and one day a

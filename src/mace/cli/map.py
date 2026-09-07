@@ -56,8 +56,10 @@ def draw(atlas: Atlas) -> list[str]:
     lines = _plot(atlas) or []
     if lines:
         lines.append("")
-        lines.append(f"  {GLYPHS['here']} here   {GLYPHS['visited']} been there   "
-                     f"{GLYPHS['known']} heard of")
+        lines.append(
+            f"  {GLYPHS['here']} here   {GLYPHS['visited']} been there   "
+            f"{GLYPHS['known']} heard of"
+        )
     lines.extend(_listing(atlas))
     return lines
 

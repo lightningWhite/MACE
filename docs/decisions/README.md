@@ -15,6 +15,7 @@ months later — and that if it *is* revisited, the reasons are on the table.
 | [0006](0006-tempo-combat.md) | Tempo combat over dice rolls | Accepted |
 | [0007](0007-full-market-economy.md) | A simulated market economy, not fixed prices | Accepted |
 | [0008](0008-the-player-answers.md) | The player answers; they do not take turns | Accepted |
+| [0009](0009-the-save-is-the-durability.md) | The server holds no playthroughs; the save does | Accepted |
 
 **Format:** Context (what problem), Decision (what we're doing), Alternatives
 (what we rejected and why), Consequences (what this costs us).

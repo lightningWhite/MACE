@@ -175,6 +175,15 @@ def test_play_offers_the_map_when_the_player_types_nonsense(
     assert "`m` for the map" in capsys.readouterr().out
 
 
+def test_serve_reports_content_it_cannot_load(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """It has to fail before it binds a port, not after."""
+    write_pack(tmp_path / "packs", "broken", kind="game")
+    assert main(["serve", str(tmp_path / "packs")]) == 1
+    assert "error" in capsys.readouterr().err
+
+
 # ── Saving and carrying on ────────────────────────────────────────────────────
 
 

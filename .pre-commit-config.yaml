@@ -27,7 +27,9 @@ repos:
     -   id: mypy
         # The hook runs in its own isolated env, so the project's runtime deps
         # have to be declared here for mypy to resolve them.
-        additional_dependencies: [pydantic>=2.7, pytest, types-PyYAML]
+        additional_dependencies: [
+            fastapi>=0.110, httpx>=0.27, pydantic>=2.7, pytest, types-PyYAML
+        ]
         exclude: '^src/(wizard\.py|modules/)'
 -   repo: local
     hooks:

@@ -654,7 +654,9 @@ def _journal(context: RuleContext) -> tuple[Entry, ...]:
                 started_at_tick=progress.started_at_tick,
             )
         )
-    entries.sort(key=lambda entry: (QUEST_ORDER[QuestStatus(entry.status)], entry.quest))
+    entries.sort(
+        key=lambda entry: (QUEST_ORDER[QuestStatus(entry.status)], entry.quest)
+    )
     return tuple(entries)
 
 

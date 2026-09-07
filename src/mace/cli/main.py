@@ -126,6 +126,44 @@ def build_parser() -> argparse.ArgumentParser:
     )
     player.set_defaults(run=run_play)
 
+    server = commands.add_parser(
+        "serve",
+        help="serve a game over HTTP and WebSocket",
+        description=(
+            "Run the session service. The browser client talks to this; so "
+            "does anything else that can post JSON. Sessions live in this "
+            "process, and `GET /api/sessions/{id}/save` is how a client "
+            "keeps one past a restart."
+        ),
+    )
+    server.add_argument(
+        "paths",
+        nargs="*",
+        type=Path,
+        default=[Path("packs")],
+        help="pack directories to serve (default: packs/)",
+    )
+    server.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help=(
+            "address to bind (default: 127.0.0.1). The service has no "
+            "authentication, so binding it to the world shares every save on "
+            "it with the world."
+        ),
+    )
+    server.add_argument("--port", type=int, default=8000, help="port (default: 8000)")
+    server.add_argument(
+        "--origin",
+        action="append",
+        metavar="URL",
+        help=(
+            "an origin a browser may call this from. Repeatable. Defaults to "
+            "the Vite dev server on localhost."
+        ),
+    )
+    server.set_defaults(run=run_serve)
+
     started = commands.add_parser(
         "new",
         help="start a new content pack",
@@ -271,6 +309,41 @@ def run_play(options: argparse.Namespace) -> int:
         save=options.save,
         resume=options.load,
     )
+
+
+def run_serve(options: argparse.Namespace) -> int:
+    """Run `mace serve`.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    try:
+        import uvicorn  # noqa: PLC0415
+
+        from mace.api.app import DEV_ORIGINS, create_app  # noqa: PLC0415
+    except ImportError:
+        print(
+            "error   the server needs its extras: pip install 'mace[api]'",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        app = create_app(options.paths, origins=options.origin or list(DEV_ORIGINS))
+    except ContentError as error:
+        print(f"error   {error}", file=sys.stderr)
+        return 1
+
+    print(f"MACE on http://{options.host}:{options.port} — ctrl-c to stop")
+    uvicorn.run(app, host=options.host, port=options.port, log_level="warning")
+    return 0
 
 
 def run_validate(options: argparse.Namespace) -> int:

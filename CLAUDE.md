@@ -64,7 +64,7 @@ src/mace/
   session/       A running game: actions in, events out, saves
   wizard/        Declarative authoring flow (shared by CLI and web)
   cli/           Terminal front-end (play + author)
-  api/           FastAPI service (later phases)
+  api/           FastAPI session service (needs the `api` extra)
 web/             PWA client (later phases)
 tests/           Unit tests + golden replay conformance tests
 ```
@@ -103,7 +103,9 @@ decision used to look like.
   into `docs/` (or `docs/decisions/` for a real fork in the road) as part of the
   change. Undocumented design decisions are how this project got stuck before.
 - Don't add dependencies casually. The engine core should stay on stdlib +
-  pydantic so it can run under Pyodide in the browser.
+  pydantic so it can run under Pyodide in the browser. FastAPI and uvicorn are
+  an optional extra (`pip install 'mace[api]'`) for `mace.api` alone — nothing
+  under `mace.engine` or `mace.content` may import them.
 - Flavor matters. Prompts, dialog, and generated text should feel like an
   adventure, not a form. But keep flavor in content and presentation layers, not
   baked into engine logic.
