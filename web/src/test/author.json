@@ -139,209 +139,721 @@
     },
     "screen": null
   },
-  "section": {
-    "pack": {
-      "id": "peasants-quest",
-      "name": "A Peasant's Quest",
-      "kind": "game",
-      "version": "0.1.0"
+  "sections": {
+    "world": {
+      "pack": {
+        "id": "peasants-quest",
+        "name": "A Peasant's Quest",
+        "kind": "game",
+        "version": "0.1.0"
+      },
+      "dirty": [],
+      "unreadable": [],
+      "desk": {
+        "name": "A Peasant's Quest",
+        "percent": 89,
+        "problems": 0,
+        "errors": 0,
+        "tasks": [
+          {
+            "section": "game",
+            "title": "Game setup",
+            "help": "The title, the opening, who the player is, and what winning means.",
+            "state": "done",
+            "summary": "name, opening, player, win and lose",
+            "note": "",
+            "errors": 0,
+            "flow": "game",
+            "collections": []
+          },
+          {
+            "section": "world",
+            "title": "World map",
+            "help": "Places, the roads between them, and the regions weather happens to.",
+            "state": "done",
+            "summary": "4 locations, 2 routes, 3 regions",
+            "note": "",
+            "errors": 0,
+            "flow": "locations",
+            "collections": [
+              "locations",
+              "routes",
+              "regions"
+            ]
+          },
+          {
+            "section": "characters",
+            "title": "Characters",
+            "help": "Everyone the player can talk to, fight, or travel with.",
+            "state": "done",
+            "summary": "7 characters",
+            "note": "",
+            "errors": 0,
+            "flow": "entities",
+            "collections": [
+              "entities"
+            ]
+          },
+          {
+            "section": "items",
+            "title": "Items",
+            "help": "Everything the player can carry, wear, or spend.",
+            "state": "done",
+            "summary": "2 items",
+            "note": "",
+            "errors": 0,
+            "flow": "entities",
+            "collections": [
+              "entities"
+            ]
+          },
+          {
+            "section": "scenes",
+            "title": "Scenes",
+            "help": "Every conversation, every choice, every ending.",
+            "state": "done",
+            "summary": "28 scenes",
+            "note": "",
+            "errors": 0,
+            "flow": "scenes",
+            "collections": [
+              "scenes"
+            ]
+          },
+          {
+            "section": "quests",
+            "title": "Quests",
+            "help": "What the player is doing, in stages, with a journal.",
+            "state": "done",
+            "summary": "1 quest",
+            "note": "",
+            "errors": 0,
+            "flow": "quests",
+            "collections": [
+              "quests"
+            ]
+          },
+          {
+            "section": "encounters",
+            "title": "Encounters",
+            "help": "What the roads might throw at somebody walking down them.",
+            "state": "done",
+            "summary": "2 encounter tables",
+            "note": "",
+            "errors": 0,
+            "flow": null,
+            "collections": [
+              "encounterTables"
+            ]
+          },
+          {
+            "section": "weather",
+            "title": "Weather & climate",
+            "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+            "state": "empty",
+            "summary": "using whatever the libraries bring",
+            "note": "",
+            "errors": 0,
+            "flow": null,
+            "collections": [
+              "climates",
+              "weatherConditions",
+              "weatherFronts",
+              "terrains"
+            ]
+          },
+          {
+            "section": "player",
+            "title": "Player setup",
+            "help": "Who the protagonist could have been, and what they get to choose.",
+            "state": "done",
+            "summary": "3 backgrounds",
+            "note": "",
+            "errors": 0,
+            "flow": "backgrounds",
+            "collections": [
+              "backgrounds"
+            ]
+          }
+        ]
+      },
+      "screen": {
+        "section": "world",
+        "title": "World map",
+        "help": "Places, the roads between them, and the regions weather happens to.",
+        "manifest": false,
+        "creates": [
+          "locations",
+          "routes"
+        ],
+        "objects": [
+          {
+            "collection": "locations",
+            "id": "fenmoor",
+            "label": "Fenmoor",
+            "unfinished": false
+          },
+          {
+            "collection": "locations",
+            "id": "hagans-castle",
+            "label": "Hagan's Castle",
+            "unfinished": false
+          },
+          {
+            "collection": "locations",
+            "id": "traders-post",
+            "label": "Trader's Post",
+            "unfinished": false
+          },
+          {
+            "collection": "locations",
+            "id": "troll-bridge",
+            "label": "The Old Bridge",
+            "unfinished": false
+          },
+          {
+            "collection": "routes",
+            "id": "north-road",
+            "label": "The North Road",
+            "unfinished": false
+          },
+          {
+            "collection": "routes",
+            "id": "south-track",
+            "label": "The Trader's Track",
+            "unfinished": false
+          },
+          {
+            "collection": "regions",
+            "id": "the-lowlands",
+            "label": "The Lowlands",
+            "unfinished": false
+          },
+          {
+            "collection": "regions",
+            "id": "the-marches",
+            "label": "The Marches",
+            "unfinished": false
+          },
+          {
+            "collection": "regions",
+            "id": "the-northwood",
+            "label": "The Northwood",
+            "unfinished": false
+          }
+        ],
+        "problems": []
+      }
     },
-    "dirty": [],
-    "unreadable": [],
-    "desk": {
-      "name": "A Peasant's Quest",
-      "percent": 89,
-      "problems": 0,
-      "errors": 0,
-      "tasks": [
-        {
-          "section": "game",
-          "title": "Game setup",
-          "help": "The title, the opening, who the player is, and what winning means.",
-          "state": "done",
-          "summary": "name, opening, player, win and lose",
-          "note": "",
-          "errors": 0,
-          "flow": "game",
-          "collections": []
-        },
-        {
-          "section": "world",
-          "title": "World map",
-          "help": "Places, the roads between them, and the regions weather happens to.",
-          "state": "done",
-          "summary": "4 locations, 2 routes, 3 regions",
-          "note": "",
-          "errors": 0,
-          "flow": "locations",
-          "collections": [
-            "locations",
-            "routes",
-            "regions"
-          ]
-        },
-        {
-          "section": "characters",
-          "title": "Characters",
-          "help": "Everyone the player can talk to, fight, or travel with.",
-          "state": "done",
-          "summary": "7 characters",
-          "note": "",
-          "errors": 0,
-          "flow": "entities",
-          "collections": [
-            "entities"
-          ]
-        },
-        {
-          "section": "items",
-          "title": "Items",
-          "help": "Everything the player can carry, wear, or spend.",
-          "state": "done",
-          "summary": "2 items",
-          "note": "",
-          "errors": 0,
-          "flow": "entities",
-          "collections": [
-            "entities"
-          ]
-        },
-        {
-          "section": "scenes",
-          "title": "Scenes",
-          "help": "Every conversation, every choice, every ending.",
-          "state": "done",
-          "summary": "28 scenes",
-          "note": "",
-          "errors": 0,
-          "flow": "scenes",
-          "collections": [
-            "scenes"
-          ]
-        },
-        {
-          "section": "quests",
-          "title": "Quests",
-          "help": "What the player is doing, in stages, with a journal.",
-          "state": "done",
-          "summary": "1 quest",
-          "note": "",
-          "errors": 0,
-          "flow": "quests",
-          "collections": [
-            "quests"
-          ]
-        },
-        {
-          "section": "encounters",
-          "title": "Encounters",
-          "help": "What the roads might throw at somebody walking down them.",
-          "state": "done",
-          "summary": "2 encounter tables",
-          "note": "",
-          "errors": 0,
-          "flow": null,
-          "collections": [
-            "encounterTables"
-          ]
-        },
-        {
-          "section": "weather",
-          "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
-          "state": "empty",
-          "summary": "using whatever the libraries bring",
-          "note": "",
-          "errors": 0,
-          "flow": null,
-          "collections": [
-            "climates",
-            "weatherConditions",
-            "weatherFronts",
-            "terrains"
-          ]
-        },
-        {
-          "section": "player",
-          "title": "Player setup",
-          "help": "Who the protagonist could have been, and what they get to choose.",
-          "state": "done",
-          "summary": "3 backgrounds",
-          "note": "",
-          "errors": 0,
-          "flow": "backgrounds",
-          "collections": [
-            "backgrounds"
-          ]
-        }
-      ]
+    "scenes": {
+      "pack": {
+        "id": "peasants-quest",
+        "name": "A Peasant's Quest",
+        "kind": "game",
+        "version": "0.1.0"
+      },
+      "dirty": [],
+      "unreadable": [],
+      "desk": {
+        "name": "A Peasant's Quest",
+        "percent": 89,
+        "problems": 0,
+        "errors": 0,
+        "tasks": [
+          {
+            "section": "game",
+            "title": "Game setup",
+            "help": "The title, the opening, who the player is, and what winning means.",
+            "state": "done",
+            "summary": "name, opening, player, win and lose",
+            "note": "",
+            "errors": 0,
+            "flow": "game",
+            "collections": []
+          },
+          {
+            "section": "world",
+            "title": "World map",
+            "help": "Places, the roads between them, and the regions weather happens to.",
+            "state": "done",
+            "summary": "4 locations, 2 routes, 3 regions",
+            "note": "",
+            "errors": 0,
+            "flow": "locations",
+            "collections": [
+              "locations",
+              "routes",
+              "regions"
+            ]
+          },
+          {
+            "section": "characters",
+            "title": "Characters",
+            "help": "Everyone the player can talk to, fight, or travel with.",
+            "state": "done",
+            "summary": "7 characters",
+            "note": "",
+            "errors": 0,
+            "flow": "entities",
+            "collections": [
+              "entities"
+            ]
+          },
+          {
+            "section": "items",
+            "title": "Items",
+            "help": "Everything the player can carry, wear, or spend.",
+            "state": "done",
+            "summary": "2 items",
+            "note": "",
+            "errors": 0,
+            "flow": "entities",
+            "collections": [
+              "entities"
+            ]
+          },
+          {
+            "section": "scenes",
+            "title": "Scenes",
+            "help": "Every conversation, every choice, every ending.",
+            "state": "done",
+            "summary": "28 scenes",
+            "note": "",
+            "errors": 0,
+            "flow": "scenes",
+            "collections": [
+              "scenes"
+            ]
+          },
+          {
+            "section": "quests",
+            "title": "Quests",
+            "help": "What the player is doing, in stages, with a journal.",
+            "state": "done",
+            "summary": "1 quest",
+            "note": "",
+            "errors": 0,
+            "flow": "quests",
+            "collections": [
+              "quests"
+            ]
+          },
+          {
+            "section": "encounters",
+            "title": "Encounters",
+            "help": "What the roads might throw at somebody walking down them.",
+            "state": "done",
+            "summary": "2 encounter tables",
+            "note": "",
+            "errors": 0,
+            "flow": null,
+            "collections": [
+              "encounterTables"
+            ]
+          },
+          {
+            "section": "weather",
+            "title": "Weather & climate",
+            "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+            "state": "empty",
+            "summary": "using whatever the libraries bring",
+            "note": "",
+            "errors": 0,
+            "flow": null,
+            "collections": [
+              "climates",
+              "weatherConditions",
+              "weatherFronts",
+              "terrains"
+            ]
+          },
+          {
+            "section": "player",
+            "title": "Player setup",
+            "help": "Who the protagonist could have been, and what they get to choose.",
+            "state": "done",
+            "summary": "3 backgrounds",
+            "note": "",
+            "errors": 0,
+            "flow": "backgrounds",
+            "collections": [
+              "backgrounds"
+            ]
+          }
+        ]
+      },
+      "screen": {
+        "section": "scenes",
+        "title": "Scenes",
+        "help": "Every conversation, every choice, every ending.",
+        "manifest": false,
+        "creates": [
+          "scenes"
+        ],
+        "objects": [
+          {
+            "collection": "scenes",
+            "id": "a-traveller-with-news",
+            "label": "a traveller with news",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "beaten-by-gorm",
+            "label": "beaten by gorm",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "buy-bread",
+            "label": "buy bread",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "buy-rope",
+            "label": "buy rope",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "cannot-afford",
+            "label": "cannot afford",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "castle-arrival",
+            "label": "castle arrival",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "defeat",
+            "label": "defeat",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "fenmoor-arrival",
+            "label": "fenmoor arrival",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "fight-gorm",
+            "label": "fight gorm",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "fled-from-gorm",
+            "label": "fled from gorm",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "gorm-beaten",
+            "label": "gorm beaten",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "gorm-has-been-paid",
+            "label": "gorm has been paid",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "gorm-on-the-road",
+            "label": "gorm on the road",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "gorm-refuses-to-haggle",
+            "label": "gorm refuses to haggle",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "haggle-with-gorm",
+            "label": "haggle with gorm",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "nothing-to-sell",
+            "label": "nothing to sell",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "pay-in-bread",
+            "label": "pay in bread",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "pay-the-toll",
+            "label": "pay the toll",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "report-to-orin",
+            "label": "report to orin",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "riders-going-north",
+            "label": "riders going north",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "say-goodbye-to-hallam",
+            "label": "say goodbye to hallam",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "sell-reaping-hook",
+            "label": "sell reaping hook",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "sell-rope",
+            "label": "sell rope",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "talk-to-gorm",
+            "label": "talk to gorm",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "talk-to-peddler",
+            "label": "talk to peddler",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "the-wolves-decide-otherwise",
+            "label": "the wolves decide otherwise",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "victory",
+            "label": "victory",
+            "unfinished": false
+          },
+          {
+            "collection": "scenes",
+            "id": "wolves-on-the-road",
+            "label": "wolves on the road",
+            "unfinished": false
+          }
+        ],
+        "problems": []
+      }
     },
-    "screen": {
-      "section": "world",
-      "title": "World map",
-      "help": "Places, the roads between them, and the regions weather happens to.",
-      "manifest": false,
-      "creates": [
-        "locations",
-        "routes"
-      ],
-      "objects": [
-        {
-          "collection": "locations",
-          "id": "fenmoor",
-          "label": "Fenmoor",
-          "unfinished": false
-        },
-        {
-          "collection": "locations",
-          "id": "hagans-castle",
-          "label": "Hagan's Castle",
-          "unfinished": false
-        },
-        {
-          "collection": "locations",
-          "id": "traders-post",
-          "label": "Trader's Post",
-          "unfinished": false
-        },
-        {
-          "collection": "locations",
-          "id": "troll-bridge",
-          "label": "The Old Bridge",
-          "unfinished": false
-        },
-        {
-          "collection": "routes",
-          "id": "north-road",
-          "label": "The North Road",
-          "unfinished": false
-        },
-        {
-          "collection": "routes",
-          "id": "south-track",
-          "label": "The Trader's Track",
-          "unfinished": false
-        },
-        {
-          "collection": "regions",
-          "id": "the-lowlands",
-          "label": "The Lowlands",
-          "unfinished": false
-        },
-        {
-          "collection": "regions",
-          "id": "the-marches",
-          "label": "The Marches",
-          "unfinished": false
-        },
-        {
-          "collection": "regions",
-          "id": "the-northwood",
-          "label": "The Northwood",
-          "unfinished": false
-        }
-      ],
-      "problems": []
+    "characters": {
+      "pack": {
+        "id": "peasants-quest",
+        "name": "A Peasant's Quest",
+        "kind": "game",
+        "version": "0.1.0"
+      },
+      "dirty": [],
+      "unreadable": [],
+      "desk": {
+        "name": "A Peasant's Quest",
+        "percent": 89,
+        "problems": 0,
+        "errors": 0,
+        "tasks": [
+          {
+            "section": "game",
+            "title": "Game setup",
+            "help": "The title, the opening, who the player is, and what winning means.",
+            "state": "done",
+            "summary": "name, opening, player, win and lose",
+            "note": "",
+            "errors": 0,
+            "flow": "game",
+            "collections": []
+          },
+          {
+            "section": "world",
+            "title": "World map",
+            "help": "Places, the roads between them, and the regions weather happens to.",
+            "state": "done",
+            "summary": "4 locations, 2 routes, 3 regions",
+            "note": "",
+            "errors": 0,
+            "flow": "locations",
+            "collections": [
+              "locations",
+              "routes",
+              "regions"
+            ]
+          },
+          {
+            "section": "characters",
+            "title": "Characters",
+            "help": "Everyone the player can talk to, fight, or travel with.",
+            "state": "done",
+            "summary": "7 characters",
+            "note": "",
+            "errors": 0,
+            "flow": "entities",
+            "collections": [
+              "entities"
+            ]
+          },
+          {
+            "section": "items",
+            "title": "Items",
+            "help": "Everything the player can carry, wear, or spend.",
+            "state": "done",
+            "summary": "2 items",
+            "note": "",
+            "errors": 0,
+            "flow": "entities",
+            "collections": [
+              "entities"
+            ]
+          },
+          {
+            "section": "scenes",
+            "title": "Scenes",
+            "help": "Every conversation, every choice, every ending.",
+            "state": "done",
+            "summary": "28 scenes",
+            "note": "",
+            "errors": 0,
+            "flow": "scenes",
+            "collections": [
+              "scenes"
+            ]
+          },
+          {
+            "section": "quests",
+            "title": "Quests",
+            "help": "What the player is doing, in stages, with a journal.",
+            "state": "done",
+            "summary": "1 quest",
+            "note": "",
+            "errors": 0,
+            "flow": "quests",
+            "collections": [
+              "quests"
+            ]
+          },
+          {
+            "section": "encounters",
+            "title": "Encounters",
+            "help": "What the roads might throw at somebody walking down them.",
+            "state": "done",
+            "summary": "2 encounter tables",
+            "note": "",
+            "errors": 0,
+            "flow": null,
+            "collections": [
+              "encounterTables"
+            ]
+          },
+          {
+            "section": "weather",
+            "title": "Weather & climate",
+            "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+            "state": "empty",
+            "summary": "using whatever the libraries bring",
+            "note": "",
+            "errors": 0,
+            "flow": null,
+            "collections": [
+              "climates",
+              "weatherConditions",
+              "weatherFronts",
+              "terrains"
+            ]
+          },
+          {
+            "section": "player",
+            "title": "Player setup",
+            "help": "Who the protagonist could have been, and what they get to choose.",
+            "state": "done",
+            "summary": "3 backgrounds",
+            "note": "",
+            "errors": 0,
+            "flow": "backgrounds",
+            "collections": [
+              "backgrounds"
+            ]
+          }
+        ]
+      },
+      "screen": {
+        "section": "characters",
+        "title": "Characters",
+        "help": "Everyone the player can talk to, fight, or travel with.",
+        "manifest": false,
+        "creates": [
+          "entities"
+        ],
+        "objects": [
+          {
+            "collection": "entities",
+            "id": "captain-orin",
+            "label": "Captain Orin",
+            "unfinished": false
+          },
+          {
+            "collection": "entities",
+            "id": "gorm",
+            "label": "Gorm",
+            "unfinished": false
+          },
+          {
+            "collection": "entities",
+            "id": "letholin",
+            "label": "Letholin",
+            "unfinished": false
+          },
+          {
+            "collection": "entities",
+            "id": "mereth-the-reeve",
+            "label": "Mereth the Reeve",
+            "unfinished": false
+          },
+          {
+            "collection": "entities",
+            "id": "old-hallam",
+            "label": "Old Hallam",
+            "unfinished": false
+          },
+          {
+            "collection": "entities",
+            "id": "peddler",
+            "label": "The Peddler",
+            "unfinished": false
+          },
+          {
+            "collection": "entities",
+            "id": "quartermaster-bel",
+            "label": "Quartermaster Bel",
+            "unfinished": false
+          }
+        ],
+        "problems": []
+      }
     }
   },
   "manifest": {
@@ -503,7 +1015,8 @@
             "interactive": false,
             "hint": "e.g. A Peasant's Quest",
             "placeholder": "A Peasant's Quest"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.tagline",
@@ -520,7 +1033,8 @@
             "interactive": false,
             "hint": "e.g. Seven days, one road, no choice.",
             "placeholder": "Seven days, one road, no choice."
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.introduction",
@@ -545,7 +1059,8 @@
             "hint": "one line at a time; a blank line ends it",
             "placeholder": "One morning the king's riders come through the barley\u2026",
             "minItems": 1
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.player.entity",
@@ -569,7 +1084,8 @@
               }
             ],
             "allowCreate": "entities"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.player.startLocation",
@@ -608,7 +1124,8 @@
               }
             ],
             "allowCreate": "locations"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.player.creationPoints",
@@ -627,7 +1144,8 @@
             "minimum": 0,
             "maximum": null,
             "integer": true
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.player.backgrounds",
@@ -666,7 +1184,8 @@
             ],
             "allowCreate": "backgrounds",
             "minItems": 0
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.world.minutesPerTick",
@@ -685,7 +1204,8 @@
             "minimum": 1,
             "maximum": null,
             "integer": true
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.world.calendar",
@@ -709,7 +1229,8 @@
               }
             ],
             "allowCreate": null
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.world.startTick",
@@ -728,7 +1249,8 @@
             "minimum": 0,
             "maximum": null,
             "integer": true
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.world.startSeason",
@@ -745,7 +1267,8 @@
             "interactive": false,
             "hint": "e.g. autumn",
             "placeholder": "autumn"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.world.startRegion",
@@ -779,7 +1302,8 @@
               }
             ],
             "allowCreate": null
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.rules.vitalPool",
@@ -796,7 +1320,8 @@
             "interactive": false,
             "hint": "e.g. hitpoints",
             "placeholder": "hitpoints"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.rules.effortPool",
@@ -813,7 +1338,8 @@
             "interactive": false,
             "hint": "e.g. stamina",
             "placeholder": "stamina"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.rules.combatMode",
@@ -847,7 +1373,8 @@
               }
             ],
             "allowCreate": null
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.rules.deathIsPermanent",
@@ -863,7 +1390,8 @@
             "optional": true,
             "interactive": false,
             "hint": "y / n"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.rules.survival",
@@ -903,7 +1431,8 @@
             ],
             "allowCreate": null,
             "minItems": 0
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.rules.economy",
@@ -932,7 +1461,8 @@
               }
             ],
             "allowCreate": null
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.rules.currency",
@@ -1006,7 +1536,8 @@
               }
             ],
             "allowCreate": "entities"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.difficulty",
@@ -1045,7 +1576,8 @@
               }
             ],
             "allowCreate": null
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.quests",
@@ -1072,7 +1604,8 @@
             ],
             "allowCreate": "quests",
             "minItems": 0
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.winConditions",
@@ -1093,7 +1626,15 @@
             "interactive": true,
             "hint": "built one question at a time",
             "single": false
-          }
+          },
+          "entries": [
+            {
+              "authored": {
+                "questComplete": "the-kings-summons"
+              },
+              "said": "The King's Summons is complete"
+            }
+          ]
         },
         {
           "id": "game.loseConditions",
@@ -1117,7 +1658,21 @@
             "interactive": true,
             "hint": "built one question at a time",
             "single": false
-          }
+          },
+          "entries": [
+            {
+              "authored": {
+                "questFailed": "the-kings-summons"
+              },
+              "said": "The King's Summons has failed"
+            },
+            {
+              "authored": {
+                "expr": "player.pools.hitpoints.current <= 0"
+              },
+              "said": "`player.pools.hitpoints.current <= 0` is true"
+            }
+          ]
         },
         {
           "id": "game.onWin",
@@ -1316,7 +1871,8 @@
               }
             ],
             "allowCreate": "scenes"
-          }
+          },
+          "entries": null
         },
         {
           "id": "game.onLose",
@@ -1515,7 +2071,8 @@
               }
             ],
             "allowCreate": "scenes"
-          }
+          },
+          "entries": null
         }
       ]
     }
@@ -1679,7 +2236,8 @@
             "interactive": false,
             "hint": "e.g. The Old Bridge",
             "placeholder": "The Old Bridge"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.description",
@@ -1699,7 +2257,8 @@
             "hint": "one line at a time; a blank line ends it",
             "placeholder": "A stone span over black water, and moss on everything.",
             "minItems": 1
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.region",
@@ -1733,7 +2292,8 @@
               }
             ],
             "allowCreate": "regions"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.indoors",
@@ -1749,7 +2309,8 @@
             "optional": true,
             "interactive": false,
             "hint": "y / n"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.safe",
@@ -1765,7 +2326,8 @@
             "optional": true,
             "interactive": false,
             "hint": "y / n"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.entities",
@@ -1903,7 +2465,8 @@
             ],
             "allowCreate": "entities",
             "minItems": 0
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.scenes",
@@ -2103,7 +2666,8 @@
             ],
             "allowCreate": "scenes",
             "minItems": 0
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.onArrive",
@@ -2302,7 +2866,8 @@
               }
             ],
             "allowCreate": "scenes"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.encounters",
@@ -2336,7 +2901,8 @@
               }
             ],
             "allowCreate": null
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.exits",
@@ -2455,7 +3021,24 @@
                 }
               }
             ]
-          }
+          },
+          "entries": [
+            {
+              "values": {
+                "to": "traders-post",
+                "route": "south-track"
+              },
+              "summary": "to: traders-post \u00b7 route: south-track"
+            },
+            {
+              "values": {
+                "to": "hagans-castle",
+                "route": "north-road",
+                "label": "Take the north road"
+              },
+              "summary": "to: hagans-castle \u00b7 route: north-road \u00b7 label: Take the north road"
+            }
+          ]
         },
         {
           "id": "location.mapPosition",
@@ -2474,7 +3057,1912 @@
             "optional": true,
             "interactive": false,
             "hint": "`x y` \u2014 or leave it blank and let the map lay itself out"
-          }
+          },
+          "entries": null
+        }
+      ]
+    }
+  },
+  "scene": {
+    "pack": {
+      "id": "peasants-quest",
+      "name": "A Peasant's Quest",
+      "kind": "game",
+      "version": "0.1.0"
+    },
+    "dirty": [],
+    "unreadable": [],
+    "desk": {
+      "name": "A Peasant's Quest",
+      "percent": 89,
+      "problems": 0,
+      "errors": 0,
+      "tasks": [
+        {
+          "section": "game",
+          "title": "Game setup",
+          "help": "The title, the opening, who the player is, and what winning means.",
+          "state": "done",
+          "summary": "name, opening, player, win and lose",
+          "note": "",
+          "errors": 0,
+          "flow": "game",
+          "collections": []
+        },
+        {
+          "section": "world",
+          "title": "World map",
+          "help": "Places, the roads between them, and the regions weather happens to.",
+          "state": "done",
+          "summary": "4 locations, 2 routes, 3 regions",
+          "note": "",
+          "errors": 0,
+          "flow": "locations",
+          "collections": [
+            "locations",
+            "routes",
+            "regions"
+          ]
+        },
+        {
+          "section": "characters",
+          "title": "Characters",
+          "help": "Everyone the player can talk to, fight, or travel with.",
+          "state": "done",
+          "summary": "7 characters",
+          "note": "",
+          "errors": 0,
+          "flow": "entities",
+          "collections": [
+            "entities"
+          ]
+        },
+        {
+          "section": "items",
+          "title": "Items",
+          "help": "Everything the player can carry, wear, or spend.",
+          "state": "done",
+          "summary": "2 items",
+          "note": "",
+          "errors": 0,
+          "flow": "entities",
+          "collections": [
+            "entities"
+          ]
+        },
+        {
+          "section": "scenes",
+          "title": "Scenes",
+          "help": "Every conversation, every choice, every ending.",
+          "state": "done",
+          "summary": "28 scenes",
+          "note": "",
+          "errors": 0,
+          "flow": "scenes",
+          "collections": [
+            "scenes"
+          ]
+        },
+        {
+          "section": "quests",
+          "title": "Quests",
+          "help": "What the player is doing, in stages, with a journal.",
+          "state": "done",
+          "summary": "1 quest",
+          "note": "",
+          "errors": 0,
+          "flow": "quests",
+          "collections": [
+            "quests"
+          ]
+        },
+        {
+          "section": "encounters",
+          "title": "Encounters",
+          "help": "What the roads might throw at somebody walking down them.",
+          "state": "done",
+          "summary": "2 encounter tables",
+          "note": "",
+          "errors": 0,
+          "flow": null,
+          "collections": [
+            "encounterTables"
+          ]
+        },
+        {
+          "section": "weather",
+          "title": "Weather & climate",
+          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "state": "empty",
+          "summary": "using whatever the libraries bring",
+          "note": "",
+          "errors": 0,
+          "flow": null,
+          "collections": [
+            "climates",
+            "weatherConditions",
+            "weatherFronts",
+            "terrains"
+          ]
+        },
+        {
+          "section": "player",
+          "title": "Player setup",
+          "help": "Who the protagonist could have been, and what they get to choose.",
+          "state": "done",
+          "summary": "3 backgrounds",
+          "note": "",
+          "errors": 0,
+          "flow": "backgrounds",
+          "collections": [
+            "backgrounds"
+          ]
+        }
+      ]
+    },
+    "screen": {
+      "collection": "scenes",
+      "id": "talk-to-gorm",
+      "title": "Something that happens",
+      "noun": "scene",
+      "label": "talk to gorm",
+      "steps": [
+        {
+          "id": "scene.prompt",
+          "title": "What does the option say?",
+          "help": "How this scene is offered in a menu. A scene with no prompt is one that only gets reached by `goto`.",
+          "optional": true,
+          "binds": "scenes[{id}].prompt",
+          "value": "Speak to the troll",
+          "described": "Speak to the troll",
+          "answered": true,
+          "field": {
+            "kind": "text",
+            "optional": true,
+            "interactive": false,
+            "hint": "e.g. Speak to the troll",
+            "placeholder": "Speak to the troll"
+          },
+          "entries": null
+        },
+        {
+          "id": "scene.when",
+          "title": "When is it available?",
+          "help": "Empty means always.",
+          "optional": true,
+          "binds": "scenes[{id}].when",
+          "value": [
+            {
+              "flag": {
+                "entity": "gorm",
+                "flag": "has-been-paid",
+                "is": false
+              }
+            }
+          ],
+          "described": "Gorm is not flagged `has-been-paid`",
+          "answered": true,
+          "field": {
+            "kind": "conditions",
+            "optional": false,
+            "interactive": true,
+            "hint": "built one question at a time",
+            "single": false
+          },
+          "entries": [
+            {
+              "authored": {
+                "flag": {
+                  "entity": "gorm",
+                  "flag": "has-been-paid",
+                  "is": false
+                }
+              },
+              "said": "Gorm is not flagged `has-been-paid`"
+            }
+          ]
+        },
+        {
+          "id": "scene.say",
+          "title": "What does the player read?",
+          "help": "One line per beat. The player presses enter between them.",
+          "optional": false,
+          "binds": "scenes[{id}].say",
+          "value": [
+            "The troll unfolds itself from beneath the bridge, and the bridge seems glad to be rid of the weight.",
+            {
+              "text": "\"Toll,\" it says. \"Ten gold, or swim.\"",
+              "pause": true
+            }
+          ],
+          "described": "The troll unfolds itself from beneath the bridg\u2026 (+1 more)",
+          "answered": true,
+          "field": {
+            "kind": "text-list",
+            "optional": false,
+            "interactive": true,
+            "hint": "one line at a time; a blank line ends it",
+            "placeholder": "\"Toll,\" it says. \"Ten gold, or swim.\"",
+            "minItems": 1
+          },
+          "entries": null
+        },
+        {
+          "id": "scene.effects",
+          "title": "What does it change?",
+          "help": "Applied in order, after the lines are said. This is where a scene stops being text and starts being a decision.",
+          "optional": true,
+          "binds": "scenes[{id}].effects",
+          "value": [
+            {
+              "setFlag": {
+                "entity": "gorm",
+                "flag": "has-spoken"
+              }
+            }
+          ],
+          "described": "Gorm is flagged `has-spoken`",
+          "answered": true,
+          "field": {
+            "kind": "effects",
+            "optional": false,
+            "interactive": true,
+            "hint": "built one question at a time"
+          },
+          "entries": [
+            {
+              "authored": {
+                "setFlag": {
+                  "entity": "gorm",
+                  "flag": "has-spoken"
+                }
+              },
+              "said": "Gorm is flagged `has-spoken`"
+            }
+          ]
+        },
+        {
+          "id": "scene.choices",
+          "title": "What can they do about it?",
+          "help": "",
+          "optional": true,
+          "binds": "scenes[{id}].choices",
+          "value": [
+            {
+              "prompt": "Pay the toll (10 gold)",
+              "when": [
+                {
+                  "hasItem": {
+                    "actor": "player",
+                    "item": "fantasy.core:gold",
+                    "qty": 10
+                  }
+                }
+              ],
+              "showWhenUnavailable": true,
+              "unavailableHint": "You don't have ten gold.",
+              "goto": "pay-the-toll"
+            },
+            {
+              "prompt": "Try to talk it down",
+              "goto": "haggle-with-gorm"
+            },
+            {
+              "prompt": "Offer it your bread (4 loaves)",
+              "when": [
+                {
+                  "hasItem": {
+                    "actor": "player",
+                    "item": "fantasy.core:bread",
+                    "qty": 4
+                  }
+                }
+              ],
+              "showWhenUnavailable": true,
+              "unavailableHint": "You have nothing like four loaves.",
+              "goto": "pay-in-bread"
+            },
+            {
+              "prompt": "Ask about the road north",
+              "goto": "gorm-on-the-road"
+            },
+            {
+              "prompt": "Refuse, and put a hand on your hook",
+              "goto": "fight-gorm"
+            }
+          ],
+          "described": "5 choices",
+          "answered": true,
+          "field": {
+            "kind": "repeat",
+            "optional": false,
+            "interactive": true,
+            "hint": "add choices one at a time",
+            "of": "choice",
+            "steps": [
+              {
+                "id": "choice.prompt",
+                "title": "What does the option say?",
+                "help": "",
+                "binds": "choices.prompt",
+                "optional": false,
+                "field": {
+                  "kind": "text",
+                  "optional": false,
+                  "interactive": false,
+                  "hint": "e.g. Pay the toll (10 gold)",
+                  "placeholder": "Pay the toll (10 gold)"
+                }
+              },
+              {
+                "id": "choice.when",
+                "title": "When can they take it?",
+                "help": "Empty means always.",
+                "binds": "choices.when",
+                "optional": true,
+                "field": {
+                  "kind": "conditions",
+                  "optional": false,
+                  "interactive": true,
+                  "hint": "built one question at a time",
+                  "single": false
+                }
+              },
+              {
+                "id": "choice.showWhenUnavailable",
+                "title": "Show it greyed out when they cannot?",
+                "help": "Showing what you are missing is usually better than hiding it \u2014 a player who never sees the option never learns the gold was the point.",
+                "binds": "choices.showWhenUnavailable",
+                "optional": true,
+                "field": {
+                  "kind": "bool",
+                  "optional": true,
+                  "interactive": false,
+                  "hint": "y / n"
+                }
+              },
+              {
+                "id": "choice.unavailableHint",
+                "title": "What should it say when they cannot?",
+                "help": "",
+                "binds": "choices.unavailableHint",
+                "optional": true,
+                "field": {
+                  "kind": "text",
+                  "optional": true,
+                  "interactive": false,
+                  "hint": "e.g. You don't have ten gold.",
+                  "placeholder": "You don't have ten gold."
+                }
+              },
+              {
+                "id": "choice.goto",
+                "title": "Which scene does it lead to?",
+                "help": "",
+                "binds": "choices.goto",
+                "optional": true,
+                "field": {
+                  "kind": "select",
+                  "optional": true,
+                  "interactive": false,
+                  "hint": "",
+                  "options": [
+                    {
+                      "value": "a-traveller-with-news",
+                      "label": "a traveller with news",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "beaten-by-gorm",
+                      "label": "beaten by gorm",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "buy-bread",
+                      "label": "buy bread",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "buy-rope",
+                      "label": "buy rope",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "cannot-afford",
+                      "label": "cannot afford",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "castle-arrival",
+                      "label": "castle arrival",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "defeat",
+                      "label": "defeat",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "fenmoor-arrival",
+                      "label": "fenmoor arrival",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "fight-gorm",
+                      "label": "fight gorm",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "fled-from-gorm",
+                      "label": "fled from gorm",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "gorm-beaten",
+                      "label": "gorm beaten",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "gorm-has-been-paid",
+                      "label": "gorm has been paid",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "gorm-on-the-road",
+                      "label": "gorm on the road",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "gorm-refuses-to-haggle",
+                      "label": "gorm refuses to haggle",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "haggle-with-gorm",
+                      "label": "haggle with gorm",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "nothing-to-sell",
+                      "label": "nothing to sell",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "pay-in-bread",
+                      "label": "pay in bread",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "pay-the-toll",
+                      "label": "pay the toll",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "report-to-orin",
+                      "label": "report to orin",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "riders-going-north",
+                      "label": "riders going north",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "say-goodbye-to-hallam",
+                      "label": "say goodbye to hallam",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "sell-reaping-hook",
+                      "label": "sell reaping hook",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "sell-rope",
+                      "label": "sell rope",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "talk-to-gorm",
+                      "label": "talk to gorm",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "talk-to-peddler",
+                      "label": "talk to peddler",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "the-wolves-decide-otherwise",
+                      "label": "the wolves decide otherwise",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "victory",
+                      "label": "victory",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "wolves-on-the-road",
+                      "label": "wolves on the road",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "mace.core:nothing-happens",
+                      "label": "nothing happens",
+                      "note": "mace.core"
+                    },
+                    {
+                      "value": "mace.core:rest-a-while",
+                      "label": "rest a while",
+                      "note": "mace.core"
+                    },
+                    {
+                      "value": "mace.core:sleep-until-morning",
+                      "label": "sleep until morning",
+                      "note": "mace.core"
+                    },
+                    {
+                      "value": "mace.core:wait-here",
+                      "label": "wait here",
+                      "note": "mace.core"
+                    },
+                    {
+                      "value": "fantasy.core:nothing-much-happens",
+                      "label": "nothing much happens",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:someone-on-the-road",
+                      "label": "someone on the road",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:something-in-the-grass",
+                      "label": "something in the grass",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:the-road-notices-you",
+                      "label": "the road notices you",
+                      "note": "fantasy.core"
+                    }
+                  ],
+                  "allowCreate": "scenes"
+                }
+              },
+              {
+                "id": "choice.effects",
+                "title": "Or does it just do something?",
+                "help": "A choice needs a `goto`, effects, or both.",
+                "binds": "choices.effects",
+                "optional": true,
+                "field": {
+                  "kind": "effects",
+                  "optional": false,
+                  "interactive": true,
+                  "hint": "built one question at a time"
+                }
+              }
+            ]
+          },
+          "entries": [
+            {
+              "values": {
+                "prompt": "Pay the toll (10 gold)",
+                "when": [
+                  {
+                    "hasItem": {
+                      "actor": "player",
+                      "item": "fantasy.core:gold",
+                      "qty": 10
+                    }
+                  }
+                ],
+                "showWhenUnavailable": true,
+                "unavailableHint": "You don't have ten gold.",
+                "goto": "pay-the-toll"
+              },
+              "summary": "prompt: Pay the toll (10 gold) \u00b7 when: [{'hasItem': {'actor': 'player', 'item': 'fantasy.core:gold', 'qty': 10}}] \u00b7 showWhenUnavailable: True \u00b7 unavailableHint: You don't have ten gold. \u00b7 goto: pay-the-toll"
+            },
+            {
+              "values": {
+                "prompt": "Try to talk it down",
+                "goto": "haggle-with-gorm"
+              },
+              "summary": "prompt: Try to talk it down \u00b7 goto: haggle-with-gorm"
+            },
+            {
+              "values": {
+                "prompt": "Offer it your bread (4 loaves)",
+                "when": [
+                  {
+                    "hasItem": {
+                      "actor": "player",
+                      "item": "fantasy.core:bread",
+                      "qty": 4
+                    }
+                  }
+                ],
+                "showWhenUnavailable": true,
+                "unavailableHint": "You have nothing like four loaves.",
+                "goto": "pay-in-bread"
+              },
+              "summary": "prompt: Offer it your bread (4 loaves) \u00b7 when: [{'hasItem': {'actor': 'player', 'item': 'fantasy.core:bread', 'qty': 4}}] \u00b7 showWhenUnavailable: True \u00b7 unavailableHint: You have nothing like four loaves. \u00b7 goto: pay-in-bread"
+            },
+            {
+              "values": {
+                "prompt": "Ask about the road north",
+                "goto": "gorm-on-the-road"
+              },
+              "summary": "prompt: Ask about the road north \u00b7 goto: gorm-on-the-road"
+            },
+            {
+              "values": {
+                "prompt": "Refuse, and put a hand on your hook",
+                "goto": "fight-gorm"
+              },
+              "summary": "prompt: Refuse, and put a hand on your hook \u00b7 goto: fight-gorm"
+            }
+          ]
+        },
+        {
+          "id": "scene.goto",
+          "title": "Or does it lead straight on?",
+          "help": "A scene either jumps onward or offers a choice. Not both \u2014 they are two answers to the same question.",
+          "optional": true,
+          "binds": "scenes[{id}].goto",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "field": {
+            "kind": "select",
+            "optional": true,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "a-traveller-with-news",
+                "label": "a traveller with news",
+                "note": "this pack"
+              },
+              {
+                "value": "beaten-by-gorm",
+                "label": "beaten by gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "buy-bread",
+                "label": "buy bread",
+                "note": "this pack"
+              },
+              {
+                "value": "buy-rope",
+                "label": "buy rope",
+                "note": "this pack"
+              },
+              {
+                "value": "cannot-afford",
+                "label": "cannot afford",
+                "note": "this pack"
+              },
+              {
+                "value": "castle-arrival",
+                "label": "castle arrival",
+                "note": "this pack"
+              },
+              {
+                "value": "defeat",
+                "label": "defeat",
+                "note": "this pack"
+              },
+              {
+                "value": "fenmoor-arrival",
+                "label": "fenmoor arrival",
+                "note": "this pack"
+              },
+              {
+                "value": "fight-gorm",
+                "label": "fight gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "fled-from-gorm",
+                "label": "fled from gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-beaten",
+                "label": "gorm beaten",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-has-been-paid",
+                "label": "gorm has been paid",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-on-the-road",
+                "label": "gorm on the road",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-refuses-to-haggle",
+                "label": "gorm refuses to haggle",
+                "note": "this pack"
+              },
+              {
+                "value": "haggle-with-gorm",
+                "label": "haggle with gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "nothing-to-sell",
+                "label": "nothing to sell",
+                "note": "this pack"
+              },
+              {
+                "value": "pay-in-bread",
+                "label": "pay in bread",
+                "note": "this pack"
+              },
+              {
+                "value": "pay-the-toll",
+                "label": "pay the toll",
+                "note": "this pack"
+              },
+              {
+                "value": "report-to-orin",
+                "label": "report to orin",
+                "note": "this pack"
+              },
+              {
+                "value": "riders-going-north",
+                "label": "riders going north",
+                "note": "this pack"
+              },
+              {
+                "value": "say-goodbye-to-hallam",
+                "label": "say goodbye to hallam",
+                "note": "this pack"
+              },
+              {
+                "value": "sell-reaping-hook",
+                "label": "sell reaping hook",
+                "note": "this pack"
+              },
+              {
+                "value": "sell-rope",
+                "label": "sell rope",
+                "note": "this pack"
+              },
+              {
+                "value": "talk-to-gorm",
+                "label": "talk to gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "talk-to-peddler",
+                "label": "talk to peddler",
+                "note": "this pack"
+              },
+              {
+                "value": "the-wolves-decide-otherwise",
+                "label": "the wolves decide otherwise",
+                "note": "this pack"
+              },
+              {
+                "value": "victory",
+                "label": "victory",
+                "note": "this pack"
+              },
+              {
+                "value": "wolves-on-the-road",
+                "label": "wolves on the road",
+                "note": "this pack"
+              },
+              {
+                "value": "mace.core:nothing-happens",
+                "label": "nothing happens",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:rest-a-while",
+                "label": "rest a while",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:sleep-until-morning",
+                "label": "sleep until morning",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:wait-here",
+                "label": "wait here",
+                "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:nothing-much-happens",
+                "label": "nothing much happens",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:someone-on-the-road",
+                "label": "someone on the road",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:something-in-the-grass",
+                "label": "something in the grass",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:the-road-notices-you",
+                "label": "the road notices you",
+                "note": "fantasy.core"
+              }
+            ],
+            "allowCreate": "scenes"
+          },
+          "entries": null
+        },
+        {
+          "id": "scene.once",
+          "title": "Does it only happen once?",
+          "help": "",
+          "optional": true,
+          "binds": "scenes[{id}].once",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "field": {
+            "kind": "bool",
+            "optional": true,
+            "interactive": false,
+            "hint": "y / n"
+          },
+          "entries": null
+        },
+        {
+          "id": "scene.else",
+          "title": "What happens instead, once it has?",
+          "help": "The fallback when this scene's own conditions fail. This is what stops a talked-out character going silent.",
+          "optional": true,
+          "binds": "scenes[{id}].else",
+          "value": "gorm-has-been-paid",
+          "described": "gorm has been paid",
+          "answered": true,
+          "field": {
+            "kind": "select",
+            "optional": true,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "a-traveller-with-news",
+                "label": "a traveller with news",
+                "note": "this pack"
+              },
+              {
+                "value": "beaten-by-gorm",
+                "label": "beaten by gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "buy-bread",
+                "label": "buy bread",
+                "note": "this pack"
+              },
+              {
+                "value": "buy-rope",
+                "label": "buy rope",
+                "note": "this pack"
+              },
+              {
+                "value": "cannot-afford",
+                "label": "cannot afford",
+                "note": "this pack"
+              },
+              {
+                "value": "castle-arrival",
+                "label": "castle arrival",
+                "note": "this pack"
+              },
+              {
+                "value": "defeat",
+                "label": "defeat",
+                "note": "this pack"
+              },
+              {
+                "value": "fenmoor-arrival",
+                "label": "fenmoor arrival",
+                "note": "this pack"
+              },
+              {
+                "value": "fight-gorm",
+                "label": "fight gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "fled-from-gorm",
+                "label": "fled from gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-beaten",
+                "label": "gorm beaten",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-has-been-paid",
+                "label": "gorm has been paid",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-on-the-road",
+                "label": "gorm on the road",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-refuses-to-haggle",
+                "label": "gorm refuses to haggle",
+                "note": "this pack"
+              },
+              {
+                "value": "haggle-with-gorm",
+                "label": "haggle with gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "nothing-to-sell",
+                "label": "nothing to sell",
+                "note": "this pack"
+              },
+              {
+                "value": "pay-in-bread",
+                "label": "pay in bread",
+                "note": "this pack"
+              },
+              {
+                "value": "pay-the-toll",
+                "label": "pay the toll",
+                "note": "this pack"
+              },
+              {
+                "value": "report-to-orin",
+                "label": "report to orin",
+                "note": "this pack"
+              },
+              {
+                "value": "riders-going-north",
+                "label": "riders going north",
+                "note": "this pack"
+              },
+              {
+                "value": "say-goodbye-to-hallam",
+                "label": "say goodbye to hallam",
+                "note": "this pack"
+              },
+              {
+                "value": "sell-reaping-hook",
+                "label": "sell reaping hook",
+                "note": "this pack"
+              },
+              {
+                "value": "sell-rope",
+                "label": "sell rope",
+                "note": "this pack"
+              },
+              {
+                "value": "talk-to-gorm",
+                "label": "talk to gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "talk-to-peddler",
+                "label": "talk to peddler",
+                "note": "this pack"
+              },
+              {
+                "value": "the-wolves-decide-otherwise",
+                "label": "the wolves decide otherwise",
+                "note": "this pack"
+              },
+              {
+                "value": "victory",
+                "label": "victory",
+                "note": "this pack"
+              },
+              {
+                "value": "wolves-on-the-road",
+                "label": "wolves on the road",
+                "note": "this pack"
+              },
+              {
+                "value": "mace.core:nothing-happens",
+                "label": "nothing happens",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:rest-a-while",
+                "label": "rest a while",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:sleep-until-morning",
+                "label": "sleep until morning",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:wait-here",
+                "label": "wait here",
+                "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:nothing-much-happens",
+                "label": "nothing much happens",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:someone-on-the-road",
+                "label": "someone on the road",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:something-in-the-grass",
+                "label": "something in the grass",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:the-road-notices-you",
+                "label": "the road notices you",
+                "note": "fantasy.core"
+              }
+            ],
+            "allowCreate": "scenes"
+          },
+          "entries": null
+        }
+      ]
+    }
+  },
+  "actor": {
+    "pack": {
+      "id": "peasants-quest",
+      "name": "A Peasant's Quest",
+      "kind": "game",
+      "version": "0.1.0"
+    },
+    "dirty": [],
+    "unreadable": [],
+    "desk": {
+      "name": "A Peasant's Quest",
+      "percent": 89,
+      "problems": 0,
+      "errors": 0,
+      "tasks": [
+        {
+          "section": "game",
+          "title": "Game setup",
+          "help": "The title, the opening, who the player is, and what winning means.",
+          "state": "done",
+          "summary": "name, opening, player, win and lose",
+          "note": "",
+          "errors": 0,
+          "flow": "game",
+          "collections": []
+        },
+        {
+          "section": "world",
+          "title": "World map",
+          "help": "Places, the roads between them, and the regions weather happens to.",
+          "state": "done",
+          "summary": "4 locations, 2 routes, 3 regions",
+          "note": "",
+          "errors": 0,
+          "flow": "locations",
+          "collections": [
+            "locations",
+            "routes",
+            "regions"
+          ]
+        },
+        {
+          "section": "characters",
+          "title": "Characters",
+          "help": "Everyone the player can talk to, fight, or travel with.",
+          "state": "done",
+          "summary": "7 characters",
+          "note": "",
+          "errors": 0,
+          "flow": "entities",
+          "collections": [
+            "entities"
+          ]
+        },
+        {
+          "section": "items",
+          "title": "Items",
+          "help": "Everything the player can carry, wear, or spend.",
+          "state": "done",
+          "summary": "2 items",
+          "note": "",
+          "errors": 0,
+          "flow": "entities",
+          "collections": [
+            "entities"
+          ]
+        },
+        {
+          "section": "scenes",
+          "title": "Scenes",
+          "help": "Every conversation, every choice, every ending.",
+          "state": "done",
+          "summary": "28 scenes",
+          "note": "",
+          "errors": 0,
+          "flow": "scenes",
+          "collections": [
+            "scenes"
+          ]
+        },
+        {
+          "section": "quests",
+          "title": "Quests",
+          "help": "What the player is doing, in stages, with a journal.",
+          "state": "done",
+          "summary": "1 quest",
+          "note": "",
+          "errors": 0,
+          "flow": "quests",
+          "collections": [
+            "quests"
+          ]
+        },
+        {
+          "section": "encounters",
+          "title": "Encounters",
+          "help": "What the roads might throw at somebody walking down them.",
+          "state": "done",
+          "summary": "2 encounter tables",
+          "note": "",
+          "errors": 0,
+          "flow": null,
+          "collections": [
+            "encounterTables"
+          ]
+        },
+        {
+          "section": "weather",
+          "title": "Weather & climate",
+          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "state": "empty",
+          "summary": "using whatever the libraries bring",
+          "note": "",
+          "errors": 0,
+          "flow": null,
+          "collections": [
+            "climates",
+            "weatherConditions",
+            "weatherFronts",
+            "terrains"
+          ]
+        },
+        {
+          "section": "player",
+          "title": "Player setup",
+          "help": "Who the protagonist could have been, and what they get to choose.",
+          "state": "done",
+          "summary": "3 backgrounds",
+          "note": "",
+          "errors": 0,
+          "flow": "backgrounds",
+          "collections": [
+            "backgrounds"
+          ]
+        }
+      ]
+    },
+    "screen": {
+      "collection": "entities",
+      "id": "gorm",
+      "title": "A person, a creature, or a thing",
+      "noun": "entity",
+      "label": "Gorm",
+      "steps": [
+        {
+          "id": "entity.name",
+          "title": "What is it called?",
+          "help": "What the player sees. Proper names are fine.",
+          "optional": false,
+          "binds": "entities[{id}].name",
+          "value": "Gorm",
+          "described": "Gorm",
+          "answered": true,
+          "field": {
+            "kind": "text",
+            "optional": false,
+            "interactive": false,
+            "hint": "e.g. Gorm",
+            "placeholder": "Gorm"
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.kind",
+          "title": "What sort of thing is it?",
+          "help": "One model covers all of them; `kind` only says which optional blocks apply. It does not switch on special engine behaviour.",
+          "optional": false,
+          "binds": "entities[{id}].kind",
+          "value": "actor",
+          "described": "actor \u2014 a person, a monster, anything that acts",
+          "answered": true,
+          "field": {
+            "kind": "select",
+            "optional": false,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "actor",
+                "label": "actor \u2014 a person, a monster, anything that acts",
+                "note": ""
+              },
+              {
+                "value": "item",
+                "label": "item \u2014 something to carry, wear, or spend",
+                "note": ""
+              },
+              {
+                "value": "fixture",
+                "label": "fixture \u2014 scenery you can interact with",
+                "note": ""
+              },
+              {
+                "value": "container",
+                "label": "container \u2014 a chest, a sack, a corpse",
+                "note": ""
+              },
+              {
+                "value": "portal",
+                "label": "portal \u2014 a door or a gate between places",
+                "note": ""
+              }
+            ],
+            "allowCreate": null
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.description",
+          "title": "What does the player notice about it?",
+          "help": "One good line beats three ordinary ones.",
+          "optional": true,
+          "binds": "entities[{id}].description",
+          "value": "It has moss in its hair and the patient look of something that gets paid eventually.",
+          "described": "It has moss in its hair and the patient look of\u2026",
+          "answered": true,
+          "field": {
+            "kind": "text-list",
+            "optional": false,
+            "interactive": true,
+            "hint": "one line at a time; a blank line ends it",
+            "placeholder": "Moss in its hair, and the patient look of something that gets paid eventually.",
+            "minItems": 0
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.extends",
+          "title": "Is it a version of something that already exists?",
+          "help": "Inheriting from a library's `soldier` takes the stats, the combat profile, and the gear, and leaves you writing only what makes this one *this* one.",
+          "optional": true,
+          "binds": "entities[{id}].extends",
+          "value": "fantasy.core:bridge-troll",
+          "described": "Bridge Troll",
+          "answered": true,
+          "field": {
+            "kind": "select",
+            "optional": true,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "captain-orin",
+                "label": "Captain Orin",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm",
+                "label": "Gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "kings-token",
+                "label": "The King's Token",
+                "note": "this pack"
+              },
+              {
+                "value": "letholin",
+                "label": "Letholin",
+                "note": "this pack"
+              },
+              {
+                "value": "mereth-the-reeve",
+                "label": "Mereth the Reeve",
+                "note": "this pack"
+              },
+              {
+                "value": "old-hallam",
+                "label": "Old Hallam",
+                "note": "this pack"
+              },
+              {
+                "value": "peddler",
+                "label": "The Peddler",
+                "note": "this pack"
+              },
+              {
+                "value": "quartermaster-bel",
+                "label": "Quartermaster Bel",
+                "note": "this pack"
+              },
+              {
+                "value": "reaping-hook",
+                "label": "Reaping Hook",
+                "note": "this pack"
+              },
+              {
+                "value": "fantasy.core:bread",
+                "label": "Bread",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:bridge-troll",
+                "label": "Bridge Troll",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:dagger",
+                "label": "Dagger",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:gold",
+                "label": "Gold",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:grain",
+                "label": "Grain",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:healing-draught",
+                "label": "Healing Draught",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:iron-ingot",
+                "label": "Iron Ingot",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:rope",
+                "label": "Rope",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:salt",
+                "label": "Salt",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:soldier",
+                "label": "Soldier",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:travelling-merchant",
+                "label": "Travelling Merchant",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:villager",
+                "label": "Villager",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:wolf",
+                "label": "Wolf",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:wool",
+                "label": "Wool",
+                "note": "fantasy.core"
+              }
+            ],
+            "allowCreate": null
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.tags",
+          "title": "How would you group it?",
+          "help": "Free labels \u2014 `human`, `undead`, `peasant`. Encounter tables and weather responses match on these.",
+          "optional": true,
+          "binds": "entities[{id}].tags",
+          "value": [
+            "$append",
+            "named"
+          ],
+          "described": "$append (?), named (?)",
+          "answered": true,
+          "field": {
+            "kind": "multi-select",
+            "optional": false,
+            "interactive": false,
+            "hint": "numbers separated by commas, or blank for none",
+            "options": [],
+            "allowCreate": null,
+            "minItems": 0
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.stats",
+          "title": "What is it made of?",
+          "help": "Pools it can lose (hitpoints, stamina) and abilities it brings (strength, speed). Mark a stat `customizable` if the player may spend creation points on it.",
+          "optional": true,
+          "binds": "entities[{id}].stats",
+          "value": {
+            "strength": {
+              "base": 85
+            }
+          },
+          "described": "strength 85",
+          "answered": true,
+          "field": {
+            "kind": "stat-allocator",
+            "optional": false,
+            "interactive": true,
+            "hint": "a name and a number at a time; blank ends it",
+            "points": 0,
+            "stats": []
+          },
+          "entries": [
+            {
+              "stat": "strength",
+              "base": 85.0,
+              "max": null
+            }
+          ]
+        },
+        {
+          "id": "entity.disposition",
+          "title": "How does it feel about the player?",
+          "help": "Where it starts. Scenes can change it.",
+          "optional": true,
+          "binds": "entities[{id}].disposition",
+          "value": "neutral",
+          "described": "neutral",
+          "answered": true,
+          "field": {
+            "kind": "select",
+            "optional": true,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "friendly",
+                "label": "friendly",
+                "note": ""
+              },
+              {
+                "value": "neutral",
+                "label": "neutral",
+                "note": ""
+              },
+              {
+                "value": "hostile",
+                "label": "hostile",
+                "note": ""
+              }
+            ],
+            "allowCreate": null
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.combat.profile",
+          "title": "How does it fight?",
+          "help": "The profile is the pattern the player learns to read. Two creatures sharing one are two creatures that fight the same, which is usually what you want.",
+          "optional": true,
+          "binds": "entities[{id}].combat.profile",
+          "value": "profile='bridge-troll-profile' moves=()",
+          "described": "profile='bridge-troll-profile' moves=() (?)",
+          "answered": true,
+          "field": {
+            "kind": "select",
+            "optional": true,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "fantasy.core:adventurer",
+                "label": "Adventurer",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:brawler",
+                "label": "Brawler",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:bridge-troll-profile",
+                "label": "Bridge troll",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:pack-hunter",
+                "label": "Pack hunter",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:quick-duelist",
+                "label": "Quick duelist",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:shield-line",
+                "label": "Shield line",
+                "note": "fantasy.core"
+              }
+            ],
+            "allowCreate": null
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.inventory",
+          "title": "What is it carrying?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].inventory",
+          "value": [
+            {
+              "item": "fantasy.core:gold",
+              "qty": 120
+            }
+          ],
+          "described": "1 stack",
+          "answered": true,
+          "field": {
+            "kind": "repeat",
+            "optional": false,
+            "interactive": true,
+            "hint": "add stacks one at a time",
+            "of": "stack",
+            "steps": [
+              {
+                "id": "stack.item",
+                "title": "Which item?",
+                "help": "",
+                "binds": "inventory.item",
+                "optional": false,
+                "field": {
+                  "kind": "select",
+                  "optional": false,
+                  "interactive": false,
+                  "hint": "",
+                  "options": [
+                    {
+                      "value": "kings-token",
+                      "label": "The King's Token",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "reaping-hook",
+                      "label": "Reaping Hook",
+                      "note": "this pack"
+                    },
+                    {
+                      "value": "fantasy.core:bread",
+                      "label": "Bread",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:dagger",
+                      "label": "Dagger",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:gold",
+                      "label": "Gold",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:grain",
+                      "label": "Grain",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:healing-draught",
+                      "label": "Healing Draught",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:iron-ingot",
+                      "label": "Iron Ingot",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:rope",
+                      "label": "Rope",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:salt",
+                      "label": "Salt",
+                      "note": "fantasy.core"
+                    },
+                    {
+                      "value": "fantasy.core:wool",
+                      "label": "Wool",
+                      "note": "fantasy.core"
+                    }
+                  ],
+                  "allowCreate": "entities"
+                }
+              },
+              {
+                "id": "stack.qty",
+                "title": "How many?",
+                "help": "",
+                "binds": "inventory.qty",
+                "optional": true,
+                "field": {
+                  "kind": "number",
+                  "optional": true,
+                  "interactive": false,
+                  "hint": "1 or more",
+                  "minimum": 1,
+                  "maximum": null,
+                  "integer": true
+                }
+              }
+            ]
+          },
+          "entries": [
+            {
+              "values": {
+                "item": "fantasy.core:gold",
+                "qty": 120
+              },
+              "summary": "item: fantasy.core:gold \u00b7 qty: 120"
+            }
+          ]
+        },
+        {
+          "id": "entity.scenes",
+          "title": "What can the player do with it?",
+          "help": "Scenes offered wherever this thing is. A character with none is scenery \u2014 which the validator will mention.",
+          "optional": true,
+          "binds": "entities[{id}].scenes",
+          "value": [
+            "talk-to-gorm"
+          ],
+          "described": "talk to gorm",
+          "answered": true,
+          "field": {
+            "kind": "multi-select",
+            "optional": false,
+            "interactive": false,
+            "hint": "numbers separated by commas, or blank for none",
+            "options": [
+              {
+                "value": "a-traveller-with-news",
+                "label": "a traveller with news",
+                "note": "this pack"
+              },
+              {
+                "value": "beaten-by-gorm",
+                "label": "beaten by gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "buy-bread",
+                "label": "buy bread",
+                "note": "this pack"
+              },
+              {
+                "value": "buy-rope",
+                "label": "buy rope",
+                "note": "this pack"
+              },
+              {
+                "value": "cannot-afford",
+                "label": "cannot afford",
+                "note": "this pack"
+              },
+              {
+                "value": "castle-arrival",
+                "label": "castle arrival",
+                "note": "this pack"
+              },
+              {
+                "value": "defeat",
+                "label": "defeat",
+                "note": "this pack"
+              },
+              {
+                "value": "fenmoor-arrival",
+                "label": "fenmoor arrival",
+                "note": "this pack"
+              },
+              {
+                "value": "fight-gorm",
+                "label": "fight gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "fled-from-gorm",
+                "label": "fled from gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-beaten",
+                "label": "gorm beaten",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-has-been-paid",
+                "label": "gorm has been paid",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-on-the-road",
+                "label": "gorm on the road",
+                "note": "this pack"
+              },
+              {
+                "value": "gorm-refuses-to-haggle",
+                "label": "gorm refuses to haggle",
+                "note": "this pack"
+              },
+              {
+                "value": "haggle-with-gorm",
+                "label": "haggle with gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "nothing-to-sell",
+                "label": "nothing to sell",
+                "note": "this pack"
+              },
+              {
+                "value": "pay-in-bread",
+                "label": "pay in bread",
+                "note": "this pack"
+              },
+              {
+                "value": "pay-the-toll",
+                "label": "pay the toll",
+                "note": "this pack"
+              },
+              {
+                "value": "report-to-orin",
+                "label": "report to orin",
+                "note": "this pack"
+              },
+              {
+                "value": "riders-going-north",
+                "label": "riders going north",
+                "note": "this pack"
+              },
+              {
+                "value": "say-goodbye-to-hallam",
+                "label": "say goodbye to hallam",
+                "note": "this pack"
+              },
+              {
+                "value": "sell-reaping-hook",
+                "label": "sell reaping hook",
+                "note": "this pack"
+              },
+              {
+                "value": "sell-rope",
+                "label": "sell rope",
+                "note": "this pack"
+              },
+              {
+                "value": "talk-to-gorm",
+                "label": "talk to gorm",
+                "note": "this pack"
+              },
+              {
+                "value": "talk-to-peddler",
+                "label": "talk to peddler",
+                "note": "this pack"
+              },
+              {
+                "value": "the-wolves-decide-otherwise",
+                "label": "the wolves decide otherwise",
+                "note": "this pack"
+              },
+              {
+                "value": "victory",
+                "label": "victory",
+                "note": "this pack"
+              },
+              {
+                "value": "wolves-on-the-road",
+                "label": "wolves on the road",
+                "note": "this pack"
+              },
+              {
+                "value": "mace.core:nothing-happens",
+                "label": "nothing happens",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:rest-a-while",
+                "label": "rest a while",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:sleep-until-morning",
+                "label": "sleep until morning",
+                "note": "mace.core"
+              },
+              {
+                "value": "mace.core:wait-here",
+                "label": "wait here",
+                "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:nothing-much-happens",
+                "label": "nothing much happens",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:someone-on-the-road",
+                "label": "someone on the road",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:something-in-the-grass",
+                "label": "something in the grass",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:the-road-notices-you",
+                "label": "the road notices you",
+                "note": "fantasy.core"
+              }
+            ],
+            "allowCreate": "scenes",
+            "minItems": 0
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.playable",
+          "title": "Can the player be this?",
+          "help": "Only the protagonist needs this.",
+          "optional": true,
+          "binds": "entities[{id}].playable",
+          "value": false,
+          "described": "no",
+          "answered": true,
+          "field": {
+            "kind": "bool",
+            "optional": true,
+            "interactive": false,
+            "hint": "y / n"
+          },
+          "entries": null
         }
       ]
     }
@@ -2632,7 +5120,8 @@
         "optional": true,
         "interactive": false,
         "hint": "y / n"
-      }
+      },
+      "entries": null
     }
   },
   "made": {
@@ -2796,7 +5285,8 @@
             "interactive": false,
             "hint": "e.g. The Old Bridge",
             "placeholder": "The Old Bridge"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.description",
@@ -2814,7 +5304,8 @@
             "hint": "one line at a time; a blank line ends it",
             "placeholder": "A stone span over black water, and moss on everything.",
             "minItems": 1
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.region",
@@ -2848,7 +5339,8 @@
               }
             ],
             "allowCreate": "regions"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.indoors",
@@ -2864,7 +5356,8 @@
             "optional": true,
             "interactive": false,
             "hint": "y / n"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.safe",
@@ -2880,7 +5373,8 @@
             "optional": true,
             "interactive": false,
             "hint": "y / n"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.entities",
@@ -3015,7 +5509,8 @@
             ],
             "allowCreate": "entities",
             "minItems": 0
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.scenes",
@@ -3215,7 +5710,8 @@
             ],
             "allowCreate": "scenes",
             "minItems": 0
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.onArrive",
@@ -3414,7 +5910,8 @@
               }
             ],
             "allowCreate": "scenes"
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.encounters",
@@ -3448,7 +5945,8 @@
               }
             ],
             "allowCreate": null
-          }
+          },
+          "entries": null
         },
         {
           "id": "location.exits",
@@ -3562,7 +6060,8 @@
                 }
               }
             ]
-          }
+          },
+          "entries": []
         },
         {
           "id": "location.mapPosition",
@@ -3578,7 +6077,8 @@
             "optional": true,
             "interactive": false,
             "hint": "`x y` \u2014 or leave it blank and let the map lay itself out"
-          }
+          },
+          "entries": null
         }
       ]
     }

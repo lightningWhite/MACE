@@ -208,15 +208,178 @@ describe("one object", () => {
     );
   });
 
-  it("shows a field it cannot collect rather than hiding it", async () => {
+  it("lists a repeat's entries and lets one be taken out", async () => {
     const user = userEvent.setup();
-    stub(fakeStudio());
+    const studio = fakeStudio();
+    stub(studio);
     await opened();
     await intoFenmoor(user);
 
-    // `exits` is a repeat, which is built one entry at a time.
-    expect(screen.getByText(/cannot do that yet/)).toBeTruthy();
-    expect(screen.getByText("repeat")).toBeTruthy();
+    expect(screen.getByText(/to: traders-post/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Remove exit 1" }));
+
+    const answered = studio.calls.find((call) => call.path.endsWith("/answers"));
+    const body = answered?.body as { step: string; value: unknown[] };
+    expect(body.step).toBe("location.exits");
+    expect(body.value).toHaveLength(1);
+  });
+
+  it("builds a repeat entry from the flow the wizard sent for one", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    await opened();
+    await intoFenmoor(user);
+
+    await user.click(screen.getByRole("button", { name: "Add a exit" }));
+    await user.selectOptions(
+      await screen.findByLabelText(/Where does it lead/),
+      "troll-bridge",
+    );
+    await user.click(screen.getByRole("button", { name: "Add it" }));
+
+    const answered = studio.calls.find((call) => call.path.endsWith("/answers"));
+    const body = answered?.body as { value: Array<Record<string, unknown>> };
+    expect(body.value[body.value.length - 1]).toEqual({ to: "troll-bridge" });
+  });
+});
+
+// ── The cascade ───────────────────────────────────────────────────────────────
+
+describe("the cascade", () => {
+  /** Open the troll's scene, where the conditions and effects live. */
+  async function intoTheScene(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("button", { name: /Scenes/ }));
+    await user.click(await screen.findByRole("button", { name: "Open talk to gorm" }));
+    await screen.findByText(/Add a condition/);
+  }
+
+  it("says what a condition means, in English, before anything is built", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoTheScene(user);
+
+    // Once in the list of conditions, once in the "now:" reading under it.
+    expect(screen.getAllByText(/Gorm is not flagged/)).toHaveLength(2);
+  });
+
+  it("offers the vocabulary grouped, and never as a syntax lesson", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoTheScene(user);
+
+    await user.click(screen.getByRole("button", { name: "Add a condition" }));
+    expect(await screen.findByText(/What should this depend on/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Something somebody is carrying/ }),
+    ).toBeTruthy();
+    expect(screen.getByText("The player")).toBeTruthy();
+  });
+
+  it("asks the recipe's own questions, with the pack's things on them", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoTheScene(user);
+
+    await user.click(screen.getByRole("button", { name: "Add a condition" }));
+    await user.click(
+      await screen.findByRole("button", { name: /Something somebody is carrying/ }),
+    );
+
+    const which = await screen.findByLabelText(/Which item/);
+    expect(which.tagName).toBe("SELECT");
+    expect(
+      within(which as HTMLSelectElement).getByRole("option", { name: /Gold/ }),
+    ).toBeTruthy();
+  });
+
+  it("lets the wizard build the content, and appends what came back", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    await opened();
+    await intoTheScene(user);
+
+    await user.click(screen.getByRole("button", { name: "Add a condition" }));
+    await user.click(
+      await screen.findByRole("button", { name: /Something somebody is carrying/ }),
+    );
+    await user.selectOptions(
+      await screen.findByLabelText(/Which item/),
+      "fantasy.core:gold",
+    );
+    await user.click(screen.getByRole("button", { name: "Add it" }));
+
+    // The client never assembles content itself: it posts the answers and
+    // takes what `/build` gives back.
+    const built = studio.calls.find((call) => call.path.endsWith("/build"));
+    expect(built?.body).toMatchObject({
+      kind: "conditions",
+      tag: "hasItem",
+      answers: { item: "fantasy.core:gold" },
+    });
+
+    const answered = studio.calls.find((call) => call.path.endsWith("/answers"));
+    const body = answered?.body as { value: unknown[] };
+    expect(body.value[body.value.length - 1]).toEqual({
+      hasItem: { item: "fantasy.core:gold", qty: 10 },
+    });
+  });
+
+  it("takes a condition back off", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    await opened();
+    await intoTheScene(user);
+
+    await user.click(screen.getByRole("button", { name: /Remove Gorm is not/ }));
+    const answered = studio.calls.find((call) => call.path.endsWith("/answers"));
+    expect((answered?.body as { value: unknown }).value).toBeNull();
+  });
+});
+
+// ── Statblocks ────────────────────────────────────────────────────────────────
+
+describe("a statblock", () => {
+  async function intoGorm(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("button", { name: /Characters/ }));
+    await user.click(await screen.findByRole("button", { name: "Open Gorm" }));
+    await screen.findByLabelText("strength base");
+  }
+
+  it("shows named numbers, with their caps", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoGorm(user);
+
+    expect((screen.getByLabelText("strength base") as HTMLInputElement).value).toBe(
+      "85",
+    );
+    // Gorm names no cap of his own — he inherits one — so the box is empty
+    // rather than inventing a number the author did not write.
+    expect((screen.getByLabelText("strength cap") as HTMLInputElement).value).toBe(
+      "",
+    );
+  });
+
+  it("adds a stat nobody has invented yet", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    await opened();
+    await intoGorm(user);
+
+    await user.type(screen.getByLabelText(/Which stat/), "hull-integrity");
+    await user.click(screen.getByRole("button", { name: "Add a stat" }));
+
+    const answered = studio.calls.find((call) => call.path.endsWith("/answers"));
+    const body = answered?.body as { value: Record<string, unknown> };
+    expect(body.value["hull-integrity"]).toEqual({ base: 0 });
   });
 });
 

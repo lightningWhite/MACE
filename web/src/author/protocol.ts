@@ -95,12 +95,36 @@ export interface StepSpec {
   field: FieldSpec;
 }
 
+/** One condition or effect already on a step, and the English of it. */
+export interface Piece {
+  authored: Record<string, unknown>;
+  said: string;
+}
+
+/** One entry of a repeat: what it holds, and a line summarising it. */
+export interface Entry {
+  values: Record<string, unknown>;
+  summary: string;
+}
+
+/** One stat of a statblock. */
+export interface Allocated {
+  stat: string;
+  base: number;
+  max: number | null;
+}
+
 /** One question, its answer, and everything a form needs to draw it. */
 export interface Step extends StepSpec {
   value: unknown;
   /** What the answer is, in English. */
   described: string;
   answered: boolean;
+  /**
+   * The pieces of an answer that holds several of something, so a list can be
+   * shown and taken apart. `null` for a field that holds one answer.
+   */
+  entries: Piece[] | Entry[] | Allocated[] | null;
 }
 
 /** A section's contents, and what may be made in it. */

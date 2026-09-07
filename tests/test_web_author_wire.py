@@ -63,9 +63,18 @@ def recorded(root: Path) -> dict[str, Any]:
             "packs/games/peasants-quest. Do not edit by hand."
         ),
         "desk": frame(studio),
-        "section": frame(studio, studio.section("world")),
+        "sections": {
+            one: frame(studio, studio.section(one))
+            for one in ("world", "scenes", "characters")
+        },
         "manifest": frame(studio, studio.object("game")),
         "object": frame(studio, studio.object("locations", "fenmoor")),
+        # A scene and a character, because between them they are the only
+        # place the four *interactive* fields appear: conditions, effects, a
+        # repeat, and a statblock. A recording without them would let the
+        # cascade be written against JSON somebody imagined.
+        "scene": frame(studio, studio.object("scenes", "talk-to-gorm")),
+        "actor": frame(studio, studio.object("entities", "gorm")),
         # After an answer: the step that changed, and a desk that has moved
         # with it. A client that only refreshed the header when asked would
         # pass against a recording that did not include this.
@@ -157,12 +166,53 @@ def test_the_recording_has_a_picker_with_something_in_it(
     assert all("label" in one for one in entities["field"]["options"])
 
 
-def test_the_recording_covers_every_field_kind_a_location_uses(
+def test_the_recording_covers_every_field_kind_the_client_draws(
     now: dict[str, Any],
 ) -> None:
     """A renderer written against a recording of half the kinds is half done."""
-    kinds = {one["field"]["kind"] for one in now["object"]["screen"]["steps"]}
-    assert {"text", "text-list", "select", "multi-select", "bool"} <= kinds
+    kinds = {
+        one["field"]["kind"]
+        for screen in ("manifest", "object", "scene", "actor")
+        for one in now[screen]["screen"]["steps"]
+    }
+    assert {
+        "text",
+        "text-list",
+        "number",
+        "select",
+        "multi-select",
+        "bool",
+        "conditions",
+        "effects",
+        "repeat",
+        "stat-allocator",
+        "map-position",
+    } <= kinds
+
+
+def test_a_built_condition_arrives_already_in_english(now: dict[str, Any]) -> None:
+    """A browser has no model and no naming service, so it must not decide."""
+    steps = now["scene"]["screen"]["steps"]
+    when = next(one for one in steps if one["id"] == "scene.when")
+    assert when["entries"]
+    assert all(one["said"] for one in when["entries"])
+    assert all("authored" in one for one in when["entries"])
+
+
+def test_a_repeat_arrives_as_entries_somebody_can_take_apart(
+    now: dict[str, Any],
+) -> None:
+    steps = now["object"]["screen"]["steps"]
+    exits = next(one for one in steps if one["id"] == "location.exits")
+    assert len(exits["entries"]) == 2
+    assert all(one["summary"] for one in exits["entries"])
+    assert exits["field"]["steps"], "a repeat has to carry the flow for one entry"
+
+
+def test_a_statblock_arrives_as_named_numbers(now: dict[str, Any]) -> None:
+    steps = now["actor"]["screen"]["steps"]
+    stats = next(one for one in steps if one["id"] == "entity.stats")
+    assert any(one["stat"] == "strength" for one in stats["entries"])
 
 
 def test_an_answer_moves_the_desk_in_the_same_reply(now: dict[str, Any]) -> None:

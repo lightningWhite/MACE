@@ -49,6 +49,7 @@ from mace.wizard.builders import (
 )
 from mace.wizard.fields import (
     ConditionBuilder,
+    EffectBuilder,
     Field,
     Fixed,
     MapEditor,
@@ -579,7 +580,57 @@ class Studio:
             "described": one.field.describe(value, catalog),
             "answered": answered(value),
             "field": _field(one.field, catalog),
+            "entries": self._entries(one.field, value),
         }
+
+    def _entries(self, field: Field, value: Any) -> list[dict[str, Any]] | None:
+        """The pieces of a field that holds several of something.
+
+        `described` says what the whole answer is; this says what each piece
+        of it is, which is what a front-end needs to show a list somebody can
+        take one thing out of. The terminal computes the same lines itself,
+        one screen at a time; a browser cannot, because it does not have the
+        model or the naming service.
+
+        Parameters
+        ----------
+        field : Field
+            The field.
+        value : object
+            The authored value.
+
+        Returns
+        -------
+        list of dict or None
+            One entry per piece, or None for a field that holds one answer.
+        """
+        if isinstance(field, ConditionBuilder | EffectBuilder):
+            kind = "conditions" if isinstance(field, ConditionBuilder) else "effects"
+            single = isinstance(field, ConditionBuilder) and field.single
+            authored = [value] if single and value is not None else _sequence(value)
+            return [
+                {"authored": _plain(one), "said": self.say(kind, [one])}
+                for one in authored
+            ]
+
+        if isinstance(field, Repeat):
+            return [
+                {"values": _plain(one), "summary": _summarise(one)}
+                for one in _sequence(value)
+            ]
+
+        if isinstance(field, StatAllocator):
+            spread = value if isinstance(value, Mapping) else {}
+            return [
+                {
+                    "stat": name,
+                    "base": _number_of(spread[name], "base"),
+                    "max": _number_of(spread[name], "max"),
+                }
+                for name in sorted(spread)
+            ]
+
+        return None
 
 
 def frame(studio: Studio, screen: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -871,6 +922,67 @@ def _flow(collection: str) -> Flow:
     if found is None:
         raise Unknown(f"nothing authors `{collection}` yet")
     return found
+
+
+def _sequence(value: Any) -> list[Any]:
+    """Read a value that may be a list, a lone item, or nothing.
+
+    Parameters
+    ----------
+    value : object
+        The authored value.
+
+    Returns
+    -------
+    list
+        Its entries.
+    """
+    if value is None:
+        return []
+    if isinstance(value, str | Mapping):
+        return [value]
+    if isinstance(value, Sequence):
+        return list(value)
+    return [value]
+
+
+def _summarise(entry: Any) -> str:
+    """Say what one repeat entry holds, for a list somebody edits.
+
+    Parameters
+    ----------
+    entry : object
+        The authored entry.
+
+    Returns
+    -------
+    str
+        `to: castle · route: road`.
+    """
+    if not isinstance(entry, Mapping):
+        return str(entry)
+    return " · ".join(f"{key}: {value}" for key, value in entry.items())
+
+
+def _number_of(stat: Any, key: str) -> float | None:
+    """One number out of a stat entry, which may be a bare value.
+
+    Parameters
+    ----------
+    stat : object
+        `{base: 32, max: 40}`, or `32`.
+    key : str
+        `base` or `max`.
+
+    Returns
+    -------
+    float or None
+        The number, or None where the author set none.
+    """
+    if isinstance(stat, Mapping):
+        found = stat.get(key)
+        return None if found is None else float(found)
+    return float(stat) if key == "base" else None
 
 
 def _plain(value: Any) -> Any:

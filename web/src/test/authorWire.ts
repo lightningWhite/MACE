@@ -13,9 +13,13 @@ import type { Built, Frame, Vocabulary } from "../author/protocol";
 
 interface Recording {
   desk: Frame;
-  section: Frame;
+  sections: Record<string, Frame>;
   manifest: Frame;
   object: Frame;
+  /** A scene: the only place conditions, effects and choices all appear. */
+  scene: Frame;
+  /** A character, for the statblock. */
+  actor: Frame;
   answered: Frame;
   made: Frame;
   vocabulary: Vocabulary;
@@ -25,9 +29,12 @@ interface Recording {
 const wire = recording as unknown as Recording;
 
 export const desk = wire.desk;
-export const section = wire.section;
+export const sections = wire.sections;
+export const section = wire.sections.world as Frame;
 export const manifest = wire.manifest;
 export const object = wire.object;
+export const scene = wire.scene;
+export const actor = wire.actor;
 export const answered = wire.answered;
 export const made = wire.made;
 export const vocabulary = wire.vocabulary;
@@ -71,7 +78,10 @@ export function fakeStudio(options: { refuse?: string; absent?: boolean } = {}) 
 
     if (path.endsWith("/api/author")) return reply(desk);
     if (path.endsWith("/vocabulary")) return reply(vocabulary);
-    if (path.includes("/sections/")) return reply(section);
+    if (path.includes("/sections/")) {
+      const which = path.split("/sections/")[1] ?? "world";
+      return reply(sections[which] ?? section);
+    }
     if (path.endsWith("/build")) return reply(built);
     if (path.endsWith("/save")) {
       return reply({ ...desk, dirty: [], screen: { saved: ["locations.yml"] } });
@@ -91,6 +101,8 @@ export function fakeStudio(options: { refuse?: string; absent?: boolean } = {}) 
       }
       if (method === "DELETE") return reply(section);
       if (path.endsWith("/objects/game")) return reply(manifest);
+      if (path.includes("/scenes/")) return reply(scene);
+      if (path.includes("/entities/")) return reply(actor);
       return reply(object);
     }
     return reply({ detail: `no route for ${path}` }, 404);

@@ -1007,3 +1007,116 @@ button:focus-visible {
 .field-unbuilt code {
   color: var(--ink);
 }
+
+/* The cascade, and the other fields that hold several of something. */
+
+.pieces {
+  margin-top: 0.5rem;
+}
+
+.piece-list {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.piece-list li,
+.statblock li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--edge);
+}
+
+.piece-list li > span:first-child {
+  flex: 1;
+}
+
+.piece-add,
+.piece-drop,
+.cascade-actions button,
+.cascade-menu button,
+.cascade-cancel {
+  font: inherit;
+  font-size: 0.87rem;
+  color: var(--ink);
+  background: var(--ground-raised);
+  border: 1px solid var(--edge);
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+
+.piece-drop {
+  color: var(--ink-dim);
+  border-color: transparent;
+  background: none;
+}
+
+.piece-drop:hover:not(:disabled) {
+  color: var(--loss);
+  border-color: var(--edge);
+}
+
+.cascade {
+  border: 1px solid var(--edge);
+  border-radius: 0.35rem;
+  background: var(--ground-raised);
+  padding: 0.9rem 1rem;
+  margin-top: 0.6rem;
+}
+
+.cascade-question {
+  font-family: var(--font);
+  font-size: 1rem;
+  margin: 0 0 0.7rem;
+}
+
+.cascade-group {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-dim);
+  margin: 0.8rem 0 0.3rem;
+}
+
+.cascade-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.2rem;
+}
+
+.cascade-menu button {
+  width: 100%;
+  text-align: left;
+  border-color: transparent;
+  background: none;
+}
+
+.cascade-menu button:hover,
+.cascade-menu button:focus-visible {
+  border-color: var(--edge);
+  background: var(--ground);
+}
+
+.cascade-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.statblock {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.statblock-name {
+  flex: 0 0 9rem;
+  font-family: var(--font);
+}
