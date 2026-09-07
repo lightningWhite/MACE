@@ -1265,3 +1265,56 @@ button:focus-visible {
   stroke: var(--warm);
   stroke-width: 2.5;
 }
+
+/*
+ * The scene graph.
+ *
+ * Columns by depth from a way in, because a story is a thing with a beginning
+ * and an author looking for the route into a scene reads left to right. A
+ * scene nothing reaches says "no way in" as well as being drawn hollow.
+ */
+
+.scene-graph {
+  margin: 1rem 0 1.5rem;
+}
+
+.graph {
+  width: 100%;
+  max-height: 26rem;
+  border: 1px solid var(--edge);
+  border-radius: 0.35rem;
+  background: var(--ground-raised);
+}
+
+.graph-edge {
+  stroke: var(--edge);
+  stroke-width: 1;
+}
+
+.graph-node {
+  cursor: pointer;
+}
+
+.graph-node circle {
+  fill: var(--ink-dim);
+}
+
+.graph-node text {
+  font-size: 8px;
+  fill: var(--ink);
+}
+
+.graph-entrance circle {
+  fill: var(--cold);
+}
+
+.graph-orphan circle {
+  fill: none;
+  stroke: var(--loss);
+  stroke-dasharray: 1.5 1.5;
+}
+
+.graph-note {
+  font-size: 6.5px;
+  fill: var(--loss);
+}

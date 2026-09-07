@@ -21,6 +21,7 @@ import * as api from "./api";
 import { StudioError } from "./api";
 import { Field } from "./Field";
 import { MapEditor } from "./MapEditor";
+import { SceneGraph } from "./SceneGraph";
 import {
   isObject,
   isSection,
@@ -299,6 +300,12 @@ function Section({
           that a terminal cannot, so it gets the thing a browser is for. The
           list below it stays: dragging is a way to place a location, not a
           way to write everything else about one. */}
+      {/* The two screens a browser draws that a terminal cannot. Neither
+          replaces the list under it: they are ways *in*, and a graph that
+          were the only way to reach a scene would be worse than the list. */}
+      {screen.section === "scenes" ? (
+        <SceneGraph onOpen={(id) => onOpen("scenes", id)} />
+      ) : null}
       {screen.section === "world" ? (
         <MapEditor
           busy={busy}

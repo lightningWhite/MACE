@@ -86,6 +86,7 @@ def recorded(root: Path) -> dict[str, Any]:
         # The world map, which is the one screen a browser draws that a
         # terminal cannot.
         "atlas": studio.atlas(),
+        "graph": studio.graph(),
         # A sample rather than all thirty-odd recipes. The vocabulary's
         # shape is guarded by `test_wizard_studio.py`; what belongs in a
         # *client* fixture is what the client replays, and the browser does
@@ -230,6 +231,14 @@ def test_the_atlas_is_a_map_with_something_on_it(now: dict[str, Any]) -> None:
     assert len(drawn["roads"]) >= 2
     assert any(one["x"] is not None for one in drawn["places"])
     assert all(one["exits"] is not None for one in drawn["places"])
+
+
+def test_the_graph_knows_what_leads_where(now: dict[str, Any]) -> None:
+    """Reachability comes from the wizard, so it cannot disagree with validate."""
+    graph = now["graph"]
+    assert graph["entrances"]
+    assert all(one["reachable"] for one in graph["scenes"])
+    assert any(one["leadsTo"] for one in graph["scenes"])
 
 
 def test_a_new_object_opens_unfinished(now: dict[str, Any]) -> None:

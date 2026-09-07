@@ -365,3 +365,9 @@ def test_dragging_a_place_is_an_ordinary_answer(client: TestClient) -> None:
         one for one in got(client, "/api/author/map")["places"] if one["id"] == "home"
     )
     assert (place["x"], place["y"]) == (12, -30)
+
+
+def test_the_graph_is_a_route(client: TestClient) -> None:
+    graph = got(client, "/api/author/graph")
+    assert graph["scenes"] == []
+    assert graph["entrances"] == []

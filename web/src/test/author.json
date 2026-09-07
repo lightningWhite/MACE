@@ -6212,6 +6212,275 @@
       }
     ]
   },
+  "graph": {
+    "entrances": [
+      "a-traveller-with-news",
+      "buy-bread",
+      "buy-rope",
+      "castle-arrival",
+      "defeat",
+      "fenmoor-arrival",
+      "report-to-orin",
+      "riders-going-north",
+      "say-goodbye-to-hallam",
+      "sell-reaping-hook",
+      "sell-rope",
+      "talk-to-gorm",
+      "talk-to-peddler",
+      "the-wolves-decide-otherwise",
+      "victory",
+      "wolves-on-the-road"
+    ],
+    "scenes": [
+      {
+        "id": "a-traveller-with-news",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "beaten-by-gorm",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "buy-bread",
+        "prompt": "Buy bread (2 gold)",
+        "leadsTo": [
+          "cannot-afford"
+        ],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "buy-rope",
+        "prompt": "Buy rope (6 gold)",
+        "leadsTo": [
+          "cannot-afford"
+        ],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "cannot-afford",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "castle-arrival",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "defeat",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "fenmoor-arrival",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "fight-gorm",
+        "prompt": null,
+        "leadsTo": [
+          "beaten-by-gorm",
+          "fled-from-gorm",
+          "gorm-beaten"
+        ],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "fled-from-gorm",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "gorm-beaten",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "gorm-has-been-paid",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "gorm-on-the-road",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "gorm-refuses-to-haggle",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "haggle-with-gorm",
+        "prompt": null,
+        "leadsTo": [
+          "gorm-refuses-to-haggle"
+        ],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "nothing-to-sell",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "pay-in-bread",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "pay-the-toll",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": false,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "report-to-orin",
+        "prompt": "Report to the captain",
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "riders-going-north",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "say-goodbye-to-hallam",
+        "prompt": "Say goodbye to Hallam",
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "sell-reaping-hook",
+        "prompt": "Sell your reaping hook (8 gold)",
+        "leadsTo": [
+          "nothing-to-sell"
+        ],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "sell-rope",
+        "prompt": "Sell rope (4 gold)",
+        "leadsTo": [
+          "nothing-to-sell"
+        ],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "talk-to-gorm",
+        "prompt": "Speak to the troll",
+        "leadsTo": [
+          "fight-gorm",
+          "gorm-has-been-paid",
+          "gorm-on-the-road",
+          "haggle-with-gorm",
+          "pay-in-bread",
+          "pay-the-toll"
+        ],
+        "entrance": true,
+        "reachable": true,
+        "ends": false
+      },
+      {
+        "id": "talk-to-peddler",
+        "prompt": "Talk to the peddler",
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "the-wolves-decide-otherwise",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "victory",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      },
+      {
+        "id": "wolves-on-the-road",
+        "prompt": null,
+        "leadsTo": [],
+        "entrance": true,
+        "reachable": true,
+        "ends": true
+      }
+    ],
+    "unreadable": [],
+    "dropped": []
+  },
   "vocabulary": {
     "conditions": [
       {

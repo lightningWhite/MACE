@@ -9,7 +9,13 @@
  */
 
 import recording from "./author.json";
-import type { Atlas, Built, Frame, Vocabulary } from "../author/protocol";
+import type {
+  Atlas,
+  Built,
+  Frame,
+  Graph,
+  Vocabulary,
+} from "../author/protocol";
 
 interface Recording {
   desk: Frame;
@@ -23,6 +29,7 @@ interface Recording {
   answered: Frame;
   made: Frame;
   atlas: Atlas;
+  graph: Graph;
   vocabulary: Vocabulary;
   built: Built;
 }
@@ -39,6 +46,7 @@ export const actor = wire.actor;
 export const answered = wire.answered;
 export const made = wire.made;
 export const atlas = wire.atlas;
+export const graph = wire.graph;
 export const vocabulary = wire.vocabulary;
 export const built = wire.built;
 
@@ -81,6 +89,7 @@ export function fakeStudio(options: { refuse?: string; absent?: boolean } = {}) 
     if (path.endsWith("/api/author")) return reply(desk);
     if (path.endsWith("/vocabulary")) return reply(vocabulary);
     if (path.endsWith("/map")) return reply(atlas);
+    if (path.endsWith("/graph")) return reply(graph);
     if (path.includes("/roads")) {
       if (options.refuse !== undefined) {
         return reply({ detail: options.refuse }, 400);

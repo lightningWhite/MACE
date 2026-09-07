@@ -11,7 +11,14 @@
  * build has to work at the root and under a project subpath.
  */
 
-import type { Atlas, Built, Frame, Problem, Vocabulary } from "./protocol";
+import type {
+  Atlas,
+  Built,
+  Frame,
+  Graph,
+  Problem,
+  Vocabulary,
+} from "./protocol";
 
 export const API = `${import.meta.env.BASE_URL}api/author`;
 
@@ -127,6 +134,11 @@ export function problems(): Promise<{ problems: Problem[] }> {
 /** The world map as the author has drawn it. */
 export function atlas(): Promise<Atlas> {
   return ask<Atlas>("/map");
+}
+
+/** Every scene, what leads to it, and what it leads to. */
+export function graph(): Promise<Graph> {
+  return ask<Graph>("/graph");
 }
 
 /**

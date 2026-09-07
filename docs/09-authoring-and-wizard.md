@@ -366,6 +366,26 @@ find two of them is not a tool being helpful. That is the rule the world
 starter has followed since phase 4; the map editor is the second thing to obey
 it, which is why it lives in `mace.wizard` rather than in the browser.
 
+### The scene graph
+
+Nothing on it writes. It is not an authoring step — it is the thing an author
+cannot hold in their head past about a dozen scenes, and the one question worth
+asking of a pack that size: **is there any way in?**
+
+Reachability comes from the wizard, computed the way `mace validate` computes
+it, so the graph and the problem list cannot disagree about whether a scene is
+orphaned. A client that walked the edges itself would be a second
+implementation of the rule, and the first thing a second implementation does is
+drift. A scene reachable only from its own `goto` is unreachable, which is what
+makes a loop show up as an island rather than as a healthy corner of the map.
+
+Laid out in columns by depth from an entrance rather than as a force
+simulation: a story is a thing with a beginning, and an author looking for the
+way into a scene reads left to right. A force layout would look more impressive
+and answer the question worse. Scenes that will not compile are named
+separately, because a scene missing from the graph is not a scene somebody
+deleted.
+
 The client lives at `#author` in the same build as the game. It renders the
 three screens and every field type that can be answered with a control; a
 field a builder drives — a condition, a repeat, a statblock — is shown as its

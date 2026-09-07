@@ -209,6 +209,30 @@ export interface Atlas {
   roads: Road[];
 }
 
+/** One node of the scene graph. */
+export interface Node {
+  id: string;
+  prompt: string | null;
+  /** Local ids of the scenes this one can lead to. */
+  leadsTo: string[];
+  /** Whether something outside the scene graph points at it. */
+  entrance: boolean;
+  /** Whether there is any way in at all. */
+  reachable: boolean;
+  /** Whether it hands control back rather than leading anywhere. */
+  ends: boolean;
+}
+
+/** Every scene, what leads to it, and what it leads to. */
+export interface Graph {
+  entrances: string[];
+  scenes: Node[];
+  /** Files the wizard could not read. */
+  unreadable: string[];
+  /** Scenes that will not compile, so they are not on the graph at all. */
+  dropped: string[];
+}
+
 /** One way of building a condition or an effect. */
 export interface Recipe {
   tag: string;

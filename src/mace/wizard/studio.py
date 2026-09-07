@@ -279,6 +279,69 @@ class Studio:
         ]
         return {"places": places, "roads": roads}
 
+    def graph(self) -> dict[str, Any]:
+        """Every scene, what leads to it, and what it leads to.
+
+        The other half of what a browser is for. A scene graph is not an
+        authoring *step* — nothing here writes — but it is the thing an author
+        cannot hold in their head past about a dozen scenes, and the question
+        it answers is the one the validator already asks: is there any way in?
+
+        Reachability is computed from the compiled pack, so it is the same
+        answer `mace validate` gives. A scene reachable only from itself is
+        unreachable, which is the rule that makes a `goto` loop show up as an
+        island rather than as a healthy corner of the map.
+
+        Returns
+        -------
+        dict
+            JSON-safe: `scenes`, each with the scenes it leads to, and
+            `entrances` — the scenes something outside the scene graph points
+            at, which are the roots the rest hangs off.
+        """
+        from mace.content.validation import _each_definition, _scene_targets
+
+        loaded = self.project.compile()
+        pack = loaded.library.pack(self.project.manifest.id)
+
+        leads: dict[str, list[str]] = {}
+        entrances: set[str] = set()
+        for local_id in sorted(pack.scenes):
+            leads[local_id] = sorted(
+                _local(one)
+                for one in _scene_targets(loaded.library, pack, pack.scenes[local_id])
+                if _local(one) in pack.scenes
+            )
+
+        for collection, _local_id, definition in _each_definition(pack):
+            if collection == "scenes":
+                continue
+            entrances.update(
+                _local(one) for one in _scene_targets(loaded.library, pack, definition)
+            )
+        if pack.game is not None:
+            entrances.update(
+                _local(one) for one in _scene_targets(loaded.library, pack, pack.game)
+            )
+
+        reached = _walk(entrances & set(pack.scenes), leads)
+        return {
+            "entrances": sorted(entrances & set(pack.scenes)),
+            "scenes": [
+                {
+                    "id": local_id,
+                    "prompt": _plain(pack.scenes[local_id].prompt),
+                    "leadsTo": leads[local_id],
+                    "entrance": local_id in entrances,
+                    "reachable": local_id in reached,
+                    "ends": _ends(pack.scenes[local_id]),
+                }
+                for local_id in sorted(pack.scenes)
+            ],
+            "unreadable": [str(error) for error in self.project.unreadable],
+            "dropped": sorted(_dropped(loaded, "scenes")),
+        }
+
     def link(
         self,
         origin: str,
@@ -1116,6 +1179,92 @@ def _flow(collection: str) -> Flow:
     if found is None:
         raise Unknown(f"nothing authors `{collection}` yet")
     return found
+
+
+def _dropped(loaded: Any, collection: str) -> set[str]:
+    """Objects the loader could not build, so the graph can say they are gone.
+
+    A scene that will not compile is not on the graph, and an author looking
+    for it deserves to be told that rather than left to conclude they had
+    deleted it.
+
+    Parameters
+    ----------
+    loaded : Loaded
+        What `Project.compile` returned.
+    collection : str
+        Which collection.
+
+    Returns
+    -------
+    set of str
+        Local ids.
+    """
+    return {
+        problem.object_id
+        for problem in loaded.problems
+        if problem.collection == collection and problem.object_id is not None
+    }
+
+
+def _walk(roots: set[str], leads: dict[str, list[str]]) -> set[str]:
+    """Everything reachable from a set of roots.
+
+    Parameters
+    ----------
+    roots : set of str
+        Where the player can get in.
+    leads : dict
+        Scene to the scenes it leads to.
+
+    Returns
+    -------
+    set of str
+        Every scene reachable, roots included.
+    """
+    seen = set(roots)
+    frontier = list(roots)
+    while frontier:
+        for onward in leads.get(frontier.pop(), ()):
+            if onward not in seen:
+                seen.add(onward)
+                frontier.append(onward)
+    return seen
+
+
+def _ends(scene: Any) -> bool:
+    """Whether a scene is somewhere the player can be left standing.
+
+    Parameters
+    ----------
+    scene : Scene
+        The scene.
+
+    Returns
+    -------
+    bool
+        Whether it offers choices or leads anywhere. A scene that does
+        neither hands control back to the location's menu, which is a fine
+        thing to be and worth marking on a graph so it does not read as a
+        dead end.
+    """
+    return not scene.choices and scene.goto is None
+
+
+def _local(qualified: str) -> str:
+    """The local half of a qualified id.
+
+    Parameters
+    ----------
+    qualified : str
+        `pack:id`, or a bare id.
+
+    Returns
+    -------
+    str
+        The id.
+    """
+    return qualified.split(":", 1)[-1]
 
 
 def _coordinate(position: Any, axis: str) -> float | None:

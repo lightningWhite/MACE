@@ -178,6 +178,18 @@ def author_routes(studio: Studio) -> APIRouter:
         """
         return studio.atlas()
 
+    @router.get("/graph")
+    def graph() -> dict[str, Any]:
+        """Every scene, what leads to it, and what it leads to.
+
+        Returns
+        -------
+        dict
+            The graph, with reachability already worked out — the same answer
+            `mace validate` gives, because it is the same code.
+        """
+        return studio.graph()
+
     @router.post("/roads", status_code=201)
     def link(body: Annotated[Road, Body()]) -> dict[str, Any]:
         """Draw a road between two places, and the ways onto it.

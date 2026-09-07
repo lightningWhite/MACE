@@ -179,7 +179,9 @@ writing YAML.
       Drawing a road is one call, because a route is a road and an exit is
       the option to walk down it; a place nobody has positioned says *not
       placed* rather than being quietly written somewhere
-- [ ] Scene graph visualization with unreachable-node detection
+- [x] Scene graph visualization with unreachable-node detection — the
+      reachability the validator already computes, drawn, so the two can
+      never disagree about whether a scene is orphaned
 - [ ] Entity/item editors with live preview
 - [ ] Export a pack; import someone else's and remix it
 - [ ] One-click playtest from any point in the editor

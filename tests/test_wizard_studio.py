@@ -533,3 +533,113 @@ def test_rubbing_a_road_out_takes_the_ways_onto_it_with_it(studio: Studio) -> No
     assert "moor" not in both["home"]
     # The exit the author wrote by hand is untouched: it names no route.
     assert both["home"] == ["castle"]
+
+
+# ── The scene graph ───────────────────────────────────────────────────────────
+
+
+def scenes(root: Path, *written: Any) -> Studio:
+    """A pack whose scenes are whatever a test needs them to be.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write it.
+    *written
+        Scene mappings.
+
+    Returns
+    -------
+    Studio
+        The open pack.
+    """
+    return Studio.open(world(root, plot={"scenes": list(written)}))
+
+
+def test_the_graph_says_what_leads_where(tmp_path: Path) -> None:
+    open_studio = scenes(
+        tmp_path,
+        {"id": "start", "say": ["Well then."], "goto": "onward"},
+        {"id": "onward", "say": ["And then."]},
+    )
+    open_studio.answer("locations", "location.onArrive", "start", "home")
+
+    graph = open_studio.graph()
+    by_id = {one["id"]: one for one in graph["scenes"]}
+    assert by_id["start"]["leadsTo"] == ["onward"]
+    assert by_id["start"]["entrance"] is True
+    assert by_id["onward"]["entrance"] is False
+
+
+def test_the_graph_finds_a_scene_with_no_way_in(tmp_path: Path) -> None:
+    """The one question worth asking of a pack past about a dozen scenes."""
+    open_studio = scenes(
+        tmp_path,
+        {"id": "start", "say": ["Well then."]},
+        {"id": "orphan", "say": ["Nobody comes here."]},
+    )
+    open_studio.answer("locations", "location.onArrive", "start", "home")
+
+    by_id = {one["id"]: one for one in open_studio.graph()["scenes"]}
+    assert by_id["start"]["reachable"] is True
+    assert by_id["orphan"]["reachable"] is False
+
+
+def test_a_scene_that_only_reaches_itself_is_still_an_orphan(
+    tmp_path: Path,
+) -> None:
+    """A `goto` loop is an island, not a healthy corner of the map."""
+    open_studio = scenes(
+        tmp_path,
+        {"id": "start", "say": ["Well then."]},
+        {"id": "loop", "say": ["Again."], "goto": "loop"},
+    )
+    open_studio.answer("locations", "location.onArrive", "start", "home")
+
+    by_id = {one["id"]: one for one in open_studio.graph()["scenes"]}
+    assert by_id["loop"]["reachable"] is False
+
+
+def test_the_graph_agrees_with_the_validator(tmp_path: Path) -> None:
+    """Two answers to "can a player get here" is one too many."""
+    open_studio = scenes(
+        tmp_path,
+        {"id": "start", "say": ["Well then."]},
+        {"id": "orphan", "say": ["Nobody comes here."]},
+    )
+    open_studio.answer("locations", "location.onArrive", "start", "home")
+
+    orphaned = {
+        one["id"] for one in open_studio.graph()["scenes"] if not one["reachable"]
+    }
+    reported = {
+        one["object"]
+        for one in open_studio.report()
+        if one["collection"] == "scenes" and "not reached" in one["message"]
+    }
+    assert orphaned == reported == {"orphan"}
+
+
+def test_the_graph_says_which_scenes_will_not_build(tmp_path: Path) -> None:
+    """A scene that is not on the graph is not a scene somebody deleted."""
+    open_studio = scenes(
+        tmp_path,
+        {"id": "start", "say": ["Well then."]},
+        {"id": "broken", "nonsense": True},
+    )
+    assert open_studio.graph()["dropped"] == ["broken"]
+
+
+def test_a_scene_that_hands_control_back_is_marked_as_one(tmp_path: Path) -> None:
+    open_studio = scenes(
+        tmp_path,
+        {"id": "start", "say": ["Well then."]},
+        {
+            "id": "onward",
+            "say": ["Pick."],
+            "choices": [{"prompt": "Go", "goto": "start"}],
+        },
+    )
+    by_id = {one["id"]: one for one in open_studio.graph()["scenes"]}
+    assert by_id["start"]["ends"] is True
+    assert by_id["onward"]["ends"] is False

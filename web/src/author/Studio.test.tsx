@@ -475,3 +475,42 @@ describe("the map", () => {
     expect(screen.getByRole("button", { name: "Open Fenmoor" })).toBeTruthy();
   });
 });
+
+// ── The scene graph ───────────────────────────────────────────────────────────
+
+describe("the scene graph", () => {
+  it("says how many ways in there are, and whether anything is orphaned", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await user.click(await screen.findByRole("button", { name: /Scenes/ }));
+
+    expect(await screen.findByText(/ways in, left to right/)).toBeTruthy();
+    expect(screen.getByText(/Every scene can be reached/)).toBeTruthy();
+  });
+
+  it("names the orphans in the graph's own description", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await user.click(await screen.findByRole("button", { name: /Scenes/ }));
+
+    // Not a colour: the label a screen reader gets is the same information.
+    const graph = await screen.findByRole("img", { name: /scenes\./ });
+    expect(graph.getAttribute("aria-label")).toMatch(/All of them can be reached/);
+  });
+
+  it("opens a scene when one is clicked", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    await opened();
+    await user.click(await screen.findByRole("button", { name: /Scenes/ }));
+
+    const graph = await screen.findByRole("img", { name: /scenes\./ });
+    await user.click(within(graph).getByText("talk-to-gorm"));
+    expect(
+      studio.calls.some((call) => call.path.endsWith("/scenes/talk-to-gorm")),
+    ).toBe(true);
+  });
+});
