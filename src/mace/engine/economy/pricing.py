@@ -25,8 +25,12 @@ Nothing here is random and nothing here mutates. A price is a question about
 the world, and asking it twice gives the same answer — which is what lets the
 debug overlay show prices without changing the playthrough it is describing.
 
-Transport cost, event shocks, and haggling are the three multipliers still
-missing from the formula above; they arrive with trade flow and phase 6.
+There is no transport-cost multiplier and there is not going to be one. The
+design doc listed one, but distance already reaches the price by the honest
+road: a market far from a producer gets less carted to it, so it holds less,
+so scarcity prices it up. Charging a second time for the same distance would
+be double-counting — see `flow`. Event shocks and haggling are the two
+multipliers still genuinely missing, and they arrive in phase 6.
 
 See docs/08-economy.md and ADR-0007.
 """

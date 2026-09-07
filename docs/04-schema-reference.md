@@ -170,7 +170,8 @@ The connection between two locations, and the most important upgrade over v0's
 | `description` | str \| [Descr]? | Framing text at the start of the journey. |
 | `legDescriptions` | [Descr]? | Flavor emitted per leg — weather- and time-aware. |
 | `when` | [Condition]? | Conditions required to use the route at all. |
-| `dangerLevel` | int? | 0–10, a hint used by the wizard to suggest encounter rates. |
+| `dangerLevel` | int? | 0–10, a hint used by the wizard to suggest encounter rates. Also throttles trade along the road. |
+| `tradeCapacity` | number? | How much trade this road carries against an ordinary road's 1. A highway is 2, a goat path 0.2. Default 1; 0 is a road nothing is carried along. |
 
 ### Terrain
 

@@ -5048,6 +5048,12 @@
           ],
           "default": null,
           "title": "Dangerlevel"
+        },
+        "tradeCapacity": {
+          "default": 1.0,
+          "minimum": 0.0,
+          "title": "Tradecapacity",
+          "type": "number"
         }
       },
       "required": [

@@ -17,6 +17,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from mace.content import ContentError
+from mace.engine import economy
 from mace.engine.conditions import RuleError
 from mace.engine.context import RuleContext
 from mace.engine.events import (
@@ -281,6 +282,7 @@ def apply(
 
     if isinstance(payload, CloseRoute | OpenRoute):
         route = _reference(payload.route, "routes", context)
+        _settle_trade(context, route)
         road = state.routes.setdefault(route, RouteState(route=route))
         if isinstance(payload, CloseRoute):
             road.closed = True
@@ -299,6 +301,7 @@ def apply(
 
     if isinstance(payload, SetRouteTicks):
         route = _reference(payload.route, "routes", context)
+        _settle_trade(context, route)
         road = state.routes.setdefault(route, RouteState(route=route))
         road.ticks = payload.ticks
         outcome.events.append(
@@ -624,6 +627,32 @@ def _reference(reference: str, collection: str, context: RuleContext) -> str:
         return context.qualify(reference, collection)
     except ContentError as error:
         raise RuleError(error.message) from error
+
+
+def _settle_trade(context: RuleContext, route: str) -> None:
+    """Bring the markets a road serves up to date before the road changes.
+
+    Markets are caught up lazily, and a catch-up applies *today's* route
+    states to every tick it crosses. So a pass that shuts on day fifty would,
+    to a market nobody had looked at since day one, have been shut all along —
+    and the player who arrives on day sixty would find shelves that never
+    existed. Committing the ticks before the change is what stops that: after
+    this, the span the closure applies to starts here.
+
+    Cheap in the way that matters. This is the only place that walks the whole
+    content library for markets, and it runs when a landslide falls, not every
+    tick.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough. The groups the road runs inside are advanced in place.
+    route : str
+        Qualified id of the route about to change.
+    """
+    network = economy.prepare(context.library)
+    for group in network.touching(route):
+        economy.sync(context.state, network, group.markets[0])
 
 
 def _number(value: object, context: RuleContext, where: str) -> float:

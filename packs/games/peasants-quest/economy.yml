@@ -1,6 +1,7 @@
 # Three markets on one road. Fenmoor grows barley and can afford little else;
 # the castle has a garrison that eats and a smithy that does not; the Trader's
-# Post makes nothing and will buy anything, which is what a crossroads is for.
+# Post makes nothing of its own and will buy anything, which is what a
+# crossroads is for.
 #
 # The goods themselves live in `fantasy.core` — this pack only says where they
 # are made and used. See docs/08-economy.md.
@@ -8,6 +9,12 @@
 # The shape to notice: grain is cheap where it grows and dear where it is
 # eaten, and the road between them is a day long. That gap is the reward for
 # noticing, and it gets wider the moment anything closes the north road.
+#
+# The numbers balance, roughly and on purpose. The valley grows a little more
+# grain than it eats, and the surplus goes stale rather than piling up — so
+# prices settle somewhere a player can read instead of pinning at the ceiling
+# and staying there. A world where everything is always at four times base is
+# a world where closing the pass changes nothing.
 
 markets:
 
@@ -17,8 +24,10 @@ markets:
     wealth: 0.3                    # six houses and a well; it cannot bid
     tags: [farmland, pasture, settlement]
     produces:
-      - {good: fantasy.core:grain, perTick: 0.8}
-      - {good: fantasy.core:wool,  perTick: 0.2}
+      # Not the six houses — the barley country around them, which is what
+      # the castle is really eating.
+      - {good: fantasy.core:grain, perTick: 2.2}
+      - {good: fantasy.core:wool,  perTick: 0.5}
     consumes:
       - {good: fantasy.core:salt,       perTick: 0.10}
       - {good: fantasy.core:iron-ingot, perTick: 0.05}
@@ -31,10 +40,16 @@ markets:
     size: village
     wealth: 0.5
     tags: [settlement]
+    produces:
+      # A crossroads makes nothing. What arrives here comes up the road from
+      # off the edge of the map, on carts this game does not simulate yet —
+      # caravans are phase 6. Until then the Post is where the outside world
+      # touches the valley, and salt and iron enter it here or not at all.
+      - {good: fantasy.core:salt,       perTick: 0.50}
+      - {good: fantasy.core:iron-ingot, perTick: 0.45}
     consumes:
-      - {good: fantasy.core:grain, perTick: 0.4}
-    # A middleman: it makes none of these and sells all of them.
-    trades: [fantasy.core:salt, fantasy.core:iron-ingot, fantasy.core:wool]
+      - {good: fantasy.core:grain, perTick: 0.3}
+    trades: [fantasy.core:wool]
     stock:
       fantasy.core:grain:      {initial: 120, capacity: 300}
       fantasy.core:salt:       {initial: 60,  capacity: 120}
@@ -46,7 +61,7 @@ markets:
     wealth: 0.8                    # a garrison pays, because it must
     tags: [settlement, smithy, garrison]
     consumes:
-      - {good: fantasy.core:grain,      perTick: 1.6}
+      - {good: fantasy.core:grain,      perTick: 1.4}
       - {good: fantasy.core:iron-ingot, perTick: 0.4}
     stock:
       fantasy.core:grain:      {initial: 300, capacity: 900}

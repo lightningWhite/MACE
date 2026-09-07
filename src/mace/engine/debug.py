@@ -28,7 +28,7 @@ from mace.content import ContentError, Library
 from mace.engine import economy
 from mace.engine.conditions import RuleError, holds
 from mace.engine.context import RuleContext
-from mace.engine.state import GameState, MarketState
+from mace.engine.state import GameState
 from mace.engine.step import context_for
 from mace.engine.world import Observation
 from mace.model import Condition, Scene
@@ -213,7 +213,8 @@ def overlay(library: Library, state: GameState) -> Overlay:
     clock = context.clock
     player = state.protagonist
     seen = context.weather()
-    standing = _market(library, state)
+    network = economy.prepare(library)
+    standing = None if state.location is None else economy.at(network, state.location)
 
     return Overlay(
         tick=state.tick,
@@ -258,42 +259,26 @@ def overlay(library: Library, state: GameState) -> Overlay:
         flags=tuple(sorted(player.flags)),
         variables=tuple(sorted(state.variables.items())),
         market=None if standing is None else standing.id,
-        prices=() if standing is None else _prices(state, standing),
+        prices=() if standing is None else _prices(state, network, standing),
     )
 
 
-def _market(library: Library, state: GameState) -> economy.Prepared | None:
-    """The market where the player is standing, if there is one.
-
-    Parameters
-    ----------
-    library : Library
-        The loaded content.
-    state : GameState
-        The playthrough.
-
-    Returns
-    -------
-    Prepared or None
-        The market, resolved.
-    """
-    here = state.location
-    if here is None:
-        return None
-    return economy.at(economy.prepare(library), here)
-
-
-def _prices(state: GameState, standing: economy.Prepared) -> tuple[Priced, ...]:
+def _prices(
+    state: GameState, network: economy.Network, standing: economy.Prepared
+) -> tuple[Priced, ...]:
     """What a market is charging, without moving its shelves.
 
     The market is projected to now rather than synced, because the overlay is
     a projection: a playthrough with it open has to replay byte-identically to
-    one without.
+    one without. The projection carries every market this one trades with,
+    because a price here depends on what came up the road.
 
     Parameters
     ----------
     state : GameState
         The playthrough. Read, never written.
+    network : economy.Network
+        Every market and the roads between them.
     standing : Prepared
         The market.
 
@@ -302,14 +287,7 @@ def _prices(state: GameState, standing: economy.Prepared) -> tuple[Priced, ...]:
     tuple of Priced
         One entry per good, in the market's own order.
     """
-    held = state.markets.get(standing.id) or MarketState(
-        market=standing.id,
-        stock={
-            good_id: dealt.stock.opening for good_id, dealt in standing.goods.items()
-        },
-        stepped_to=state.start_tick,
-    )
-    now = economy.projected(held, standing, state.tick)
+    now = economy.projected(state, network, standing.id, state.tick)
     return tuple(
         Priced(
             good=good_id,

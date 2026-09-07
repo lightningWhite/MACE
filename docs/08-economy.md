@@ -98,11 +98,16 @@ scarcity  = clamp(target_stock / max(current_stock, 1), 0.25, 4.0)
 ratio     = clamp(scarcity ^ elasticity, 0.25, 4.0)
 price     = baseValue
             × ratio                          # supply and demand
-            × (1 + transport_cost)           # distance from a producer
             × market_wealth_factor           # a city pays more than a hamlet
             × event_pressure                 # sieges, closed passes, disasters
             × haggle_factor                  # the player's charisma and skill
 ```
+
+**There is no transport-cost term**, though an earlier version of this
+document had one. Distance already reaches the price by the honest road: a
+market far from a producer has less carted to it, so it holds less, so
+scarcity prices it up. A second multiplier for the same distance would charge
+for it twice.
 
 **Why the ratio is clamped twice.** An earlier version of this document clamped
 scarcity and stopped there, and said that clamp was what bounded a price to
@@ -134,16 +139,28 @@ that began when you looked at it is not a world.
 
 This is only allowed to be an optimization. Catching up runs exactly the loop
 that stepping runs, so visiting a town every day and arriving after a season
-give the same shelves; `tests/test_economy_markets.py` checks that directly
-rather than trusting it.
+give the same shelves; `tests/test_economy_markets.py` and
+`tests/test_economy_trade.py` check that directly rather than trusting it.
 
-Two consequences worth stating, because they are easy to break later:
+Because trade flow makes two markets depend on each other, a market cannot be
+carried forward alone. The unit is the **trading group**: everything a road can
+reach from everything else, carried together, in lockstep. Two groups with no
+road between them are two economies that happen to share a world, and neither
+costs anything while the player is in the other.
+
+Three consequences worth stating, because they are easy to break later:
 
 - **Reading a price must not move a shelf.** A price is a question about the
   world, and a question that changes its answer breaks replay. So the catch-up
   is split: a pure projection that anything may call, and a commit that only
   the places where the engine already accepts that time moves may call. It is
   the rule the weather model follows for the same reason.
+- **Anything that changes a road must catch the markets up first.** A
+  fast-forward applies *today's* route states to every tick it crosses. So a
+  pass that shuts on day fifty has to commit the fifty days before it, or a
+  market nobody has looked at since the world began will find the pass had
+  always been shut — and a player who visited every day and one who arrived
+  late would be in different worlds.
 - **Any randomness here must be positional.** Production jitter and merchant
   restock have to be derived from the tick, not drawn in sequence from the
   `economy` stream — a lazily caught-up subsystem that walked a stream would
@@ -152,10 +169,22 @@ Two consequences worth stating, because they are easy to break later:
 
 ### Trade flow is the reason routes exist
 
-Connected markets equalize, slowly, limited by the route between them:
+Connected markets equalize, slowly, limited by the route between them. A route
+whose two ends both have a market is a road goods move along:
+
+```yaml
+- id: north-road
+  from: fenmoor
+  to: hagans-castle
+  ticks: 6
+  dangerLevel: 5
+  tradeCapacity: 1.0     # a highway is 2, a goat path 0.2, the default is 1
+```
 
 ```
-flow = price_gap × route_capacity / (route.ticks × danger_factor)
+haulage = 24 × tradeCapacity / (route.ticks × (1 + 0.2 × dangerLevel))
+flow    = min(haulage × price_gap / baseValue,
+              what would level the two prices)
 ```
 
 So:
@@ -163,6 +192,9 @@ So:
 - A long road means prices stay different at the two ends — and a profit for
   whoever makes the trip.
 - A **dangerous** road throttles flow, so bandit country is expensive country.
+  It is deliberately a weaker lever than distance: the worst road an author
+  can write carries a third of a safe one, not none of it.
+- A **one-way** route (`bidirectional: false`) carries trade one way too.
 - A **closed** route (blizzard, landslide, the Ashfell erupting) cuts flow to
   zero, and prices on both sides diverge within days.
 
@@ -170,6 +202,31 @@ That last one is the payoff for building weather and events first. When the pass
 shuts, iron in the mountain towns gets dear and grain rots in the lowlands, and
 the player who noticed the omens and stocked up is *rewarded for reading the
 world*. No special-case code — it falls out of the flow equation.
+
+**Why the second line of the flow equation.** Nobody carts so much that they
+arrive to find the price below the one they left. Without that cap the model
+does exactly that, and a good with an `elasticity` above 1 — whose price moves
+sharply with its shelf — is overshot every tick and shipped straight back the
+next, forever. Solving the price formula for the amount that levels the two
+ends is one line of arithmetic, because `baseValue` and the exponent are the
+same at both ends and cancel.
+
+**A link is one route.** Two towns joined by a single long route trade, even
+if the route passes waypoints on the way. Two routes meeting at a crossroads
+with no market at it do *not* chain into one — put a market where trade should
+pass through, or draw the long road as one route.
+
+### Content has to balance, and the engine will not do it for you
+
+A good nothing produces empties everywhere and sits at the ceiling; a good
+nothing consumes fills everywhere and sits at the floor. Both are stable, both
+are correct, and both are dull — a world permanently at 4× base is a world
+where closing the pass changes nothing. Perishability is the one thing that
+gives a good an interior resting point on its own, which is why grain has it.
+
+So when laying out a map, add up what it makes against what it uses. The
+`producedBy`/`consumedBy` tags make that easy to get wrong, because they add
+demand at every settlement without anyone writing a number down.
 
 ---
 

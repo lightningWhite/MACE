@@ -151,10 +151,12 @@ writing YAML.
   - [x] Price formation from scarcity, and stock that moves with production,
         consumption and spoilage. Markets are fast-forwarded on being looked
         at rather than stepped, and a test holds the two to the same answer
+  - [x] Trade flow between connected markets, throttled by route length,
+        `tradeCapacity` and danger, and stopped dead by a closure — the part
+        that makes a closed pass move a price. Markets a road can reach are
+        fast-forwarded as one group, because they move each other
   - [ ] Buying and selling: the trade action, the events it emits, and what a
         merchant says about its own prices
-  - [ ] Trade flow between connected markets, throttled by route length and
-        danger — the part that makes a closed pass move a price
 
 ---
 

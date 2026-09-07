@@ -66,3 +66,10 @@ class Route(ContentModel):
 
     when: Conditions | None = None
     danger_level: int | None = Field(default=None, ge=0, le=10)
+
+    #: How much trade this road carries against an ordinary road's one. A
+    #: highway between two cities is a 2; a goat path somebody's cousin walks
+    #: with a sack is a 0.2. Zero is a road nothing is carried along at all,
+    #: which is a different thing from a road that is shut — this one was
+    #: never a trade route.
+    trade_capacity: float = Field(default=1.0, ge=0.0)

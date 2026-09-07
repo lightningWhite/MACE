@@ -1,6 +1,6 @@
-"""What a market deals in, and how its shelves move while nobody is looking.
+"""What a market deals in, and which roads reach it.
 
-Three things happen here, in the order an author would ask about them.
+Three questions, in the order an author would ask them.
 
 **What does this place trade?** A market names some goods explicitly and
 implies the rest through tags: a market tagged `farmland` grows every good
@@ -8,33 +8,24 @@ whose `producedBy` says `farmland`. That is what makes a world of twenty
 markets cheap to write, and it means the answer has to be *derived* rather than
 read, once, up front — `prepare`.
 
-**How much of each does it have?** Stock moves by production and consumption,
-and perishable goods rot. A market the player has never seen still has to have
-the stock it *would* have had, or arriving somewhere late would find a world
-that started when you looked at it. So a market carries `stepped_to` and is
-carried forward from there, exactly the way a region's weather is.
+**Who does it trade with?** A route whose two ends both have a market is a
+road that goods move along, and `prepare` turns the route graph into a
+`Network` of `Link`s. Markets reachable from each other form a `Group`, and a
+group is the unit everything downstream works in: shelves in one group move
+together because they pull on each other, and two groups with no road between
+them are two economies that happen to share a world.
 
-**When is it allowed to move?** Catching up mutates, so it may only happen
-where time moves or where the player arrives — never from a condition or a
-description, or asking what grain costs would change what grain costs and
-replay would stop working. That is why the work is split in two:
+**How does any of it move?** That is `flow`, next door. It is a separate
+module because this one is about content — what the author wrote, resolved
+once — and that one is about a playthrough, which is the only thing allowed to
+change.
 
-- `projected` is pure. It answers "what would the shelves hold at tick N"
-  without touching anything, and it is what a price query and the debug
-  overlay use.
-- `sync` commits that answer into the playthrough, and is called only from
-  where the engine already accepts that the world moves.
-
-Both run the same loop, so the committed answer and the projected one cannot
-disagree.
-
-Catching up is deliberately a tick-by-tick loop rather than a closed form.
-Production and consumption alone would have one — a constant net rate is just
-multiplication — but spoilage is proportional to what is on the shelf, and
-trade flow (still ahead) will make the rate depend on what the *neighbours*
-hold that tick. Stepping is what all three have in common, and a fast-forward
-that gives a different answer from stepping would be a bug that only showed up
-in playthroughs nobody replayed.
+A link is a route between two market *locations*, directly. A road that runs
+from one town to another through a pass with no market at it is still one
+route and still a link; a chain of two routes meeting at a market-less
+crossroads is not, and goods will not cross it. That is a real limit and worth
+knowing when laying out a map: put a market where trade should pass through,
+or draw the long route as one route.
 
 See docs/08-economy.md and ADR-0007.
 """
@@ -44,25 +35,29 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from mace.content import Library
-from mace.engine.state import GameState, MarketState
 from mace.model import Entity, Good, Market, Stock
 
 __all__ = [
     "DEFAULT_DEPTH",
     "IMPLIED_FLOW",
     "Dealt",
+    "Group",
+    "Link",
+    "Network",
     "Prepared",
     "at",
     "prepare",
-    "projected",
-    "sync",
 ]
 
 #: Units per tick a tag implies for a village-sized market, scaled by size so
-#: that tagging a city `farmland` grows a city's worth of grain. Small on
-#: purpose: half a unit a tick is a few hundred over a season, which is what a
-#: village's shelves hold.
-IMPLIED_FLOW = 0.5
+#: that tagging a city `farmland` grows a city's worth of grain.
+#:
+#: Small against `DEFAULT_DEPTH` on purpose: a tenth of a unit a tick is about
+#: ten days of a village's shelves, which is the stock a market keeps. It was
+#: five times this until trade flow arrived, and nothing noticed, because
+#: until markets fed each other a village that ate half its shelf a day simply
+#: ran out and stayed out.
+IMPLIED_FLOW = 0.1
 
 #: The shelf depth a village-sized market gets for a good it deals in and did
 #: not size by hand, scaled the same way.
@@ -154,8 +149,131 @@ class Prepared:
         return f"{self.home}:{self.market.id}"
 
 
-def prepare(library: Library) -> dict[str, Prepared]:
-    """Resolve every market and everything it deals in, once.
+@dataclass(frozen=True, slots=True)
+class Link:
+    """A road between two markets, and everything trade over it depends on.
+
+    Attributes
+    ----------
+    route : str
+        Qualified route id. What the playthrough's `RouteState` is keyed by,
+        so a landslide that shuts this road is found through it.
+    origin, destination : str
+        Qualified market ids, the route's two ends.
+    ticks : int
+        How long the road is, as written. A playthrough may have lengthened
+        it since; `flow` prefers the `RouteState` when there is one.
+    capacity : float
+        `tradeCapacity` — how much traffic the road carries against an
+        ordinary road's one.
+    danger : int
+        `dangerLevel`, 0 to 10. Bandit country throttles trade, which is what
+        makes it expensive country.
+    both_ways : bool
+        Whether goods may move in either direction. A one-way route carries
+        trade one way too.
+    """
+
+    route: str
+    origin: str
+    destination: str
+    ticks: int
+    capacity: float
+    danger: int
+    both_ways: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Group:
+    """Markets that can reach each other, and the roads that let them.
+
+    A group is the unit shelves move in. Two markets joined by a road pull on
+    each other's prices every tick, so neither can be carried forward alone —
+    see `flow`.
+
+    Attributes
+    ----------
+    markets : tuple of str
+        Qualified market ids, sorted, so anything walking them walks them the
+        same way every replay.
+    links : tuple of Link
+        The roads inside this group, in a fixed order for the same reason.
+    """
+
+    markets: tuple[str, ...]
+    links: tuple[Link, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Network:
+    """Every market in a library, and the roads between them.
+
+    Attributes
+    ----------
+    markets : dict
+        Qualified market id to the resolved market, in a fixed order.
+    links : tuple of Link
+        Every road between two markets, in a fixed order.
+    groups : tuple of Group
+        The markets partitioned by what can reach what. Every market is in
+        exactly one group; a market no road reaches is a group of one.
+    """
+
+    markets: dict[str, Prepared]
+    links: tuple[Link, ...]
+    groups: tuple[Group, ...]
+
+    def group(self, market_id: str) -> Group:
+        """The trading group one market belongs to.
+
+        Parameters
+        ----------
+        market_id : str
+            Qualified market id.
+
+        Returns
+        -------
+        Group
+            The group containing it.
+
+        Raises
+        ------
+        KeyError
+            If no market has that id.
+        """
+        for group in self.groups:
+            if market_id in group.markets:
+                return group
+        raise KeyError(market_id)
+
+    def touching(self, route_id: str) -> tuple[Group, ...]:
+        """The groups a road runs inside.
+
+        What a landslide has to bring up to date before it lands: shutting a
+        road changes how every shelf in the group moves from that tick on, so
+        the ticks *before* it have to be committed first. See
+        `mace.engine.effects`.
+
+        Parameters
+        ----------
+        route_id : str
+            Qualified route id.
+
+        Returns
+        -------
+        tuple of Group
+            The groups containing a link on that route, in a fixed order.
+            Empty when the road joins nothing that trades.
+        """
+        return tuple(
+            group
+            for group in self.groups
+            if any(link.route == route_id for link in group.links)
+        )
+
+
+def prepare(library: Library) -> Network:
+    """Resolve every market, everything it deals in, and every road between.
 
     Parameters
     ----------
@@ -164,23 +282,25 @@ def prepare(library: Library) -> dict[str, Prepared]:
 
     Returns
     -------
-    dict
-        Qualified market id to the resolved market, in a fixed order.
+    Network
+        The markets and the roads joining them.
     """
-    prepared: dict[str, Prepared] = {}
+    markets: dict[str, Prepared] = {}
     for pack in library.packs:
         for local_id in sorted(pack.markets):
             resolved = _resolve(library, pack.id, pack.markets[local_id])
-            prepared[resolved.id] = resolved
-    return prepared
+            markets[resolved.id] = resolved
+
+    links = _links(library, markets)
+    return Network(markets=markets, links=links, groups=_groups(markets, links))
 
 
-def at(prepared: dict[str, Prepared], location: str) -> Prepared | None:
+def at(network: Network, location: str) -> Prepared | None:
     """The market at a location, if there is one.
 
     Parameters
     ----------
-    prepared : dict
+    network : Network
         The output of `prepare`.
     location : str
         Qualified location id.
@@ -192,10 +312,99 @@ def at(prepared: dict[str, Prepared], location: str) -> Prepared | None:
         loader allows and nothing here has an opinion about; the first in
         preparation order wins, which is stable across replays.
     """
-    for market in prepared.values():
+    for market in network.markets.values():
         if market.location == location:
             return market
     return None
+
+
+def _links(library: Library, markets: dict[str, Prepared]) -> tuple[Link, ...]:
+    """Every route whose two ends both have a market.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    markets : dict
+        The resolved markets, keyed by qualified id.
+
+    Returns
+    -------
+    tuple of Link
+        In pack then route id order, so trade is applied identically every
+        replay.
+    """
+    standing = {market.location: market.id for market in markets.values()}
+    links: list[Link] = []
+    for pack in library.packs:
+        for local_id in sorted(pack.routes):
+            route = pack.routes[local_id]
+            origin = standing.get(
+                library.resolve(route.origin, "locations", within=pack.id)
+            )
+            destination = standing.get(
+                library.resolve(route.destination, "locations", within=pack.id)
+            )
+            if origin is None or destination is None or origin == destination:
+                continue
+            links.append(
+                Link(
+                    route=f"{pack.id}:{local_id}",
+                    origin=origin,
+                    destination=destination,
+                    ticks=route.ticks,
+                    capacity=route.trade_capacity,
+                    danger=route.danger_level or 0,
+                    both_ways=route.bidirectional,
+                )
+            )
+    return tuple(links)
+
+
+def _groups(markets: dict[str, Prepared], links: tuple[Link, ...]) -> tuple[Group, ...]:
+    """Partition markets by what can reach what.
+
+    Reachability is undirected even where a route is not: a one-way road
+    still means the price at one end depends on the other, so both markets
+    have to be carried forward together whichever way the goods go.
+
+    Parameters
+    ----------
+    markets : dict
+        The resolved markets.
+    links : tuple of Link
+        The roads between them.
+
+    Returns
+    -------
+    tuple of Group
+        Every market in exactly one group, in sorted order.
+    """
+    neighbours: dict[str, set[str]] = {market_id: set() for market_id in markets}
+    for link in links:
+        neighbours[link.origin].add(link.destination)
+        neighbours[link.destination].add(link.origin)
+
+    seen: set[str] = set()
+    groups: list[Group] = []
+    for market_id in sorted(markets):
+        if market_id in seen:
+            continue
+        reached = {market_id}
+        frontier = [market_id]
+        while frontier:
+            for onward in sorted(neighbours[frontier.pop()]):
+                if onward not in reached:
+                    reached.add(onward)
+                    frontier.append(onward)
+        seen |= reached
+        groups.append(
+            Group(
+                markets=tuple(sorted(reached)),
+                links=tuple(link for link in links if link.origin in reached),
+            )
+        )
+    return tuple(groups)
 
 
 def _resolve(library: Library, home: str, market: Market) -> Prepared:
@@ -307,103 +516,3 @@ def _item(library: Library, good_id: str, good: Good) -> Entity:
     found = library.find(good.item, "entities", within=home)
     assert isinstance(found, Entity)
     return found
-
-
-def projected(held: MarketState, prepared: Prepared, to_tick: int) -> dict[str, float]:
-    """What a market's shelves would hold at a tick, without moving them.
-
-    Pure: a question about the world must not change it (the same rule the
-    weather's `sync` follows), so this is what a price and the debug overlay
-    read. `sync` runs the identical loop and keeps the answer.
-
-    Parameters
-    ----------
-    held : MarketState
-        Where the shelves have got to.
-    prepared : Prepared
-        The market, resolved.
-    to_tick : int
-        The tick to carry them to. A tick already passed carries nothing.
-
-    Returns
-    -------
-    dict
-        Qualified good id to units held.
-    """
-    stock = dict(held.stock)
-    for _ in range(max(0, to_tick - held.stepped_to)):
-        _step(stock, prepared)
-    return stock
-
-
-def sync(
-    state: GameState,
-    prepared: Prepared,
-    to_tick: int | None = None,
-) -> MarketState:
-    """Bring one market up to now, opening it if it has never been looked at.
-
-    Called where time moves and where the player arrives somewhere, never from
-    a condition — see the module docstring.
-
-    A market opened late is opened at the playthrough's *start* tick and
-    carried forward, so arriving somewhere on day fifty finds the shelves it
-    would have had all along rather than shelves that began when you looked.
-
-    Parameters
-    ----------
-    state : GameState
-        The playthrough. The market is created or advanced in place.
-    prepared : Prepared
-        The market, resolved.
-    to_tick : int or None
-        The tick to carry it to. Defaults to now.
-
-    Returns
-    -------
-    MarketState
-        The market's shelves, current.
-    """
-    target = state.tick if to_tick is None else to_tick
-    held = state.markets.get(prepared.id)
-    if held is None:
-        held = MarketState(
-            market=prepared.id,
-            stock={
-                good_id: dealt.stock.opening
-                for good_id, dealt in prepared.goods.items()
-            },
-            stepped_to=state.start_tick,
-        )
-        state.markets[prepared.id] = held
-
-    if target <= held.stepped_to:
-        return held
-
-    held.stock = projected(held, prepared, target)
-    held.stepped_to = target
-    return held
-
-
-def _step(stock: dict[str, float], prepared: Prepared) -> None:
-    """Move one market's shelves by one tick, in place.
-
-    Order matters and is part of the contract: a thing is made, then it is
-    used, then what is left of it rots. Rotting first would spoil grain that
-    was eaten that same tick.
-
-    Parameters
-    ----------
-    stock : dict
-        Qualified good id to units held, updated in place.
-    prepared : Prepared
-        The market, resolved.
-    """
-    for good_id, dealt in prepared.goods.items():
-        held = stock.get(good_id, 0.0) + dealt.net
-        if dealt.good.perishable is not None:
-            # A unit lasts `ticksToSpoil`, so that fraction of the shelf is
-            # lost each tick. Proportional rather than per-unit ageing: the
-            # player sees a shelf, not a queue of sacks with dates on them.
-            held -= max(held, 0.0) / dealt.good.perishable.ticks_to_spoil
-        stock[good_id] = min(max(held, 0.0), dealt.stock.capacity)

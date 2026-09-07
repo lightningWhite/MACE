@@ -15,7 +15,7 @@ import pytest
 
 from mace.engine import economy
 from mace.engine.economy import pricing
-from test_economy_markets import one_market
+from test_economy_markets import MARKET, one_market
 
 BASE_GRAIN = 4.0
 BASE_IRON = 30.0
@@ -36,7 +36,7 @@ def dealt(tmp_path: Path, **fields: Any) -> dict[str, economy.Dealt]:
     dict
         Qualified good id to the resolved good.
     """
-    market = one_market(
+    network = one_market(
         tmp_path,
         stock={
             "grain": {"target": 400, "capacity": 800},
@@ -44,7 +44,7 @@ def dealt(tmp_path: Path, **fields: Any) -> dict[str, economy.Dealt]:
         },
         **fields,
     )
-    return market.goods
+    return network.markets[MARKET].goods
 
 
 def test_a_market_holding_what_it_wants_charges_the_going_rate(
