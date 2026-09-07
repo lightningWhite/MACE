@@ -61,6 +61,11 @@ SURVIVAL = Fixed.of(
     ("thirst", "thirst"),
 )
 
+ECONOMIES = Fixed.of(
+    ("simple", "simple — a price is an item's value, and shops are scenes"),
+    ("market", "market — shelves, scarcity, and trade along the roads"),
+)
+
 
 GAME = Flow(
     id="game",
@@ -238,6 +243,35 @@ GAME = Flow(
             help=(
                 "Exposure and rest are what give the weather teeth. Hunger and "
                 "thirst are off unless your game is about rations."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="game.rules.economy",
+            title="How does money work?",
+            binds="game.rules.economy",
+            field=Select(options=ECONOMIES, optional=True),
+            help=(
+                "`simple` is enough for a story game: an item is worth its "
+                "value and a shop is a scene you write. `market` runs the "
+                "whole thing — a place is cheap because it grows the stuff, "
+                "and closing a road makes it dear somewhere else."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="game.rules.currency",
+            title="What is trade paid in?",
+            binds="game.rules.currency",
+            field=Select(
+                options=Query("entities", where={"kind": "item"}),
+                allow_create="entities",
+                optional=True,
+            ),
+            help=(
+                "Only needed for a `market` economy, which has to settle a "
+                "price the engine works out in something the player carries. "
+                "Gold, ration chits, whatever your world spends."
             ),
             optional=True,
         ),

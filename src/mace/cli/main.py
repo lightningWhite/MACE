@@ -265,6 +265,33 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("packs"),
         help="where the packs it builds on live (default: packs/)",
     )
+    writer.add_argument(
+        "--web",
+        action="store_true",
+        help=(
+            "serve the wizard to a browser instead of running it in this "
+            "terminal. Same pack, same questions, same validator — the "
+            "browser only draws them differently."
+        ),
+    )
+    writer.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help=(
+            "address to bind with --web (default: 127.0.0.1). These routes "
+            "write to your disk and have no authentication, so binding them "
+            "to a network hands that network your filesystem."
+        ),
+    )
+    writer.add_argument(
+        "--port", type=int, default=8000, help="port for --web (default: 8000)"
+    )
+    writer.add_argument(
+        "--client",
+        type=Path,
+        metavar="DIR",
+        help="a built web client to serve alongside --web (usually web/dist)",
+    )
     writer.set_defaults(run=run_author)
     return parser
 
@@ -282,7 +309,63 @@ def run_author(options: argparse.Namespace) -> int:
     int
         The process exit code.
     """
-    return author(options.directory, options.packs)
+    if not options.web:
+        return author(options.directory, options.packs)
+    return _author_on_the_web(options)
+
+
+def _author_on_the_web(options: argparse.Namespace) -> int:
+    """Serve the wizard to a browser rather than to this terminal.
+
+    One pack per process, the way the terminal is one pack per window: a
+    project holds unsaved edits in memory, and two behind one process would be
+    two authors overwriting each other.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    try:
+        import uvicorn  # noqa: PLC0415
+
+        from mace.api.app import DEV_ORIGINS, create_app  # noqa: PLC0415
+    except ImportError:
+        print(
+            "error   the wizard's web mode needs the server extras: "
+            "pip install 'mace[api]'",
+            file=sys.stderr,
+        )
+        return 1
+
+    from mace.wizard.studio import Studio  # noqa: PLC0415
+
+    try:
+        studio = Studio.open(options.directory, options.packs)
+        app = create_app(
+            [options.packs],
+            origins=list(DEV_ORIGINS),
+            client=options.client,
+            authoring=studio,
+        )
+    except ContentError as error:
+        print(f"error   {error}", file=sys.stderr)
+        return 1
+
+    where = f"http://{options.host}:{options.port}"
+    print(f"Authoring {studio.project.manifest.name} on {where} — ctrl-c to stop")
+    if options.host not in {"127.0.0.1", "localhost", "::1"}:
+        print(
+            "warning these routes write to your disk and have no " "authentication.",
+            file=sys.stderr,
+        )
+    uvicorn.run(app, host=options.host, port=options.port, log_level="warning")
+    return 0
 
 
 def run_new(options: argparse.Namespace) -> int:

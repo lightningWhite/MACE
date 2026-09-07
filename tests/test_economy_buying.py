@@ -28,7 +28,7 @@ import pytest
 from conftest import game_pack
 from mace.content import Library, load_library
 from mace.engine.actions import Choose, Trade
-from mace.engine.conditions import RuleError, holds
+from mace.engine.conditions import holds
 from mace.engine.economy import trade
 from mace.engine.state import RouteState
 from mace.engine.step import begin, context_for, step
@@ -153,9 +153,7 @@ def opened(library: Library) -> Any:
     """
     result = begin(library, "valley", seed="trade")
     where = list(result.state.pending.options)  # type: ignore[union-attr]
-    which = next(
-        index for index, option in enumerate(where) if option.trade == KEEPER
-    )
+    which = next(index for index, option in enumerate(where) if option.trade == KEEPER)
     return step(result.state, Choose(which), library)
 
 
@@ -206,7 +204,7 @@ def test_opening_a_stall_takes_the_menu_over(tmp_path: Path) -> None:
     """A counter is not one option among the roads out of town."""
     library = valley(tmp_path)
     result = opened(library)
-    prompts = [option.prompt for option in result.state.pending.options]  # type: ignore[union-attr]
+    prompts = [option.prompt for option in result.state.pending.options]
     assert any(prompt.startswith("Buy Grain") for prompt in prompts)
     assert prompts[-1] == "Done with The Keeper"
     assert not any("Travel" in prompt for prompt in prompts)
@@ -496,9 +494,7 @@ def test_an_empty_lot_is_refused(tmp_path: Path) -> None:
 
 def test_an_absurd_lot_is_refused(tmp_path: Path) -> None:
     library = valley(tmp_path)
-    result = step(
-        opened(library).state, Trade(good="grain", qty=100_000), library
-    )
+    result = step(opened(library).state, Trade(good="grain", qty=100_000), library)
     assert str(trade.MAX_LOT) in result.events[0].record()["message"]
 
 

@@ -41,6 +41,7 @@ from mace.engine.conditions import RuleError
 from mace.engine.creation import Character
 from mace.engine.creation import offer as creation_offer
 from mace.session import Save, SaveError, Session, choose_game, frame, resume
+from mace.wizard.studio import Studio
 
 __all__ = ["DEV_ORIGINS", "New", "create_app"]
 
@@ -117,6 +118,7 @@ def create_app(
     origins: Sequence[str] = DEV_ORIGINS,
     capacity: int | None = None,
     client: Path | None = None,
+    authoring: Studio | None = None,
 ) -> FastAPI:
     """Build the service over some loaded content.
 
@@ -135,6 +137,10 @@ def create_app(
         there, the game and the service share an origin and the CORS list is
         beside the point; in development the two are separate and the Vite
         dev server proxies `/api` to here instead.
+    authoring : Studio or None
+        A pack open for editing, which adds the `/api/author` routes. Off
+        unless asked for, because those routes write to the author's disk and
+        the session service never does — see `mace.api.author`.
 
     Returns
     -------
@@ -409,6 +415,11 @@ def create_app(
                     await websocket.send_json({"error": error.detail})
         except WebSocketDisconnect:
             return
+
+    if authoring is not None:
+        from mace.api.author import author_routes  # noqa: PLC0415
+
+        app.include_router(author_routes(authoring))
 
     # Mounted last, at the root, so every `/api` route above wins. `html=True`
     # serves index.html for a path the build has no file for, which is what a

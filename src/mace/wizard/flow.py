@@ -27,7 +27,7 @@ from mace.content import ContentError
 from mace.wizard.fields import Field, Text
 from mace.wizard.project import Project
 
-__all__ = ["Binding", "Flow", "Step", "answered"]
+__all__ = ["Binding", "Flow", "Step", "answered", "slug"]
 
 #: The binding target that means the `game:` manifest rather than a collection.
 GAME_TARGET = "game"
@@ -355,6 +355,28 @@ def answered(value: Any) -> bool:
     if isinstance(value, str | list | tuple | dict):
         return bool(value)
     return True
+
+
+def slug(name: str) -> str:
+    """Turn a name into a content id.
+
+    Both front-ends make an object the same way — the author says what it is
+    called and the wizard derives the id — so this lives here rather than in
+    either of them, or a browser and a terminal would name the same place
+    differently.
+
+    Parameters
+    ----------
+    name : str
+        What the author typed.
+
+    Returns
+    -------
+    str
+        `the-old-bridge`.
+    """
+    kept = [one.lower() if one.isalnum() else "-" for one in name]
+    return "-".join(part for part in "".join(kept).split("-") if part) or "untitled"
 
 
 def _dig(holder: Mapping[str, Any], path: Sequence[str]) -> Any:

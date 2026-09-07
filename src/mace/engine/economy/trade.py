@@ -516,7 +516,9 @@ def _stall(
     """
     player = context.state.protagonist
     wealth = prepared.market.wealth
-    will_buy, will_sell = _named(context, merchant.buys), _named(context, merchant.sells)
+    will_buy, will_sell = _named(context, merchant.buys), _named(
+        context, merchant.sells
+    )
     rows: list[Priced] = []
 
     for good_id, dealt in prepared.goods.items():

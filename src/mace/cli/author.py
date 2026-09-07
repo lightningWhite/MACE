@@ -47,7 +47,7 @@ from mace.wizard.fields import (
     StatAllocator,
     TextList,
 )
-from mace.wizard.flow import Flow, Step, answered
+from mace.wizard.flow import Flow, Step, answered, slug
 from mace.wizard.flows import FLOWS, GAME
 from mace.wizard.generators import FLAVOURS, PRESETS, SIZES, start_world, suggest_table
 from mace.wizard.language import Names, say_conditions
@@ -405,7 +405,7 @@ class Wizard:
         name = self.ask(f"What is the new {flow.noun} called?  ")
         if not name:
             return None
-        local_id = _slug(name)
+        local_id = slug(name)
         if local_id in self.project.ids(flow.collection):
             self.say(f"  There is already a `{local_id}`.")
             return None
@@ -553,7 +553,7 @@ class Wizard:
         name = self.ask("What is the table called?  ")
         if not name:
             return
-        local_id = _slug(name)
+        local_id = slug(name)
         if self.project.get("encounterTables", local_id) is not None:
             self.say(f"  There is already a `{local_id}`.")
             return
@@ -764,7 +764,7 @@ class Wizard:
         name = self.ask(f"What is the new {flow.noun} called?  ")
         if not name:
             return None
-        local_id = _slug(name)
+        local_id = slug(name)
         authored: dict[str, Any] = {"id": local_id}
         if any(step.binding.leaf == "name" for step in flow.steps):
             authored["name"] = name
@@ -1553,23 +1553,6 @@ def _line_text(line: Any) -> Any:
         The text.
     """
     return line.get("text", "") if isinstance(line, Mapping) else line
-
-
-def _slug(name: str) -> str:
-    """Turn a name into a content id.
-
-    Parameters
-    ----------
-    name : str
-        What the author typed.
-
-    Returns
-    -------
-    str
-        `the-old-bridge`.
-    """
-    kept = [c.lower() if c.isalnum() else "-" for c in name]
-    return "-".join(part for part in "".join(kept).split("-") if part) or "untitled"
 
 
 def _short(text: str, width: int = 44) -> str:
