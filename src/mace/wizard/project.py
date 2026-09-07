@@ -740,7 +740,23 @@ def _dependencies(manifest: Pack, root: Path, search: tuple[Path, ...]) -> Libra
         return Library(())
     tolerance = collecting()
     library = load_library(*roots, tolerance=tolerance)
-    needed = {requirement.id for requirement in manifest.requires}
+
+    # Transitively: a pack that requires `fantasy.core` gets `mace.core` too,
+    # because `fantasy.core` does. Keeping only the direct requirements loads
+    # a library whose own references cannot be resolved, which surfaces as a
+    # crash somewhere far from the cause.
+    by_id = {pack.id: pack for pack in library.packs}
+    needed: set[str] = set()
+    frontier = [requirement.id for requirement in manifest.requires]
+    while frontier:
+        pack_id = frontier.pop()
+        if pack_id in needed or pack_id not in by_id:
+            continue
+        needed.add(pack_id)
+        frontier.extend(one.id for one in by_id[pack_id].manifest.requires)
+
+    # In dependency order still, because that is the order `load_library`
+    # returned them in and a `Library` promises it.
     return Library(tuple(pack for pack in library.packs if pack.id in needed))
 
 

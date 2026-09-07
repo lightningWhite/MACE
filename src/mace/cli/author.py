@@ -51,6 +51,7 @@ from mace.wizard.fields import (
 )
 from mace.wizard.flow import Flow, Step, answered
 from mace.wizard.flows import FLOWS, GAME
+from mace.wizard.generators import FLAVOURS, PRESETS, SIZES, start_world, suggest_table
 from mace.wizard.language import Names, say_conditions
 from mace.wizard.notes import Note, PlaytestSetup, ProjectNotes
 from mace.wizard.playtest import start_from
@@ -61,6 +62,9 @@ from mace.wizard.tasks import Task, TaskList, review
 __all__ = ["author"]
 
 RULE = "─" * 72
+
+#: Which sections have scaffolding to offer, and what to call it.
+_GENERATORS = {"world": "starter map", "encounters": "suggest a table"}
 
 #: How the three severities are marked in a problem list.
 MARKS = {Severity.ERROR: "✗", Severity.WARNING: "!", Severity.NOTE: "·"}
@@ -270,6 +274,8 @@ class Wizard:
                 self.problem_lines(task.problems)
             self.say("")
             actions = "[b] back" if not kinds else "[n] new   [d] delete   [b] back"
+            if task.section.id in _GENERATORS:
+                actions = f"[g] {_GENERATORS[task.section.id]}   {actions}"
             if not kinds:
                 self.say("      This one is hand-written for now — no flow yet.")
             self.say(f"      {actions}")
@@ -279,6 +285,9 @@ class Wizard:
                 raise Leave
             if typed in {"q", "quit"}:
                 raise Stop
+            if typed in {"g", "generate"} and task.section.id in _GENERATORS:
+                self._generate(task.section.id)
+                continue
             if kinds and typed in {"n", "new"}:
                 chosen = self._which_kind(kinds)
                 if chosen is not None:
@@ -438,6 +447,129 @@ class Wizard:
             return
         self.project.drop(collection, chosen.value)
         self.say(f"  Deleted `{chosen.value}`. Validate to see what it broke.")
+
+    def _generate(self, section_id: str) -> None:
+        """Offer the scaffolding for one section.
+
+        Always editable and never mandatory: what comes back is ordinary
+        content, written into the author's own files, which they are expected
+        to rearrange. Nothing here happens during a session.
+
+        Parameters
+        ----------
+        section_id : str
+            Which section asked.
+
+        Raises
+        ------
+        Stop
+            When the author is done.
+        """
+        if section_id == "world":
+            self._starter_map()
+        else:
+            self._suggest_table()
+
+    def _starter_map(self) -> None:
+        """Make a map to rearrange instead of a blank page.
+
+        Raises
+        ------
+        Stop
+            When the author is done.
+        """
+        self.say("")
+        for number, flavour in enumerate(FLAVOURS, start=1):
+            self.say(f"      {number:>2}. {flavour.label}")
+        typed = self.ask("Which one?  ")
+        if not typed.isdigit() or not 1 <= int(typed) <= len(FLAVOURS):
+            self.say("  Nothing generated.")
+            return
+        flavour = FLAVOURS[int(typed) - 1]
+
+        size = self.ask(f"How big? {'/'.join(SIZES)} [small]  ").lower() or "small"
+        if size not in SIZES:
+            self.say(f"  `{size}` is not a size. Nothing generated.")
+            return
+        seed = self.ask("Seed — change it to get a different map [mace]  ") or "mace"
+        climate = self._a_climate()
+
+        made = start_world(
+            self.project, flavour=flavour.id, size=size, seed=seed, climate=climate
+        )
+        if not made:
+            self.say("  Everything it would have made is already here.")
+            return
+        for one in made:
+            self.say(f"    + {one}")
+        self.say("")
+        self.say("  Rename all of it. It is a shape, not a world.")
+
+    def _a_climate(self) -> str | None:
+        """Ask which climate the new regions should use, if any is on offer.
+
+        Returns
+        -------
+        str or None
+            The climate reference, or None to leave the regions weatherless.
+
+        Raises
+        ------
+        Stop
+            When the author is done.
+        """
+        from mace.wizard.query import Query
+
+        offered = Query("climates").options(self.catalog)
+        if not offered:
+            return None
+        self.say("")
+        for number, option in enumerate(offered, start=1):
+            self.say(f"      {number:>2}. {option.label}   ({option.note})")
+        typed = self.ask("Which climate? [blank for none]  ")
+        if typed.isdigit() and 1 <= int(typed) <= len(offered):
+            return offered[int(typed) - 1].value
+        return None
+
+    def _suggest_table(self) -> None:
+        """Propose an encounter table from the presets and the libraries.
+
+        Raises
+        ------
+        Stop
+            When the author is done.
+        """
+        self.say("")
+        for number, preset in enumerate(PRESETS, start=1):
+            self.say(
+                f"      {number:>2}. {preset.label:<26}"
+                f"something happens {preset.chance:.0%} of the time, "
+                f"{preset.threat_share:.0%} of it dangerous"
+            )
+        typed = self.ask("How does this road feel?  ")
+        if not typed.isdigit() or not 1 <= int(typed) <= len(PRESETS):
+            self.say("  Nothing generated.")
+            return
+        preset = PRESETS[int(typed) - 1]
+
+        name = self.ask("What is the table called?  ")
+        if not name:
+            return
+        local_id = _slug(name)
+        if self.project.get("encounterTables", local_id) is not None:
+            self.say(f"  There is already a `{local_id}`.")
+            return
+
+        table = suggest_table(self.project, local_id=local_id, name=name, preset=preset)
+        self.project.put("encounterTables", table)
+        if not table.get("entries"):
+            self.say(
+                "  Nothing in your libraries to draw entries from, so it is "
+                "switched off. Write some scenes and turn its `chance` up."
+            )
+            return
+        self.say(f"  Made `{local_id}` with {len(table['entries'])} entries.")
+        self.say("  Retune it — the `chance` is the one dial that matters.")
 
     # ── One object ────────────────────────────────────────────────────────
 
