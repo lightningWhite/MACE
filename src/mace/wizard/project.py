@@ -365,6 +365,98 @@ class Project:
         held = self.objects.get(collection, {}).get(local_id)
         return None if held is None else held.data
 
+    def lineage(
+        self, collection: str, local_id: str
+    ) -> tuple[tuple[Mapping[str, Any], ...], Any]:
+        """An object and everything it inherits from, in lookup order.
+
+        `extends` is resolved by the loader, which means it does not exist as
+        far as the raw mappings are concerned — and an author who wrote
+        `extends: fantasy.core:soldier` and never wrote `kind` has still said
+        their character is an actor. Anything asking what an object *is*
+        rather than what its file *says* needs this.
+
+        The chain stops at the first ancestor that lives in a dependency,
+        because a compiled definition already has its own inheritance resolved.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection.
+        local_id : str
+            The object's id in this pack.
+
+        Returns
+        -------
+        tuple of (tuple of mapping, object or None)
+            The authored mappings, nearest first, and the compiled ancestor
+            that ends the chain, if there is one.
+        """
+        chain: list[Mapping[str, Any]] = []
+        seen: set[str] = set()
+        current = self.objects.get(collection, {}).get(local_id)
+        while current is not None and local_id not in seen:
+            seen.add(local_id)
+            chain.append(current.data)
+            parent = current.data.get("extends")
+            if not isinstance(parent, str):
+                return tuple(chain), None
+            pack_id, _, local_id = parent.rpartition(":")
+            if pack_id not in {"", self.manifest.id}:
+                return tuple(chain), self._from_dependency(collection, parent)
+            current = self.objects.get(collection, {}).get(local_id)
+            if current is None:
+                return tuple(chain), self._from_dependency(collection, parent)
+        return tuple(chain), None
+
+    def _from_dependency(self, collection: str, reference: str) -> Any:
+        """Look a reference up in the packs this one builds on.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection.
+        reference : str
+            The reference, qualified or bare.
+
+        Returns
+        -------
+        object or None
+            The compiled definition, or None when nothing matches.
+        """
+        pack_id, _, local_id = reference.rpartition(":")
+        for pack in self.dependencies.packs:
+            if pack_id in {"", pack.id}:
+                found = pack.collection(collection).get(local_id)
+                if found is not None:
+                    return found
+        return None
+
+    def effective(self, collection: str, local_id: str, key: str) -> Any:
+        """What an object holds for one top-level field, inheritance included.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection.
+        local_id : str
+            The object's id.
+        key : str
+            The authored key.
+
+        Returns
+        -------
+        object
+            The value, or None when neither the object nor its ancestors set
+            it. The model's own default is deliberately not applied here —
+            callers that want it know which model they are looking at.
+        """
+        chain, ancestor = self.lineage(collection, local_id)
+        for data in chain:
+            if key in data:
+                return data[key]
+        return None if ancestor is None else getattr(ancestor, key, None)
+
     def ids(self, collection: str) -> list[str]:
         """Every local id in one collection, sorted.
 
