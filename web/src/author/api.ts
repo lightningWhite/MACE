@@ -16,6 +16,7 @@ import type {
   Built,
   Frame,
   Graph,
+  Preview,
   Problem,
   Vocabulary,
 } from "./protocol";
@@ -134,6 +135,13 @@ export function problems(): Promise<{ problems: Problem[] }> {
 /** The world map as the author has drawn it. */
 export function atlas(): Promise<Atlas> {
   return ask<Atlas>("/map");
+}
+
+/** One object as the engine will see it, not as the file writes it. */
+export function preview(collection: string, id: string): Promise<Preview> {
+  return ask<Preview>(
+    `/preview/${encodeURIComponent(collection)}/${encodeURIComponent(id)}`,
+  );
 }
 
 /** Every scene, what leads to it, and what it leads to. */

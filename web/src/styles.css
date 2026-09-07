@@ -1318,3 +1318,76 @@ button:focus-visible {
   font-size: 6.5px;
   fill: var(--loss);
 }
+
+/*
+ * The live preview.
+ *
+ * What the engine will see, beside the form that writes it. Inherited values
+ * say "(inherited)" rather than being shaded, because an author has to be able
+ * to tell what they typed from what they were given, and a shade is not a way
+ * of telling anybody anything.
+ */
+
+.preview {
+  border: 1px solid var(--edge);
+  border-left: 3px solid var(--warm);
+  border-radius: 0.35rem;
+  background: var(--ground-raised);
+  padding: 0.8rem 1rem;
+  margin: 0.8rem 0 0.4rem;
+}
+
+.preview h3 {
+  font-family: var(--font);
+  font-size: 1rem;
+  margin: 0 0 0.2rem;
+}
+
+.preview p {
+  margin: 0.2rem 0;
+  font-size: 0.87rem;
+}
+
+.preview-lines {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  font-family: var(--font);
+  font-size: 0.95rem;
+}
+
+.preview-lines li {
+  padding: 0.15rem 0;
+}
+
+.preview-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.1rem 1rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.87rem;
+}
+
+.preview-facts div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.preview-facts dt {
+  flex: 0 0 6.5rem;
+  color: var(--ink-dim);
+}
+
+.preview-facts dd {
+  margin: 0;
+}
+
+.preview-broken {
+  color: var(--loss);
+  font-size: 0.87rem;
+}
+
+.preview-broken ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
+}

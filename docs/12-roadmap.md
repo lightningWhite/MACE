@@ -182,7 +182,9 @@ writing YAML.
 - [x] Scene graph visualization with unreachable-node detection — the
       reachability the validator already computes, drawn, so the two can
       never disagree about whether a scene is orphaned
-- [ ] Entity/item editors with live preview
+- [x] Entity/item editors with live preview — the object as the engine sees
+      it, `extends` resolved, saying which values the author wrote and which
+      they inherited
 - [ ] Export a pack; import someone else's and remix it
 - [ ] One-click playtest from any point in the editor
 - [x] Economy phase 2

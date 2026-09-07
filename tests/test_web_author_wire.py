@@ -87,6 +87,9 @@ def recorded(root: Path) -> dict[str, Any]:
         # terminal cannot.
         "atlas": studio.atlas(),
         "graph": studio.graph(),
+        # An entity that inherits, because the whole point of a preview is
+        # the difference between the file and the object.
+        "preview": studio.preview("entities", "gorm"),
         # A sample rather than all thirty-odd recipes. The vocabulary's
         # shape is guarded by `test_wizard_studio.py`; what belongs in a
         # *client* fixture is what the client replays, and the browser does
@@ -239,6 +242,16 @@ def test_the_graph_knows_what_leads_where(now: dict[str, Any]) -> None:
     assert graph["entrances"]
     assert all(one["reachable"] for one in graph["scenes"])
     assert any(one["leadsTo"] for one in graph["scenes"])
+
+
+def test_the_preview_shows_what_extends_hid(now: dict[str, Any]) -> None:
+    """The file is not the object, and that is the gap a form cannot close."""
+    seen = now["preview"]
+    assert seen["built"] is True
+    assert seen["inherits"] == "fantasy.core:bridge-troll"
+    # Gorm writes only `strength`; the rest of the statblock is the troll's.
+    assert {one["stat"] for one in seen["stats"]} > {"strength"}
+    assert any(not one["own"] for one in seen["facts"])
 
 
 def test_a_new_object_opens_unfinished(now: dict[str, Any]) -> None:

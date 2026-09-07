@@ -73,6 +73,45 @@ __all__ = ["Studio", "Unknown", "frame", "vocabulary"]
 #: The binding target that stands for the game manifest rather than an object.
 GAME_COLLECTION = "game"
 
+#: What a preview says about each kind of object, in the order it says it.
+#: Deliberately short: a preview that listed every field would be the file
+#: again, and the file is the thing an author already has.
+_PREVIEW_FACTS: dict[str, tuple[tuple[str, str], ...]] = {
+    "entities": (
+        ("kind", "kind"),
+        ("tags", "tags"),
+        ("disposition", "disposition"),
+        ("combat", "fights as"),
+        ("scenes", "offers"),
+        ("merchant", "keeps a stall"),
+        ("item", "as an item"),
+    ),
+    "locations": (
+        ("type", "type"),
+        ("region", "region"),
+        ("indoors", "indoors"),
+        ("safe", "safe"),
+        ("entities", "here"),
+        ("scenes", "offers"),
+        ("on_arrive", "on arrival"),
+        ("encounters", "rolls"),
+    ),
+    "routes": (
+        ("origin", "from"),
+        ("destination", "to"),
+        ("ticks", "ticks"),
+        ("terrain", "terrain"),
+        ("danger_level", "danger"),
+        ("encounters", "rolls"),
+    ),
+    "scenes": (
+        ("prompt", "offered as"),
+        ("once", "once only"),
+        ("goto", "leads to"),
+        ("otherwise", "else"),
+    ),
+}
+
 
 class Unknown(Exception):
     """A client asked for a screen that is not there.
@@ -530,6 +569,158 @@ class Studio:
             ),
             "steps": [self._step(one, object_id, catalog) for one in flow.steps],
         }
+
+    def preview(self, collection: str, object_id: str) -> dict[str, Any]:
+        """One object as the engine will see it, not as the file writes it.
+
+        This is the gap a form cannot close on its own. `extends` means the
+        file is *not* the object: a troll that inherits from
+        `fantasy.core:bridge-troll` and writes only `strength: 85` has eighty
+        hitpoints, a combat profile, and an `env` response to the dark, none
+        of which appear anywhere an author can see. Neither does a conditional
+        description, which is three lines in a file and one line in play.
+
+        So the preview is built from the **compiled** pack, and it says what
+        was inherited rather than quietly presenting it as written. An author
+        who cannot tell what they typed from what they got is an author who
+        will retype it.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection.
+        object_id : str
+            The object's local id.
+
+        Returns
+        -------
+        dict
+            JSON-safe. `built` is False for an object the models will not
+            accept yet, and everything else is what could still be said about
+            it — a preview that went blank exactly when an author broke
+            something would be a preview nobody trusted.
+        """
+        held = self.project.get(collection, object_id)
+        if held is None:
+            raise Unknown(f"there is no `{object_id}` in `{collection}`")
+
+        inherits = held.get("extends")
+        loaded = self.project.compile()
+        pack = loaded.library.pack(self.project.manifest.id)
+        built = pack.collection(collection).get(object_id) if collection else None
+
+        if built is None:
+            return {
+                "collection": collection,
+                "id": object_id,
+                "name": str(held.get("name") or object_id),
+                "built": False,
+                "inherits": _plain(inherits),
+                "why": [
+                    str(one) for one in loaded.problems if one.object_id == object_id
+                ],
+                "lines": [],
+                "facts": [],
+                "stats": [],
+                "carries": [],
+            }
+
+        return {
+            "collection": collection,
+            "id": object_id,
+            "name": str(getattr(built, "name", None) or object_id),
+            "built": True,
+            "inherits": _plain(inherits),
+            "why": [],
+            "lines": self._lines(built),
+            "facts": self._facts(collection, built, held),
+            "stats": _stats(built),
+            "carries": self._carried(built),
+        }
+
+    def _lines(self, built: Any) -> list[dict[str, Any]]:
+        """An object's description, with its conditions in English.
+
+        Parameters
+        ----------
+        built : ContentModel
+            The compiled object.
+
+        Returns
+        -------
+        list of dict
+            One entry per variant, in the order the engine tries them — first
+            match wins, which is the thing a file does not make obvious.
+        """
+        described = getattr(built, "description", None) or ()
+        return [
+            {
+                "text": line.text,
+                "when": (
+                    "always"
+                    if not line.when
+                    else self.say("conditions", [one.authored() for one in line.when])
+                ),
+            }
+            for line in described
+        ]
+
+    def _facts(
+        self, collection: str, built: Any, held: Mapping[str, Any]
+    ) -> list[dict[str, Any]]:
+        """The short answers about an object, and where each came from.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection.
+        built : ContentModel
+            The compiled object.
+        held : mapping
+            What the author actually wrote, so an inherited value can say so.
+
+        Returns
+        -------
+        list of dict
+            Label, value, and whether the author wrote it themselves.
+        """
+        wanted = _PREVIEW_FACTS.get(collection, ())
+        facts: list[dict[str, Any]] = []
+        for field, label in wanted:
+            value = getattr(built, field, None)
+            if value in (None, (), [], {}, ""):
+                continue
+            facts.append(
+                {
+                    "label": label,
+                    "value": _said(value),
+                    "own": _camel(field) in held,
+                }
+            )
+        return facts
+
+    def _carried(self, built: Any) -> list[dict[str, Any]]:
+        """What an object starts with, named rather than referenced.
+
+        Parameters
+        ----------
+        built : ContentModel
+            The compiled object.
+
+        Returns
+        -------
+        list of dict
+            Item, name, and quantity.
+        """
+        names = self.names
+        return [
+            {
+                "item": entry.item,
+                "name": names.of(entry.item, "entities"),
+                "qty": entry.qty,
+            }
+            for entry in getattr(built, "inventory", None) or ()
+        ]
 
     def step(
         self, collection: str, step_id: str, object_id: str | None = None
@@ -1179,6 +1370,71 @@ def _flow(collection: str) -> Flow:
     if found is None:
         raise Unknown(f"nothing authors `{collection}` yet")
     return found
+
+
+def _stats(built: Any) -> list[dict[str, Any]]:
+    """An object's statblock as the engine reads it, inheritance included.
+
+    Parameters
+    ----------
+    built : ContentModel
+        The compiled object.
+
+    Returns
+    -------
+    list of dict
+        Stat, base, and cap, in name order.
+    """
+    declared = getattr(built, "stats", None) or {}
+    return [
+        {
+            "stat": name,
+            "base": declared[name].base,
+            "max": declared[name].max,
+            "customizable": declared[name].customizable,
+        }
+        for name in sorted(declared)
+    ]
+
+
+def _said(value: Any) -> str:
+    """One field of a preview, as a line somebody reads.
+
+    Parameters
+    ----------
+    value : object
+        The compiled value.
+
+    Returns
+    -------
+    str
+        A phrase.
+    """
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    if isinstance(value, str | int | float):
+        return str(value)
+    if isinstance(value, Sequence):
+        return ", ".join(_said(one) for one in value)
+    named = getattr(value, "profile", None) or getattr(value, "id", None)
+    return str(named) if named else "yes"
+
+
+def _camel(field: str) -> str:
+    """The name an author writes for a model field.
+
+    Parameters
+    ----------
+    field : str
+        The snake_case attribute.
+
+    Returns
+    -------
+    str
+        Its camelCase authored spelling.
+    """
+    head, *rest = field.split("_")
+    return head + "".join(part.title() for part in rest)
 
 
 def _dropped(loaded: Any, collection: str) -> set[str]:

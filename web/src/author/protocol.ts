@@ -209,6 +209,41 @@ export interface Atlas {
   roads: Road[];
 }
 
+/** One line of an object's description, and when the player reads it. */
+export interface Told {
+  text: string;
+  /** The condition, in English. "always" for the fallback. */
+  when: string;
+}
+
+/** One short answer about an object, and whether the author wrote it. */
+export interface Fact {
+  label: string;
+  value: string;
+  /** False when it came from whatever this object `extends`. */
+  own: boolean;
+}
+
+/** One object as the engine will see it, inheritance resolved. */
+export interface Preview {
+  collection: string;
+  id: string;
+  name: string;
+  /** False when the models will not accept it yet; `why` says what is wrong. */
+  built: boolean;
+  inherits: string | null;
+  why: string[];
+  lines: Told[];
+  facts: Fact[];
+  stats: Array<{
+    stat: string;
+    base: number;
+    max: number | null;
+    customizable: boolean;
+  }>;
+  carries: Array<{ item: string; name: string; qty: number }>;
+}
+
 /** One node of the scene graph. */
 export interface Node {
   id: string;

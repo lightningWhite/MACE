@@ -643,3 +643,101 @@ def test_a_scene_that_hands_control_back_is_marked_as_one(tmp_path: Path) -> Non
     by_id = {one["id"]: one for one in open_studio.graph()["scenes"]}
     assert by_id["start"]["ends"] is True
     assert by_id["onward"]["ends"] is False
+
+
+# ── The live preview ──────────────────────────────────────────────────────────
+
+
+def inheriting(root: Path) -> Studio:
+    """A pack with a parent and a child, which is what a preview is for.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write it.
+
+    Returns
+    -------
+    Studio
+        The open pack.
+    """
+    return Studio.open(
+        world(
+            root,
+            beasts={
+                "entities": [
+                    {
+                        "id": "troll",
+                        "kind": "actor",
+                        "name": "Troll",
+                        "description": [
+                            {"text": "Moss in its hair.", "when": {"dayPart": ["day"]}},
+                            {"text": "Something large, breathing."},
+                        ],
+                        "tags": ["monster"],
+                        "disposition": "neutral",
+                        "stats": {
+                            "hitpoints": {"base": 80, "max": 80},
+                            "strength": {"base": 70},
+                        },
+                        "inventory": [{"item": "gold", "qty": 12}],
+                    },
+                    {"id": "gorm", "extends": "troll", "name": "Gorm"},
+                ]
+            },
+        )
+    )
+
+
+def test_a_preview_is_the_object_rather_than_the_file(tmp_path: Path) -> None:
+    """`extends` means the file is not the object, and a form cannot say so."""
+    seen = inheriting(tmp_path).preview("entities", "gorm")
+
+    assert seen["built"] is True
+    assert seen["inherits"] == "troll"
+    assert {one["stat"] for one in seen["stats"]} == {"hitpoints", "strength"}
+    assert [one["qty"] for one in seen["carries"]] == [12]
+
+
+def test_a_preview_says_which_of_it_the_author_actually_wrote(
+    tmp_path: Path,
+) -> None:
+    """An author who cannot tell will retype it."""
+    seen = inheriting(tmp_path).preview("entities", "gorm")
+    facts = {one["label"]: one["own"] for one in seen["facts"]}
+    assert facts["tags"] is False
+    assert facts["disposition"] is False
+
+
+def test_a_preview_puts_a_conditional_description_in_english(
+    tmp_path: Path,
+) -> None:
+    """Three lines in a file, one line in play."""
+    seen = inheriting(tmp_path).preview("entities", "gorm")
+    assert [one["when"] for one in seen["lines"]] == ["it is day", "always"]
+
+
+def test_a_preview_of_something_that_will_not_build_says_why(
+    tmp_path: Path,
+) -> None:
+    """A preview that went blank when an author broke something is untrusted."""
+    open_studio = Studio.open(
+        world(tmp_path, broken={"locations": [{"id": "bad", "nonsense": True}]})
+    )
+    seen = open_studio.preview("locations", "bad")
+    assert seen["built"] is False
+    assert seen["why"]
+    assert seen["name"] == "bad"
+
+
+def test_a_preview_of_nothing_is_a_404(tmp_path: Path) -> None:
+    with pytest.raises(Unknown, match="no `nowhere`"):
+        Studio.open(world(tmp_path)).preview("locations", "nowhere")
+
+
+def test_a_preview_is_of_unsaved_work(tmp_path: Path) -> None:
+    """Compiling never touches the disk, so a live preview is actually live."""
+    open_studio = inheriting(tmp_path)
+    open_studio.answer("entities", "entity.name", "Gorm the Patient", "gorm")
+    assert open_studio.preview("entities", "gorm")["name"] == "Gorm the Patient"
+    assert open_studio.project.dirty

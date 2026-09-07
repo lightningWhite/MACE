@@ -6481,6 +6481,86 @@
     "unreadable": [],
     "dropped": []
   },
+  "preview": {
+    "collection": "entities",
+    "id": "gorm",
+    "name": "Gorm",
+    "built": true,
+    "inherits": "fantasy.core:bridge-troll",
+    "why": [],
+    "lines": [
+      {
+        "text": "It has moss in its hair and the patient look of something that gets paid eventually.",
+        "when": "always"
+      }
+    ],
+    "facts": [
+      {
+        "label": "kind",
+        "value": "actor",
+        "own": false
+      },
+      {
+        "label": "tags",
+        "value": "monster, large, troll, named",
+        "own": true
+      },
+      {
+        "label": "disposition",
+        "value": "neutral",
+        "own": false
+      },
+      {
+        "label": "fights as",
+        "value": "bridge-troll-profile",
+        "own": false
+      },
+      {
+        "label": "offers",
+        "value": "talk-to-gorm",
+        "own": true
+      }
+    ],
+    "stats": [
+      {
+        "stat": "charisma",
+        "base": 10.0,
+        "max": null,
+        "customizable": false
+      },
+      {
+        "stat": "hitpoints",
+        "base": 80.0,
+        "max": 80.0,
+        "customizable": false
+      },
+      {
+        "stat": "speed",
+        "base": 25.0,
+        "max": null,
+        "customizable": false
+      },
+      {
+        "stat": "stamina",
+        "base": 60.0,
+        "max": 60.0,
+        "customizable": false
+      },
+      {
+        "stat": "strength",
+        "base": 85.0,
+        "max": null,
+        "customizable": false
+      }
+    ],
+    "carries": [
+      {
+        "item": "fantasy.core:gold",
+        "name": "Gold",
+        "qty": 120
+      }
+    ]
+  },
   "vocabulary": {
     "conditions": [
       {

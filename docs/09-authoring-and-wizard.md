@@ -366,6 +366,26 @@ find two of them is not a tool being helpful. That is the rule the world
 starter has followed since phase 4; the map editor is the second thing to obey
 it, which is why it lives in `mace.wizard` rather than in the browser.
 
+### The live preview
+
+Beside the form, the object **as the engine will see it**. The gap a form
+cannot close on its own is `extends`: the file is not the object. A troll that
+inherits from `fantasy.core:bridge-troll` and writes only `strength: 85` has
+eighty hitpoints, a combat profile and a response to the dark, and none of that
+appears anywhere the author can see. A conditional description is the same
+problem the other way — three lines in a file and one line in play.
+
+So the preview is built from the *compiled* pack, and every value says whether
+the author wrote it or inherited it, in words rather than in a shade. An author
+who cannot tell what they typed from what they were given is an author who will
+retype it.
+
+It is genuinely live, because compiling never touches the disk: a preview of
+unsaved work is true rather than approximately true, which is the same property
+that makes playtest-from-anywhere work. An object that will not build shows why
+instead of going blank — a preview that vanished exactly when somebody broke
+something would be a preview nobody trusted.
+
 ### The scene graph
 
 Nothing on it writes. It is not an authoring step — it is the thing an author

@@ -21,6 +21,7 @@ import * as api from "./api";
 import { StudioError } from "./api";
 import { Field } from "./Field";
 import { MapEditor } from "./MapEditor";
+import { Preview } from "./Preview";
 import { SceneGraph } from "./SceneGraph";
 import {
   isObject,
@@ -50,6 +51,10 @@ export function Studio() {
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState<string[] | null>(null);
+  // Bumped on every answer, so the preview refetches. The wizard recompiles
+  // on demand and never touches the disk, which is what makes a preview of
+  // unsaved work true rather than approximately true.
+  const [written, setWritten] = useState(0);
 
   /**
    * Run one call and take in what came back.
@@ -199,9 +204,11 @@ export function Studio() {
         <ObjectForm
           screen={screen}
           busy={busy}
+          written={written}
           onAnswer={(step, value) =>
             void run(async () => {
               await api.answer(screen.collection, step, value, screen.id);
+              setWritten((count) => count + 1);
               return api.object(screen.collection, screen.id);
             })
           }
@@ -400,16 +407,27 @@ function Section({
 function ObjectForm({
   screen,
   busy,
+  written,
   onAnswer,
 }: {
   screen: ObjectScreen;
   busy: boolean;
+  written: number;
   onAnswer: (step: string, value: unknown) => void;
 }) {
   return (
     <section className="studio-object">
       <h2>{screen.label}</h2>
       {screen.id === null ? null : <p className="dim">{screen.id}</p>}
+      {/* The game manifest is not an object with a preview: it has no
+          `extends` and nothing to render. */}
+      {screen.id === null ? null : (
+        <Preview
+          collection={screen.collection}
+          id={screen.id}
+          version={written}
+        />
+      )}
       <div className="fields">
         {screen.steps.map((step) => (
           <Field

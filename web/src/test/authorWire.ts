@@ -14,6 +14,7 @@ import type {
   Built,
   Frame,
   Graph,
+  Preview,
   Vocabulary,
 } from "../author/protocol";
 
@@ -30,6 +31,7 @@ interface Recording {
   made: Frame;
   atlas: Atlas;
   graph: Graph;
+  preview: Preview;
   vocabulary: Vocabulary;
   built: Built;
 }
@@ -47,6 +49,7 @@ export const answered = wire.answered;
 export const made = wire.made;
 export const atlas = wire.atlas;
 export const graph = wire.graph;
+export const preview = wire.preview;
 export const vocabulary = wire.vocabulary;
 export const built = wire.built;
 
@@ -90,6 +93,7 @@ export function fakeStudio(options: { refuse?: string; absent?: boolean } = {}) 
     if (path.endsWith("/vocabulary")) return reply(vocabulary);
     if (path.endsWith("/map")) return reply(atlas);
     if (path.endsWith("/graph")) return reply(graph);
+    if (path.includes("/preview/")) return reply(preview);
     if (path.includes("/roads")) {
       if (options.refuse !== undefined) {
         return reply({ detail: options.refuse }, 400);

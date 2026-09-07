@@ -178,6 +178,29 @@ def author_routes(studio: Studio) -> APIRouter:
         """
         return studio.atlas()
 
+    @router.get("/preview/{collection}/{object_id}")
+    def preview(collection: str, object_id: str) -> dict[str, Any]:
+        """One object as the engine will see it, not as the file writes it.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection.
+        object_id : str
+            The object's local id.
+
+        Returns
+        -------
+        dict
+            The preview.
+
+        Raises
+        ------
+        HTTPException
+            404 if it is not there.
+        """
+        return _found(lambda: studio.preview(collection, object_id))
+
     @router.get("/graph")
     def graph() -> dict[str, Any]:
         """Every scene, what leads to it, and what it leads to.

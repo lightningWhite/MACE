@@ -514,3 +514,31 @@ describe("the scene graph", () => {
     ).toBe(true);
   });
 });
+
+// ── The live preview ──────────────────────────────────────────────────────────
+
+describe("the live preview", () => {
+  it("shows what extends hid, and says it was inherited", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await user.click(await screen.findByRole("button", { name: /Characters/ }));
+    await user.click(await screen.findByRole("button", { name: "Open Gorm" }));
+
+    const card = await screen.findByLabelText(/as the engine sees it/);
+    expect(within(card).getByText(/fantasy.core:bridge-troll/)).toBeTruthy();
+    // Gorm writes only `strength`; hitpoints come from the troll.
+    expect(within(card).getByText("hitpoints")).toBeTruthy();
+    expect(within(card).getAllByText(/\(inherited\)/).length).toBeGreaterThan(0);
+  });
+
+  it("is not shown for the game manifest, which inherits nothing", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await user.click(await screen.findByRole("button", { name: /Game setup/ }));
+    await screen.findByLabelText(/What is this game called/);
+
+    expect(screen.queryByLabelText(/as the engine sees it/)).toBeNull();
+  });
+});
