@@ -37,6 +37,7 @@ CONDITIONS: dict[str, Any] = {
     "flag": {"flag": {"entity": "gorm", "flag": "has-been-paid"}},
     "hasItem": {"hasItem": {"item": "fantasy.core:gold", "qty": 10}},
     "not": {"not": {"chance": 0.5}},
+    "priceOf": {"priceOf": {"good": "fantasy.core:grain", "above": 1.5}},
     "questComplete": {"questComplete": "the-kings-summons"},
     "questFailed": {"questFailed": "the-kings-summons"},
     "questStage": {"questStage": {"quest": "the-kings-summons", "stage": "set-out"}},

@@ -702,6 +702,13 @@ class PendingChoice:
         Neither starts a new journey, which is why they are not `travel`.
     use : str or None
         Qualified id of an item this option spends.
+    trade : str or None
+        Instance id of a merchant to open a stall with. Set on the menu the
+        engine offers; a scene's own choices never trade.
+    deal : tuple or None
+        A good, a quantity, and whether the player is selling — the one-click
+        form of a `trade` action, so a terminal can trade without a quantity
+        control. Both go through the same arithmetic.
     effects : tuple
         Inline effects to apply if it is taken.
     available : bool
@@ -717,6 +724,8 @@ class PendingChoice:
     travel: str | None = None
     journey: str | None = None
     use: str | None = None
+    trade: str | None = None
+    deal: tuple[str, int, bool] | None = None
     effects: tuple[Any, ...] = ()
     available: bool = True
     hint: str | None = None
@@ -832,6 +841,11 @@ class GameState:
         and flags around it; this is the answer, not the consequences.
     pending : PendingChoices or None
         Choices awaiting an answer.
+    trading : str or None
+        Instance id of the merchant the player has a stall open with. Only a
+        presentation state — it decides which menu the engine offers — but it
+        lives here because it has to survive a replay, and it is cleared the
+        moment the player is anywhere else.
     outcome : Outcome
         Whether the game is still running, and how it ended if not.
     ended_because : str or None
@@ -867,6 +881,7 @@ class GameState:
     time_pressure: float = 1.0
     background: str | None = None
     pending: PendingChoices | None = None
+    trading: str | None = None
     outcome: Outcome = Outcome.PLAYING
     ended_because: str | None = None
 

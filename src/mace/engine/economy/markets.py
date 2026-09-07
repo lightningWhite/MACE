@@ -74,6 +74,9 @@ class Dealt:
         The good's market behaviour.
     item : Entity
         The item it is the behaviour of. Its `baseValue` anchors the price.
+    item_id : str
+        That item's qualified id — what an inventory is keyed by, so trade can
+        put the sack a market priced into the pack the player carries.
     stock : Stock
         How much this market holds and wants of it.
     produced : float
@@ -85,6 +88,7 @@ class Dealt:
 
     good: Good
     item: Entity
+    item_id: str
     stock: Stock
     produced: float = 0.0
     consumed: float = 0.0
@@ -462,16 +466,17 @@ def _resolve(library: Library, home: str, market: Market) -> Prepared:
         if tags & set(good.consumed_by):
             consumed.setdefault(good_id, IMPLIED_FLOW * market.depth)
 
-    dealt = {
-        good_id: Dealt(
+    dealt: dict[str, Dealt] = {}
+    for good_id in sorted({*produced, *consumed, *written, *traded}):
+        item_id, item = _item(library, good_id, goods[good_id])
+        dealt[good_id] = Dealt(
             good=goods[good_id],
-            item=_item(library, good_id, goods[good_id]),
+            item=item,
+            item_id=item_id,
             stock=written.get(good_id) or Stock(capacity=DEFAULT_DEPTH * market.depth),
             produced=produced.get(good_id, 0.0),
             consumed=consumed.get(good_id, 0.0),
         )
-        for good_id in sorted({*produced, *consumed, *written, *traded})
-    }
     return Prepared(market=market, home=home, location=location, goods=dealt)
 
 
@@ -495,8 +500,8 @@ def _good_id(library: Library, home: str, reference: str) -> str:
     return library.resolve(reference, "goods", within=home)
 
 
-def _item(library: Library, good_id: str, good: Good) -> Entity:
-    """The item a good is the market behaviour of.
+def _item(library: Library, good_id: str, good: Good) -> tuple[str, Entity]:
+    """The item a good is the market behaviour of, and its qualified id.
 
     Parameters
     ----------
@@ -509,10 +514,12 @@ def _item(library: Library, good_id: str, good: Good) -> Entity:
 
     Returns
     -------
-    Entity
-        The item.
+    tuple of (str, Entity)
+        The item's qualified id — which is what an inventory is keyed by —
+        and the item.
     """
     home = good_id.split(":", 1)[0]
+    item_id = library.resolve(good.item, "entities", within=home)
     found = library.find(good.item, "entities", within=home)
     assert isinstance(found, Entity)
-    return found
+    return item_id, found

@@ -450,7 +450,7 @@ def test_the_bridge_on_the_north_road_is_a_waypoint() -> None:
     """You do not choose to visit the Old Bridge; it is in the way."""
     library = load_library(REPO_ROOT / "packs")
     result = begin(library, "peasants-quest", seed="mace")
-    result = step(result.state, Choose(2), library)
+    result = step(result.state, Choose(3), library)
 
     assert result.state.location == "peasants-quest:troll-bridge"
     assert result.state.journey is not None

@@ -108,7 +108,7 @@ writing YAML.
 
 ---
 
-## Phase 5 — The web client *(current)*
+## Phase 5 — The web client *(done)*
 
 **Playable at the end:** a browser tab, no install, with a real map.
 
@@ -142,7 +142,7 @@ writing YAML.
 - [x] Accessibility pass — the time-pressure setting docs/10 asked for and
       nothing had implemented, ARIA live regions, focus that stays in the game
       between turns, reduced motion, and nothing carried by colour alone
-- [ ] **Economy**: goods, markets, stock, price formation, trade flow between
+- [x] **Economy**: goods, markets, stock, price formation, trade flow between
       connected markets (`economy: market`)
   - [x] The content half: `goods` and `markets` as modelled, schema-validated
         collections. A good names the item it is the market behaviour of
@@ -155,12 +155,16 @@ writing YAML.
         `tradeCapacity` and danger, and stopped dead by a closure — the part
         that makes a closed pass move a price. Markets a road can reach are
         fast-forwarded as one group, because they move each other
-  - [ ] Buying and selling: the trade action, the events it emits, and what a
-        merchant says about its own prices
+  - [x] Buying and selling: the trade action, the events it emits, and what a
+        merchant says about its own prices. A merchant is an actor standing in
+        front of a settlement's shelves, not a shop of its own; every unit is
+        priced as the shelf moves under it, so a round trip at one counter
+        always loses money; and `priceOf` is what lets a merchant's remark be
+        content rather than a special case
 
 ---
 
-## Phase 6 — Authoring in the browser
+## Phase 6 — Authoring in the browser *(current)*
 
 **Usable at the end:** build a world by dragging nodes on a map.
 

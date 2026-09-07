@@ -108,7 +108,7 @@ def scripted(monkeypatch: pytest.MonkeyPatch, answers: list[str]) -> None:
 def test_play_walks_a_pack_to_its_ending(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    scripted(monkeypatch, ["1", "2", "3", "3", "4", "1"])
+    scripted(monkeypatch, ["2", "3", "3", "3", "4", "1"])
     assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
     printed = capsys.readouterr().out
     assert "You are a peasant." in printed
@@ -130,7 +130,7 @@ def test_play_complains_about_a_number_that_is_not_on_offer(
     assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
     printed = capsys.readouterr().out
     assert "Type the number" in printed
-    assert "Pick a number between 1 and 4." in printed
+    assert "Pick a number between 1 and 5." in printed
 
 
 def test_play_needs_to_know_which_game(
@@ -215,7 +215,7 @@ def test_play_writes_the_save_it_was_asked_for(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     save = tmp_path / "saves" / "north.json"
-    scripted(monkeypatch, ["1", "2", "q"])
+    scripted(monkeypatch, ["2", "3", "q"])
     assert main(["play", "packs", "--pack", "peasants-quest", "--save", str(save)]) == 0
 
     assert "Saved to" in capsys.readouterr().out
@@ -231,7 +231,7 @@ def test_play_carries_on_from_a_save(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     save = tmp_path / "north.json"
-    scripted(monkeypatch, ["1", "2", "q"])
+    scripted(monkeypatch, ["2", "3", "q"])
     assert main(["play", "packs", "--pack", "peasants-quest", "--save", str(save)]) == 0
     ended = capsys.readouterr().out
 
@@ -264,7 +264,7 @@ def test_play_fights_a_troll_in_the_terminal(
     # Walk north, refuse the toll, and then answer every windup correctly.
     # The keys are fixed rather than derived because that is what a player
     # types: the sequence is what reading this troll's habits looks like.
-    scripted(monkeypatch, ["3", "3", "5", *"jddsdjd", "q"])
+    scripted(monkeypatch, ["4", "3", "5", *"jddsdjd", "q"])
     assert (
         main(
             [
@@ -290,7 +290,7 @@ def test_the_counter_matrix_is_shown_before_the_first_swing(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The training wheels stay on until somebody builds a way to take them off."""
-    scripted(monkeypatch, ["3", "3", "5", "q"])
+    scripted(monkeypatch, ["4", "3", "5", "q"])
     assert (
         main(["play", "packs", "--pack", "peasants-quest", "--combat", "tactical"]) == 0
     )
@@ -302,7 +302,7 @@ def test_an_exchange_says_why_it_went_that_way(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Attribution is what turns an outcome into learning."""
-    scripted(monkeypatch, ["3", "3", "5", "p", "q"])
+    scripted(monkeypatch, ["4", "3", "5", "p", "q"])
     assert (
         main(["play", "packs", "--pack", "peasants-quest", "--combat", "tactical"]) == 0
     )
@@ -314,7 +314,7 @@ def test_a_fight_does_not_repeat_the_status_line_every_exchange(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """`combat.resolve` already says what an exchange cost. Both still fire."""
-    scripted(monkeypatch, ["3", "3", "5", "d", "d", "d", "q"])
+    scripted(monkeypatch, ["4", "3", "5", "d", "d", "d", "q"])
     assert (
         main(["play", "packs", "--pack", "peasants-quest", "--combat", "tactical"]) == 0
     )
@@ -326,7 +326,7 @@ def test_a_fight_does_not_repeat_the_status_line_every_exchange(
 def test_an_unknown_answer_is_explained_rather_than_taken(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    scripted(monkeypatch, ["3", "3", "5", "z", "q"])
+    scripted(monkeypatch, ["4", "3", "5", "z", "q"])
     assert (
         main(["play", "packs", "--pack", "peasants-quest", "--combat", "tactical"]) == 0
     )
@@ -336,7 +336,7 @@ def test_an_unknown_answer_is_explained_rather_than_taken(
 def test_auto_mode_needs_no_answers_at_all(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    scripted(monkeypatch, ["3", "3", "5", "q"])
+    scripted(monkeypatch, ["4", "3", "5", "q"])
     assert main(["play", "packs", "--pack", "peasants-quest", "--combat", "auto"]) == 0
     printed = capsys.readouterr().out
     assert "Fighting: Gorm" in printed
@@ -393,7 +393,7 @@ def test_a_timed_window_records_what_it_measured(
 
     monkeypatch.setattr("mace.cli.play.raw_terminal_available", lambda: True)
     monkeypatch.setattr("mace.cli.play.read_key", press)
-    scripted(monkeypatch, ["3", "3", "5", "q"])
+    scripted(monkeypatch, ["4", "3", "5", "q"])
     assert (
         main(["play", "packs", "--pack", "peasants-quest", "--combat", "reflex"]) == 0
     )

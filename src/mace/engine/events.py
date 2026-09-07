@@ -39,6 +39,8 @@ __all__ = [
     "RouteChanged",
     "RuleFailed",
     "SceneEntered",
+    "StallOpened",
+    "Traded",
     "TravelInterrupted",
     "TravelLeg",
     "StatChanged",
@@ -608,6 +610,90 @@ class InventoryChanged(Event):
             "item": self.item,
             "delta": self.delta,
             "quantity": self.quantity,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StallOpened(Event):
+    """A merchant laid its prices out.
+
+    Carries the whole price list rather than a reference to one, because a
+    price is a fact about a moment: what the shelf held when the player asked.
+    A front-end that went and looked it up again a second later would be
+    drawing a different market from the one the player is standing in.
+
+    Attributes
+    ----------
+    merchant : str
+        The merchant's instance id — what a `trade` action is addressed to.
+    market : str
+        Qualified market id.
+    currency : str
+        Qualified item id trade is settled in.
+    goods : tuple of dict
+        One row per good: id, name, unit prices, shelf, and what the player
+        already carries.
+    """
+
+    kind: ClassVar[str] = "trade.stall"
+    merchant: str
+    market: str
+    currency: str
+    goods: tuple[Mapping[str, Any], ...] = ()
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "merchant": self.merchant,
+            "market": self.market,
+            "currency": self.currency,
+            "goods": [dict(row) for row in self.goods],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class Traded(Event):
+    """Goods and coin changed hands.
+
+    The `inventory.changed` events beside this one say what moved; this says
+    what the deal *was*, which is the thing a journal or a ledger wants and
+    cannot reconstruct from two stack sizes.
+
+    Attributes
+    ----------
+    merchant : str
+        The merchant's instance id.
+    market : str
+        Qualified market id.
+    good : str
+        Qualified good id.
+    item : str
+        Qualified item id.
+    qty : int
+        Units, always positive.
+    sell : bool
+        Whether the player was the one handing goods over.
+    coin : int
+        Whole currency that changed hands.
+    """
+
+    kind: ClassVar[str] = "trade.done"
+    merchant: str
+    market: str
+    good: str
+    item: str
+    qty: int
+    sell: bool
+    coin: int
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "merchant": self.merchant,
+            "market": self.market,
+            "good": self.good,
+            "item": self.item,
+            "qty": self.qty,
+            "sell": self.sell,
+            "coin": self.coin,
         }
 
 

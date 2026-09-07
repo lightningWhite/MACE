@@ -120,6 +120,11 @@
           "scene": "",
           "options": [
             {
+              "prompt": "Deal with Mereth over the barley",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Say goodbye to Hallam",
               "available": true,
               "hint": null
@@ -1501,6 +1506,11 @@
           "options": [
             {
               "prompt": "Report to the captain",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Sell to the quartermaster",
               "available": true,
               "hint": null
             },

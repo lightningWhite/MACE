@@ -26,8 +26,10 @@ from mace.model.base import (
     EntityRef,
     ExpressionField,
     Flag,
+    GoodRef,
     Id,
     LocationRef,
+    MarketRef,
     Name,
     QuestRef,
     Tag,
@@ -53,6 +55,7 @@ ConditionTag = Literal[
     "flag",
     "hasItem",
     "not",
+    "priceOf",
     "questComplete",
     "questFailed",
     "questStage",
@@ -168,6 +171,39 @@ class DayPartIs(ConditionPayload):
     parts: tuple[Id, ...] = Field(min_length=1)
 
 
+class PriceIs(ConditionPayload):
+    """A market is charging more, or less, than a good is ordinarily worth.
+
+    The comparison is against the item's own `baseValue`, so the number an
+    author writes means the same thing in every market and in every pack:
+    `above: 1.5` is half again the going rate. Prices are bounded to a quarter
+    of base and four times it, so nothing outside that range is worth asking
+    about.
+
+    Attributes
+    ----------
+    good : str
+        Which good.
+    market : str or None
+        Which market. None is the market where the player is standing, which
+        is what a merchant talking about its own prices means.
+    above, below : float or None
+        Multiples of `baseValue`. Both may be given, for a band.
+    """
+
+    good: GoodRef
+    market: MarketRef | None = None
+    above: float | None = Field(default=None, gt=0.0)
+    below: float | None = Field(default=None, gt=0.0)
+
+    @model_validator(mode="after")
+    def _asks_something(self) -> PriceIs:
+        """A price condition with no bound is true everywhere."""
+        if self.above is None and self.below is None:
+            raise ValueError("a price condition needs `above`, `below`, or both")
+        return self
+
+
 class ConditionGroup(ConditionPayload):
     """A group of conditions, for `all` and `any`."""
 
@@ -196,6 +232,7 @@ CONDITION_PAYLOADS: dict[ConditionTag, type[ConditionPayload]] = {
     "flag": FlagIs,
     "hasItem": HasItem,
     "not": ConditionNegation,
+    "priceOf": PriceIs,
     "questComplete": QuestOutcome,
     "questFailed": QuestOutcome,
     "questStage": QuestAtStage,

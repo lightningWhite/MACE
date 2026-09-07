@@ -175,7 +175,7 @@ describe("the game", () => {
     await waitFor(() => expect(service.taken()).toBe(1));
 
     const acted = service.calls.filter((call) => call.path.endsWith("/actions"));
-    expect(acted[0]?.body).toEqual({ kind: "choose", option: 2 });
+    expect(acted[0]?.body).toEqual({ kind: "choose", option: 3 });
   });
 
   it("shows an unavailable option, and why", async () => {
@@ -426,7 +426,7 @@ describe("a connection that holds", () => {
     await user.click(screen.getByRole("button", { name: /Take the north road/ }));
     expect(await screen.findByText(/The journey stops:/)).toBeTruthy();
 
-    expect(LiveSocket.last?.sent).toEqual([{ kind: "choose", option: 2 }]);
+    expect(LiveSocket.last?.sent).toEqual([{ kind: "choose", option: 3 }]);
     expect(service.calls.some((call) => call.path.endsWith("/actions"))).toBe(false);
   });
 

@@ -213,8 +213,39 @@ def say_condition(condition: Condition, names: Names) -> str:
         return f"it is {_joined(list(get('seasons')), 'or')}"
     if tag == "dayPart":
         return f"it is {_joined(list(get('parts')), 'or')}"
+    if tag == "priceOf":
+        return _price(get, names)
 
     return f"[{tag}] {_arguments(body, names)}"  # pragma: no cover — new tag
+
+
+def _price(get: Any, names: Names) -> str:
+    """Say a price band in the words an author was thinking in.
+
+    Parameters
+    ----------
+    get : callable
+        Field reader for the payload.
+    names : Names
+        The naming service.
+
+    Returns
+    -------
+    str
+        `grain costs over 1.5× its usual price at Fenmoor`.
+    """
+    good = names.of(get("good"), "goods")
+    above, below = get("above"), get("below")
+    if above is not None and below is not None:
+        band = f"between {_number(above)}× and {_number(below)}× its usual price"
+    elif above is not None:
+        band = f"over {_number(above)}× its usual price"
+    else:
+        band = f"under {_number(below)}× its usual price"
+
+    market = get("market")
+    where = " here" if market is None else f" at {names.of(market, 'markets')}"
+    return f"{good} costs {band}{where}"
 
 
 def say_effects(effects: Sequence[Effect], names: Names) -> str:

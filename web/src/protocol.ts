@@ -400,6 +400,29 @@ export interface Sheet {
   exposure: number;
 }
 
+/** One good on a merchant's counter, priced for right now. */
+export interface Priced {
+  good: string;
+  item: string;
+  name: string;
+  /** What one costs the player, or null when it is not for sale. */
+  buy: number | null;
+  /** What the merchant pays for one, or null when it will not take it. */
+  sell: number | null;
+  available: number;
+  carried: number;
+}
+
+/** What the merchant in front of the player is offering. */
+export interface Stall {
+  merchant: string;
+  name: string;
+  market: string;
+  currency: string;
+  coin: number;
+  goods: Priced[];
+}
+
 export interface View {
   pack: string;
   tick: number;
@@ -409,6 +432,8 @@ export interface View {
   carried: Carried[];
   journal: Entry[];
   atlas: Atlas;
+  /** Prices, while the player is standing at a counter. */
+  stall: Stall | null;
 }
 
 // ── One frame for every reply ────────────────────────────────────────────────
@@ -438,6 +463,7 @@ export type Action =
   | { kind: "choose"; prompt: string }
   | { kind: "combat.input"; response: string; elapsedMs?: number }
   | { kind: "wait"; ticks: number }
+  | { kind: "trade"; good: string; qty: number; sell: boolean }
   | { kind: "look" };
 
 /** A save file: packs, seed, character, and everything the player did. */

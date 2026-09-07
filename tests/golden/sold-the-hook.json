@@ -125,6 +125,11 @@
           "scene": "",
           "options": [
             {
+              "prompt": "Deal with Mereth over the barley",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Say goodbye to Hallam",
               "available": true,
               "hint": null
@@ -202,6 +207,11 @@
           "kind": "choices",
           "scene": "",
           "options": [
+            {
+              "prompt": "Deal with Mereth over the barley",
+              "available": true,
+              "hint": null
+            },
             {
               "prompt": "Travel to Trader's Post",
               "available": true,
@@ -325,6 +335,11 @@
               "hint": null
             },
             {
+              "prompt": "Look over the peddler's stall",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Travel to Fenmoor",
               "available": true,
               "hint": null
@@ -417,6 +432,11 @@
             },
             {
               "prompt": "Sell your reaping hook (8 gold)",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Look over the peddler's stall",
               "available": true,
               "hint": null
             },
@@ -528,6 +548,11 @@
             },
             {
               "prompt": "Sell your reaping hook (8 gold)",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Look over the peddler's stall",
               "available": true,
               "hint": null
             },
@@ -645,6 +670,11 @@
               "hint": null
             },
             {
+              "prompt": "Look over the peddler's stall",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Travel to Fenmoor",
               "available": true,
               "hint": null
@@ -726,6 +756,11 @@
           "kind": "choices",
           "scene": "",
           "options": [
+            {
+              "prompt": "Deal with Mereth over the barley",
+              "available": true,
+              "hint": null
+            },
             {
               "prompt": "Travel to Trader's Post",
               "available": true,
@@ -1295,6 +1330,11 @@
           "options": [
             {
               "prompt": "Report to the captain",
+              "available": true,
+              "hint": null
+            },
+            {
+              "prompt": "Sell to the quartermaster",
               "available": true,
               "hint": null
             },

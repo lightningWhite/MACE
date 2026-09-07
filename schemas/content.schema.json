@@ -1411,6 +1411,18 @@
         {
           "type": "object",
           "properties": {
+            "priceOf": {
+              "$ref": "#/$defs/PriceIs"
+            }
+          },
+          "required": [
+            "priceOf"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "questComplete": {
               "$ref": "#/$defs/QuestOutcome"
             }
@@ -1682,6 +1694,32 @@
         "amount"
       ],
       "title": "DealDamage",
+      "type": "object"
+    },
+    "Deals": {
+      "additionalProperties": false,
+      "description": "Which goods a merchant will take, or part with.\n\nNaming nothing means everything its market deals in, which is what most\nmerchants are. A filter is for the specialist: the smith who buys metal\nand is not interested in your wool.\n\nAttributes\n----------\ngoods : tuple of str\n    Named goods.\ncategories : tuple of str\n    Whole classes of good, by a good's `category`. `[food]` is every good\n    an author has labelled food, including ones written after this\n    merchant was.",
+      "properties": {
+        "goods": {
+          "default": [],
+          "items": {
+            "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Goods",
+          "type": "array"
+        },
+        "categories": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Categories",
+          "type": "array"
+        }
+      },
+      "title": "Deals",
       "type": "object"
     },
     "DescriptionLine": {
@@ -2540,6 +2578,17 @@
           ],
           "default": null
         },
+        "merchant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Merchant"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "custom": {
           "anyOf": [
             {
@@ -2996,7 +3045,7 @@
     },
     "GameRules": {
       "additionalProperties": false,
-      "description": "The structural choices a game makes about its own simulation.\n\nAttributes\n----------\nvital_pool : str\n    The pool whose exhaustion means death.\neffort_pool : str\n    The pool combat actions are paid from.\ncombat_mode : {'reflex', 'tactical', 'auto'}\n    The default combat presentation. The player may override it.\ndeath_is_permanent : bool\n    Whether death ends the playthrough or returns to a scene.\nsurvival : tuple of str\n    Which survival systems are on: `exposure`, `rest`, `hunger`, `thirst`.\n    Exposure and rest are on by default because they are what give the\n    weather model teeth; hunger and thirst are not, because not every\n    world wants to be about rations. `[]` disables them all.\neconomy : {'simple', 'market'}\n    `simple` prices from each item's `value`; `market` runs the full\n    supply-and-demand model.",
+      "description": "The structural choices a game makes about its own simulation.\n\nAttributes\n----------\nvital_pool : str\n    The pool whose exhaustion means death.\neffort_pool : str\n    The pool combat actions are paid from.\ncombat_mode : {'reflex', 'tactical', 'auto'}\n    The default combat presentation. The player may override it.\ndeath_is_permanent : bool\n    Whether death ends the playthrough or returns to a scene.\nsurvival : tuple of str\n    Which survival systems are on: `exposure`, `rest`, `hunger`, `thirst`.\n    Exposure and rest are on by default because they are what give the\n    weather model teeth; hunger and thirst are not, because not every\n    world wants to be about rations. `[]` disables them all.\neconomy : {'simple', 'market'}\n    `simple` prices from each item's `value`; `market` runs the full\n    supply-and-demand model.\ncurrency : str or None\n    The item trade is settled in. A `market` economy needs one, because a\n    price the engine works out has to be paid in something the player can\n    carry; a `simple` economy prices in whatever its scenes say it does\n    and never asks. Genre-neutral: gold here, ration chits somewhere else.",
       "properties": {
         "vitalPool": {
           "default": "hitpoints",
@@ -3045,6 +3094,19 @@
           ],
           "title": "Economy",
           "type": "string"
+        },
+        "currency": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
         }
       },
       "title": "GameRules",
@@ -3787,6 +3849,69 @@
           "location"
         ]
       }
+    },
+    "Merchant": {
+      "additionalProperties": false,
+      "description": "An actor who buys and sells against a market's prices.\n\nA merchant is the way a player reaches a market at all. The shelves and\nthe prices belong to the settlement \u2014 a market is a town, not a shop \u2014 and\nthis is the person standing in front of them who will deal with you, which\nis why the block sits on an actor rather than on a location.\n\nAttributes\n----------\nmarket : str or None\n    Which market it deals for. None is the market where it is standing,\n    which is what a merchant usually is.\nspread : float\n    The gap between what it buys at and what it sells at, as a fraction of\n    the market price. 0.25 buys at 0.875\u00d7 and sells at 1.125\u00d7. This is the\n    merchant's living, and the reason carrying goods somewhere else can\n    beat selling them here.\nbuys, sells : Deals\n    What it will take off you, and what it will part with.\nprompt : str or None\n    What the option to trade is called. None is `Trade with <name>`.\nremarks : Description\n    What it says about its own prices, first matching line. Written as\n    ordinary conditional description, so `priceOf` is what makes a line\n    about a shortage and the weather and the season can join in \u2014\n    \"Grain? You'll pay for grain this week.\"",
+      "properties": {
+        "market": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Market"
+        },
+        "spread": {
+          "default": 0.2,
+          "exclusiveMaximum": 1.0,
+          "minimum": 0.0,
+          "title": "Spread",
+          "type": "number"
+        },
+        "buys": {
+          "$ref": "#/$defs/Deals",
+          "default": {}
+        },
+        "sells": {
+          "$ref": "#/$defs/Deals",
+          "default": {}
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt"
+        },
+        "remarks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptionLine"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/DescriptionLine"
+              },
+              "type": "array"
+            }
+          ],
+          "default": [],
+          "title": "Remarks"
+        }
+      },
+      "title": "Merchant",
+      "type": "object"
     },
     "Move": {
       "additionalProperties": false,
@@ -4554,6 +4679,61 @@
         }
       },
       "title": "PressureStart",
+      "type": "object"
+    },
+    "PriceIs": {
+      "additionalProperties": false,
+      "description": "A market is charging more, or less, than a good is ordinarily worth.\n\nThe comparison is against the item's own `baseValue`, so the number an\nauthor writes means the same thing in every market and in every pack:\n`above: 1.5` is half again the going rate. Prices are bounded to a quarter\nof base and four times it, so nothing outside that range is worth asking\nabout.\n\nAttributes\n----------\ngood : str\n    Which good.\nmarket : str or None\n    Which market. None is the market where the player is standing, which\n    is what a merchant talking about its own prices means.\nabove, below : float or None\n    Multiples of `baseValue`. Both may be given, for a band.",
+      "properties": {
+        "good": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Good",
+          "type": "string"
+        },
+        "market": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Market"
+        },
+        "above": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Above"
+        },
+        "below": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Below"
+        }
+      },
+      "required": [
+        "good"
+      ],
+      "title": "PriceIs",
       "type": "object"
     },
     "Quest": {

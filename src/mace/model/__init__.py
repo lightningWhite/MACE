@@ -49,9 +49,11 @@ from mace.model.conditions import (
 )
 from mace.model.economy import (
     MARKET_SIZES,
+    Deals,
     Flow,
     Good,
     Market,
+    Merchant,
     Perishable,
     Size,
     Stock,
@@ -125,6 +127,7 @@ __all__ = [
     "ContainerProps",
     "ContentModel",
     "Damage",
+    "Deals",
     "DayPart",
     "Description",
     "DescriptionLine",
@@ -155,6 +158,7 @@ __all__ = [
     "MARKET_SIZES",
     "MapPosition",
     "Market",
+    "Merchant",
     "Move",
     "MoveKind",
     "Name",

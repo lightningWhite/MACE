@@ -10,7 +10,7 @@ locations:
     safe: true
     description:
       - "Six houses, a well, and more geese than people. The barley stands unfinished in the low field."
-    entities: [old-hallam]
+    entities: [old-hallam, mereth-the-reeve]
     onArrive: fenmoor-arrival
     mapPosition: {x: 0, y: 120}
     exits:
@@ -57,7 +57,7 @@ locations:
     discovered: true
     description:
       - "Grey walls on a grey hill, and a muster yard full of men who look as unwilling as you feel."
-    entities: [captain-orin]
+    entities: [captain-orin, quartermaster-bel]
     onArrive: castle-arrival
     mapPosition: {x: 20, y: 0}
     exits:

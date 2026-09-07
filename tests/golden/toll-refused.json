@@ -135,6 +135,11 @@
           "scene": "",
           "options": [
             {
+              "prompt": "Deal with Mereth over the barley",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Say goodbye to Hallam",
               "available": true,
               "hint": null
@@ -1466,6 +1471,11 @@
           "scene": "",
           "options": [
             {
+              "prompt": "Deal with Mereth over the barley",
+              "available": true,
+              "hint": null
+            },
+            {
               "prompt": "Say goodbye to Hallam",
               "available": true,
               "hint": null
@@ -1553,6 +1563,11 @@
           "kind": "choices",
           "scene": "",
           "options": [
+            {
+              "prompt": "Deal with Mereth over the barley",
+              "available": true,
+              "hint": null
+            },
             {
               "prompt": "Carry on to Hagan's Castle",
               "available": true,

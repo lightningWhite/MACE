@@ -105,6 +105,11 @@ class GameRules(ContentModel):
     economy : {'simple', 'market'}
         `simple` prices from each item's `value`; `market` runs the full
         supply-and-demand model.
+    currency : str or None
+        The item trade is settled in. A `market` economy needs one, because a
+        price the engine works out has to be paid in something the player can
+        carry; a `simple` economy prices in whatever its scenes say it does
+        and never asks. Genre-neutral: gold here, ration chits somewhere else.
     """
 
     vital_pool: Name = "hitpoints"
@@ -113,6 +118,7 @@ class GameRules(ContentModel):
     death_is_permanent: bool = False
     survival: tuple[Id, ...] = ("exposure", "rest")
     economy: EconomyMode = "simple"
+    currency: EntityRef | None = None
 
 
 class Game(ContentModel):

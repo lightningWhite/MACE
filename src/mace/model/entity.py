@@ -30,6 +30,7 @@ from mace.model.base import (
     Tag,
 )
 from mace.model.conditions import Conditions
+from mace.model.economy import Merchant
 from mace.model.effects import Effect
 from mace.model.text import Description
 
@@ -43,6 +44,7 @@ __all__ = [
     "ItemProps",
     "ItemUse",
     "InventoryEntry",
+    "Merchant",
     "PortalProps",
     "Stat",
     "StatModifier",
@@ -58,6 +60,7 @@ KIND_BLOCKS: dict[str, EntityKind] = {
     "item": "item",
     "container": "container",
     "portal": "portal",
+    "merchant": "actor",
 }
 
 
@@ -296,6 +299,7 @@ class Entity(ContentModel):
     item: ItemProps | None = None
     container: ContainerProps | None = None
     portal: PortalProps | None = None
+    merchant: Merchant | None = None
 
     custom: Mapping[str, Any] | None = None
 

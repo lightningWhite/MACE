@@ -28,6 +28,7 @@ __all__ = [
     "Interact",
     "Look",
     "Respond",
+    "Trade",
     "Travel",
     "Use",
     "Wait",
@@ -158,6 +159,34 @@ class Use(BaseAction):
 
 
 @dataclass(frozen=True, slots=True)
+class Trade(BaseAction):
+    """Buy from the merchant you are dealing with, or sell to them.
+
+    A quantity, not a single unit, because the whole of trading is carrying
+    twenty sacks somewhere they are worth more. The engine also offers one-
+    and ten-unit trades as ordinary menu options, so a terminal can do this
+    without a quantity control; both go through the same arithmetic.
+
+    Attributes
+    ----------
+    good : str
+        The good reference, bare or qualified.
+    qty : int
+        How many units. Always positive; `sell` says which way they go.
+    sell : bool
+        Whether the player is the one handing the goods over.
+    """
+
+    kind: ClassVar[str] = "trade"
+    good: str
+    qty: int = 1
+    sell: bool = False
+
+    def payload(self) -> dict[str, Any]:
+        return {"good": self.good, "qty": self.qty, "sell": self.sell}
+
+
+@dataclass(frozen=True, slots=True)
 class Respond(BaseAction):
     """Answer the move a fight has just telegraphed.
 
@@ -186,12 +215,12 @@ class Respond(BaseAction):
         return {"response": self.response, "elapsedMs": self.elapsed_ms}
 
 
-Action = Look | Choose | Interact | Respond | Travel | Use | Wait
+Action = Look | Choose | Interact | Respond | Trade | Travel | Use | Wait
 
 #: Every action kind, for decoding a saved log.
 ACTIONS: dict[str, type[BaseAction]] = {
     action.kind: action
-    for action in (Look, Choose, Interact, Respond, Travel, Use, Wait)
+    for action in (Look, Choose, Interact, Respond, Trade, Travel, Use, Wait)
 }
 
 #: Fields whose recorded name differs from the constructor's, so an action log
@@ -238,7 +267,9 @@ def decode(record: dict[str, Any], *, offered: Sequence[str] | None = None) -> A
 
     fields = {RECORD_FIELDS.get(name, name): value for name, value in fields.items()}
     built = ACTIONS[kind](**fields)
-    assert isinstance(built, Look | Choose | Interact | Respond | Travel | Use | Wait)
+    assert isinstance(
+        built, Look | Choose | Interact | Respond | Trade | Travel | Use | Wait
+    )
     return built
 
 

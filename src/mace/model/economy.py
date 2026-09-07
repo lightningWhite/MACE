@@ -41,8 +41,19 @@ from mace.model.base import (
     MarketRef,
     Tag,
 )
+from mace.model.text import Description
 
-__all__ = ["MARKET_SIZES", "Flow", "Good", "Market", "Perishable", "Size", "Stock"]
+__all__ = [
+    "MARKET_SIZES",
+    "Deals",
+    "Flow",
+    "Good",
+    "Market",
+    "Merchant",
+    "Perishable",
+    "Size",
+    "Stock",
+]
 
 #: How big a place is, and how deep its shelves are. The multiplier scales a
 #: good's default capacity, so an author who writes `size: city` gets a city's
@@ -237,3 +248,73 @@ class Market(ContentModel):
             The multiplier from `MARKET_SIZES`.
         """
         return MARKET_SIZES[self.size]
+
+
+class Deals(ContentModel):
+    """Which goods a merchant will take, or part with.
+
+    Naming nothing means everything its market deals in, which is what most
+    merchants are. A filter is for the specialist: the smith who buys metal
+    and is not interested in your wool.
+
+    Attributes
+    ----------
+    goods : tuple of str
+        Named goods.
+    categories : tuple of str
+        Whole classes of good, by a good's `category`. `[food]` is every good
+        an author has labelled food, including ones written after this
+        merchant was.
+    """
+
+    goods: tuple[GoodRef, ...] = ()
+    categories: tuple[Tag, ...] = ()
+
+    @property
+    def everything(self) -> bool:
+        """Whether this filter narrows anything at all.
+
+        Returns
+        -------
+        bool
+            True when neither list says anything, which means the whole
+            market.
+        """
+        return not self.goods and not self.categories
+
+
+class Merchant(ContentModel):
+    """An actor who buys and sells against a market's prices.
+
+    A merchant is the way a player reaches a market at all. The shelves and
+    the prices belong to the settlement — a market is a town, not a shop — and
+    this is the person standing in front of them who will deal with you, which
+    is why the block sits on an actor rather than on a location.
+
+    Attributes
+    ----------
+    market : str or None
+        Which market it deals for. None is the market where it is standing,
+        which is what a merchant usually is.
+    spread : float
+        The gap between what it buys at and what it sells at, as a fraction of
+        the market price. 0.25 buys at 0.875× and sells at 1.125×. This is the
+        merchant's living, and the reason carrying goods somewhere else can
+        beat selling them here.
+    buys, sells : Deals
+        What it will take off you, and what it will part with.
+    prompt : str or None
+        What the option to trade is called. None is `Trade with <name>`.
+    remarks : Description
+        What it says about its own prices, first matching line. Written as
+        ordinary conditional description, so `priceOf` is what makes a line
+        about a shortage and the weather and the season can join in —
+        "Grain? You'll pay for grain this week."
+    """
+
+    market: MarketRef | None = None
+    spread: float = Field(default=0.2, ge=0.0, lt=1.0)
+    buys: Deals = Deals()
+    sells: Deals = Deals()
+    prompt: str | None = None
+    remarks: Description = ()

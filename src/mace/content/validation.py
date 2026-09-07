@@ -434,6 +434,7 @@ def validate_library(library: Library) -> Report:
         problems.extend(_check_event_references(library, pack))
         problems.extend(_check_reachable_scenes(library, pack))
         problems.extend(_check_combat(library, pack))
+        problems.extend(_check_economy(library, pack))
         problems.extend(_check_notes(library, pack))
     return Report(tuple(problems))
 
@@ -615,6 +616,65 @@ def _check_game(library: Library, pack: LoadedPack) -> Iterator[Problem]:
                 collection="quests",
                 object_id=local_id,
             )
+
+
+def _check_economy(library: Library, pack: LoadedPack) -> Iterator[Problem]:
+    """A market economy has to have something to pay with, and shelves to buy.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded packs, for resolution.
+    pack : LoadedPack
+        The pack to check.
+
+    Yields
+    ------
+    Problem
+        An error for a market economy with no currency, and notes for the
+        two ways a market can be written and never reached.
+    """
+    game = pack.game
+    if game is not None and game.rules.economy == "market":
+        if game.rules.currency is None:
+            yield Problem(
+                severity=Severity.ERROR,
+                message=(
+                    "runs a market economy but names no `rules.currency`, so "
+                    "a price the engine works out cannot be paid"
+                ),
+                pack=pack.id,
+                collection="game",
+                field="rules.currency",
+            )
+        if not any(one.markets for one in library.packs):
+            yield Problem(
+                severity=Severity.WARNING,
+                message=(
+                    "runs a market economy but nothing defines a market, so "
+                    "there is nowhere to trade"
+                ),
+                pack=pack.id,
+                collection="game",
+                field="rules.economy",
+            )
+
+    if game is None or game.rules.economy == "market":
+        return
+    for local_id in sorted(pack.entities):
+        if pack.entities[local_id].merchant is None:
+            continue
+        yield Problem(
+            severity=Severity.WARNING,
+            message=(
+                "keeps a market stall, but this game runs `economy: simple` — "
+                "the stall will never be offered"
+            ),
+            pack=pack.id,
+            collection="entities",
+            object_id=local_id,
+            field="merchant",
+        )
 
 
 def _check_backgrounds(library: Library, pack: LoadedPack) -> Iterator[Problem]:

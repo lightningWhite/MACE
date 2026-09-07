@@ -41,6 +41,57 @@ entities:
       - {item: fantasy.core:bread, qty: 6}
       - {item: fantasy.core:rope, qty: 2}
     scenes: [talk-to-peddler, buy-bread, buy-rope, sell-rope, sell-reaping-hook]
+    # He deals for the Post's shelves rather than out of his own pack, which
+    # is what makes the price he quotes a fact about the valley: shut the
+    # north road and it moves without anybody editing this file. His `spread`
+    # is his living, and the reason carrying grain to the castle beats
+    # selling it back to him an hour later.
+    merchant:
+      spread: 0.25
+      prompt: "Look over the peddler's stall"
+      remarks:
+        - text: "\"Grain?\" He does not look up. \"You'll pay for grain this week. Nothing's come down the north road since the guard went up it.\""
+          when: [{priceOf: {good: fantasy.core:grain, above: 1.4}}]
+        - text: "\"Barley,\" he says, with some disgust. \"Everyone's barley. I'll take it, but I'll not pretend to want it.\""
+          when: [{priceOf: {good: fantasy.core:grain, below: 0.8}}]
+        - text: "\"Iron's dear,\" he says. \"It's always dear. But it's dearer.\""
+          when: [{priceOf: {good: fantasy.core:iron-ingot, above: 1.6}}]
+        - "\"Have a look,\" he says, and goes back to not looking at you."
+
+  # The two ends of the grain road. Neither of them is a shop: they deal for
+  # the shelves of the place they stand in, so Mereth is cheap because the
+  # valley grows barley and the quartermaster is dear because a garrison eats
+  # it, and the day's walk between them is the whole of the trade.
+  - id: mereth-the-reeve
+    extends: fantasy.core:villager
+    name: "Mereth the Reeve"
+    description: "She keeps the village's tally stick and has never once been wrong with it."
+    merchant:
+      spread: 0.15                 # a neighbour, not a middleman
+      prompt: "Deal with Mereth over the barley"
+      remarks:
+        - text: "\"Take it,\" she says. \"It'll only go stale in the loft.\""
+          when: [{priceOf: {good: fantasy.core:grain, below: 0.9}}]
+        - text: "\"We're short ourselves,\" she says, and does not offer twice."
+          when: [{priceOf: {good: fantasy.core:grain, above: 1.3}}]
+        - "She uncovers the sacks with the air of somebody doing you a favour."
+
+  - id: quartermaster-bel
+    extends: fantasy.core:soldier
+    name: "Quartermaster Bel"
+    description: "A ledger, a stub of chalk, and four hundred men to feed by Friday."
+    disposition: neutral
+    merchant:
+      spread: 0.2
+      prompt: "Sell to the quartermaster"
+      buys: {categories: [food, metal]}
+      sells: {goods: [fantasy.core:iron-ingot]}
+      remarks:
+        - text: "\"Grain,\" he says, before you have said anything. \"Whatever you have. Name it.\""
+          when: [{priceOf: {good: fantasy.core:grain, above: 1.3}}]
+        - text: "\"The road's been kind,\" he says, sounding disappointed about it."
+          when: [{priceOf: {good: fantasy.core:grain, below: 1.0}}]
+        - "He looks at your hands, then at your pack, then at the ledger."
 
   - id: gorm
     extends: fantasy.core:bridge-troll

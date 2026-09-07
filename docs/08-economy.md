@@ -257,19 +257,59 @@ Shocks decay, so the world recovers — on a timescale the player can watch.
 ## Merchants and haggling
 
 A merchant is an actor with a `merchant` block, buying and selling against its
-market's prices with a spread.
+market's prices with a spread. The shelves belong to the settlement — a market
+is a town, not a shop — and the merchant is the person standing in front of
+them who will deal with you. That is why the block is on an actor and why a
+market with nobody at it cannot be traded with at all.
 
 ```yaml
 - id: peddler
   kind: actor
   merchant:
-    market: traders-post-market      # or `mobile: true` to carry its own prices
+    market: traders-post-market      # omit for the market where it stands
     spread: 0.25                     # buys at 0.875×, sells at 1.125×
-    buys: [category: food, category: metal]
-    sells: [grain, salt, rope, dagger]
-    capital: 200                     # can't buy what it can't afford
-    restockTicks: 48
+    buys: {categories: [food, metal]}
+    sells: {goods: [grain, salt]}
+    prompt: "Look over the peddler's stall"
+    remarks:
+      - text: "\"You'll pay for grain this week. Nothing's come over the pass.\""
+        when: [{priceOf: {good: grain, above: 1.4}}]
+      - "\"Have a look,\" he says, and goes back to not looking at you."
 ```
+
+`buys` and `sells` are separate lists on purpose, and naming nothing in either
+means everything the market deals in. A quartermaster who takes food and metal
+and parts with nothing but iron is two lines; a general dealer is none.
+
+**What a merchant says about its prices is content.** `remarks` is ordinary
+conditional description and the engine only chooses the first line that fits,
+so `priceOf` — dearer or cheaper than a multiple of the item's `baseValue`,
+here or at a named market — is what makes a line about a shortage, and it
+composes with weather, season, and quest state like any other condition.
+
+### Buying and selling
+
+The player opens a stall and the engine offers one and ten of everything in
+both directions as ordinary menu options, so a terminal trades with no new
+input mode and a recorded trade replays by prompt like any other choice. A
+front-end with a quantity control sends `{kind: trade, good, qty, sell}`
+instead; both go through the same arithmetic.
+
+**Every unit is priced separately, as the shelf moves under it.** The tenth
+sack costs more than the first, because there are nine fewer sacks by then;
+selling the tenth pays less. This is not an anti-exploit rule bolted on — it is
+the same price formula asked once per unit instead of once per lot. Pricing a
+lot once would let a player empty a hamlet at the price it had before they
+arrived, which is a money printer and a market that lies about what it is short
+of. It also means a round trip at one counter always loses money, which is the
+one trade that must never pay.
+
+Coin is whole, and rounded against the player at each end — up when they buy,
+down when they sell — so the spread cannot be arbitraged away by trading one
+unit at a time.
+
+A merchant has **no capital** yet, so it will buy whatever you bring it. That,
+and haggling, are what phase 6 adds.
 
 **Haggling** is where charisma finally does something. It's a small,
 skill-adjacent negotiation rather than a stat check:
@@ -305,7 +345,15 @@ the price formula is that bound.
 
 **Optional.** `game.rules.economy: simple` gives fixed item values and plain
 buy/sell scenes with no simulation at all. A tight 45-minute story game shouldn't
-have to think about grain. Full simulation is `economy: market`.
+have to think about grain. Full simulation is `economy: market`, which also needs
+`game.rules.currency` — a price the engine works out has to be paid in something
+the player can carry, and which item that is is a genre question, not an engine
+one. A `market` game with no currency is a validation error.
+
+The two are not exclusive at the level of a *thing*. `peasants-quest` runs
+`economy: market` and still sells bread and rope from the peddler's own scenes,
+because those are items with a price rather than goods with a market. What
+`simple` switches off is the stall, not the ability to write a shop.
 
 **Not required for play.** A player who ignores trade entirely should never be
 blocked. Money is a lever, not a gate — quest-critical items are never purchasable

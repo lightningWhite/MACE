@@ -68,6 +68,11 @@
         "scene": "",
         "options": [
           {
+            "prompt": "Deal with Mereth over the barley",
+            "available": true,
+            "hint": null
+          },
+          {
             "prompt": "Say goodbye to Hallam",
             "available": true,
             "hint": null
@@ -108,6 +113,7 @@
       }
     ],
     "choices": [
+      "Deal with Mereth over the barley",
       "Say goodbye to Hallam",
       "Travel to Trader's Post",
       "Take the north road",
@@ -222,7 +228,7 @@
             "weather": "fantasy.core:light-snow",
             "sky": "light snow",
             "indoors": false,
-            "choice": 2,
+            "choice": 3,
             "x": 20.0,
             "y": 0.0
           },
@@ -234,7 +240,7 @@
             "weather": "fantasy.core:drizzle",
             "sky": "drizzle",
             "indoors": true,
-            "choice": 1,
+            "choice": 2,
             "x": -60.0,
             "y": 160.0
           }
@@ -262,7 +268,8 @@
           }
         ],
         "journey": null
-      }
+      },
+      "stall": null
     }
   },
   "steps": [
@@ -552,7 +559,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     },
@@ -809,7 +817,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     },
@@ -1122,7 +1131,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     }
@@ -1414,7 +1424,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     },
@@ -1671,7 +1682,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     },
@@ -1984,7 +1996,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     },
@@ -2271,7 +2284,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     },
@@ -2558,7 +2572,8 @@
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
-          }
+          },
+          "stall": null
         }
       }
     }

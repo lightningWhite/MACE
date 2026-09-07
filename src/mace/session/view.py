@@ -32,6 +32,7 @@ from typing import Any
 from mace.content import ContentError, Library
 from mace.content.ids import split
 from mace.engine.context import RuleContext
+from mace.engine.economy.trade import Stall, look
 from mace.engine.state import GameState, QuestStatus
 from mace.engine.stats import effective, pool_bounds
 from mace.engine.step import context_for
@@ -46,6 +47,7 @@ __all__ = [
     "Place",
     "Road",
     "Sheet",
+    "Stall",
     "Underway",
     "View",
     "view",
@@ -450,6 +452,11 @@ class View:
         Quests the player knows about, active ones first.
     atlas : Atlas
         The map.
+    stall : Stall or None
+        The prices in front of the player, when they are dealing with a
+        merchant. A standing fact for exactly as long as they are standing at
+        the counter, so a shop panel is a projection like every other panel
+        rather than a client accumulating `trade.stall` events.
     """
 
     pack: str
@@ -460,6 +467,7 @@ class View:
     carried: tuple[Carried, ...]
     journal: tuple[Entry, ...]
     atlas: Atlas
+    stall: Stall | None = None
 
     def record(self) -> dict[str, Any]:
         """The whole view, JSON-safe.
@@ -478,6 +486,7 @@ class View:
             "carried": [stack.record() for stack in self.carried],
             "journal": [entry.record() for entry in self.journal],
             "atlas": self.atlas.record(),
+            "stall": None if self.stall is None else self.stall.record(),
         }
 
 
@@ -506,7 +515,32 @@ def view(library: Library, state: GameState) -> View:
         carried=_carried(context),
         journal=_journal(context),
         atlas=_atlas(context),
+        stall=_stall(context),
     )
+
+
+def _stall(context: RuleContext) -> Stall | None:
+    """The prices the player is being quoted, if they are at a counter.
+
+    Reading this never moves a shelf — `trade.look` projects the market the
+    way the weather is read without advancing it — so a client with the shop
+    panel open replays identically to one without.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    Stall or None
+        The offer, or None when no stall is open.
+    """
+    trading = context.state.trading
+    if trading is None:
+        return None
+    merchant = context.state.entities.get(trading)
+    return None if merchant is None else look(context, merchant)
 
 
 # ── The character panel ───────────────────────────────────────────────────────

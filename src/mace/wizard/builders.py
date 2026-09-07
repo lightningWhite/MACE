@@ -344,6 +344,34 @@ CONDITIONS: tuple[Recipe, ...] = (
         ),
     ),
     Recipe(
+        label="What a market is charging",
+        tag="priceOf",
+        group="The world",
+        help=(
+            "Against the ordinary price. 1.5 is half again the going rate, "
+            "0.7 is a glut. Nothing ever goes outside a quarter to four times."
+        ),
+        asks=(
+            Ask("good", "Which good?", Select(options=Query("goods"))),
+            Ask(
+                "above",
+                "Dearer than what multiple of the usual price?",
+                Number(minimum=0.25, maximum=4, integer=False, optional=True),
+            ),
+            Ask(
+                "below",
+                "And cheaper than what multiple?",
+                Number(minimum=0.25, maximum=4, integer=False, optional=True),
+            ),
+            Ask(
+                "market",
+                "Which market?",
+                Select(options=Query("markets"), optional=True),
+                help="Blank means wherever the player is standing.",
+            ),
+        ),
+    ),
+    Recipe(
         label="A quest is finished",
         tag="questComplete",
         group="The story",

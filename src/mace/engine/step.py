@@ -26,6 +26,7 @@ from mace.engine.actions import (
     Interact,
     Look,
     Respond,
+    Trade,
     Travel,
     Use,
     Wait,
@@ -35,6 +36,7 @@ from mace.engine.conditions import RuleError, all_hold, holds
 from mace.engine.context import RuleContext
 from mace.engine.creation import Character, check
 from mace.engine.creation import offer as creation_offer
+from mace.engine.economy import trade as market_trade
 from mace.engine.effects import EffectOutcome, apply_all
 from mace.engine.encounter import Rolled, roll, table_for
 from mace.engine.events import (
@@ -52,8 +54,10 @@ from mace.engine.events import (
     QuestUpdated,
     RuleFailed,
     SceneEntered,
+    StallOpened,
     StatChanged,
     TimePassed,
+    Traded,
     TravelInterrupted,
     TravelLeg,
     WeatherChanged,
@@ -103,6 +107,15 @@ OPTIONS_MENU = ""
 #: How much of a rest's exposure relief a player gets with no roof over
 #: them. Sleeping in a blizzard is still sleeping in a blizzard.
 OPEN_REST_RELIEF = 0.25
+
+#: The instance id that means "stop trading" rather than "start trading with".
+#: An empty id can never name an entity, so the two readings cannot collide.
+CLOSE_STALL = ""
+
+#: The bulk lot a stall menu offers beside a single unit, so a terminal can
+#: trade at a scale worth travelling for. A front-end with a quantity control
+#: sends a `trade` action and is not limited to these two.
+LOT = 10
 
 #: How much road running away costs, in route ticks, when the author has not
 #: said where fleeing puts you. Running is always available and never free, and
@@ -338,6 +351,14 @@ def _perform(action: Action, context: RuleContext, events: list[Event]) -> bool:
         state.pending = None
         return _travel(context.qualify(action.to, "locations"), context, events)
 
+    if isinstance(action, Trade):
+        # Cleared only once the deal is made, so a refused trade leaves the
+        # stall's menu where it was — being told you cannot afford something
+        # should not close the shop.
+        _trade(action.good, action.qty, context, events, sell=action.sell)
+        state.pending = None
+        return False
+
     return _choose(action, context, events)
 
 
@@ -387,6 +408,18 @@ def _choose(action: Choose, context: RuleContext, events: list[Event]) -> bool:
 
     if option.travel is not None:
         return _travel(option.travel, context, events)
+
+    if option.trade is not None:
+        if option.trade == CLOSE_STALL:
+            state.trading = None
+        else:
+            _open_stall(option.trade, context, events)
+        return False
+
+    if option.deal is not None:
+        good, qty, selling = option.deal
+        _trade(good, qty, context, events, sell=selling)
+        return False
 
     if option.effects:
         outcome = apply_all(option.effects, context, source=pending.scene)
@@ -688,6 +721,268 @@ def usable(context: RuleContext) -> list[tuple[str, Entity]]:
         if definition.item is not None and definition.item.use is not None:
             found.append((item_id, definition))
     return found
+
+
+# ── Trading ───────────────────────────────────────────────────────────────────
+
+
+def _merchant(context: RuleContext, instance: str | None = None) -> EntityState | None:
+    """The merchant the player is dealing with, or one standing here.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    instance : str or None
+        A specific instance id. None takes whoever the stall is open with.
+
+    Returns
+    -------
+    EntityState or None
+        The merchant's instance, if it is a merchant and it is still here.
+    """
+    state = context.state
+    wanted = state.trading if instance is None else instance
+    if wanted is None:
+        return None
+    found = state.entities.get(wanted)
+    if found is None or found.location != state.location:
+        return None
+    return found if market_trade.merchant_at(context, found) is not None else None
+
+
+def _open_stall(instance: str, context: RuleContext, events: list[Event]) -> None:
+    """Start dealing with a merchant: their remark, then their prices.
+
+    The remark is ordinary conditional description, so what a merchant says
+    about grain being dear is content and the choice of line is the only part
+    the engine has an opinion about.
+
+    Parameters
+    ----------
+    instance : str
+        The merchant's instance id.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Raises
+    ------
+    RuleError
+        If there is nobody there to deal with.
+    """
+    entity = _merchant(context, instance)
+    if entity is None:
+        raise RuleError("there is nobody here to trade with")
+    block = market_trade.merchant_at(context, entity)
+    assert block is not None
+
+    context.state.trading = instance
+    line = _first_matching(block.remarks, context)
+    if line is not None:
+        events.append(Narrated(line.text))
+    # The prices themselves come from `_show_stall`, which runs with the menu
+    # every turn the stall is open — including this one.
+
+
+def _show_stall(context: RuleContext, events: list[Event]) -> None:
+    """Lay the current prices out, if a stall is open.
+
+    Emitted every time the menu is rebuilt rather than once on opening: a
+    price moves when the player buys, and a front-end holding the first list
+    would be quoting a market that no longer exists.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    """
+    stall = _stall(context)
+    if stall is None:
+        return
+    events.append(
+        StallOpened(
+            merchant=stall.merchant,
+            market=stall.market,
+            currency=stall.currency,
+            goods=tuple(row.record() for row in stall.goods),
+        )
+    )
+
+
+def _stall(context: RuleContext) -> market_trade.Stall | None:
+    """What the open stall is offering, or None when none is.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    Stall or None
+        The offer.
+    """
+    entity = _merchant(context)
+    return None if entity is None else market_trade.look(context, entity)
+
+
+def _trade(
+    good: str, qty: int, context: RuleContext, events: list[Event], *, sell: bool
+) -> None:
+    """Buy or sell, against whoever the player has a stall open with.
+
+    Parameters
+    ----------
+    good : str
+        The good reference.
+    qty : int
+        How many units.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+    sell : bool
+        Whether the player is handing the goods over.
+
+    Raises
+    ------
+    RuleError
+        If there is nobody to deal with, or the deal cannot be made.
+    """
+    entity = _merchant(context)
+    if entity is None:
+        raise RuleError("you are not trading with anybody")
+
+    sale = market_trade.deal(context, entity, good, qty, sell=sell)
+    player = context.state.protagonist
+    stall = market_trade.look(context, entity)
+    assert stall is not None
+
+    for item, delta in (
+        (sale.item, -sale.qty if sale.sell else sale.qty),
+        (stall.currency, sale.coin if sale.sell else -sale.coin),
+    ):
+        events.append(
+            InventoryChanged(
+                actor=player.instance_id,
+                item=item,
+                delta=delta,
+                quantity=player.inventory.get(item, 0),
+            )
+        )
+    events.append(
+        Traded(
+            merchant=entity.instance_id,
+            market=stall.market,
+            good=sale.good,
+            item=sale.item,
+            qty=sale.qty,
+            sell=sale.sell,
+            coin=sale.coin,
+        )
+    )
+
+
+def _offer_stall(context: RuleContext, options: list[PendingChoice]) -> None:
+    """Build the menu of trades an open stall offers.
+
+    One and ten of everything, in both directions. A front-end with a
+    quantity control sends a `trade` action instead and is not limited to
+    these two.
+
+    A single unit the player cannot afford is still listed, greyed out with
+    what they have: in a terminal this menu *is* the price list, and a stall
+    that showed nothing because everything was out of reach would be a stall
+    that would not tell you what anything cost. The bulk row is dropped
+    instead of greyed, because ten of everything you cannot afford one of is
+    a screen of noise.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    options : list of PendingChoice
+        The menu being built.
+    """
+    stall = _stall(context)
+    if stall is None:
+        return
+
+    for row in stall.goods:
+        for lot in (1, LOT):
+            if row.buy is not None and row.available >= lot:
+                cost = _lot_price(context, stall.merchant, row.good, lot, sell=False)
+                afford = cost is not None and stall.coin >= cost
+                if cost is not None and (afford or lot == 1):
+                    options.append(
+                        PendingChoice(
+                            prompt=f"Buy {_lot_of(lot, row.name)} ({cost} coin)",
+                            deal=(row.good, lot, False),
+                            available=afford,
+                            hint=None if afford else f"you have {stall.coin}",
+                        )
+                    )
+            if row.sell is not None and row.carried >= lot:
+                paid = _lot_price(context, stall.merchant, row.good, lot, sell=True)
+                if paid:
+                    options.append(
+                        PendingChoice(
+                            prompt=f"Sell {_lot_of(lot, row.name)} ({paid} coin)",
+                            deal=(row.good, lot, True),
+                        )
+                    )
+    options.append(PendingChoice(prompt=f"Done with {stall.name}", trade=CLOSE_STALL))
+
+
+def _lot_price(
+    context: RuleContext, instance: str, good: str, qty: int, *, sell: bool
+) -> int | None:
+    """What a whole lot would come to, for the menu.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    instance : str
+        The merchant's instance id.
+    good : str
+        Qualified good id.
+    qty : int
+        How many units.
+    sell : bool
+        Whether the player would be handing them over.
+
+    Returns
+    -------
+    int or None
+        The total, or None when the merchant cannot price it.
+    """
+    entity = context.state.entities.get(instance)
+    if entity is None:  # pragma: no cover — the stall named it a line ago
+        return None
+    return market_trade.quote(context, entity, good, qty, sell=sell)
+
+
+def _lot_of(qty: int, name: str) -> str:
+    """Name a quantity of something the way a person would.
+
+    Parameters
+    ----------
+    qty : int
+        How many.
+    name : str
+        The item's name.
+
+    Returns
+    -------
+    str
+        `Grain`, or `ten Grain`.
+    """
+    return name if qty == 1 else f"{qty} {name}"
 
 
 def _travel(destination: str, context: RuleContext, events: list[Event]) -> bool:
@@ -1428,6 +1723,9 @@ def _stand_at(state: GameState, where: str) -> None:
     state.protagonist.location = where
     state.revealed.add(where)
     state.visited.add(where)
+    # Every way of leaving somewhere comes through here, so a stall cannot
+    # follow the player down the road.
+    state.trading = None
 
 
 def _arrive(
@@ -1959,35 +2257,80 @@ def _offer_options(context: RuleContext, events: list[Event]) -> None:
         return
 
     options: list[PendingChoice] = []
-    for scene_ref in here.scenes:
-        _offer_scene(scene_ref, context, options)
-    for entity in state.here():
-        for scene_ref in context.definition(entity).scenes:
+    if _merchant(context) is not None:
+        # A stall takes the whole menu over. Standing at a counter and being
+        # offered the north road in the same list is not what haggling over
+        # grain feels like, and the way out of it is the last option.
+        _show_stall(context, events)
+        _offer_stall(context, options)
+    else:
+        for scene_ref in here.scenes:
             _offer_scene(scene_ref, context, options)
+        for entity in state.here():
+            for scene_ref in context.definition(entity).scenes:
+                _offer_scene(scene_ref, context, options)
+            _offer_stallholder(entity, context, options)
 
-    _offer_journey(context, options)
+        _offer_journey(context, options)
 
-    for way in here.exits:
-        if not all_hold(way.when, context):
-            continue
-        if way.hidden_until and not all_hold(way.hidden_until, context):
-            continue
-        destination = context.qualify(way.to, "locations")
-        target = _location(destination, context)
-        label = way.label or f"Travel to {target.name if target else destination}"
-        options.append(PendingChoice(prompt=label, travel=destination))
+        for way in here.exits:
+            if not all_hold(way.when, context):
+                continue
+            if way.hidden_until and not all_hold(way.hidden_until, context):
+                continue
+            destination = context.qualify(way.to, "locations")
+            target = _location(destination, context)
+            label = way.label or f"Travel to {target.name if target else destination}"
+            options.append(PendingChoice(prompt=label, travel=destination))
 
-    # Last, because talking to people and walking down roads is what a player
-    # came here to do and eating the bread is not. A UI with an inventory panel
-    # will show these somewhere else entirely; the menu is what a terminal has.
-    for item_id, definition in usable(context):
-        options.append(PendingChoice(prompt=f"Use {definition.name}", use=item_id))
+        # Last, because talking to people and walking down roads is what a
+        # player came here to do and eating the bread is not. A UI with an
+        # inventory panel will show these somewhere else entirely; the menu
+        # is what a terminal has.
+        for item_id, definition in usable(context):
+            options.append(PendingChoice(prompt=f"Use {definition.name}", use=item_id))
 
     state.pending = PendingChoices(OPTIONS_MENU, tuple(options))
     events.append(
         ChoicesOffered(
             OPTIONS_MENU,
-            tuple(ChoiceOffered(option.prompt) for option in options),
+            tuple(
+                ChoiceOffered(option.prompt, option.available, option.hint)
+                for option in options
+            ),
+        )
+    )
+
+
+def _offer_stallholder(
+    entity: EntityState, context: RuleContext, options: list[PendingChoice]
+) -> None:
+    """Offer to deal with somebody here who keeps a market.
+
+    Only where the market model is on. A `simple` economy prices from an
+    item's `baseValue` and buys and sells through authored scenes, and a
+    stall offering supply-and-demand prices beside them would be two
+    economies in one game.
+
+    Parameters
+    ----------
+    entity : EntityState
+        Somebody standing here.
+    context : RuleContext
+        The playthrough.
+    options : list of PendingChoice
+        The menu being built.
+    """
+    if context.game.rules.economy != "market":
+        return
+    block = market_trade.merchant_at(context, entity)
+    if block is None or market_trade.look(context, entity) is None:
+        return
+    name = context.definition(entity).name
+    options.append(
+        PendingChoice(
+            prompt=block.prompt or f"Trade with {name}",
+            trade=entity.instance_id,
         )
     )
 

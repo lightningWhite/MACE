@@ -27,7 +27,13 @@ game:
     vitalPool: hitpoints
     effortPool: stamina
     deathIsPermanent: false
-    economy: simple
+    # `market`, because this pack defines three of them and the whole point
+    # of the valley is that grain is cheap where it grows and dear where the
+    # garrison eats it. Bread and rope are still bought from the peddler's
+    # own scenes: they are items with a price, not goods with a market, and
+    # the two ways of selling something sit side by side on purpose.
+    economy: market
+    currency: fantasy.core:gold
 
   quests: [the-kings-summons]
 

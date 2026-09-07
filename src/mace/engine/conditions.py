@@ -32,6 +32,7 @@ from mace.model.conditions import (
     ExprCondition,
     FlagIs,
     HasItem,
+    PriceIs,
     QuestAtStage,
     QuestOutcome,
     SeasonIs,
@@ -163,7 +164,68 @@ def holds(condition: Condition, context: RuleContext) -> bool:
         tags = context.weather().tags
         return any(tag in tags for tag in payload.tags)
 
+    if isinstance(payload, PriceIs):
+        return _price(payload, context)
+
     raise RuleError(f"condition `{condition.tag}` is not answerable yet")
+
+
+def _price(payload: PriceIs, context: RuleContext) -> bool:
+    """Whether a market's price for a good is inside the band asked about.
+
+    Asking never moves a shelf: the market is projected forward on a copy, the
+    way the weather is read without advancing its chain. A merchant's remark
+    about grain being dear must not be the reason grain is dear.
+
+    Parameters
+    ----------
+    payload : PriceIs
+        The question.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    bool
+        The answer. A market that is not there, or does not deal in the good,
+        answers false — there is no price to be above or below.
+
+    Raises
+    ------
+    RuleError
+        If the good or the market names nothing.
+    """
+    from mace.engine.economy import at, prepare, price_of, projected
+
+    try:
+        good_id = context.qualify(payload.good, "goods")
+    except ContentError as error:
+        raise RuleError(error.message) from error
+
+    network = prepare(context.library)
+    if payload.market is None:
+        where = context.state.location
+        prepared = None if where is None else at(network, where)
+    else:
+        try:
+            prepared = network.markets.get(context.qualify(payload.market, "markets"))
+        except ContentError as error:
+            raise RuleError(error.message) from error
+
+    if prepared is None:
+        return False
+    dealt = prepared.goods.get(good_id)
+    if dealt is None or dealt.base_value <= 0.0:
+        return False
+
+    held = projected(context.state, network, prepared.id, context.state.tick)
+    ratio = (
+        price_of(dealt, held.get(good_id, 0.0), prepared.market.wealth)
+        / dealt.base_value
+    )
+    if payload.above is not None and ratio <= payload.above:
+        return False
+    return not (payload.below is not None and ratio >= payload.below)
 
 
 def _expression(payload: ExprCondition, context: RuleContext) -> bool:

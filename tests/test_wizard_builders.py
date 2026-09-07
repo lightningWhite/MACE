@@ -44,6 +44,7 @@ CONDITION_ANSWERS: dict[str, dict[str, Any]] = {
     "any": {"": [{"chance": 0.5}, {"season": ["autumn"]}]},
     "not": {"": {"chance": 0.5}},
     "expr": {"": "world.day > 7"},
+    "priceOf": {"good": "grain", "above": 1.5},
 }
 
 #: The same, for effects.

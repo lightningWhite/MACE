@@ -754,17 +754,44 @@ A settlement's shelves and what it charges for what is on them.
 
 ## Merchant
 
-A block on an `actor` entity.
+A block on an `actor` entity, and the only way a player reaches a market at
+all. The shelves and the prices belong to the settlement — a market is a town,
+not a shop — and this is the person standing in front of them who will deal
+with you. Only offered under `rules.economy: market`.
 
 | Field | Type | Notes |
 |---|---|---|
-| `market` | Ref? | The market it trades against. |
-| `mobile` | bool? | Carries its own prices instead — for caravans and peddlers. |
-| `spread` | number | Buy/sell margin. 0.25 means buys at 0.875×, sells at 1.125×. |
-| `buys` / `sells` | [Ref \| {category: str}]? | |
-| `capital` | number? | It can't buy what it can't afford. |
-| `restockTicks` | int? | |
-| `maxSwing` | number? | How far haggling can move the price, before charisma. |
+| `market` | Ref? | The market it trades against. Omit for the market where it is standing, which is what a merchant usually is. |
+| `spread` | number | Buy/sell margin, and the merchant's living. 0.25 buys at 0.875×, sells at 1.125×. Default 0.2. |
+| `buys` / `sells` | {goods: [Ref]?, categories: [str]?}? | What it will take off you, and what it will part with. Naming nothing means everything its market deals in; a filter is for the specialist. The two are separate — a quartermaster buys food and sells only iron. |
+| `prompt` | str? | What the option to trade is called. Defaults to `Trade with <name>`. |
+| `remarks` | Description? | What it says about its own prices, first matching line. Ordinary conditional description, so `priceOf` is what makes a line about a shortage and the weather and the season can join in. |
+
+Not there yet, and all phase 6: `capital` (it can't buy what it can't
+afford), `restockTicks`, `mobile` for caravans that carry their own prices, and
+`maxSwing` for haggling. Until then a merchant has bottomless coin and `spread`
+is the whole of the negotiation.
+
+### Trading
+
+The player opens a stall, and the engine offers one and ten of everything in
+both directions as ordinary menu options — so a terminal can trade with no new
+input mode, and a recording of a trade replays by prompt like every other
+choice. A front-end with a quantity control sends the action directly:
+
+```json
+{"kind": "trade", "good": "fantasy.core:grain", "qty": 20, "sell": false}
+```
+
+Two events come back. `trade.stall` carries the whole price list, reissued
+every turn the stall is open because a price moves when the player buys;
+`trade.done` says what the deal was. The same list is on the view-model as
+`view.stall` for as long as the player is at the counter.
+
+**Every unit is priced separately, as the shelf moves under it.** The tenth
+sack costs more than the first because there are nine fewer sacks by then.
+Coin is whole, and rounded against the player at each end, so the spread
+cannot be arbitraged away one unit at a time.
 
 ---
 

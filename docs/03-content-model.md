@@ -331,6 +331,7 @@ when:
   - {questComplete: reach-the-castle}
   - {questFailed: reach-the-castle}
   - {chance: 0.15}                                  # rolls on a scene-local stream
+  - {priceOf: {good: fantasy.core:grain, above: 1.5}}   # dear, where you stand
   - {expr: "player.pools.hitpoints.current < player.pools.hitpoints.max * 0.25"}
 ```
 
