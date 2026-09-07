@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from mace.cli.create import ask
+from mace.cli.map import draw
 from mace.cli.timing import Keypress, raw_terminal_available, read_key
 from mace.content import ContentError, load_library
 from mace.engine.actions import Action, Choose, Respond
@@ -603,10 +604,18 @@ def choose(renderer: Renderer, session: Session) -> Action | None:
 
         if typed in {"q", "quit", "exit"}:
             return None
+        if typed in {"m", "map"}:
+            renderer.line("")
+            for line in draw(session.view().atlas):
+                renderer.line(line)
+            continue
         if not typed:
             continue
         if not typed.isdigit():
-            renderer.line("  Type the number of what you want to do, or `q` to stop.")
+            renderer.line(
+                "  Type the number of what you want to do, `m` for the map, "
+                "or `q` to stop."
+            )
             continue
 
         chosen = int(typed)
@@ -687,6 +696,7 @@ def play(
         renderer.line("  (no timed input available here — playing combat untimed)")
 
     renderer.line(RULE)
+    renderer.line("  (`m` for the map, `q` to stop)")
     if resume is not None:
         # The replay already happened, in silence: re-reading a whole
         # playthrough is not resuming it. What the player needs is the world

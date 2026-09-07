@@ -149,6 +149,32 @@ def test_play_reports_a_broken_pack(
     assert "game" in capsys.readouterr().err
 
 
+def test_play_draws_the_map_on_demand(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scripted(monkeypatch, ["m", "q"])
+    assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
+    printed = capsys.readouterr().out
+    assert "● Fenmoor" in printed
+    assert "6 ticks  Hagan's Castle" in printed
+
+
+def test_play_says_the_map_is_there(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scripted(monkeypatch, ["q"])
+    assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
+    assert "`m` for the map" in capsys.readouterr().out
+
+
+def test_play_offers_the_map_when_the_player_types_nonsense(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scripted(monkeypatch, ["north", "q"])
+    assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
+    assert "`m` for the map" in capsys.readouterr().out
+
+
 # ── Saving and carrying on ────────────────────────────────────────────────────
 
 

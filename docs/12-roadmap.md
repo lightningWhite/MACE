@@ -117,6 +117,10 @@ writing YAML.
 - [x] Saves: the packs, the seed and the action log, with choices recorded by
       prompt so a save survives an author editing the menu. `mace play --save`
       and `--load`
+- [x] The view-model: character sheet, pack, journal, and an atlas of the
+      places and roads the player knows — the standing facts no event carries
+- [x] An ASCII map in the terminal, drawn from that atlas, so the map is
+      engine data before it is a browser feature
 - [ ] FastAPI session service; WebSocket event stream
 - [ ] React + TS PWA: narrative pane, choices, character, inventory, journal
 - [ ] SVG map with fog of war, route lengths, weather overlay

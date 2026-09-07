@@ -34,6 +34,7 @@ from mace.engine.creation import Character
 from mace.engine.events import Event
 from mace.engine.state import GameState, Outcome
 from mace.engine.step import StepResult, begin, step
+from mace.session.view import View, view
 
 __all__ = ["Session", "choose_game"]
 
@@ -171,6 +172,20 @@ class Session:
         if pending is None:
             return ()
         return tuple(option.prompt for option in pending.options)
+
+    def view(self) -> View:
+        """Project everything a front-end draws that the events do not carry.
+
+        The pack, the character sheet, the journal, the map. A projection, so
+        asking for it changes nothing and a session with a map open replays
+        identically to one without.
+
+        Returns
+        -------
+        View
+            The standing facts.
+        """
+        return view(self.library, self.state)
 
     def perform(self, action: Action) -> StepResult:
         """Apply one action and remember it.

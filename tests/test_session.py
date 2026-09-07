@@ -58,7 +58,12 @@ def forked(root: Path, *, first: str = "castle") -> Path:
         root,
         world={
             "locations": [
-                {"id": "home", "name": "Home", "description": "A well.", "exits": exits},
+                {
+                    "id": "home",
+                    "name": "Home",
+                    "description": "A well.",
+                    "exits": exits,
+                },
                 {"id": "castle", "name": "The Castle"},
                 {"id": "mill", "name": "The Mill"},
             ],
@@ -245,7 +250,11 @@ def test_a_save_that_stops_fitting_says_at_which_action(tmp_path: Path) -> None:
         tmp_path / "gone",
         world={
             "locations": [
-                {"id": "home", "name": "Home", "exits": [{"to": "mill", "route": "lane"}]},
+                {
+                    "id": "home",
+                    "name": "Home",
+                    "exits": [{"to": "mill", "route": "lane"}],
+                },
                 {"id": "castle", "name": "The Castle"},
                 {"id": "mill", "name": "The Mill"},
             ],

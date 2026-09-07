@@ -137,6 +137,32 @@ and the alternative to emitting it is letting the UI reach into engine state
 for it, which is the boundary this protocol exists to hold. It is emitted last
 in every step, so it describes the world the offered choices belong to.
 
+#### The other half: the view-model
+
+Events are things that happened, and a panel is a standing fact. The pack in
+your hands, the quests in your journal, the map of what you know: a front-end
+that rebuilt those by accumulating events would be keeping a second copy of
+the world, and the first thing a second copy does is disagree with the first.
+
+So a front-end renders events *and* reads `mace.session.view` — a read-only
+projection of content and state into a character sheet, an inventory, a
+journal, and an atlas of places and roads. Like the debug overlay it changes
+nothing: the engine emits nothing extra because somebody is looking, and a
+playthrough with the map open replays byte-identically to one without it.
+
+Two rules keep it from becoming a hole in this boundary.
+
+**Fog of war is applied in the projection, not in the client.** A place the
+player has not heard of is not in the atlas at all, rather than being in it
+with a flag the client is trusted to honour. `revealed` is what the player has
+heard of and `visited` is where they have actually stood — kept apart, because
+a map that cannot tell those two apart has thrown away the reward for going.
+
+**Reading never draws.** A region's weather chain is advanced by `sync`, at
+the points where time moves, so a region the player is nowhere near shows the
+sky it had when they last looked at it. That is not a limitation of the
+projection; on a fogged map it is the only honest thing to draw.
+
 ## Determinism and randomness
 
 A session is fully described by:

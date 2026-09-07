@@ -16,7 +16,7 @@ The target layout for the web client. Four regions, all driven by events:
 │  to be rid of the weight.                │   ●────┼──── ○ Hagan's Castle │
 │                                          │  Fenmoor│                     │
 │  "Toll," it says. "Ten gold, or swim."   │        ◌ Troll Bridge         │
-│                                          │  ● here ○ known ◌ visited     │
+│                                          │  ● here ◍ visited ○ known     │
 │  ▸ Pay the toll (10 gold)                ├───────────────────────────────┤
 │  ▸ Try to talk it down                   │  ▣ LETHOLIN                   │
 │  ▸ Draw your sword                       │  ♥ 38/50   ⚡ 26/40           │
@@ -41,8 +41,10 @@ building at all.
 
 - Nodes are locations, edges are routes. Edge length reflects `ticks`, so
   distance is legible at a glance.
-- Fog of war: unknown / heard-of / visited / current, each visually distinct.
-  Discovery is a reward.
+- Fog of war: unknown / heard-of / visited / current, each visually distinct —
+  and distinct by *shape*, not only by color. Discovery is a reward, and the
+  scale runs from hollow to solid as the player learns a place: `○` heard of,
+  `◍` been there, `●` here.
 - Routes show what the player has learned about them — a road they've been
   ambushed on twice should look like it.
 - Weather overlay per region, so an approaching front is something you can *see*
@@ -73,7 +75,10 @@ Not a fallback — a real client, and the one that keeps the project honest, sin
 anything the terminal can render is provably engine data rather than UI logic.
 
 - Same event stream, rendered as text with ANSI color.
-- An ASCII map view on demand.
+- An ASCII map view on demand — `m` at the prompt. It draws the same atlas the
+  web client will draw as SVG, plotted from `mapPosition` where an author set
+  one and listed where they did not, so fog of war, route lengths and the
+  weather overlay are all provably engine data before a browser is involved.
 - Combat via single keypress against a monotonic deadline.
 - The status line as a persistent bottom row.
 - `mace author` — the whole wizard, rendering the same declarative steps the

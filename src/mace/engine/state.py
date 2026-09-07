@@ -747,7 +747,13 @@ class GameState:
     variables : dict
         Author-set game variables, readable from expressions as `vars.name`.
     revealed : set of str
-        Qualified ids of locations the player knows about.
+        Qualified ids of locations the player knows about — heard of, or
+        stood in.
+    visited : set of str
+        Qualified ids of locations the player has actually stood in. A subset
+        of `revealed`, kept apart from it because a map that cannot tell
+        somewhere you have been from somewhere you were told about has thrown
+        away the reward for going there.
     played : set of str
         Qualified ids of scenes that have run, for `once`.
     weather : dict
@@ -803,6 +809,7 @@ class GameState:
     quests: dict[str, QuestState] = field(default_factory=dict)
     variables: dict[str, Any] = field(default_factory=dict)
     revealed: set[str] = field(default_factory=set)
+    visited: set[str] = field(default_factory=set)
     played: set[str] = field(default_factory=set)
     weather: dict[str, RegionWeather] = field(default_factory=dict)
     fronts: list[FrontState] = field(default_factory=list)

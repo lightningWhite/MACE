@@ -11,15 +11,37 @@ drives a `Session` and renders its events. Nothing above this line calls
 
 from mace.session.saves import FORMAT, Save, SaveError, load, read, resume, write
 from mace.session.session import Session, choose_game
+from mace.session.view import (
+    Atlas,
+    Carried,
+    Entry,
+    Gauge,
+    Place,
+    Road,
+    Sheet,
+    Underway,
+    View,
+    view,
+)
 
 __all__ = [
     "FORMAT",
+    "Atlas",
+    "Carried",
+    "Entry",
+    "Gauge",
+    "Place",
+    "Road",
     "Save",
     "SaveError",
     "Session",
+    "Sheet",
+    "Underway",
+    "View",
     "choose_game",
     "load",
     "read",
     "resume",
+    "view",
     "write",
 ]

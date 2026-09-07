@@ -505,8 +505,7 @@ def _fled(fight: CombatState, context: RuleContext, events: list[Event]) -> bool
     state = context.state
     if fight.flee_to is not None:
         origin = state.location
-        state.protagonist.location = fight.flee_to
-        state.revealed.add(fight.flee_to)
+        _stand_at(state, fight.flee_to)
         state.journey = None
         events.append(Moved(origin, fight.flee_to))
         return False
@@ -711,8 +710,7 @@ def _travel(destination: str, context: RuleContext, events: list[Event]) -> bool
     state.journey = None
     if route is None:
         # An exit with no route is a doorway, not a road: one tick, no legs.
-        state.protagonist.location = destination
-        state.revealed.add(destination)
+        _stand_at(state, destination)
         _advance(context, 1, events)
         events.append(Moved(origin, destination, None, 1))
         return _arrive(destination, context, events)
@@ -883,8 +881,7 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
             continue
 
         where, stop_if, table = reached
-        state.protagonist.location = where
-        state.revealed.add(where)
+        _stand_at(state, where)
         if _arrive(where, context, events):
             return True
 
@@ -999,8 +996,7 @@ def _finish(
     assert journey is not None
     origin = state.location
 
-    state.protagonist.location = journey.destination
-    state.revealed.add(journey.destination)
+    _stand_at(state, journey.destination)
     state.journey = None
     _announce_time(context, state.tick - began_at, events)
     events.append(
@@ -1401,6 +1397,25 @@ def _follow(context: RuleContext, events: list[Event]) -> None:
             )
             continue
         entity.location = where
+
+
+def _stand_at(state: GameState, where: str) -> None:
+    """Put the player in a place, and remember that they have been there.
+
+    Every way of arriving somewhere goes through here — a doorway, a road, a
+    waypoint on one, a fight run from — so that knowing a place and having
+    been to it never come apart. See `GameState.visited`.
+
+    Parameters
+    ----------
+    state : GameState
+        The playthrough.
+    where : str
+        Qualified location id.
+    """
+    state.protagonist.location = where
+    state.revealed.add(where)
+    state.visited.add(where)
 
 
 def _arrive(
@@ -2081,6 +2096,7 @@ def _initial_state(
             if location.starts_discovered:
                 state.revealed.add(qualified_location)
     state.revealed.add(start)
+    state.visited.add(start)
 
     for quest_ref in game.quests:
         quest_id = library.resolve(quest_ref, "quests", within=pack_id)
