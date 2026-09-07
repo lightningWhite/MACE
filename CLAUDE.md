@@ -62,6 +62,7 @@ src/mace/
     combat/      Tempo combat resolution
     expr/        Safe condition/effect expression evaluation
   session/       A running game: actions in, events out, saves
+  browser.py     The engine as a browser tab drives it (Pyodide)
   wizard/        Declarative authoring flow (shared by CLI and web)
   cli/           Terminal front-end (play + author)
   api/           FastAPI session service (needs the `api` extra)
@@ -91,6 +92,16 @@ decision used to look like.
 `web/` is a front-end and is held to the same bar as the CLI: it renders
 events and the view-model, and holds no rules. `npm --prefix web run check`
 (tsc, strict) and `npm --prefix web test` (vitest) both run on `git push`.
+
+It runs against either engine and cannot tell them apart — the FastAPI service
+over HTTP, or the same Python compiled to WebAssembly in a worker in the tab
+(`mace.browser`, packed by `mace bundle`). If you change the wire, change it
+once: `mace.session.frame` and the projections' own `record()` methods are
+shared by every front-end on purpose.
+
+`npm --prefix web run check:pyodide` plays a recorded playthrough under the
+real WebAssembly runtime and compares every frame against CPython's. Run it
+after touching the engine, the bundle, or `mace.browser`.
 
 Its tests replay `web/src/test/frames.json` — real frames generated from a
 real playthrough by `tests/test_web_wire.py`. If you change the wire, that

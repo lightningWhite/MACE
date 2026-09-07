@@ -87,7 +87,7 @@ export interface Call {
  * the three frames the engine actually produced for those three actions.
  */
 export function fakeService(
-  options: { failOpen?: string; script?: typeof steps } = {},
+  options: { failOpen?: string; script?: typeof steps; absent?: boolean } = {},
 ) {
   const calls: Call[] = [];
   const script = options.script ?? steps;
@@ -108,6 +108,9 @@ export function fakeService(
         headers: { "content-type": "application/json" },
       });
 
+    // A static deployment has no service at all: every `/api` path is a
+    // 404 from whatever is serving the files.
+    if (options.absent === true) return reply({ detail: "not found" }, 404);
     if (path === "/api/games") return reply({ games: GAMES });
     if (path.includes("/creation")) return reply(CREATION);
     if (path === "/api/sessions" && method === "POST") {

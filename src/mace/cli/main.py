@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from mace import __version__
 from mace.cli.author import author
+from mace.cli.bundle import bundle
 from mace.cli.create import parse_spend
 from mace.cli.play import play
 from mace.content import ContentError, Severity, validate_paths
@@ -185,6 +186,31 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     server.set_defaults(run=run_serve)
+
+    packer = commands.add_parser(
+        "bundle",
+        help="pack the engine and some worlds into one file for a browser",
+        description=(
+            "Write a zip holding the `mace` package and the content packs "
+            "found under the given paths. The static web build fetches it and "
+            "runs the engine in the tab, with no server at all."
+        ),
+    )
+    packer.add_argument(
+        "paths",
+        nargs="*",
+        type=Path,
+        default=[Path("packs")],
+        help="pack directories to include (default: packs/)",
+    )
+    packer.add_argument(
+        "-o",
+        "--out",
+        type=Path,
+        default=Path("web/public/mace-bundle.zip"),
+        help="where to write it (default: web/public/mace-bundle.zip)",
+    )
+    packer.set_defaults(run=run_bundle)
 
     started = commands.add_parser(
         "new",
@@ -370,6 +396,31 @@ def run_serve(options: argparse.Namespace) -> int:
 
     print(f"MACE on http://{options.host}:{options.port} — ctrl-c to stop")
     uvicorn.run(app, host=options.host, port=options.port, log_level="warning")
+    return 0
+
+
+def run_bundle(options: argparse.Namespace) -> int:
+    """Run `mace bundle`.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    try:
+        written, packed = bundle(options.paths, options.out)
+    except ContentError as error:
+        print(f"error   {error}", file=sys.stderr)
+        return 1
+
+    size = written.stat().st_size
+    names = ", ".join(one.rpartition("/")[2] for one in packed)
+    print(f"wrote {written} — {size // 1024} KiB, {len(packed)} packs: {names}")
     return 0
 
 

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from typing import Any
 
 from mace.content import ContentError, Library
 from mace.engine.stats import DEFAULT_ABILITY_MAX
@@ -74,6 +75,24 @@ class StatOffer:
         """
         return max(0, int(self.maximum - self.base))
 
+    def record(self) -> dict[str, Any]:
+        """The stat, JSON-safe.
+
+        Returns
+        -------
+        dict
+            camelCase fields, `room` included because a front-end drawing a
+            "+" button needs to know when to stop and should not have to
+            re-derive it.
+        """
+        return {
+            "stat": self.stat,
+            "base": self.base,
+            "minimum": self.minimum,
+            "maximum": self.maximum,
+            "room": self.room,
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class BackgroundOffer:
@@ -97,6 +116,21 @@ class BackgroundOffer:
     name: str
     description: str
     grants: tuple[str, ...] = ()
+
+    def record(self) -> dict[str, Any]:
+        """The background, JSON-safe.
+
+        Returns
+        -------
+        dict
+            camelCase fields.
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "grants": list(self.grants),
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +167,25 @@ class Creation:
             True when the player has something to decide.
         """
         return bool(self.backgrounds) or (self.points > 0 and bool(self.stats))
+
+    def record(self) -> dict[str, Any]:
+        """The whole question, JSON-safe.
+
+        Every front-end asks it the same way, so every front-end sends the
+        same thing — the terminal, the service, and the engine in a browser
+        tab all render this and hand back a `Character`.
+
+        Returns
+        -------
+        dict
+            camelCase fields.
+        """
+        return {
+            "asksAnything": self.asks_anything,
+            "points": self.points,
+            "backgrounds": [one.record() for one in self.backgrounds],
+            "stats": [one.record() for one in self.stats],
+        }
 
 
 @dataclass(frozen=True, slots=True)

@@ -752,6 +752,15 @@ button:focus-visible {
   margin: 0;
 }
 
+.progress {
+  margin: 0;
+  color: var(--warm);
+}
+
+.transport-local {
+  color: var(--cold);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .transcript {
     scroll-behavior: auto;

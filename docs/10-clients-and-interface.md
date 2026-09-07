@@ -147,6 +147,18 @@ against a protocol that has moved.
   client-side. A static build deployable to GitHub Pages, playable offline, with
   no server to run or pay for. This matters a great deal for a hobby community
   project.
+
+  `mace bundle` writes the `mace` package and every content pack into one
+  350 KB zip. A worker starts Pyodide, unzips it onto `sys.path`, and drives
+  `mace.browser.Runtime` — the third front-end, sitting in the package beside
+  `mace.cli` and `mace.api` so it is linted, typed and tested with everything
+  else. It hands out the same frames `mace.session.frame` builds, so the
+  client cannot tell it from the service.
+
+  **The client is not told which it has; it asks.** It probes `/api/games`,
+  and falls through to the engine in the tab when nothing answers. One build
+  serves the hosted deployment and the static one, and an offline tab in a
+  static deployment simply plays.
 - **Later, if needed** — a TypeScript port of the engine, verified against the
   Python one by the golden replay tests. Only worth doing if Pyodide's download
   size proves to be a real barrier; the decision can wait for data.
@@ -154,6 +166,11 @@ against a protocol that has moved.
 See [ADR-0005](decisions/0005-python-core-with-pyodide.md).
 
 ### The offline shell
+
+In a **static** deployment there is nothing to be offline from: the engine, the
+worlds and the runtime are all same-origin files, the service worker caches
+them on the first visit, and the second visit plays with the network off. The
+shell below is what a *hosted* deployment can do — which is less, and says so.
 
 The client is installable: a manifest, an icon, and a service worker written
 by hand rather than generated, because what it has to do is small and a

@@ -22,12 +22,11 @@ from typing import Any
 
 import pytest
 
-from mace.api.app import frame
 from mace.cli.play import keys_for
 from mace.content import load_library
 from mace.engine.actions import decode
 from mace.engine.creation import Character
-from mace.session import Session
+from mace.session import Session, frame
 
 #: Where the client's tests read it from.
 FIXTURE = Path(__file__).resolve().parents[1] / "web" / "src" / "test" / "frames.json"

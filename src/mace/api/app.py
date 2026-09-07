@@ -38,11 +38,11 @@ from mace.api.sessions import Registry, UnknownSession
 from mace.content import ContentError, Library, load_library
 from mace.engine.actions import decode
 from mace.engine.conditions import RuleError
-from mace.engine.creation import Character, Creation
+from mace.engine.creation import Character
 from mace.engine.creation import offer as creation_offer
-from mace.session import Save, SaveError, Session, choose_game, resume
+from mace.session import Save, SaveError, Session, choose_game, frame, resume
 
-__all__ = ["DEV_ORIGINS", "New", "create_app", "frame"]
+__all__ = ["DEV_ORIGINS", "New", "create_app"]
 
 #: Where a development web client is served from. The PWA is built by Vite,
 #: which means a different origin from this service until they are deployed
@@ -108,72 +108,6 @@ class New(Wire):
     time_pressure: float = Field(default=1.0, gt=0.0, le=10.0)
     character: Made | None = None
     save: dict[str, Any] | None = None
-
-
-def frame(session_id: str, session: Session) -> dict[str, Any]:
-    """Everything a client needs after something happened.
-
-    One shape for every reply, so a client has one renderer rather than one
-    per endpoint. The events are what happened; the view is what stands; the
-    choices are what may be done next, named the way a save names them.
-
-    Parameters
-    ----------
-    session_id : str
-        Which playthrough.
-    session : Session
-        The playthrough.
-
-    Returns
-    -------
-    dict
-        JSON-safe.
-    """
-    return {
-        "session": session_id,
-        "playing": session.playing,
-        "events": [event.record() for event in session.events],
-        "choices": list(session.offered),
-        "view": session.view().record(),
-    }
-
-
-def _creation(offered: Creation) -> dict[str, Any]:
-    """Render the character-creation question.
-
-    Parameters
-    ----------
-    offered : Creation
-        The projection `mace.engine.creation` already built.
-
-    Returns
-    -------
-    dict
-        JSON-safe.
-    """
-    return {
-        "asksAnything": offered.asks_anything,
-        "points": offered.points,
-        "backgrounds": [
-            {
-                "id": one.id,
-                "name": one.name,
-                "description": one.description,
-                "grants": list(one.grants),
-            }
-            for one in offered.backgrounds
-        ],
-        "stats": [
-            {
-                "stat": one.stat,
-                "base": one.base,
-                "minimum": one.minimum,
-                "maximum": one.maximum,
-                "room": one.room,
-            }
-            for one in offered.stats
-        ],
-    }
 
 
 def create_app(
@@ -311,7 +245,7 @@ def create_app(
             404 if there is no such game.
         """
         try:
-            return _creation(creation_offer(loaded, pack, background=background))
+            return creation_offer(loaded, pack, background=background).record()
         except ContentError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
 

@@ -12,7 +12,7 @@ installable — and importable under Pyodide — without a web framework.
 See docs/10-clients-and-interface.md.
 """
 
-from mace.api.app import create_app, frame
+from mace.api.app import create_app
 from mace.api.sessions import Registry, UnknownSession
 
-__all__ = ["Registry", "UnknownSession", "create_app", "frame"]
+__all__ = ["Registry", "UnknownSession", "create_app"]

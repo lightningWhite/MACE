@@ -1,5 +1,11 @@
 """Reading and writing authored content without eating the comments.
 
+`ruamel.yaml` is imported inside the functions rather than at the top of the
+file, which is worth the small ugliness: it is an *authoring* dependency, and
+`import mace.content` is on the path to playing a game. Under Pyodide that is
+a wheel the player would download to run a browser tab that never writes a
+pack. Reading content needs pyyaml; only writing it needs this.
+
 Everything the wizard saves goes through here, so how MACE renders a pack is
 one decision in one place rather than a habit spread across a dozen flows.
 
@@ -29,13 +35,13 @@ from __future__ import annotations
 import io
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
-
-from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
-from ruamel.yaml.error import YAMLError
+from typing import TYPE_CHECKING, Any
 
 from mace.content.errors import ContentError
+
+if TYPE_CHECKING:
+    from ruamel.yaml import YAML
+    from ruamel.yaml.comments import CommentedMap
 
 __all__ = ["document", "dump", "load_document", "write_document"]
 
@@ -61,6 +67,8 @@ def _writer() -> YAML:
     YAML
         A handler that preserves comments, quoting, and key order.
     """
+    from ruamel.yaml import YAML  # noqa: PLC0415
+
     handler = YAML()
     handler.preserve_quotes = True
     handler.width = WIDTH
@@ -87,6 +95,8 @@ def load_document(path: Path) -> Any:
     ContentError
         If the file is not readable or not valid YAML.
     """
+    from ruamel.yaml.error import YAMLError  # noqa: PLC0415
+
     try:
         return _writer().load(path.read_text())
     except YAMLError as error:
@@ -108,6 +118,8 @@ def document(body: Mapping[str, Any] | None = None) -> CommentedMap:
     CommentedMap
         An empty document that can carry comments once it has any.
     """
+    from ruamel.yaml.comments import CommentedMap  # noqa: PLC0415
+
     return CommentedMap(body or {})
 
 

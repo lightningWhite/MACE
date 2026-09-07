@@ -193,6 +193,40 @@ describe("the game", () => {
   });
 });
 
+// ── Where the game runs ───────────────────────────────────────────────────────
+
+describe("choosing an engine", () => {
+  it("says it is playing against a server when there is one", async () => {
+    stub(fakeService());
+    render(<App />);
+    expect(
+      await screen.findByText(/Playing against a MACE server/),
+    ).toBeTruthy();
+  });
+
+  it("falls through to the engine in the tab when there is not", async () => {
+    // A static deployment has no `/api` at all. The client asks rather than
+    // being told at build time, so one build serves both. See ADR-0005.
+    const booting = vi.fn();
+    vi.stubGlobal("fetch", fakeService({ absent: true }).fetcher);
+    vi.stubGlobal(
+      "Worker",
+      class {
+        postMessage = booting;
+        terminate() {}
+        onmessage: unknown = null;
+      },
+    );
+    render(<App />);
+
+    expect(
+      await screen.findByText(/The engine is running in this tab/),
+    ).toBeTruthy();
+    // And it has started asking the worker to boot.
+    await waitFor(() => expect(booting).toHaveBeenCalled());
+  });
+});
+
 // ── Offline ───────────────────────────────────────────────────────────────────
 
 describe("with no network", () => {

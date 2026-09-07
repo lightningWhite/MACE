@@ -45,6 +45,32 @@ contract every front-end is written against — with:
 MACE_UPDATE_FIXTURES=1 pytest tests/test_web_wire.py
 ```
 
+## Two deployments, one build
+
+**Hosted** — `mace serve` holds the sessions, the client is a renderer:
+
+```bash
+mace serve packs/ --client web/dist
+```
+
+**Static** — no server at all. The engine is compiled to WebAssembly and runs
+in a worker in the tab:
+
+```bash
+npm --prefix web run build     # copies Pyodide, writes the bundle, builds
+# then serve web/dist with anything at all
+```
+
+The client does not know which it is until it asks: it probes `/api/games` and
+falls through to the local engine when nothing answers. That is also what lets
+an offline tab in a static deployment keep playing.
+
+`npm run check:pyodide` boots the real runtime, plays the recorded playthrough
+through it, and compares every frame against the ones CPython produced. It
+takes about half a minute, so it is not part of `npm test` — but it is what
+makes "one implementation" a fact rather than a hope, and CI runs it before
+publishing.
+
 ## Offline
 
 `public/sw.js` is a hand-written service worker: it caches the shell as the
@@ -59,11 +85,18 @@ the Pyodide build, when there will be no server to be offline from.
 ## Layout
 
 ```
+scripts/
+  pyodide.mjs       Copy the runtime out of node_modules (build step)
+  bundle.mjs        Ask MACE for a zip of itself and its worlds (build step)
+  pyodide-check.mjs Play it under WebAssembly, compare against CPython
 src/
   protocol.ts     The wire, as TypeScript sees it. The only file that knows it.
-  api.ts          Talking to the service: requests, and the socket
+  api.ts          The Service interface, and the one that talks over a network
+  local/          The other one: Pyodide in a worker, same interface
   transcript.ts   Events → lines to read (the job Renderer does in the CLI)
   storage.ts      Keeping the save, because the server does not (ADR-0009)
   App.tsx         The client: a transcript, a frame, and a connection
+  map/            The SVG map and its layout
+  combat/         The tell, the window, and the answers
   panels/         Character, Pack, Journal, Choices, StatusLine, Opening
 ```

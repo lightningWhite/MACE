@@ -12,17 +12,32 @@
  * they would click it and be told no. Better to fail honestly and let the
  * client say it is offline.
  *
- * What the shell can do without a network is therefore: load, say so, and
- * keep the save safe. That is the whole of it until the engine moves into the
- * tab (ADR-0005), at which point there is no server to be offline from.
+ * Everything else same-origin *is* cached, and in a static build that
+ * includes the Pyodide runtime and the engine bundle. So the second visit to
+ * a static deployment plays with no network at all: there is no server to be
+ * offline from, which is what ADR-0005 was for.
  */
 
 const CACHE = "mace-shell-v1";
 
+/**
+ * Where the app lives.
+ *
+ * The worker's own scope, not `/`: a project site on GitHub Pages is served
+ * from `/<repo>/`, and a service worker that precached `/` there would cache
+ * somebody else's page.
+ */
+const BASE = new URL("./", self.registration.scope);
+
 self.addEventListener("install", (event) => {
   // The document itself, so a cold offline start has something to open.
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(["/", "/manifest.webmanifest"])),
+    caches
+      .open(CACHE)
+      .then((cache) =>
+        cache.addAll([BASE.pathname, new URL("manifest.webmanifest", BASE).pathname]),
+      )
+      .catch(() => undefined),
   );
   self.skipWaiting();
 });
@@ -44,7 +59,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith(new URL("api/", BASE).pathname)) return;
 
   // A navigation offline gets the shell back, so the app opens and can say
   // what is wrong rather than showing the browser's error page.
@@ -53,10 +68,15 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put("/", copy));
+          void caches
+            .open(CACHE)
+            .then((cache) => cache.put(BASE.pathname, copy))
+            .catch(() => undefined);
           return response;
         })
-        .catch(() => caches.match("/").then((hit) => hit ?? Response.error())),
+        .catch(() =>
+          caches.match(BASE.pathname).then((hit) => hit ?? Response.error()),
+        ),
     );
     return;
   }
@@ -70,7 +90,13 @@ self.addEventListener("fetch", (event) => {
         fetch(request).then((response) => {
           if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(request, copy));
+            // Not awaited, and allowed to fail: the runtime is fourteen
+            // megabytes and a device that will not store it should still be
+            // able to play, just not offline.
+            void caches
+              .open(CACHE)
+              .then((cache) => cache.put(request, copy))
+              .catch(() => undefined);
           }
           return response;
         }),

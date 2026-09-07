@@ -135,7 +135,10 @@ writing YAML.
       itself the way the terminal's does
 - [x] Offline-capable PWA shell — installable, and honest about the fact
       that the *game* still needs the server until Pyodide lands
-- [ ] Pyodide build: engine client-side, static deploy to GitHub Pages
+- [x] Pyodide build: engine client-side, static deploy to GitHub Pages.
+      `mace bundle` packs the engine and the worlds into 350 KB; the client
+      probes for a service and falls through to the engine in the tab when
+      there is none, so one build serves both deployments
 - [x] Accessibility pass — the time-pressure setting docs/10 asked for and
       nothing had implemented, ARIA live regions, focus that stays in the game
       between turns, reduced motion, and nothing carried by colour alone

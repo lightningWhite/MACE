@@ -8,9 +8,10 @@
  * cannot be had, the same actions go by `POST`, the same frames come back,
  * and the only difference the player sees is the word in the corner.
  *
- * Every path here is relative. The dev server proxies `/api` and a deployment
- * serves the client from the same origin as the service, so there is no base
- * URL to configure and no build that is wrong in one environment.
+ * Every path here is same-origin and resolved against the page's base. The
+ * dev server proxies `/api`, a hosted deployment serves the client from the
+ * same origin as the service, and a static one has no service at all — so
+ * there is nothing to configure and no build that is wrong in one of them.
  */
 
 import type {
@@ -23,6 +24,15 @@ import type {
   SaveRecord,
 } from "./protocol";
 import { isRefusal } from "./protocol";
+
+/**
+ * Where the service is, if there is one.
+ *
+ * Relative to the page's base rather than to `/`, because a project site on
+ * GitHub Pages lives under `/<repo>/` and a build that hard-coded a leading
+ * slash would be wrong in exactly one of the two deployments.
+ */
+export const API = `${import.meta.env.BASE_URL}api`;
 
 /** What the service said when it refused. */
 export class ServiceError extends Error {
@@ -62,7 +72,7 @@ async function ask<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function listGames(): Promise<{ games: GameSummary[] }> {
-  return ask("/api/games");
+  return ask(`${API}/games`);
 }
 
 export function creationFor(
@@ -70,43 +80,105 @@ export function creationFor(
   background?: string,
 ): Promise<CreationOffer> {
   const query = background ? `?background=${encodeURIComponent(background)}` : "";
-  return ask(`/api/games/${encodeURIComponent(pack)}/creation${query}`);
+  return ask(`${API}/games/${encodeURIComponent(pack)}/creation${query}`);
 }
 
-export function openSession(request: {
-  pack?: string;
-  seed?: string;
-  combatMode?: string;
-  timePressure?: number;
-  character?: Made;
-}): Promise<Frame> {
-  return ask("/api/sessions", { method: "POST", body: JSON.stringify(request) });
+export function openSession(request: OpenRequest): Promise<Frame> {
+  return ask(`${API}/sessions`, {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }
 
 export function resumeSession(save: SaveRecord): Promise<Frame> {
-  return ask("/api/sessions", {
+  return ask(`${API}/sessions`, {
     method: "POST",
     body: JSON.stringify({ save }),
   });
 }
 
 export function fetchSave(session: string): Promise<SaveRecord> {
-  return ask(`/api/sessions/${encodeURIComponent(session)}/save`);
+  return ask(`${API}/sessions/${encodeURIComponent(session)}/save`);
 }
 
 export function closeSession(session: string): Promise<void> {
-  return fetch(`/api/sessions/${encodeURIComponent(session)}`, {
+  return fetch(`${API}/sessions/${encodeURIComponent(session)}`, {
     method: "DELETE",
   }).then(() => undefined);
 }
 
-/** How the client is currently reaching the service. */
-export type Transport = "connecting" | "socket" | "polling";
+/** How the client is currently reaching the engine. */
+export type Transport = "connecting" | "socket" | "polling" | "local";
 
-interface Handlers {
+export interface Handlers {
   onFrame: (frame: Frame) => void;
   onRefusal: (message: string) => void;
   onTransport: (transport: Transport) => void;
+}
+
+/**
+ * Somewhere a game can be played.
+ *
+ * Two of these exist and the client cannot tell them apart, which is the
+ * whole point: `remote` is the FastAPI service over HTTP and a socket, and
+ * `local` (`./local/engine`) is the same Python engine compiled to WebAssembly
+ * and running in a worker in this tab. Both hand back the frame
+ * `mace.session.frame` builds.
+ */
+export interface Service {
+  /** What to call this when telling the player where their game is running. */
+  readonly where: "server" | "here";
+  listGames(): Promise<{ games: GameSummary[] }>;
+  creationFor(pack: string, background?: string): Promise<CreationOffer>;
+  openSession(request: OpenRequest): Promise<Frame>;
+  resumeSession(save: SaveRecord): Promise<Frame>;
+  fetchSave(session: string): Promise<SaveRecord>;
+  connect(session: string, handlers: Handlers): Link;
+}
+
+/** A playthrough held open, however it is being held. */
+export interface Link {
+  send(action: Action): Promise<void>;
+  close(): void;
+}
+
+export interface OpenRequest {
+  pack?: string;
+  seed?: string;
+  combatMode?: string;
+  timePressure?: number;
+  character?: Made;
+}
+
+/** The service reachable over the network, when there is one. */
+export const remote: Service = {
+  where: "server",
+  listGames,
+  creationFor,
+  openSession,
+  resumeSession,
+  fetchSave,
+  connect: (session, handlers) => {
+    const held = new Connection(session, handlers);
+    held.open();
+    return held;
+  },
+};
+
+/**
+ * Whether a session service is answering here.
+ *
+ * The static build has no server at all, and the hosted one has nothing else,
+ * so the client asks rather than being told at build time. One build, both
+ * deployments, and an offline tab falls through to the engine it already has.
+ */
+export async function serviceIsUp(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API}/games`, { method: "GET" });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -130,7 +202,7 @@ export class Connection {
 
   open(): void {
     const scheme = window.location.protocol === "https:" ? "wss" : "ws";
-    const url = `${scheme}://${window.location.host}/api/sessions/${encodeURIComponent(
+    const url = `${scheme}://${window.location.host}${API}/sessions/${encodeURIComponent(
       this.session,
     )}/stream`;
 
@@ -181,7 +253,7 @@ export class Connection {
     try {
       this.handlers.onFrame(
         await ask<Frame>(
-          `/api/sessions/${encodeURIComponent(this.session)}/actions`,
+          `${API}/sessions/${encodeURIComponent(this.session)}/actions`,
           { method: "POST", body: JSON.stringify(action) },
         ),
       );

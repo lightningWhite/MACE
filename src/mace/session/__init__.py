@@ -9,6 +9,7 @@ drives a `Session` and renders its events. Nothing above this line calls
 `mace.engine.step` directly, and nothing below it knows a user exists.
 """
 
+from mace.session.frames import frame
 from mace.session.saves import FORMAT, Save, SaveError, load, read, resume, write
 from mace.session.session import Session, choose_game
 from mace.session.view import (
@@ -39,6 +40,7 @@ __all__ = [
     "Underway",
     "View",
     "choose_game",
+    "frame",
     "load",
     "read",
     "resume",

@@ -12,13 +12,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  Connection,
-  fetchSave,
-  openSession,
-  resumeSession,
-  type Transport,
-} from "./api";
+import { remote, serviceIsUp, type Link, type Service, type Transport } from "./api";
+import { local, type Progress } from "./local/engine";
 import { Combat, type Fight } from "./combat/Combat";
 import { Character } from "./panels/Character";
 import { Choices } from "./panels/Choices";
@@ -59,8 +54,10 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [fight, setFight] = useState<Fight | null>(null);
   const [saved, setSaved] = useState<SaveRecord | null>(() => kept());
+  const [service, setService] = useState<Service | null>(null);
+  const [progress, setProgress] = useState<Progress>(null);
 
-  const connection = useRef<Connection | null>(null);
+  const connection = useRef<Link | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
   const pane = useRef<HTMLElement | null>(null);
   const acted = useRef(false);
@@ -101,11 +98,26 @@ export function App() {
     setBusy(false);
   }, []);
 
+  // One build, two deployments. The hosted one has a session service; the
+  // static one has no server at all and runs the same engine, compiled to
+  // WebAssembly, in a worker in this tab. Asking rather than being told at
+  // build time is also what lets an offline tab fall through to the engine it
+  // already has. See ADR-0005.
+  useEffect(() => {
+    let live = true;
+    void serviceIsUp().then((up) => {
+      if (live) setService(up ? remote : local(setProgress));
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
   /** Hold the connection open, and keep the save where a reload finds it. */
   const attach = useCallback(
-    (opened: Frame) => {
+    (opened: Frame, on: Service) => {
       absorb(opened);
-      const held = new Connection(opened.session, {
+      connection.current = on.connect(opened.session, {
         onFrame: absorb,
         onRefusal: (message) => {
           setRefusal(message);
@@ -113,23 +125,23 @@ export function App() {
         },
         onTransport: setTransport,
       });
-      held.open();
-      connection.current = held;
     },
     [absorb],
   );
 
-  // ADR-0009: the service holds no playthroughs, so the client keeps the save.
+  // ADR-0009: nothing but the client is holding on to this playthrough — not
+  // the service, and certainly not a tab that might be closed.
   useEffect(() => {
     const session = frame?.session;
-    if (session === undefined) return;
-    fetchSave(session)
+    if (session === undefined || service === null) return;
+    service
+      .fetchSave(session)
       .then((save) => {
         keep(save);
         setSaved(save);
       })
       .catch(() => undefined);
-  }, [frame]);
+  }, [frame, service]);
 
   // Stay at the foot of the transcript as it grows. Setting `scrollTop`
   // rather than calling `scrollIntoView` because the smoothness is the
@@ -161,24 +173,28 @@ export function App() {
     character: Made | null,
     timePressure: number,
   ): void {
+    if (service === null) return;
     setFailure(null);
-    openSession({
-      pack,
-      timePressure,
-      ...(character === null ? {} : { character }),
-    })
-      .then(attach)
+    service
+      .openSession({
+        pack,
+        timePressure,
+        ...(character === null ? {} : { character }),
+      })
+      .then((opened) => attach(opened, service))
       .catch((error: Error) => setFailure(error.message));
   }
 
   function carryOn(save: SaveRecord): void {
+    if (service === null) return;
     setFailure(null);
-    resumeSession(save)
+    service
+      .resumeSession(save)
       .then((opened) => {
         // The replay already happened, in silence. Re-reading a whole
         // playthrough is not resuming it: what the player wants back is the
         // room they were standing in, which is the last step's events.
-        attach(opened);
+        attach(opened, service);
         if (opened.warnings?.length) {
           setRefusal(opened.warnings.join(" "));
         }
@@ -206,6 +222,8 @@ export function App() {
   if (frame === null) {
     return (
       <Opening
+        service={service}
+        progress={progress}
         saved={saved}
         onBegin={begin}
         onResume={carryOn}
@@ -261,11 +279,13 @@ export function App() {
         <Pack carried={frame.view.carried} />
         <Journal journal={frame.view.journal} />
         <p className={`transport transport-${transport}`}>
-          {transport === "socket"
-            ? "connected"
-            : transport === "polling"
-              ? "reconnecting — playing over HTTP"
-              : "connecting…"}
+          {transport === "local"
+            ? "running in this tab"
+            : transport === "socket"
+              ? "connected"
+              : transport === "polling"
+                ? "reconnecting — playing over HTTP"
+                : "connecting…"}
         </p>
       </aside>
 

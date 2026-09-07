@@ -8,6 +8,11 @@ import { defineConfig } from "vite";
 // too. One origin, no CORS to think about, no build that is wrong in one
 // environment.
 export default defineConfig({
+  // GitHub Pages serves a project site from `/<repo>/`, so the build has to
+  // know where it will live. Everything in the client resolves against
+  // `import.meta.env.BASE_URL` rather than a leading slash, which is what
+  // lets one build work at the root and under a subpath.
+  base: process.env.BASE_PATH ?? "/",
   plugins: [react()],
   server: {
     proxy: {

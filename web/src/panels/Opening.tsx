@@ -15,18 +15,25 @@
 
 import { useEffect, useState } from "react";
 
-import { creationFor, listGames } from "../api";
+import type { Service } from "../api";
+import type { Progress } from "../local/engine";
 import { useOffline } from "../offline";
 import type { CreationOffer, GameSummary, Made, SaveRecord } from "../protocol";
 import { PRESSURES } from "../protocol";
 
 export function Opening({
+  service,
+  progress,
   saved,
   onBegin,
   onResume,
   onForget,
   failure,
 }: {
+  /** Where the game will run. Null until the client has worked out which. */
+  service: Service | null;
+  /** What the in-tab engine is doing while it starts, if that is the one. */
+  progress: Progress;
   saved: SaveRecord | null;
   onBegin: (
     pack: string,
@@ -47,21 +54,24 @@ export function Opening({
   const offline = useOffline();
 
   useEffect(() => {
-    listGames()
+    if (service === null) return;
+    service
+      .listGames()
       .then(({ games: found }) => {
         setGames(found);
         if (found.length === 1 && found[0] !== undefined) setPack(found[0].id);
       })
       .catch((error: Error) => setTrouble(error.message));
-  }, []);
+  }, [service]);
 
   useEffect(() => {
-    if (pack === null) return;
+    if (pack === null || service === null) return;
     setSpend({});
-    creationFor(pack, background ?? undefined)
+    service
+      .creationFor(pack, background ?? undefined)
       .then(setOffer)
       .catch((error: Error) => setTrouble(error.message));
-  }, [pack, background]);
+  }, [service, pack, background]);
 
   const spent = Object.values(spend).reduce((total, points) => total + points, 0);
   const left = (offer?.points ?? 0) - spent;
@@ -118,7 +128,19 @@ export function Opening({
         </section>
       )}
 
-      {games === null && trouble === null && <p className="empty">Looking…</p>}
+      {progress !== null && (
+        <p className="progress" role="status">
+          {progress}
+          <span className="dim">
+            {" "}
+            — this world runs in your browser, so it has to be downloaded once.
+          </span>
+        </p>
+      )}
+
+      {games === null && trouble === null && progress === null && (
+        <p className="empty">Looking…</p>
+      )}
 
       {chooser && (
         <section>
@@ -237,6 +259,14 @@ export function Opening({
       <button type="button" className="primary begin" disabled={!ready} onClick={begin}>
         Begin
       </button>
+
+      {service !== null && (
+        <p className="dim aside">
+          {service.where === "here"
+            ? "The engine is running in this tab. Nothing you do here leaves it."
+            : "Playing against a MACE server."}
+        </p>
+      )}
     </main>
   );
 }

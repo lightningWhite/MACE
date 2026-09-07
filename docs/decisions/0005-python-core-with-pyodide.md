@@ -54,11 +54,39 @@ it's also the path multiplayer would take.
 - **No backend required** for single-player web. Static hosting is free and
   effectively unkillable — good for a community project's longevity.
 - **Offline play** falls out of the PWA + Pyodide combination.
-- **Payload cost.** Pyodide's runtime is a multi-megabyte first load. Mitigations:
-  aggressive service-worker caching (paid once per version), a slim build with
-  unused stdlib modules stripped, and a fast-loading shell that streams the
-  runtime behind a splash. Still, first load on a phone over cellular is the real
-  risk and the thing to measure.
+- **Payload cost.** Pyodide's runtime is a multi-megabyte first load.
+  Mitigations: aggressive service-worker caching (paid once per version), a
+  slim build with unused stdlib modules stripped, and a fast-loading shell
+  that streams the runtime behind a splash. Still, first load on a phone over
+  cellular is the real risk and the thing to measure.
+
+  **Measured** (phase 5, Pyodide 314.0.6 / CPython 3.14):
+
+  | | |
+  |---|---|
+  | `pyodide.asm.wasm` | 9.2 MB |
+  | `python_stdlib.zip` | 2.4 MB |
+  | pydantic, pydantic-core, pyyaml and their deps | 2.0 MB |
+  | `mace-bundle.zip` — the engine *and* every world | 0.35 MB |
+  | the client itself | 0.23 MB (68 KB gzipped) |
+  | **total** | **~16 MB**, cached by the service worker after the first visit |
+
+  The engine and its content are a rounding error against the interpreter,
+  which is worth knowing: adding worlds is nearly free, and the cost is
+  Python's, not MACE's. Time from a cold start to a playable first frame is
+  about 3.6s on a laptop — 2.0s of that is Pyodide starting, the rest is
+  unzipping the bundle, importing the engine and loading three packs.
+
+  The runtime is served from the same origin rather than a CDN, because a
+  service worker cannot cache cross-origin requests and offline play is the
+  whole point. It is copied out of `node_modules` at build time and never
+  committed.
+
+- **The claim is checked, not assumed.** `npm run check:pyodide` boots the real
+  runtime, plays the recorded playthrough through `mace.browser`, and compares
+  every frame against the ones CPython produced. It runs before the site is
+  published. "One implementation" is a property this project can lose by
+  accident, so it is a test.
 - **Dependency discipline.** The core cannot use anything that doesn't run under
   Pyodide. This is a genuine constraint on the engine, and a healthy one.
 - **The escape hatch is kept open deliberately.** The engine is specified in these

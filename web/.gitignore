@@ -1,3 +1,9 @@
+
 node_modules/
 dist/
 *.tsbuildinfo
+
+# Copied out of node_modules at build time. 14 MB of WebAssembly does not
+# belong in a hobby project's git history.
+public/pyodide/
+public/mace-bundle.zip
