@@ -147,12 +147,14 @@ GAME = Flow(
             id="game.world.minutesPerTick",
             title="How much time is one tick?",
             binds="game.world.minutesPerTick",
-            field=Number(minimum=1),
+            field=Number(minimum=1, optional=True),
             help=(
                 "The pace of everything: travel, weather, hunger, the seven "
                 "days you have left. Thirty minutes suits a game about a "
-                "week-long journey; a game about one night wants less."
+                "week-long journey; a game about one night wants less. Blank "
+                "leaves it at thirty."
             ),
+            optional=True,
         ),
         Step(
             id="game.world.calendar",
@@ -190,18 +192,24 @@ GAME = Flow(
             id="game.rules.vitalPool",
             title="Which pool means life?",
             binds="game.rules.vitalPool",
-            field=Text(placeholder="hitpoints"),
+            field=Text(placeholder="hitpoints", optional=True),
             help=(
                 "When it empties, the player is done. Name it whatever your "
-                "world calls it — the engine has no opinion."
+                "world calls it — the engine has no opinion, and blank leaves "
+                "it at `hitpoints`."
             ),
+            optional=True,
         ),
         Step(
             id="game.rules.effortPool",
             title="Which pool does fighting cost?",
             binds="game.rules.effortPool",
-            field=Text(placeholder="stamina"),
-            help="Every move in combat is paid for out of this.",
+            field=Text(placeholder="stamina", optional=True),
+            help=(
+                "Every move in combat is paid for out of this. Blank leaves "
+                "it at `stamina`."
+            ),
+            optional=True,
         ),
         Step(
             id="game.rules.combatMode",

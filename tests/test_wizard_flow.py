@@ -352,6 +352,25 @@ def test_every_flow_step_has_a_unique_id() -> None:
         assert len(ids) == len(set(ids)), f"{flow.id} repeats a step id"
 
 
+def test_a_step_is_only_required_when_leaving_it_blank_is_unfinished() -> None:
+    """A field the model defaults sensibly is a field an author may skip.
+
+    `minutesPerTick` is thirty unless you say otherwise, so asking again for
+    the rest of the project would be nagging about a decision the engine has
+    already made. What stays required is either required by the model, or the
+    thing a game is not a game without.
+    """
+    required = {step.id for step in GAME.steps if not step.optional}
+
+    assert required == {
+        "game.name",
+        "game.introduction",
+        "game.player.entity",
+        "game.player.startLocation",
+        "game.winConditions",
+    }
+
+
 def test_a_flow_is_a_flow_even_when_it_is_empty() -> None:
     empty = Flow(id="nothing", title="Nothing", steps=(Step("a", "A?", "game.name"),))
 

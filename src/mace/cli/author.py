@@ -732,7 +732,11 @@ class Wizard:
             try:
                 return one.parse(typed, self.catalog)
             except Invalid as error:
-                self.say(f"    {error}")
+                # The field counts the options it was given; the "+ a new one"
+                # row is the renderer's, so the renderer is what has to
+                # mention it.
+                extra = f" — or {len(offered) + 1} to make one" if creates else ""
+                self.say(f"    {error}{extra}")
 
     def _create_inline(self, collection: str) -> str | None:
         """Make a new object without leaving the question that needed it.
@@ -824,22 +828,26 @@ class Wizard:
         kept: dict[str, Any] = dict(current or {})
         if one.points:
             self.say(f"    {one.points} points to spread.")
-        self.say("    A name and a number — `strength 32`. A blank line ends it.")
+        self.say(
+            "    A name and a number — `strength 32`. A pool wants a cap too, "
+            "written `hitpoints 20/20`, or it has nothing to refill to. A "
+            "blank line ends it."
+        )
         while True:
             typed = self.ask("  + ")
             if not typed:
                 return kept
             name, _, number = typed.partition(" ")
+            base, _, cap = number.partition("/")
             try:
-                value: float = float(number)
+                stat: dict[str, Any] = {"base": _whole(base)}
+                if cap.strip():
+                    stat["max"] = _whole(cap)
             except ValueError:
                 self.say("    A name and a number, like `strength 32`.")
                 continue
             existing = kept.get(name)
-            if isinstance(existing, Mapping):
-                kept[name] = {**existing, "base": value}
-            else:
-                kept[name] = {"base": value}
+            kept[name] = {**existing, **stat} if isinstance(existing, Mapping) else stat
             self.say(f"    ✓ {name} {number}")
 
     def _conditions(self, one: ConditionBuilder, current: Any) -> Any:
@@ -1342,6 +1350,31 @@ def author(root: Path, packs: Path, out: TextIO | None = None) -> int:
     except Stop:
         wizard.say("\n  Until next time.")
     return 0
+
+
+def _whole(typed: str) -> float | int:
+    """Read a number, keeping a whole one whole.
+
+    `base: 20.0` is what an author gets for typing `20` if this rounds
+    everything to float, and it is not what they wrote.
+
+    Parameters
+    ----------
+    typed : str
+        The number, as typed.
+
+    Returns
+    -------
+    float or int
+        The value.
+
+    Raises
+    ------
+    ValueError
+        If it is not a number.
+    """
+    value = float(typed)
+    return int(value) if value.is_integer() else value
 
 
 def _askable(ask: Ask) -> Field:

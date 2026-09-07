@@ -235,3 +235,29 @@ def test_opening_a_pack_that_is_not_there_says_so(
 ) -> None:
     assert author(tmp_path / "nowhere", tmp_path) == 1
     assert "error" in capsys.readouterr().err
+
+
+def test_a_statblock_takes_a_cap_and_keeps_whole_numbers_whole(
+    project: Project,
+) -> None:
+    """A pool with no `max` has nothing to refill to, and `base: 20.0` is not
+    what an author typed."""
+    drive(
+        project,
+        "3",  # characters
+        "n",
+        "Gorm",
+        "6",  # what is it made of
+        "hitpoints 20/20",
+        "strength 32",
+        "",
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    assert dict(project.get("entities", "gorm") or {})["stats"] == {
+        "hitpoints": {"base": 20, "max": 20},
+        "strength": {"base": 32},
+    }
