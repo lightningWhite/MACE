@@ -20,6 +20,7 @@ import { useCallback, useEffect, useState } from "react";
 import * as api from "./api";
 import { StudioError } from "./api";
 import { Field } from "./Field";
+import { MapEditor } from "./MapEditor";
 import {
   isObject,
   isSection,
@@ -167,6 +168,7 @@ export function Studio() {
         <Section
           screen={screen}
           busy={busy}
+          onRefresh={() => void run(() => api.section(screen.section))}
           onOpen={(collection, id) =>
             void run(() => api.object(collection, id), {
               at: "object",
@@ -276,12 +278,14 @@ function Section({
   onOpen,
   onCreate,
   onDelete,
+  onRefresh,
 }: {
   screen: SectionScreen;
   busy: boolean;
   onOpen: (collection: string, id: string) => void;
   onCreate: (collection: string, name: string) => void;
   onDelete: (collection: string, id: string) => void;
+  onRefresh: () => void;
 }) {
   const [naming, setNaming] = useState("");
   const [making, setMaking] = useState(screen.creates[0] ?? "");
@@ -290,6 +294,24 @@ function Section({
     <section className="studio-section">
       <h2>{screen.title}</h2>
       <p className="dim">{screen.help}</p>
+
+      {/* The world map is the one section a browser can do something with
+          that a terminal cannot, so it gets the thing a browser is for. The
+          list below it stays: dragging is a way to place a location, not a
+          way to write everything else about one. */}
+      {screen.section === "world" ? (
+        <MapEditor
+          busy={busy}
+          onChanged={onRefresh}
+          onOpen={(id) =>
+            onOpen(
+              screen.objects.find((one) => one.id === id)?.collection ??
+                "locations",
+              id,
+            )
+          }
+        />
+      ) : null}
 
       {screen.objects.length === 0 ? (
         <p className="empty">Nothing here yet.</p>

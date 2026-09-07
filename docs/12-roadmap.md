@@ -175,7 +175,10 @@ writing YAML.
       unless asked for because it writes to the author's disk. Repeats,
       statblocks and the condition cascade still say "open it in the terminal"
       — the vocabulary is on the wire, the browser does not draw it yet
-- [ ] Visual map editor — drag locations, draw routes, set travel times
+- [x] Visual map editor — drag locations, draw routes, set travel times.
+      Drawing a road is one call, because a route is a road and an exit is
+      the option to walk down it; a place nobody has positioned says *not
+      placed* rather than being quietly written somewhere
 - [ ] Scene graph visualization with unreachable-node detection
 - [ ] Entity/item editors with live preview
 - [ ] Export a pack; import someone else's and remix it

@@ -30,7 +30,7 @@ from mace.api.app import Wire
 from mace.content import ContentError
 from mace.wizard.studio import Studio, Unknown, frame
 
-__all__ = ["Answer", "Made", "Built", "author_routes"]
+__all__ = ["Answer", "Built", "Made", "Road", "author_routes"]
 
 
 class Answer(Wire):
@@ -74,6 +74,25 @@ class Made(Wire):
     name: str
     section: str | None = None
     answers: dict[str, Any] = {}  # noqa: RUF012 — pydantic copies per instance
+
+
+class Road(Wire):
+    """A road to draw between two places.
+
+    Attributes
+    ----------
+    origin, destination : str
+        Local ids of the two places.
+    ticks : int
+        How long it takes in fair weather.
+    name : str or None
+        What to call it. None names it after where it goes.
+    """
+
+    origin: str
+    destination: str
+    ticks: int = 1
+    name: str | None = None
 
 
 class Built(Wire):
@@ -147,6 +166,70 @@ def author_routes(studio: Studio) -> APIRouter:
             `conditions` and `effects`.
         """
         return studio.vocabulary()
+
+    @router.get("/map")
+    def atlas() -> dict[str, Any]:
+        """The world map as the author has drawn it so far.
+
+        Returns
+        -------
+        dict
+            Places and roads.
+        """
+        return studio.atlas()
+
+    @router.post("/roads", status_code=201)
+    def link(body: Annotated[Road, Body()]) -> dict[str, Any]:
+        """Draw a road between two places, and the ways onto it.
+
+        One call rather than three, because drawing a road is one authoring
+        intention — see `Studio.link`.
+
+        Parameters
+        ----------
+        body : Road
+            Where it goes and how long it takes.
+
+        Returns
+        -------
+        dict
+            The frame, with the map as it now stands.
+
+        Raises
+        ------
+        HTTPException
+            400 if it cannot be drawn.
+        """
+        try:
+            studio.link(body.origin, body.destination, body.ticks, name=body.name)
+        except ContentError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        return screened(studio.atlas())
+
+    @router.delete("/roads/{route_id}")
+    def unlink(route_id: str) -> dict[str, Any]:
+        """Rub out a road, and the ways onto it.
+
+        Parameters
+        ----------
+        route_id : str
+            The road's local id.
+
+        Returns
+        -------
+        dict
+            The frame, with the map as it now stands.
+
+        Raises
+        ------
+        HTTPException
+            404 if there was nothing to rub out.
+        """
+        if not studio.unlink(route_id):
+            raise HTTPException(
+                status_code=404, detail=f"there is no `{route_id}` to rub out"
+            )
+        return screened(studio.atlas())
 
     @router.get("/problems")
     def problems() -> dict[str, Any]:

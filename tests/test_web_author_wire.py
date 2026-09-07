@@ -83,6 +83,9 @@ def recorded(root: Path) -> dict[str, Any]:
             studio.answer("locations", "location.safe", True, "fenmoor"),
         ),
         "made": _made(studio),
+        # The world map, which is the one screen a browser draws that a
+        # terminal cannot.
+        "atlas": studio.atlas(),
         # A sample rather than all thirty-odd recipes. The vocabulary's
         # shape is guarded by `test_wizard_studio.py`; what belongs in a
         # *client* fixture is what the client replays, and the browser does
@@ -218,6 +221,15 @@ def test_a_statblock_arrives_as_named_numbers(now: dict[str, Any]) -> None:
 def test_an_answer_moves_the_desk_in_the_same_reply(now: dict[str, Any]) -> None:
     assert now["answered"]["dirty"] == ["locations.yml"]
     assert now["answered"]["desk"]["tasks"]
+
+
+def test_the_atlas_is_a_map_with_something_on_it(now: dict[str, Any]) -> None:
+    """A map editor written against an empty map is a map editor untested."""
+    drawn = now["atlas"]
+    assert len(drawn["places"]) >= 3
+    assert len(drawn["roads"]) >= 2
+    assert any(one["x"] is not None for one in drawn["places"])
+    assert all(one["exits"] is not None for one in drawn["places"])
 
 
 def test_a_new_object_opens_unfinished(now: dict[str, Any]) -> None:

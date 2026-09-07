@@ -339,6 +339,33 @@ process, the way the terminal is one pack per window — a project holds unsaved
 edits in memory, and two behind one process would be two authors overwriting
 each other.
 
+### The map editor
+
+The one screen a browser draws that a terminal cannot, and the reason a step
+type the terminal renders badly (`MapEditor`) declares a text fallback rather
+than being refused: a position is a pair of numbers, and dragging is one way of
+choosing one. Everything it writes goes through the ordinary wizard — dragging
+a place posts the same `location.mapPosition` answer the terminal writes when
+somebody types `0 120`.
+
+Two things it does not do, deliberately:
+
+- **It never turns a guess into a choice.** A place with no `mapPosition` comes
+  over as `null`, is drawn where the client puts it, and says *not placed*. An
+  editor that quietly wrote a position the first time somebody opened the map
+  would be an editor that wrote content nobody asked for.
+- **It does not replace the forms.** Clicking a place or a road opens its
+  flow. Dragging is a way to place a location, not a way to write everything
+  else about one.
+
+Drawing a road is **one call**, because it is one authoring intention: a route
+is a road and an exit is the option to walk down it. `Studio.link` writes the
+route and both exits, and `unlink` takes the exits away with it — an exit
+naming a route that is gone is a dangling reference, and leaving an author to
+find two of them is not a tool being helpful. That is the rule the world
+starter has followed since phase 4; the map editor is the second thing to obey
+it, which is why it lives in `mace.wizard` rather than in the browser.
+
 The client lives at `#author` in the same build as the game. It renders the
 three screens and every field type that can be answered with a control; a
 field a builder drives — a condition, a repeat, a statblock — is shown as its

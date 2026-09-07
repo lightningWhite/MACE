@@ -1167,3 +1167,101 @@ button:focus-visible {
   border-radius: 0.25rem;
   padding: 0.1rem 0.25rem;
 }
+
+/*
+ * The map editor.
+ *
+ * The one place in the wizard where dragging beats typing. A place the author
+ * has not positioned is drawn where the client guesses and *says* "not
+ * placed", because a guess that looked like a choice would be the editor
+ * writing content nobody asked for.
+ */
+
+.map-editor {
+  margin: 1rem 0 1.5rem;
+}
+
+.author-map {
+  width: 100%;
+  height: 22rem;
+  border: 1px solid var(--edge);
+  border-radius: 0.35rem;
+  background: var(--ground-raised);
+  touch-action: none;
+}
+
+.author-road line {
+  stroke: var(--edge);
+  stroke-width: 1.5;
+}
+
+.author-road text {
+  font-size: 8px;
+  fill: var(--ink-dim);
+  text-anchor: middle;
+}
+
+.author-place {
+  cursor: grab;
+}
+
+.author-place circle {
+  fill: var(--warm);
+  stroke: var(--ground);
+  stroke-width: 1.5;
+}
+
+.author-place text {
+  font-size: 9px;
+  fill: var(--ink);
+}
+
+.author-guessed circle {
+  fill: none;
+  stroke: var(--ink-dim);
+  stroke-dasharray: 2 2;
+}
+
+.author-unplaced {
+  font-size: 7px;
+  fill: var(--ink-dim);
+}
+
+.author-drawing circle {
+  fill: var(--cold);
+}
+
+.map-tools {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.6rem 0;
+}
+
+.map-tools .field-number {
+  flex: 0 0 4.5rem;
+}
+
+.road-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.road-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--edge);
+}
+
+.author-road-grab {
+  stroke: transparent;
+  stroke-width: 12;
+  cursor: pointer;
+}
+
+.author-chosen line:first-child {
+  stroke: var(--warm);
+  stroke-width: 2.5;
+}

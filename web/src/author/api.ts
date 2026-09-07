@@ -11,7 +11,7 @@
  * build has to work at the root and under a project subpath.
  */
 
-import type { Built, Frame, Problem, Vocabulary } from "./protocol";
+import type { Atlas, Built, Frame, Problem, Vocabulary } from "./protocol";
 
 export const API = `${import.meta.env.BASE_URL}api/author`;
 
@@ -122,6 +122,34 @@ export function save(): Promise<Frame> {
 /** Everything the validator found, worst first. */
 export function problems(): Promise<{ problems: Problem[] }> {
   return ask<{ problems: Problem[] }>("/problems");
+}
+
+/** The world map as the author has drawn it. */
+export function atlas(): Promise<Atlas> {
+  return ask<Atlas>("/map");
+}
+
+/**
+ * Draw a road between two places, and the ways onto it.
+ *
+ * One call rather than three, because drawing a road is one authoring
+ * intention: a route is a road and an exit is the option to walk down it.
+ */
+export function link(
+  origin: string,
+  destination: string,
+  ticks: number,
+  name?: string,
+): Promise<Frame> {
+  return ask<Frame>(
+    "/roads",
+    sending({ origin, destination, ticks, name: name ?? null }),
+  );
+}
+
+/** Rub out a road, and the ways onto it. */
+export function unlink(route: string): Promise<Frame> {
+  return ask<Frame>(`/roads/${encodeURIComponent(route)}`, { method: "DELETE" });
 }
 
 /** The cascades, with this pack's options on them. */

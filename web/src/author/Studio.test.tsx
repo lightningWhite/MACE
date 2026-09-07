@@ -395,3 +395,83 @@ describe("saving", () => {
     expect(await screen.findByText(/Saved locations\.yml/)).toBeTruthy();
   });
 });
+
+// ── The map editor ────────────────────────────────────────────────────────────
+
+describe("the map", () => {
+  async function intoTheMap(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("button", { name: /World map/ }));
+    await screen.findByRole("img", { name: /A map of/ });
+  }
+
+  it("draws the places and roads the author has drawn", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoTheMap(user);
+
+    const map = screen.getByRole("img", { name: /A map of/ });
+    expect(within(map).getByText("Fenmoor")).toBeTruthy();
+    // The road's length is on it, which is the thing an author is setting.
+    expect(within(map).getByText("6")).toBeTruthy();
+  });
+
+  it("says which places nobody has put anywhere", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoTheMap(user);
+
+    // The recording makes a place and never positions it. Saying so is the
+    // point: a guess that looked like a choice would be the editor writing
+    // content nobody asked for.
+    expect(screen.getAllByText("not placed")).toHaveLength(1);
+  });
+
+  it("draws a road between two places in one call", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    await opened();
+    await intoTheMap(user);
+
+    const map = screen.getByRole("img", { name: /A map of/ });
+    await user.click(within(map).getByText("Fenmoor"));
+    await user.click(within(map).getByText("The Old Bridge"));
+
+    const drawn = studio.calls.find((call) => call.path.endsWith("/roads"));
+    expect(drawn?.method).toBe("POST");
+    expect(drawn?.body).toEqual({
+      origin: "fenmoor",
+      destination: "troll-bridge",
+      ticks: 4,
+      name: null,
+    });
+  });
+
+  it("rubs a road out, ways onto it and all", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    await opened();
+    await intoTheMap(user);
+
+    const map = screen.getByRole("img", { name: /A map of/ });
+    await user.click(within(map).getByText("6"));
+    await user.click(
+      await screen.findByRole("button", { name: /Rub out The North Road/ }),
+    );
+
+    const gone = studio.calls.find((call) => call.method === "DELETE");
+    expect(gone?.path).toContain("/roads/north-road");
+  });
+
+  it("still lists the places, because dragging is not the whole of authoring", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoTheMap(user);
+
+    expect(screen.getByRole("button", { name: "Open Fenmoor" })).toBeTruthy();
+  });
+});

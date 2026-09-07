@@ -305,3 +305,63 @@ def test_an_authoring_service_still_plays(client: TestClient) -> None:
     opened = client.post("/api/sessions", json={"pack": "tiny"})
     assert opened.status_code == 201, opened.text
     assert opened.json()["playing"] is True
+
+
+# ── The map ───────────────────────────────────────────────────────────────────
+
+
+def test_the_map_is_what_the_author_has_drawn(client: TestClient) -> None:
+    drawn = got(client, "/api/author/map")
+    assert {one["id"] for one in drawn["places"]} == {"home", "castle"}
+    assert drawn["roads"] == []
+
+
+def test_drawing_a_road_takes_one_call(client: TestClient) -> None:
+    """Drawing a road is one authoring intention, so it is one request."""
+    response = client.post(
+        "/api/author/roads",
+        json={"origin": "home", "destination": "castle", "ticks": 6},
+    )
+    assert response.status_code == 201, response.text
+    screen = response.json()["screen"]
+    assert screen["roads"][0]["ticks"] == 6
+    # And both ends can walk down it.
+    exits = {one["id"]: one["exits"] for one in screen["places"]}
+    assert "castle" in exits["home"] and "home" in exits["castle"]
+
+
+def test_a_road_that_cannot_be_drawn_is_a_400(client: TestClient) -> None:
+    response = client.post(
+        "/api/author/roads",
+        json={"origin": "home", "destination": "nowhere", "ticks": 6},
+    )
+    assert response.status_code == 400
+
+
+def test_rubbing_a_road_out(client: TestClient) -> None:
+    client.post(
+        "/api/author/roads",
+        json={"origin": "home", "destination": "castle", "ticks": 6},
+    )
+    gone = client.delete("/api/author/roads/home-to-castle")
+    assert gone.status_code == 200, gone.text
+    assert gone.json()["screen"]["roads"] == []
+    assert client.delete("/api/author/roads/home-to-castle").status_code == 404
+
+
+def test_dragging_a_place_is_an_ordinary_answer(client: TestClient) -> None:
+    """Nothing special: a position is a field like any other."""
+    response = client.post(
+        "/api/author/answers",
+        json={
+            "collection": "locations",
+            "object": "home",
+            "step": "location.mapPosition",
+            "value": {"x": 12, "y": -30},
+        },
+    )
+    assert response.status_code == 200, response.text
+    place = next(
+        one for one in got(client, "/api/author/map")["places"] if one["id"] == "home"
+    )
+    assert (place["x"], place["y"]) == (12, -30)

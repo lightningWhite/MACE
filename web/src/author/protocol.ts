@@ -177,6 +177,38 @@ export interface Frame {
   screen: Screen;
 }
 
+/** One place on the author's map, as they have drawn it. */
+export interface Drawn {
+  id: string;
+  name: string;
+  /** `null` where the author has not put it anywhere yet. */
+  x: number | null;
+  y: number | null;
+  /** Local ids of the places you can walk to from here. */
+  exits: string[];
+}
+
+/** One road on the author's map. */
+export interface Road {
+  id: string;
+  name: unknown;
+  from: unknown;
+  to: unknown;
+  ticks: unknown;
+  bidirectional: boolean;
+}
+
+/**
+ * The world map as the author has drawn it.
+ *
+ * Not the player's atlas: no fog of war, no weather, and no opinion about
+ * where anybody has been. It is the shape of the pack.
+ */
+export interface Atlas {
+  places: Drawn[];
+  roads: Road[];
+}
+
 /** One way of building a condition or an effect. */
 export interface Recipe {
   tag: string;

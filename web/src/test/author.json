@@ -6148,6 +6148,70 @@
       ]
     }
   },
+  "atlas": {
+    "places": [
+      {
+        "id": "fenmoor",
+        "name": "Fenmoor",
+        "x": 0.0,
+        "y": 120.0,
+        "exits": [
+          "traders-post",
+          "hagans-castle"
+        ]
+      },
+      {
+        "id": "hagans-castle",
+        "name": "Hagan's Castle",
+        "x": 20.0,
+        "y": 0.0,
+        "exits": [
+          "fenmoor"
+        ]
+      },
+      {
+        "id": "the-long-moor",
+        "name": "The Long Moor",
+        "x": null,
+        "y": null,
+        "exits": []
+      },
+      {
+        "id": "traders-post",
+        "name": "Trader's Post",
+        "x": -60.0,
+        "y": 160.0,
+        "exits": [
+          "fenmoor"
+        ]
+      },
+      {
+        "id": "troll-bridge",
+        "name": "The Old Bridge",
+        "x": 10.0,
+        "y": 60.0,
+        "exits": []
+      }
+    ],
+    "roads": [
+      {
+        "id": "north-road",
+        "name": "The North Road",
+        "from": "fenmoor",
+        "to": "hagans-castle",
+        "ticks": 6,
+        "bidirectional": true
+      },
+      {
+        "id": "south-track",
+        "name": "The Trader's Track",
+        "from": "fenmoor",
+        "to": "traders-post",
+        "ticks": 2,
+        "bidirectional": true
+      }
+    ]
+  },
   "vocabulary": {
     "conditions": [
       {

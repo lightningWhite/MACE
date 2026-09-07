@@ -462,3 +462,74 @@ def test_saving_writes_only_what_changed(tmp_path: Path) -> None:
 
     open_studio.answer("locations", "location.name", "The Hearth", "home")
     assert open_studio.save() == ["locations.yml"]
+
+
+# ── The map ───────────────────────────────────────────────────────────────────
+
+
+def test_the_atlas_is_the_shape_of_the_pack(studio: Studio) -> None:
+    """Not the player's atlas: no fog, no weather, no opinion about anywhere."""
+    drawn = studio.atlas()
+    assert {one["id"] for one in drawn["places"]} == {"home", "castle"}
+    exits = {one["id"]: one["exits"] for one in drawn["places"]}
+    assert exits == {"home": ["castle"], "castle": ["home"]}
+
+
+def test_a_place_nobody_has_positioned_says_so(studio: Studio) -> None:
+    """The client laying it out is not the same as the author having chosen."""
+    place = next(one for one in studio.atlas()["places"] if one["id"] == "home")
+    assert place["x"] is None and place["y"] is None
+
+    studio.answer("locations", "location.mapPosition", {"x": 3, "y": 4}, "home")
+    place = next(one for one in studio.atlas()["places"] if one["id"] == "home")
+    assert (place["x"], place["y"]) == (3.0, 4.0)
+
+
+def test_drawing_a_road_writes_the_ways_onto_it_too(studio: Studio) -> None:
+    """A route is a road; an exit is the option to walk down it."""
+    studio.create("locations", "Moor")
+    made = studio.link("home", "moor", 5)
+
+    assert made == "home-to-moor"
+    road = next(one for one in studio.atlas()["roads"] if one["id"] == made)
+    assert (road["from"], road["to"], road["ticks"]) == ("home", "moor", 5)
+
+    both = {one["id"]: one["exits"] for one in studio.atlas()["places"]}
+    assert "moor" in both["home"]
+    assert "home" in both["moor"]
+
+
+def test_a_road_can_be_named(studio: Studio) -> None:
+    studio.create("locations", "Moor")
+    assert studio.link("home", "moor", 5, name="The Long Way") == "the-long-way"
+
+
+def test_a_road_to_nowhere_is_refused(studio: Studio) -> None:
+    with pytest.raises(ContentError, match="no `nowhere`"):
+        studio.link("home", "nowhere", 4)
+
+
+def test_a_road_from_a_place_to_itself_is_refused(studio: Studio) -> None:
+    with pytest.raises(ContentError, match="somewhere else"):
+        studio.link("home", "home", 4)
+
+
+def test_a_road_that_is_already_there_is_refused(studio: Studio) -> None:
+    studio.create("locations", "Moor")
+    studio.link("home", "moor", 5)
+    with pytest.raises(ContentError, match="already there"):
+        studio.link("home", "moor", 5)
+
+
+def test_rubbing_a_road_out_takes_the_ways_onto_it_with_it(studio: Studio) -> None:
+    """An exit naming a route that is gone is a dangling reference."""
+    studio.create("locations", "Moor")
+    made = studio.link("home", "moor", 5)
+
+    assert studio.unlink(made) is True
+    assert studio.unlink(made) is False
+    assert studio.atlas()["roads"] == []
+    both = {one["id"]: one["exits"] for one in studio.atlas()["places"]}
+    assert "moor" not in both["home"]
+    # The exit the author wrote by hand is untouched: it names no route.
+    assert both["home"] == ["castle"]

@@ -233,6 +233,200 @@ class Studio:
             ],
         }
 
+    def atlas(self) -> dict[str, Any]:
+        """The world map as the author has drawn it so far.
+
+        Not the player's atlas: this one has no fog of war, no weather and no
+        opinion about where the player has been. It is the shape of the pack,
+        which is the thing an author drags around.
+
+        Positions come back as the author wrote them, `null` included. A place
+        with no `mapPosition` is a place the author has not put anywhere yet,
+        and the client laying it out is *not* the same as the author having
+        chosen — so the wizard says which is which and lets the client decide
+        what to draw.
+
+        Returns
+        -------
+        dict
+            JSON-safe: `places` and `roads`.
+        """
+        places = [
+            {
+                "id": local_id,
+                "name": str(self._read("locations", local_id, "name") or local_id),
+                "x": _coordinate(self._read("locations", local_id, "mapPosition"), "x"),
+                "y": _coordinate(self._read("locations", local_id, "mapPosition"), "y"),
+                "exits": [
+                    str(one.get("to"))
+                    for one in _sequence(self._read("locations", local_id, "exits"))
+                    if isinstance(one, Mapping) and one.get("to") is not None
+                ],
+            }
+            for local_id in self.project.ids("locations")
+        ]
+        roads = [
+            {
+                "id": local_id,
+                "name": _plain(self._read("routes", local_id, "name")),
+                "from": _plain(self._read("routes", local_id, "from")),
+                "to": _plain(self._read("routes", local_id, "to")),
+                "ticks": _plain(self._read("routes", local_id, "ticks")),
+                "bidirectional": self._read("routes", local_id, "bidirectional")
+                is not False,
+            }
+            for local_id in self.project.ids("routes")
+        ]
+        return {"places": places, "roads": roads}
+
+    def link(
+        self,
+        origin: str,
+        destination: str,
+        ticks: int,
+        *,
+        name: str | None = None,
+    ) -> str:
+        """Draw a road between two places, and the ways onto it.
+
+        One operation rather than three, because drawing a road is one
+        authoring *intention*. A route is a road; an exit is the option to walk
+        down it. A wizard that made the route and left the exits to the author
+        would be a wizard whose maps open with a validator note at every place,
+        which is the rule the world starter already follows.
+
+        Parameters
+        ----------
+        origin, destination : str
+            Local ids of the two places.
+        ticks : int
+            How long it takes in fair weather.
+        name : str or None
+            What to call it. None names it after where it goes.
+
+        Returns
+        -------
+        str
+            The new route's local id.
+
+        Raises
+        ------
+        ContentError
+            If either end is not there, they are the same place, or a road
+            between them already exists.
+        """
+        for end in (origin, destination):
+            if self.project.get("locations", end) is None:
+                raise ContentError(f"there is no `{end}` to draw a road to")
+        if origin == destination:
+            raise ContentError("a road has to go somewhere else")
+
+        local_id = slug(name) if name else f"{origin}-to-{destination}"
+        if self.project.get("routes", local_id) is not None:
+            raise ContentError(f"`{local_id}` is already there", collection="routes")
+
+        self.project.put(
+            "routes",
+            {
+                "id": local_id,
+                "name": name or f"The road to {self._label(destination)}",
+                "from": origin,
+                "to": destination,
+                "ticks": ticks,
+            },
+        )
+        self._open(origin, destination, local_id)
+        self._open(destination, origin, local_id)
+        return local_id
+
+    def unlink(self, route_id: str) -> bool:
+        """Rub out a road, and the ways onto it.
+
+        The exits go with it for the same reason they came with it: an exit
+        naming a route that is not there is a dangling reference, and leaving
+        the author to find two of them is not a tool being helpful.
+
+        Parameters
+        ----------
+        route_id : str
+            The road's local id.
+
+        Returns
+        -------
+        bool
+            Whether there was one to rub out.
+        """
+        if self.project.get("routes", route_id) is None:
+            return False
+        for local_id in self.project.ids("locations"):
+            body = self.project.get("locations", local_id)
+            if body is None:  # pragma: no cover — it was just listed
+                continue
+            kept = [
+                one
+                for one in _sequence(body.get("exits"))
+                if not (isinstance(one, Mapping) and one.get("route") == route_id)
+            ]
+            if len(kept) != len(_sequence(body.get("exits"))):
+                self.project.put("locations", {**body, "exits": kept})
+        return self.project.drop("routes", route_id)
+
+    def _open(self, at: str, to: str, route_id: str) -> None:
+        """Give one place the option of walking down one road.
+
+        Parameters
+        ----------
+        at : str
+            The place the exit is on.
+        to : str
+            Where it leads.
+        route_id : str
+            The road it takes.
+        """
+        body = self.project.get("locations", at)
+        if body is None:  # pragma: no cover — the caller checked
+            return
+        exits = list(_sequence(body.get("exits")))
+        if any(isinstance(one, Mapping) and one.get("to") == to for one in exits):
+            return
+        exits.append({"to": to, "route": route_id})
+        self.project.put("locations", {**body, "exits": exits})
+
+    def _read(self, collection: str, local_id: str, key: str) -> Any:
+        """One field of one object, read through `extends`.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection.
+        local_id : str
+            The object.
+        key : str
+            The field.
+
+        Returns
+        -------
+        object
+            The value, or None.
+        """
+        return self.project.effective(collection, local_id, key)
+
+    def _label(self, local_id: str) -> str:
+        """What a place is called, for naming a road after it.
+
+        Parameters
+        ----------
+        local_id : str
+            The place.
+
+        Returns
+        -------
+        str
+            Its name, or a readable form of its id.
+        """
+        named = self._read("locations", local_id, "name")
+        return str(named) if named else local_id.replace("-", " ")
+
     def object(self, collection: str, object_id: str | None = None) -> dict[str, Any]:
         """One object's steps, with everything a form needs to draw them.
 
@@ -922,6 +1116,27 @@ def _flow(collection: str) -> Flow:
     if found is None:
         raise Unknown(f"nothing authors `{collection}` yet")
     return found
+
+
+def _coordinate(position: Any, axis: str) -> float | None:
+    """One axis out of an authored map position.
+
+    Parameters
+    ----------
+    position : object
+        `{x: 0, y: 120}`, or None.
+    axis : str
+        `x` or `y`.
+
+    Returns
+    -------
+    float or None
+        The number, or None where the author has not placed it.
+    """
+    if not isinstance(position, Mapping):
+        return None
+    found = position.get(axis)
+    return None if found is None else float(found)
 
 
 def _sequence(value: Any) -> list[Any]:
