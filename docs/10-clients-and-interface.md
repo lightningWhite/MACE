@@ -54,6 +54,25 @@ building at all.
 - Layout from authored `mapPosition` when present, force-directed otherwise, so
   authors get a decent map for free and a beautiful one if they care.
 
+Click-to-travel works because the projection says so. `Place.choice` is the
+index of the option currently on offer that goes there — only the engine knows
+that "Take the north road" is the one that walks to Hagan's Castle, and a
+client that matched prompts to place names by their wording would be guessing
+at content and would break on the first author who wrote "Head north". An
+option the player cannot afford is not a way out: it stays on the menu, where
+the author's hint says why, and the map does not pretend the place is
+reachable.
+
+In the force layout a road's rest length is proportional to its `ticks`, which
+is where "edge length reflects `ticks`" is literally true — a six-tick road
+settles about three times as long as a two-tick one. The layout is seeded from
+the place ids rather than `Math.random`, so a world lays out the same way
+every time it is opened; a map that rearranged itself on reload would be
+unreadable in a different way each time.
+
+What is not done yet: the route preview, and roads showing what the player has
+learned about them. Both want the projection to carry more than it does.
+
 ### Combat view
 
 Takes over the narrative pane during a fight. From

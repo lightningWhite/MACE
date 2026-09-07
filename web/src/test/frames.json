@@ -210,6 +210,7 @@
             "weather": "fantasy.core:drizzle",
             "sky": "drizzle",
             "indoors": false,
+            "choice": null,
             "x": 0.0,
             "y": 120.0
           },
@@ -221,6 +222,7 @@
             "weather": "fantasy.core:light-snow",
             "sky": "light snow",
             "indoors": false,
+            "choice": 2,
             "x": 20.0,
             "y": 0.0
           },
@@ -232,6 +234,7 @@
             "weather": "fantasy.core:drizzle",
             "sky": "drizzle",
             "indoors": true,
+            "choice": 1,
             "x": -60.0,
             "y": 160.0
           }
@@ -478,6 +481,7 @@
                 "weather": "fantasy.core:drizzle",
                 "sky": "drizzle",
                 "indoors": false,
+                "choice": null,
                 "x": 0.0,
                 "y": 120.0
               },
@@ -489,6 +493,7 @@
                 "weather": "fantasy.core:overcast",
                 "sky": "overcast",
                 "indoors": false,
+                "choice": null,
                 "x": 20.0,
                 "y": 0.0
               },
@@ -500,6 +505,7 @@
                 "weather": "fantasy.core:drizzle",
                 "sky": "drizzle",
                 "indoors": true,
+                "choice": null,
                 "x": -60.0,
                 "y": 160.0
               },
@@ -511,6 +517,7 @@
                 "weather": "fantasy.core:clear",
                 "sky": "clear",
                 "indoors": false,
+                "choice": null,
                 "x": 10.0,
                 "y": 60.0
               }
@@ -731,6 +738,7 @@
                 "weather": "fantasy.core:drizzle",
                 "sky": "drizzle",
                 "indoors": false,
+                "choice": null,
                 "x": 0.0,
                 "y": 120.0
               },
@@ -742,6 +750,7 @@
                 "weather": "fantasy.core:overcast",
                 "sky": "overcast",
                 "indoors": false,
+                "choice": null,
                 "x": 20.0,
                 "y": 0.0
               },
@@ -753,6 +762,7 @@
                 "weather": "fantasy.core:drizzle",
                 "sky": "drizzle",
                 "indoors": true,
+                "choice": null,
                 "x": -60.0,
                 "y": 160.0
               },
@@ -764,6 +774,7 @@
                 "weather": "fantasy.core:clear",
                 "sky": "clear",
                 "indoors": false,
+                "choice": null,
                 "x": 10.0,
                 "y": 60.0
               }
@@ -1040,6 +1051,7 @@
                 "weather": "fantasy.core:drizzle",
                 "sky": "drizzle",
                 "indoors": false,
+                "choice": null,
                 "x": 0.0,
                 "y": 120.0
               },
@@ -1051,6 +1063,7 @@
                 "weather": "fantasy.core:overcast",
                 "sky": "overcast",
                 "indoors": false,
+                "choice": null,
                 "x": 20.0,
                 "y": 0.0
               },
@@ -1062,6 +1075,7 @@
                 "weather": "fantasy.core:drizzle",
                 "sky": "drizzle",
                 "indoors": true,
+                "choice": null,
                 "x": -60.0,
                 "y": 160.0
               },
@@ -1073,6 +1087,7 @@
                 "weather": "fantasy.core:clear",
                 "sky": "clear",
                 "indoors": false,
+                "choice": null,
                 "x": 10.0,
                 "y": 60.0
               }

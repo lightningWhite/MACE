@@ -266,6 +266,33 @@ def test_a_road_that_is_shut_says_so_and_why(session: Session) -> None:
     assert road.reason == "The bridge is out."
 
 
+def test_the_map_says_which_option_goes_where(session: Session) -> None:
+    """What makes it a map you can travel by rather than a picture of one."""
+    ways = {place.name: place.choice for place in session.view().atlas.places}
+    assert ways["Home"] is None
+    assert session.offered[ways["The Castle"] or 0] == "Travel to The Castle"
+    assert session.offered[ways["The Mill"] or 0] == "Travel to The Mill"
+
+
+def test_a_place_with_nothing_offered_toward_it_is_not_clickable(
+    session: Session,
+) -> None:
+    session.state.pending = None
+    assert all(place.choice is None for place in session.view().atlas.places)
+
+
+def test_an_option_that_cannot_be_taken_does_not_make_a_place_reachable(
+    session: Session,
+) -> None:
+    """A menu shows it, with the author's hint. A map would just be lying."""
+    pending = session.state.pending
+    assert pending is not None
+    for option in pending.options:
+        option.available = False
+
+    assert all(place.choice is None for place in session.view().atlas.places)
+
+
 def test_the_map_carries_authored_coordinates(session: Session) -> None:
     placed = {
         place.location: (place.x, place.y) for place in session.view().atlas.places

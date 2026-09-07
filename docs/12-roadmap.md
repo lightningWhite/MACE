@@ -127,7 +127,9 @@ writing YAML.
 - [x] React + TS client: narrative pane, choices, character, inventory,
       journal, standing status line. Tests replay frames recorded from the
       real engine, guarded by `tests/test_web_wire.py`
-- [ ] SVG map with fog of war, route lengths, weather overlay
+- [x] SVG map with fog of war, route lengths, weather overlay, and
+      click-to-travel — the projection says which offered option goes where,
+      so the map never guesses at content
 - [ ] Combat view with timing bar and momentum
 - [ ] Offline-capable PWA shell
 - [ ] Pyodide build: engine client-side, static deploy to GitHub Pages

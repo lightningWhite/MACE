@@ -246,6 +246,15 @@ export interface Place {
   weather: string | null;
   sky: string | null;
   indoors: boolean;
+  /**
+   * The option on offer that goes here, if one is.
+   *
+   * What makes the map something you can travel by rather than a picture of
+   * one. Only the engine knows that "Take the north road" is the option that
+   * walks to Hagan's Castle; a client that matched prompts to places by their
+   * wording would be guessing at content.
+   */
+  choice: number | null;
   x: number | null;
   y: number | null;
 }

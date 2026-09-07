@@ -203,6 +203,12 @@ class Place:
         What to call that condition.
     indoors : bool
         Whether it is under a roof.
+    choice : int or None
+        The option currently on offer that goes here, if one is. This is what
+        makes a map something you can travel by rather than a picture of one:
+        only the engine knows that "Take the north road" is the option that
+        walks to Hagan's Castle, and a front-end that matched prompts to
+        places by their wording would be guessing at content.
     x, y : float or None
         Authored map coordinates. None means the client lays it out itself,
         which is what `mapPosition` being optional is for.
@@ -215,6 +221,7 @@ class Place:
     weather: str | None
     sky: str | None
     indoors: bool
+    choice: int | None
     x: float | None
     y: float | None
 
@@ -234,6 +241,7 @@ class Place:
             "weather": self.weather,
             "sky": self.sky,
             "indoors": self.indoors,
+            "choice": self.choice,
             "x": self.x,
             "y": self.y,
         }
@@ -682,8 +690,10 @@ def _atlas(context: RuleContext) -> Atlas:
         for qualified, definition in _locations(context).items()
         if qualified in state.revealed
     }
+    ways = _ways_out(context)
     places = tuple(
-        _place(context, qualified, known[qualified]) for qualified in sorted(known)
+        _place(context, qualified, known[qualified], ways)
+        for qualified in sorted(known)
     )
     roads = tuple(
         road
@@ -701,7 +711,42 @@ def _atlas(context: RuleContext) -> Atlas:
     )
 
 
-def _place(context: RuleContext, qualified: str, definition: Location) -> Place:
+def _ways_out(context: RuleContext) -> dict[str, int]:
+    """Which offered option travels to which place.
+
+    Only options that can actually be taken are here. An option the player
+    cannot afford is worth showing on a menu, where the author's hint says
+    why; it is not worth making a place on the map look reachable.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    dict
+        Qualified location id to the index of the option that goes there. The
+        first one wins, which is the one a player would reach for.
+    """
+    pending = context.state.pending
+    if pending is None:
+        return {}
+
+    ways: dict[str, int] = {}
+    for index, option in enumerate(pending.options):
+        if option.travel is None or not option.available:
+            continue
+        ways.setdefault(context.qualify(option.travel, "locations"), index)
+    return ways
+
+
+def _place(
+    context: RuleContext,
+    qualified: str,
+    definition: Location,
+    ways: dict[str, int],
+) -> Place:
     """Project one location the player knows about.
 
     Parameters
@@ -712,6 +757,8 @@ def _place(context: RuleContext, qualified: str, definition: Location) -> Place:
         The location's qualified id.
     definition : Location
         Its content.
+    ways : dict
+        Location id to the offered option that goes there.
 
     Returns
     -------
@@ -742,6 +789,7 @@ def _place(context: RuleContext, qualified: str, definition: Location) -> Place:
         weather=seen.qualified,
         sky=None if seen.condition is None else seen.condition.name,
         indoors=definition.indoors,
+        choice=ways.get(qualified),
         x=None if definition.map_position is None else definition.map_position.x,
         y=None if definition.map_position is None else definition.map_position.y,
     )

@@ -327,6 +327,109 @@ h2 {
   color: var(--warm);
 }
 
+/* ── The map ─────────────────────────────────────────────────────────────── */
+
+.map {
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 16rem;
+  display: block;
+  overflow: visible;
+}
+
+.region circle {
+  fill: var(--cold);
+  opacity: 0.07;
+  stroke: var(--edge);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.region-here circle {
+  opacity: 0.13;
+}
+
+.region-sky {
+  fill: var(--ink-dim);
+  font-size: 9px;
+  font-style: italic;
+  text-anchor: middle;
+}
+
+.road line {
+  stroke: var(--edge);
+  stroke-width: 1.5;
+}
+
+.road-shut line {
+  stroke: var(--loss);
+  stroke-dasharray: 3 3;
+}
+
+.road-ticks {
+  fill: var(--ink-dim);
+  font-size: 9px;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.journey line {
+  stroke: var(--warm);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.journey circle {
+  fill: var(--warm);
+}
+
+.node-ring {
+  fill: var(--ground);
+  stroke: var(--ink-dim);
+  stroke-width: 1.5;
+}
+
+.node-here {
+  fill: var(--warm);
+}
+
+.node-halo {
+  fill: none;
+  stroke: var(--warm);
+  stroke-width: 1.5;
+  opacity: 0.5;
+}
+
+.node-target {
+  fill: transparent;
+}
+
+.place-name {
+  fill: var(--ink);
+  font-size: 10px;
+}
+
+.place-known .place-name {
+  fill: var(--ink-dim);
+}
+
+.place-reachable {
+  cursor: pointer;
+}
+
+.place-reachable:hover .node-ring {
+  stroke: var(--warm);
+}
+
+.place-reachable:hover .place-name {
+  fill: var(--warm);
+}
+
+.legend {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+}
+
 /* ── The standing line ───────────────────────────────────────────────────── */
 
 .status {

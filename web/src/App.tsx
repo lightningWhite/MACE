@@ -22,6 +22,7 @@ import {
 import { Character } from "./panels/Character";
 import { Choices } from "./panels/Choices";
 import { Journal } from "./panels/Journal";
+import { MapView } from "./map/Map";
 import { Opening } from "./panels/Opening";
 import { Pack } from "./panels/Pack";
 import { StatusLine } from "./panels/StatusLine";
@@ -177,6 +178,7 @@ export function App() {
       </main>
 
       <aside className="sidebar">
+        <MapView atlas={frame.view.atlas} onTravel={choose} busy={busy} />
         <Character sheet={frame.view.sheet} />
         <Pack carried={frame.view.carried} />
         <Journal journal={frame.view.journal} />
