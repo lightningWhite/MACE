@@ -39,7 +39,9 @@ dependencies = [
 # to run. Nothing under `mace.engine` or `mace.content` may import these.
 api = [
     "fastapi>=0.110",
-    "uvicorn>=0.29",
+    # [standard] pulls in websockets, without which uvicorn can't upgrade the
+    # session stream connection — see mace.api.app's /stream endpoint.
+    "uvicorn[standard]>=0.29",
 ]
 dev = [
     "black>=24.0",

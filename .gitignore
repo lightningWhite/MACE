@@ -133,3 +133,8 @@ dmypy.json
 *.swo
 *~
 .DS_Store
+
+# Playthroughs. `mace play --save` writes wherever it is pointed, and the web
+# client downloads saves as `<pack>.mace.json` — either can land in the repo
+# while playtesting. A save is somebody's game, not the game.
+*.mace.json
