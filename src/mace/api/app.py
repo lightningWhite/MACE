@@ -419,7 +419,7 @@ def create_app(
     if authoring is not None:
         from mace.api.author import author_routes  # noqa: PLC0415
 
-        app.include_router(author_routes(authoring))
+        app.include_router(author_routes(authoring, registry))
 
     # Mounted last, at the root, so every `/api` route above wins. `html=True`
     # serves index.html for a path the build has no file for, which is what a

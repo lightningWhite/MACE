@@ -171,8 +171,20 @@ mace author packs/games/my-world
 
 Inside it: `[g]` on the World Map generates a starter map to rearrange, `[p]`
 plays what you have — unsaved changes included, from wherever you like, in
-whatever weather — and `[s]` saves. Saving rewrites only the files that changed
-and leaves your comments exactly where they were.
+whatever weather — `[s]` saves, and `[e]` writes the pack out as one file
+somebody else can open. Saving rewrites only the files that changed and leaves
+your comments exactly where they were.
+
+**Handing a pack on.** Errors block an export and never block saving: stopping
+mid-thought is fine, handing somebody a game that will not load is not. What
+comes out is a zip, and what opens one is:
+
+```bash
+mace import peasants-quest-0.4.0.zip --packs packs/
+```
+
+It lands beside your own packs rather than merging with them — `requires` is how
+you build on somebody else's work.
 
 **The v0 templates** in [`templates/`](templates/) documented the original
 design. The generated JSON Schemas in [`schemas/`](schemas/) now describe the

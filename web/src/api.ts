@@ -97,6 +97,18 @@ export function resumeSession(save: SaveRecord): Promise<Frame> {
   });
 }
 
+/**
+ * The current frame of a playthrough somebody else opened.
+ *
+ * The one caller is the wizard's playtest, which opens a session on the
+ * server and hands the game client its id. There is no local equivalent and
+ * there should not be: a playtest of unsaved work only exists where the
+ * half-finished pack is, which is the process the wizard is running in.
+ */
+export function lookSession(session: string): Promise<Frame> {
+  return ask(`${API}/sessions/${encodeURIComponent(session)}`);
+}
+
 export function fetchSave(session: string): Promise<SaveRecord> {
   return ask(`${API}/sessions/${encodeURIComponent(session)}/save`);
 }

@@ -87,6 +87,10 @@ def recorded(root: Path) -> dict[str, Any]:
         # terminal cannot.
         "atlas": studio.atlas(),
         "graph": studio.graph(),
+        # The playtest form, whose pickers are resolved for the same reason a
+        # `Select`'s are: a browser cannot ask the catalog where the bridge is
+        # in the middle of drawing a form.
+        "rehearsal": studio.rehearsal(),
         # An entity that inherits, because the whole point of a preview is
         # the difference between the file and the object.
         "preview": studio.preview("entities", "gorm"),

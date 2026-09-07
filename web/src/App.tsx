@@ -12,7 +12,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { remote, serviceIsUp, type Link, type Service, type Transport } from "./api";
+import {
+  lookSession,
+  remote,
+  serviceIsUp,
+  type Link,
+  type Service,
+  type Transport,
+} from "./api";
 import { local, type Progress } from "./local/engine";
 import { Combat, type Fight } from "./combat/Combat";
 import { Character } from "./panels/Character";
@@ -43,7 +50,15 @@ import {
   type Line,
 } from "./transcript";
 
-export function App() {
+/**
+ * The client.
+ *
+ * @param playtest - A session the wizard already opened, handed over as
+ *   `#play/<id>`. The client attaches to it instead of offering to start
+ *   one; everything after that is an ordinary playthrough, because that is
+ *   all a playtest is.
+ */
+export function App({ playtest }: { playtest?: string } = {}) {
   const [frame, setFrame] = useState<Frame | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [status, setStatus] = useState<WorldStatus | null>(null);
@@ -104,6 +119,12 @@ export function App() {
   // build time is also what lets an offline tab fall through to the engine it
   // already has. See ADR-0005.
   useEffect(() => {
+    // A playtest lives in the process the wizard is running in — that is
+    // where the half-finished pack is — so there is nothing to ask about.
+    if (playtest !== undefined) {
+      setService(remote);
+      return;
+    }
     let live = true;
     void serviceIsUp().then((up) => {
       if (live) setService(up ? remote : local(setProgress));
@@ -111,7 +132,7 @@ export function App() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [playtest]);
 
   /** Hold the connection open, and keep the save where a reload finds it. */
   const attach = useCallback(
@@ -129,11 +150,26 @@ export function App() {
     [absorb],
   );
 
+  // Pick up the playthrough the wizard opened. Attaching rather than
+  // beginning: the seed, the weather and the kit were all chosen on the
+  // author's form, and asking again here would be asking twice.
+  useEffect(() => {
+    if (playtest === undefined) return;
+    lookSession(playtest)
+      .then((opened) => attach(opened, remote))
+      .catch((error: Error) => setFailure(error.message));
+  }, [playtest, attach]);
+
   // ADR-0009: nothing but the client is holding on to this playthrough — not
   // the service, and certainly not a tab that might be closed.
   useEffect(() => {
     const session = frame?.session;
     if (session === undefined || service === null) return;
+    // Except a playtest, whose save would be a lie: the weather and the extra
+    // kit are set on the opening state rather than smuggled into content, so
+    // they are not in the action log and would not come back. Keeping one
+    // would also put a half-finished pack in the player's "carry on".
+    if (playtest !== undefined) return;
     service
       .fetchSave(session)
       .then((save) => {
@@ -217,6 +253,16 @@ export function App() {
     setBusy(true);
     acted.current = true;
     void connection.current?.send(action);
+  }
+
+  if (frame === null && playtest !== undefined) {
+    // Nothing to offer and nothing to choose: this playthrough already
+    // exists. Either it arrives, or the wizard that opened it is gone.
+    return (
+      <main className="opening">
+        <p className="dim">{failure ?? "Opening the playtest…"}</p>
+      </main>
+    );
   }
 
   if (frame === null) {

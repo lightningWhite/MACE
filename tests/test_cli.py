@@ -4,6 +4,7 @@ CI runs `mace validate packs/`, so the exit code is a contract.
 """
 
 import json
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ from mace.cli.play import keys_for
 from mace.cli.timing import Keypress
 from mace.content import validate_paths
 from mace.wizard.project import Project
+from mace.wizard.share import export_pack
 
 
 def test_no_command_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
@@ -483,3 +485,140 @@ def test_a_new_pack_validates_as_far_as_an_empty_game_can(tmp_path: Path) -> Non
     assert [problem.message for problem in report.errors] == [
         "is a game pack but has no `game:` manifest"
     ]
+
+
+def exported(tmp_path: Path) -> Path:
+    """A pack archive, written the way `mace author`'s export writes one.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Pytest's directory.
+
+    Returns
+    -------
+    Path
+        The archive.
+    """
+    root = write_pack(
+        tmp_path / "mine",
+        "gift",
+        kind="game",
+        files={
+            "world.yml": {
+                "locations": [
+                    {"id": "home", "name": "Home", "exits": [{"to": "castle"}]},
+                    {"id": "castle", "name": "The Castle", "exits": [{"to": "home"}]},
+                ],
+                "entities": [
+                    {
+                        "id": "hero",
+                        "kind": "actor",
+                        "name": "Hero",
+                        "playable": True,
+                        "stats": {
+                            "hitpoints": {"base": 10, "max": 10},
+                            "stamina": {"base": 10, "max": 10},
+                        },
+                    }
+                ],
+            },
+            "game.yml": {
+                "game": {
+                    "name": "A Gift",
+                    "player": {"entity": "hero", "startLocation": "home"},
+                    "winConditions": [{"atLocation": {"location": "castle"}}],
+                }
+            },
+        },
+    )
+    return export_pack(Project.open(root, root.parent), tmp_path / "post")
+
+
+def test_import_opens_a_pack_somebody_sent(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    archive = exported(tmp_path)
+    assert main(["import", str(archive), "--packs", str(tmp_path / "packs")]) == 0
+
+    assert "opened" in capsys.readouterr().out
+    assert (tmp_path / "packs" / "gift" / "game.yml").is_file()
+    assert validate_paths(tmp_path / "packs" / "gift").ok
+
+
+def test_import_refuses_to_overwrite_a_pack(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Quietly replacing somebody's work is not a thing a tool does on a keystroke."""
+    archive = exported(tmp_path)
+    where = ["--packs", str(tmp_path / "packs")]
+    assert main(["import", str(archive), *where]) == 0
+    assert main(["import", str(archive), *where]) == 1
+    assert "is already at" in capsys.readouterr().err
+    assert main(["import", str(archive), *where, "--force"]) == 0
+
+
+def test_import_refuses_something_that_is_not_a_pack(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    holiday = tmp_path / "holiday.zip"
+    holiday.write_bytes(b"PK not really")
+
+    assert main(["import", str(holiday), "--packs", str(tmp_path / "packs")]) == 1
+    assert "is not a MACE pack" in capsys.readouterr().err
+
+
+def test_import_says_what_is_wrong_with_what_it_opened(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The wizard's export cannot write a broken pack. Somebody's hand-made zip
+    can, and finding out at `mace play` time would be finding out too late."""
+    archive = tmp_path / "broken.zip"
+    with zipfile.ZipFile(archive, "w") as writing:
+        writing.writestr(
+            "pack.yml",
+            json.dumps(
+                {
+                    "id": "broken",
+                    "name": "Broken",
+                    "version": "0.1.0",
+                    "kind": "game",
+                    "maceVersion": "^0.1",
+                }
+            ),
+        )
+        writing.writestr("world.yml", json.dumps({"locations": [{"id": "here"}]}))
+
+    assert main(["import", str(archive), "--packs", str(tmp_path / "packs")]) == 1
+    assert (tmp_path / "packs" / "broken").is_dir()  # it is still on disk
+    assert "error" in capsys.readouterr().err
+
+
+def test_import_does_not_call_a_missing_dependency_the_packs_fault(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A pack that builds on `fantasy.core` is not broken for being read alone.
+
+    So the check runs against the packs directory it landed in, which is
+    where what it `requires` would be — and reports only the imported pack's
+    own problems, because the author's other packs are not what they opened.
+    """
+    write_pack(tmp_path / "packs", "fantasy.core")
+    archive = tmp_path / "leaning.zip"
+    with zipfile.ZipFile(archive, "w") as writing:
+        writing.writestr(
+            "pack.yml",
+            json.dumps(
+                {
+                    "id": "leaning",
+                    "name": "Leaning",
+                    "version": "0.1.0",
+                    "kind": "library",
+                    "maceVersion": "^0.1",
+                    "requires": [{"id": "fantasy.core", "version": "^0.1"}],
+                }
+            ),
+        )
+
+    assert main(["import", str(archive), "--packs", str(tmp_path / "packs")]) == 0
+    assert capsys.readouterr().err == ""

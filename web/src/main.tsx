@@ -15,10 +15,24 @@ if (root === null) throw new Error("no #root to mount on");
 // and a router is a dependency for one decision. The wizard is only
 // *answered* when somebody ran `mace author --web`, so a hosted game stays a
 // game and nothing else.
-const authoring = window.location.hash.replace(/^#\/?/, "") === "author";
+const fragment = window.location.hash.replace(/^#\/?/, "");
+
+// `#play/<id>` is a playthrough somebody else opened — in practice the
+// wizard, handing over a playtest. It is still the game client and still an
+// ordinary session; the only thing the fragment changes is that the client
+// attaches to one instead of offering to start one.
+const handed = /^play\/(.+)$/.exec(fragment)?.[1];
 
 createRoot(root).render(
-  <StrictMode>{authoring ? <Studio /> : <App />}</StrictMode>,
+  <StrictMode>
+    {fragment === "author" ? (
+      <Studio />
+    ) : handed === undefined ? (
+      <App />
+    ) : (
+      <App playtest={decodeURIComponent(handed)} />
+    )}
+  </StrictMode>,
 );
 
 // The offline shell. Registered after the app is mounted and never awaited:

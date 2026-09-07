@@ -64,6 +64,7 @@ from mace.wizard.fields import (
 from mace.wizard.flow import Flow, Step, answered, slug
 from mace.wizard.flows import FLOWS, GAME
 from mace.wizard.language import Names, say_conditions, say_effects
+from mace.wizard.notes import PlaytestSetup, ProjectNotes
 from mace.wizard.project import Project
 from mace.wizard.query import Catalog, Option, Query
 from mace.wizard.tasks import SECTIONS, Section, TaskList, review
@@ -913,6 +914,64 @@ class Studio:
         )
         return [_problem(one) for one in problems]
 
+    # ── The playtest ──────────────────────────────────────────────────────
+
+    def rehearsal(self) -> dict[str, Any]:
+        """The playtest setup, and the pickers a client needs to change it.
+
+        Resolved here for the same reason a `Select` is: a browser cannot ask
+        the catalog what locations exist in the middle of drawing a form.
+
+        The setup that comes back is the one the author used last, because
+        iterating means running the same awkward corner twenty times and
+        retyping "the bridge, at midnight, in a blizzard" twenty times is how
+        people stop iterating.
+
+        Returns
+        -------
+        dict
+            The remembered setup, and the options for each of its pickers.
+        """
+        catalog = self.catalog
+        return {
+            "setup": _setup(self.project.notes.playtest),
+            "locations": [
+                _option(one)
+                for one in Query("locations", scope="project").options(catalog)
+            ],
+            "weather": [
+                _option(one) for one in Query("weatherConditions").options(catalog)
+            ],
+            "items": [
+                _option(one)
+                for one in Query("entities", where={"kind": "item"}).options(catalog)
+            ],
+        }
+
+    def rehearse(self, setup: PlaytestSetup) -> PlaytestSetup:
+        """Remember a playtest setup, so the next one opens with it.
+
+        Parameters
+        ----------
+        setup : PlaytestSetup
+            What the author asked for.
+
+        Returns
+        -------
+        PlaytestSetup
+            The same setup, now remembered.
+        """
+        notes = self.project.notes
+        self.project.remember(
+            ProjectNotes(
+                format_version=notes.format_version,
+                completed=notes.completed,
+                notes=notes.notes,
+                playtest=setup,
+            )
+        )
+        return setup
+
     # ── The cascade ───────────────────────────────────────────────────────
 
     def build(self, kind: str, tag: str, answers: Mapping[str, Any]) -> dict[str, Any]:
@@ -1280,6 +1339,35 @@ def _fixed(source: Any) -> list[dict[str, str]]:
     if not isinstance(source, Fixed):
         return []
     return [_option(one) for one in source.choices]
+
+
+def _setup(setup: PlaytestSetup) -> dict[str, Any]:
+    """One playtest setup, every field on it.
+
+    Written out rather than dumped: a content model serializes through
+    `authored()`, which writes the *smallest* content that reproduces it, and
+    a form needs the seed on it even when the seed is the one it started with.
+
+    Parameters
+    ----------
+    setup : PlaytestSetup
+        The remembered setup.
+
+    Returns
+    -------
+    dict
+        JSON-safe, keyed the way the wire is.
+    """
+    return {
+        "seed": setup.seed,
+        "startLocation": setup.start_location,
+        "startTick": setup.start_tick,
+        "weather": setup.weather,
+        "items": dict(setup.items),
+        "background": setup.background,
+        "spend": dict(setup.spend),
+        "combatMode": setup.combat_mode,
+    }
 
 
 def _option(option: Option) -> dict[str, str]:

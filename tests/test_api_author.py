@@ -14,10 +14,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from conftest import write_pack
 from mace.api.app import create_app
+from mace.api.author import author_routes
 from mace.content import load_library
 from mace.wizard.studio import Studio
 
@@ -371,3 +373,117 @@ def test_the_graph_is_a_route(client: TestClient) -> None:
     graph = got(client, "/api/author/graph")
     assert graph["scenes"] == []
     assert graph["entrances"] == []
+
+
+# ── Playtest, and handing the pack on ─────────────────────────────────────────
+
+
+def test_a_playtest_is_an_ordinary_session(client: TestClient) -> None:
+    """Two front-ends, one engine: a playtest is a playthrough, not a mode.
+
+    The proof is that the answer is a session id and the *game* routes drive
+    it from there, without knowing it came from the wizard.
+    """
+    opened = client.post("/api/author/playtest", json={})
+    assert opened.status_code == 201, opened.text
+    frame = opened.json()
+    assert frame["playing"] is True
+
+    acted = client.post(
+        f"/api/sessions/{frame['session']}/actions",
+        json={"kind": "choose", "option": 0},
+    )
+    assert acted.status_code == 200, acted.text
+
+
+def test_the_playtest_form_arrives_with_its_pickers_resolved(
+    client: TestClient,
+) -> None:
+    """A browser cannot ask the catalog what locations exist mid-render."""
+    offered = got(client, "/api/author/playtest")
+    assert offered["setup"]["seed"] == "mace"
+    assert {one["value"] for one in offered["locations"]} == {"home", "castle"}
+    assert {one["value"] for one in offered["items"]} == {"gold"}
+
+
+def test_the_playtest_setup_is_remembered(client: TestClient) -> None:
+    """Retyping "the bridge, at midnight" twenty times is how people stop."""
+    client.post(
+        "/api/author/playtest", json={"startLocation": "castle", "seed": "wind"}
+    )
+    setup = got(client, "/api/author/playtest")["setup"]
+
+    assert (setup["startLocation"], setup["seed"]) == ("castle", "wind")
+
+
+def test_a_setup_that_will_not_start_is_not_remembered(client: TestClient) -> None:
+    """The form should not open on the thing that just failed."""
+    client.post("/api/author/playtest", json={"startLocation": "atlantis"})
+    assert got(client, "/api/author/playtest")["setup"]["startLocation"] is None
+
+
+def test_a_playtest_starts_where_the_author_asked(client: TestClient) -> None:
+    """ "Start me at the castle, at midnight" — every part a session parameter."""
+    opened = client.post(
+        "/api/author/playtest",
+        json={"startLocation": "castle", "startTick": 24, "seed": "storm"},
+    )
+    assert opened.status_code == 201, opened.text
+    view = opened.json()["view"]
+    assert view["atlas"]["here"] == "tiny:castle"
+    assert view["tick"] == 24
+
+
+def test_a_playtest_runs_the_pack_as_it_stands(client: TestClient) -> None:
+    """Unsaved changes included. Compiling never touches the disk, so this is
+    the project in memory rather than the project on disk."""
+    client.post(
+        "/api/author/objects/locations",
+        json={"name": "The Tower", "section": "world", "answers": {}},
+    )
+    opened = client.post("/api/author/playtest", json={"startLocation": "the-tower"})
+    assert opened.status_code == 201, opened.text
+    assert opened.json()["view"]["atlas"]["here"] == "tiny:the-tower"
+
+
+def test_a_playtest_that_cannot_start_is_a_400(client: TestClient) -> None:
+    refused = client.post("/api/author/playtest", json={"startLocation": "atlantis"})
+    assert refused.status_code == 400
+    assert "atlantis" in refused.json()["detail"]
+
+
+def test_exporting_hands_back_a_file(client: TestClient, root: Path) -> None:
+    written = client.post("/api/author/export", json={"into": str(root.parent / "out")})
+    assert written.status_code == 200, written.text
+
+    archive = Path(written.json()["path"])
+    assert archive.is_file()
+    assert archive.stat().st_size == written.json()["bytes"]
+
+
+def test_errors_block_an_export(client: TestClient) -> None:
+    """The one place the wizard says no. Saving is still allowed."""
+    client.post(
+        "/api/author/answers",
+        json={
+            "collection": "locations",
+            "object": "home",
+            "step": "location.exits",
+            "value": [{"to": "atlantis"}],
+        },
+    )
+    refused = client.post("/api/author/export", json={})
+    assert refused.status_code == 400
+    assert "atlantis" in refused.json()["detail"]
+    assert client.post("/api/author/save").status_code == 200
+
+
+def test_a_wizard_with_nowhere_to_put_a_playthrough_says_so(root: Path) -> None:
+    """The routes can be mounted without a session registry. Then there is
+    nowhere for a playtest to live, and saying 409 beats pretending."""
+    alone = FastAPI()
+    alone.include_router(author_routes(Studio.open(root, root.parent)))
+    refused = TestClient(alone).post("/api/author/playtest", json={})
+
+    assert refused.status_code == 409
+    assert "holds no playthroughs" in refused.json()["detail"]

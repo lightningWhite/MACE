@@ -290,6 +290,37 @@ export interface Vocabulary {
   effects: Recipe[];
 }
 
+/**
+ * Where and how to open a playtest.
+ *
+ * Every field is a session-opening parameter, the way the seed is, so a
+ * playtest is an ordinary replayable session rather than a special mode.
+ */
+export interface Setup {
+  seed: string;
+  startLocation: string | null;
+  startTick: number | null;
+  weather: string | null;
+  items: Record<string, number>;
+  background: string | null;
+  spend: Record<string, number>;
+  combatMode: string | null;
+}
+
+/** The playtest form: what was used last, and the pickers to change it. */
+export interface Rehearsal {
+  setup: Setup;
+  locations: Option[];
+  weather: Option[];
+  items: Option[];
+}
+
+/** What `POST /export` returns: the file, and how big it is. */
+export interface Exported {
+  path: string;
+  bytes: number;
+}
+
 /** What `POST /build` returns: content, and the English of it. */
 export interface Built {
   authored: Record<string, unknown>;

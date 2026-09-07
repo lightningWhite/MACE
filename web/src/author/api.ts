@@ -14,10 +14,13 @@
 import type {
   Atlas,
   Built,
+  Exported,
   Frame,
   Graph,
   Preview,
   Problem,
+  Rehearsal,
+  Setup,
   Vocabulary,
 } from "./protocol";
 
@@ -175,6 +178,27 @@ export function unlink(route: string): Promise<Frame> {
 /** The cascades, with this pack's options on them. */
 export function vocabulary(): Promise<Vocabulary> {
   return ask<Vocabulary>("/vocabulary");
+}
+
+/** The playtest form: the setup used last, and the pickers to change it. */
+export function rehearsal(): Promise<Rehearsal> {
+  return ask<Rehearsal>("/playtest");
+}
+
+/**
+ * Open a playthrough of the pack as it stands, unsaved changes and all.
+ *
+ * What comes back is a session id, and the *game* client plays it from there
+ * through the ordinary session routes. Two front-ends, one engine: a playtest
+ * is a playthrough, not a special mode.
+ */
+export function playtest(setup: Setup): Promise<{ session: string }> {
+  return ask<{ session: string }>("/playtest", sending(setup));
+}
+
+/** Write the pack out as one file somebody else can open. */
+export function exportPack(into?: string | null): Promise<Exported> {
+  return ask<Exported>("/export", sending({ into: into ?? null }));
 }
 
 /** Turn a cascade's answers into an authored condition or effect. */

@@ -119,6 +119,11 @@ export function fakeService(
       }
       return reply(opening, 201);
     }
+    // A playthrough somebody else opened — the wizard, handing over a
+    // playtest. The client attaches to it rather than beginning one.
+    if (/\/api\/sessions\/[^/]+$/.test(path) && method === "GET") {
+      return reply(opening);
+    }
     if (path.endsWith("/save")) {
       return reply({
         format: 1,

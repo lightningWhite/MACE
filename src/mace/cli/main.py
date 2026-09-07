@@ -15,6 +15,7 @@ from mace.cli.play import play
 from mace.content import ContentError, Severity, validate_paths
 from mace.engine.creation import Character
 from mace.wizard.project import Project
+from mace.wizard.share import import_pack
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -250,6 +251,32 @@ def build_parser() -> argparse.ArgumentParser:
     )
     started.set_defaults(run=run_new)
 
+    taker = commands.add_parser(
+        "import",
+        help="open a pack somebody sent you",
+        description=(
+            "Unpack a `.zip` written by the wizard's export into your packs "
+            "directory. It lands beside your own packs rather than merging "
+            "with them: `requires` is how you build on somebody else's work."
+        ),
+    )
+    taker.add_argument("archive", type=Path, help="the pack archive")
+    taker.add_argument(
+        "--packs",
+        type=Path,
+        default=Path("packs"),
+        help="where your packs live (default: packs/)",
+    )
+    taker.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "replace a pack of the same id that is already there. Without "
+            "this, an import that would overwrite somebody's work refuses."
+        ),
+    )
+    taker.set_defaults(run=run_import)
+
     writer = commands.add_parser(
         "author",
         help="build a game without writing YAML",
@@ -406,6 +433,47 @@ def run_new(options: argparse.Namespace) -> int:
             "it is still required, so put it there before playing",
             file=sys.stderr,
         )
+    return 0
+
+
+def run_import(options: argparse.Namespace) -> int:
+    """Run `mace import`.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    try:
+        root = import_pack(options.archive, options.packs, overwrite=options.force)
+    except ContentError as error:
+        print(f"error   {error}", file=sys.stderr)
+        return 1
+
+    print(f"opened  {root}", flush=True)
+
+    # Validated against the whole packs directory rather than the pack alone,
+    # because that is where what it `requires` would be — a pack that builds
+    # on `fantasy.core` is not broken for being read on its own. Only its own
+    # problems are reported: the author's other packs are not what they just
+    # imported.
+    mine = [
+        problem
+        for problem in validate_paths(options.packs).problems
+        if problem.pack == root.name and problem.severity is Severity.ERROR
+    ]
+    if mine:
+        # Not a failure of the import — the pack is on disk and this is what
+        # is wrong with it. A pack that will not load is worth saying out loud
+        # rather than leaving for whenever they try to play it.
+        for problem in mine:
+            print(problem, file=sys.stderr)
+        return 1
     return 0
 
 

@@ -244,7 +244,24 @@ simulation, because watching a blizzard lift is half of why you asked for one.
 
 The setup is remembered in `.mace/project.yml`, because iterating means running
 the same awkward corner twenty times and retyping "the bridge, at midnight, in a
-blizzard" twenty times is how people stop iterating.
+blizzard" twenty times is how people stop iterating. It is remembered only once
+the session has actually opened: a form that reopened on the thing that just
+failed would be a form fighting the author.
+
+In the browser this is the same setup form and the same session. `GET
+/api/author/playtest` hands over the remembered setup with its pickers already
+resolved — a browser cannot ask the catalog where the bridge is in the middle of
+drawing a form, which is the same rule a `Select` obeys — and `POST` opens the
+playthrough and answers with a session id. From there the **game** client plays
+it, in a tab of its own at `#play/<id>`, through the ordinary session routes.
+Two front-ends, one engine: a playtest really is a playthrough, and the client
+driving it cannot tell that the wizard opened it.
+
+The one thing it does differently is refuse to keep the save. `start()` sets the
+weather and the extra kit on the opening state rather than smuggling them into
+content, so they are not in the action log and would not come back; a "carry on"
+button pointing at a half-finished pack in somebody else's process would be
+worse than no button at all.
 
 The overlay (`mace.engine.debug`) is a **projection**, not a second event
 channel: it reads state and content and returns a description, and the engine
@@ -338,6 +355,43 @@ the same questions and the same validator as the terminal. One pack per
 process, the way the terminal is one pack per window — a project holds unsaved
 edits in memory, and two behind one process would be two authors overwriting
 each other.
+
+### Sharing a pack
+
+A pack is a directory of YAML and nothing else, so handing one to somebody is a
+zip (`mace.wizard.share`). What makes it a module rather than two lines of
+`shutil` is the rule on either side of the exchange.
+
+**Errors block an export.** This is the one place the wizard is allowed to say
+no. Saving is never blocked — an author has to be able to stop mid-thought — but
+handing somebody a pack that will not load is a different thing. Warnings and
+notes do not block: a road with no encounters is an opinion, not a fault. The
+export saves first, because an export that silently left the last twenty minutes
+on the floor would be worse than no export.
+
+**An imported pack is untrusted.** Content packs are community input, which
+architecture boundary 5 says to treat as such, and a zip is the classic way to
+be handed a path that escapes where you meant to put it. Every entry is checked
+against the destination before anything is written, and an archive that is not a
+pack is refused before it can leave a directory of loose files behind. Importing
+over a pack that is already there refuses unless asked twice, and when it is
+asked twice it *replaces* rather than unpacks over the top — a file the new
+version dropped would otherwise stay on disk and go on being loaded, leaving a
+pack that is neither the old one nor the new one.
+
+An archive never carries `.mace/`. That directory is the author's own — their
+playtest setup, and the reminders they left themselves at midnight — and it is
+not part of the pack.
+
+Importing does not merge, remix, or rename. It puts somebody else's pack beside
+yours, and `requires` is how you build on it: the mechanism packs already have,
+and the reason `fantasy.core` exists.
+
+    [e] in the wizard          →  peasants-quest-0.4.0.zip
+    mace import <archive>      →  packs/peasants-quest/
+
+`mace import` validates what it opened and says what is wrong with it. Finding
+that out at `mace play` time would be finding out too late.
 
 ### The map editor
 

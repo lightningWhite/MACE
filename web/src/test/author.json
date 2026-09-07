@@ -6481,6 +6481,149 @@
     "unreadable": [],
     "dropped": []
   },
+  "rehearsal": {
+    "setup": {
+      "seed": "mace",
+      "startLocation": null,
+      "startTick": null,
+      "weather": null,
+      "items": {},
+      "background": null,
+      "spend": {},
+      "combatMode": null
+    },
+    "locations": [
+      {
+        "value": "fenmoor",
+        "label": "Fenmoor",
+        "note": "this pack"
+      },
+      {
+        "value": "hagans-castle",
+        "label": "Hagan's Castle",
+        "note": "this pack"
+      },
+      {
+        "value": "the-long-moor",
+        "label": "The Long Moor",
+        "note": "this pack"
+      },
+      {
+        "value": "traders-post",
+        "label": "Trader's Post",
+        "note": "this pack"
+      },
+      {
+        "value": "troll-bridge",
+        "label": "The Old Bridge",
+        "note": "this pack"
+      }
+    ],
+    "weather": [
+      {
+        "value": "fantasy.core:blizzard",
+        "label": "blizzard",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:clear",
+        "label": "clear",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:drizzle",
+        "label": "drizzle",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:fog",
+        "label": "fog",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:light-snow",
+        "label": "light snow",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:overcast",
+        "label": "overcast",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:rain",
+        "label": "rain",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:sleet",
+        "label": "sleet",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:storm",
+        "label": "storm",
+        "note": "fantasy.core"
+      }
+    ],
+    "items": [
+      {
+        "value": "kings-token",
+        "label": "The King's Token",
+        "note": "this pack"
+      },
+      {
+        "value": "reaping-hook",
+        "label": "Reaping Hook",
+        "note": "this pack"
+      },
+      {
+        "value": "fantasy.core:bread",
+        "label": "Bread",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:dagger",
+        "label": "Dagger",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:gold",
+        "label": "Gold",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:grain",
+        "label": "Grain",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:healing-draught",
+        "label": "Healing Draught",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:iron-ingot",
+        "label": "Iron Ingot",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:rope",
+        "label": "Rope",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:salt",
+        "label": "Salt",
+        "note": "fantasy.core"
+      },
+      {
+        "value": "fantasy.core:wool",
+        "label": "Wool",
+        "note": "fantasy.core"
+      }
+    ]
+  },
   "preview": {
     "collection": "entities",
     "id": "gorm",

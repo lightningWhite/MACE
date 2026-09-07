@@ -803,6 +803,14 @@ button:focus-visible {
   font-size: 0.9rem;
 }
 
+.studio-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.studio-actions button,
+.playtest button,
 .studio-save,
 .studio-back,
 .make button,
@@ -818,8 +826,92 @@ button:focus-visible {
 }
 
 .studio-save:hover:not(:disabled),
+.studio-actions button:hover:not(:disabled),
+.playtest button:hover:not(:disabled),
 .make button:hover:not(:disabled) {
   border-color: var(--warm);
+}
+
+button.quiet {
+  background: none;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Playtest — the form for "start me at the bridge, at midnight, in a
+   blizzard". Boxed rather than a screen of its own, because it is something
+   you reach for from wherever you happen to be working. */
+.playtest {
+  border: 1px solid var(--edge);
+  border-radius: 0.4rem;
+  background: var(--ground-raised);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.2rem;
+}
+
+.playtest h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+}
+
+.playtest > p {
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+}
+
+.playtest-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.7rem 1rem;
+}
+
+.playtest-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+.playtest-fields input,
+.playtest-fields select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--ground);
+  border: 1px solid var(--edge);
+  border-radius: 0.3rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.playtest-kit {
+  border: none;
+  padding: 0.8rem 0 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+.playtest-kit legend {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  padding: 0;
+}
+
+.playtest-kit label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.playtest-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .studio-back {

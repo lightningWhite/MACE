@@ -55,6 +55,7 @@ from mace.wizard.notes import Note, PlaytestSetup, ProjectNotes
 from mace.wizard.playtest import start_from
 from mace.wizard.project import Project
 from mace.wizard.query import Catalog, Option
+from mace.wizard.share import export_pack
 from mace.wizard.tasks import Task, TaskList, review
 
 __all__ = ["author"]
@@ -193,13 +194,16 @@ class Wizard:
             if typed in {"n", "note"}:
                 self._note()
                 continue
+            if typed in {"e", "export"}:
+                self._export()
+                continue
             if typed.isdigit() and 1 <= int(typed) <= len(listed.tasks):
                 try:
                     self.section(listed.tasks[int(typed) - 1])
                 except Leave:
                     continue
                 continue
-            self.say("  A number, or one of p / v / s / n / q.")
+            self.say("  A number, or one of p / v / s / n / e / q.")
 
     def _task_list(self, listed: TaskList) -> None:
         """Draw the task list.
@@ -229,7 +233,10 @@ class Wizard:
                 f"{_short(task.summary, 38):<40}{_short(task.note, 46)}"
             )
         self.say("")
-        self.say("      [p] playtest   [v] validate   [s] save   [n] note   [q] quit")
+        self.say(
+            "      [p] playtest   [v] validate   [s] save   [n] note   "
+            "[e] export   [q] quit"
+        )
 
     # ── A section ─────────────────────────────────────────────────────────
 
@@ -1147,6 +1154,31 @@ class Wizard:
             )
         )
         self.say("  Noted.")
+
+    def _export(self) -> None:
+        """Write the pack out as one file somebody else can open.
+
+        The one place the wizard says no. Saving is never blocked — an author
+        has to be able to stop mid-thought — but handing somebody a pack that
+        will not load is a different thing.
+
+        Raises
+        ------
+        Stop
+            When the author is done.
+        """
+        typed = self.ask("Where to? (a directory, or blank for beside the pack)  ")
+        try:
+            written = export_pack(self.project, Path(typed) if typed else None)
+        except ContentError as error:
+            self.say(f"  ! {error}")
+            self.say("  Fix the errors and try again — saving still works.")
+            return
+        except OSError as error:  # pragma: no cover — a full disk, a bad mount
+            self.say(f"  ! could not write it: {error}")
+            return
+        self.say(f"  Wrote {written} ({written.stat().st_size:,} bytes).")
+        self.say("  `mace import` is how they open it.")
 
     def _playtest(self) -> None:
         """Set a session up and play it, unsaved changes included.

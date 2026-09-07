@@ -521,3 +521,40 @@ it("the recording reaches a fight", () => {
   const kinds = afterStep(2).events.map((event) => event.kind);
   expect(kinds).toContain("combat.tell");
 });
+
+// ── A playtest, handed over ───────────────────────────────────────────────────
+
+describe("a playtest the wizard opened", () => {
+  it("attaches to it rather than offering to start one", async () => {
+    const service = fakeService();
+    stub(service);
+    render(<App playtest="handed" />);
+
+    // Straight into the world: the seed, the weather and the kit were all
+    // chosen on the author's form, and asking again here would ask twice.
+    expect(await screen.findByText(/You are a peasant/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Begin" })).toBeNull();
+    expect(
+      service.calls.some((call) => call.path === "/api/sessions/handed"),
+    ).toBe(true);
+  });
+
+  it("does not keep its save, because that save would be a lie", async () => {
+    stub(fakeService());
+    render(<App playtest="handed" />);
+    await screen.findByText(/You are a peasant/);
+
+    // The weather and the extra kit are set on the opening state rather than
+    // smuggled into content, so they are not in the action log and would not
+    // come back. A "carry on" pointing at a half-finished pack is worse than
+    // no "carry on".
+    await waitFor(() => expect(window.localStorage.length).toBe(0));
+  });
+
+  it("says so when the wizard that opened it is gone", async () => {
+    stub(fakeService({ absent: true }));
+    render(<App playtest="handed" />);
+
+    expect(await screen.findByText(/not found/)).toBeTruthy();
+  });
+});

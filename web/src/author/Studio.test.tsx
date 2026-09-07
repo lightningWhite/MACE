@@ -542,3 +542,81 @@ describe("the live preview", () => {
     expect(screen.queryByLabelText(/as the engine sees it/)).toBeNull();
   });
 });
+
+// ── Playtest, and handing the pack on ─────────────────────────────────────────
+
+describe("the playtest", () => {
+  it("offers where to start, with the pickers already resolved", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+
+    await user.click(screen.getByRole("button", { name: "Playtest" }));
+    const where = await screen.findByLabelText(/Start where/);
+
+    // The bridge is on the list because the wizard resolved it, not because
+    // the client went looking for locations.
+    expect(within(where).getByText("The Old Bridge")).toBeTruthy();
+    expect(
+      within(await screen.findByLabelText(/In what weather/)).getByRole("option", {
+        name: /blizzard/,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("hands the session to the game client rather than playing it here", async () => {
+    const user = userEvent.setup();
+    const studio = fakeStudio();
+    stub(studio);
+    const opening = vi.fn();
+    vi.stubGlobal("open", opening);
+    await opened();
+
+    await user.click(screen.getByRole("button", { name: "Playtest" }));
+    await screen.findByLabelText(/Start where/);
+    await user.selectOptions(screen.getByLabelText(/Start where/), "troll-bridge");
+    await user.click(screen.getByRole("button", { name: "Play it" }));
+
+    const asked = studio.calls.find((call) => call.method === "POST" && call.path.endsWith("/playtest"));
+    expect(asked?.body).toMatchObject({ startLocation: "troll-bridge" });
+    expect(String(opening.mock.calls[0]?.[0])).toContain("#play/played");
+  });
+
+  it("says why it would not start, and stays on the form", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio({ refuse: "no such location `atlantis`" }));
+    await opened();
+
+    await user.click(screen.getByRole("button", { name: "Playtest" }));
+    await screen.findByLabelText(/Start where/);
+    await user.click(screen.getByRole("button", { name: "Play it" }));
+
+    expect(await screen.findByText(/no such location/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Play it" })).toBeTruthy();
+  });
+});
+
+describe("handing the pack on", () => {
+  it("writes a file and says where it went", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+
+    await user.click(screen.getByRole("button", { name: "Export" }));
+    expect(await screen.findByText(/peasants-quest-0.4.0.zip/)).toBeTruthy();
+  });
+
+  it("is the one thing errors stop, and saving is not", async () => {
+    stub(fakeStudio());
+    render(<Studio />);
+    await screen.findByText("A Peasant's Quest");
+
+    // The recorded pack has no errors, so the button is live. What matters is
+    // that it is the *only* button tied to them: saving never is.
+    expect(screen.getByRole("button", { name: "Save" }).hasAttribute("disabled")).toBe(
+      false,
+    );
+    const exporting = screen.getByRole("button", { name: "Export" });
+    expect(exporting.getAttribute("title")).toContain("somebody else can open");
+  });
+});

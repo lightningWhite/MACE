@@ -21,6 +21,7 @@ import * as api from "./api";
 import { StudioError } from "./api";
 import { Field } from "./Field";
 import { MapEditor } from "./MapEditor";
+import { Playtest } from "./Playtest";
 import { Preview } from "./Preview";
 import { SceneGraph } from "./SceneGraph";
 import {
@@ -51,6 +52,8 @@ export function Studio() {
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState<string[] | null>(null);
+  const [trying, setTrying] = useState(false);
+  const [handed, setHanded] = useState<string | null>(null);
   // Bumped on every answer, so the preview refetches. The wizard recompiles
   // on demand and never touches the disk, which is what makes a preview of
   // unsaved work true rather than approximately true.
@@ -110,7 +113,26 @@ export function Studio() {
             return done;
           })
         }
+        onPlaytest={() => setTrying((open) => !open)}
+        onExport={() => {
+          setBusy(true);
+          setFailure(null);
+          setHanded(null);
+          api
+            .exportPack()
+            .then((written) => setHanded(written.path))
+            .catch((error: unknown) =>
+              setFailure(
+                error instanceof StudioError
+                  ? error.message
+                  : "it would not export",
+              ),
+            )
+            .finally(() => setBusy(false));
+        }}
       />
+
+      {trying ? <Playtest onClose={() => setTrying(false)} /> : null}
 
       {failure === null ? null : (
         <p className="studio-failure" role="alert">
@@ -123,6 +145,11 @@ export function Studio() {
             <li key={one}>{one}</li>
           ))}
         </ul>
+      )}
+      {handed === null ? null : (
+        <p className="studio-saved" role="status">
+          Wrote {handed}. <code>mace import</code> is how they open it.
+        </p>
       )}
       {saved === null ? null : (
         <p className="studio-saved" role="status">
@@ -222,10 +249,14 @@ function Header({
   frame,
   busy,
   onSave,
+  onPlaytest,
+  onExport,
 }: {
   frame: Frame;
   busy: boolean;
   onSave: () => void;
+  onPlaytest: () => void;
+  onExport: () => void;
 }) {
   const { desk, dirty } = frame;
   return (
@@ -241,9 +272,30 @@ function Header({
           {dirty.length === 0 ? "" : ` · unsaved: ${dirty.join(", ")}`}
         </p>
       </div>
-      <button type="button" className="studio-save" disabled={busy} onClick={onSave}>
-        Save
-      </button>
+      <div className="studio-actions">
+        <button type="button" disabled={busy} onClick={onPlaytest}>
+          Playtest
+        </button>
+        <button type="button" className="studio-save" disabled={busy} onClick={onSave}>
+          Save
+        </button>
+        {/* Errors block this and never block saving. An author has to be able
+            to stop mid-thought; handing somebody a pack that will not load is
+            a different thing, and the one place the wizard says no. */}
+        <button
+          type="button"
+          className="quiet"
+          disabled={busy || desk.errors > 0}
+          title={
+            desk.errors === 0
+              ? "Write it out as one file somebody else can open"
+              : "Fix the errors first — a pack that will not load cannot be handed on"
+          }
+          onClick={onExport}
+        >
+          Export
+        </button>
+      </div>
     </header>
   );
 }

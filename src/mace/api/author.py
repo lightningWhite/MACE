@@ -22,15 +22,21 @@ See docs/09-authoring-and-wizard.md § CLI and web parity.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, HTTPException
 
 from mace.api.app import Wire
+from mace.api.sessions import Registry
 from mace.content import ContentError
+from mace.session import frame as frame_of
+from mace.wizard.notes import PlaytestSetup
+from mace.wizard.playtest import start_from
+from mace.wizard.share import export_pack
 from mace.wizard.studio import Studio, Unknown, frame
 
-__all__ = ["Answer", "Built", "Made", "Road", "author_routes"]
+__all__ = ["Answer", "Built", "Made", "Road", "Trial", "author_routes"]
 
 
 class Answer(Wire):
@@ -95,6 +101,42 @@ class Road(Wire):
     name: str | None = None
 
 
+class Trial(Wire):
+    """Where and how to open a playtest.
+
+    Every field is a session-opening parameter, the way the seed is, so a
+    playtest is an ordinary replayable session rather than a special mode.
+
+    Attributes
+    ----------
+    seed : str
+        Fixed by default, so a change in the pack is the only variable.
+    start_location : str or None
+        Where to begin, overriding the game's own start.
+    start_tick : int or None
+        When to begin.
+    weather : str or None
+        A condition to open in, whatever the climate would have rolled.
+    items : dict
+        Extra kit, by reference.
+    background : str or None
+        Which background to create the protagonist with.
+    spend : dict
+        Where the creation points went.
+    combat_mode : str or None
+        Which combat presentation to use.
+    """
+
+    seed: str = "mace"
+    start_location: str | None = None
+    start_tick: int | None = None
+    weather: str | None = None
+    items: dict[str, int] = {}  # noqa: RUF012 — pydantic copies per instance
+    background: str | None = None
+    spend: dict[str, int] = {}  # noqa: RUF012 — pydantic copies per instance
+    combat_mode: str | None = None
+
+
 class Built(Wire):
     """A cascade's answers, to be turned into content.
 
@@ -113,13 +155,17 @@ class Built(Wire):
     answers: dict[str, Any] = {}  # noqa: RUF012 — pydantic copies per instance
 
 
-def author_routes(studio: Studio) -> APIRouter:
+def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter:
     """Build the authoring routes over one open pack.
 
     Parameters
     ----------
     studio : Studio
         The pack being edited. Held for the life of the process.
+    registry : Registry or None
+        Where a playtest's session goes, so the game client can drive it
+        through the ordinary `/api/sessions` routes. None leaves playtesting
+        off, which is what a service with no session registry means.
 
     Returns
     -------
@@ -463,6 +509,109 @@ def author_routes(studio: Studio) -> APIRouter:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @router.get("/playtest")
+    def rehearsal() -> dict[str, Any]:
+        """The playtest setup, with its pickers already resolved.
+
+        The setup is the one the author used last, because iterating means
+        running the same awkward corner twenty times and retyping "the bridge,
+        at midnight, in a blizzard" twenty times is how people stop iterating.
+
+        Returns
+        -------
+        dict
+            The remembered setup, and the options for each of its pickers.
+        """
+        return studio.rehearsal()
+
+    @router.post("/playtest", status_code=201)
+    def playtest(body: Annotated[Trial, Body()]) -> dict[str, Any]:
+        """Open a playthrough of the pack **as it stands**, unsaved and all.
+
+        The single most important feature for keeping an author engaged, and
+        the one the v0 wizard could not offer: nothing was playable until
+        everything was done. Compiling never touches the disk, so this really
+        is the project in memory — half-finished objects dropped with a note
+        rather than a crash.
+
+        The session goes into the ordinary registry, so the answer is a
+        session id and the *game* client plays it. Two front-ends, one
+        engine: a playtest is a playthrough, not a special mode.
+
+        Parameters
+        ----------
+        body : Trial
+            Where and how to begin.
+
+        Returns
+        -------
+        dict
+            The opening frame, with the session id to address it by.
+
+        Raises
+        ------
+        HTTPException
+            409 if this service holds no sessions, 400 if the project will not
+            open as a game.
+        """
+        if registry is None:
+            raise HTTPException(
+                status_code=409,
+                detail="this service holds no playthroughs, so it cannot play one",
+            )
+        try:
+            setup = PlaytestSetup.model_validate(
+                {
+                    "seed": body.seed,
+                    "startLocation": body.start_location,
+                    "startTick": body.start_tick,
+                    "weather": body.weather,
+                    "items": body.items,
+                    "background": body.background,
+                    "spend": body.spend,
+                    "combatMode": body.combat_mode,
+                }
+            )
+            session = start_from(studio.project, setup)
+        except (ContentError, ValueError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        # Remembered only once it has opened, so a setup that will not start
+        # is not the one waiting in the form next time.
+        studio.rehearse(setup)
+        return frame_of(registry.add(session), session)
+
+    @router.post("/export")
+    def export(
+        into: Annotated[str | None, Body(embed=True)] = None,
+    ) -> dict[str, Any]:
+        """Write the pack out as one file somebody else can open.
+
+        Refused while the pack has errors. Saving is never blocked — an author
+        has to be able to stop mid-thought — but handing somebody a pack that
+        will not load is a different thing, and the one place the wizard is
+        allowed to say no.
+
+        Parameters
+        ----------
+        into : str or None
+            Where to write it. None writes beside the pack.
+
+        Returns
+        -------
+        dict
+            The path written, and how big it is.
+
+        Raises
+        ------
+        HTTPException
+            400 with the errors, when there are any.
+        """
+        try:
+            written = export_pack(studio.project, None if into is None else Path(into))
+        except ContentError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        return {"path": str(written), "bytes": written.stat().st_size}
 
     @router.post("/save")
     def save() -> dict[str, Any]:

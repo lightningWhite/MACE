@@ -9,6 +9,7 @@ in memory, and that quitting never loses work without asking.
 import builtins
 import io
 import shutil
+import zipfile
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -261,3 +262,30 @@ def test_a_statblock_takes_a_cap_and_keeps_whole_numbers_whole(
         "hitpoints": {"base": 20, "max": 20},
         "strength": {"base": 32},
     }
+
+
+def test_exporting_writes_a_pack_somebody_else_can_open(
+    quest: Project, tmp_path: Path
+) -> None:
+    out = tmp_path / "out"
+    shown = drive(quest, "e", str(out), "q", "n")
+
+    assert "Wrote" in shown and "mace import" in shown
+    written = list(out.glob("*.zip"))
+    assert len(written) == 1
+    with zipfile.ZipFile(written[0]) as opened:
+        assert "pack.yml" in opened.namelist()
+
+
+def test_errors_stop_an_export_and_say_so(project: Project) -> None:
+    """The one place the wizard says no — and it still lets you save."""
+    project.put(
+        "locations", {"id": "cellar", "name": "Cellar", "exits": [{"to": "sea"}]}
+    )
+    shown = drive(project, "e", "", "s", "q")
+
+    assert "cannot be handed to anybody" in shown
+    assert "saving still works" in shown
+    # It refused to hand the pack on. It did not refuse to write the file:
+    # an export saves first, and saving is never blocked.
+    assert "cellar" in (project.root / "world.yml").read_text()
