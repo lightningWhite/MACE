@@ -244,24 +244,27 @@ MACE/
     └── golden/                 Replay conformance: seed + actions → expected events
 ```
 
-### Migrating the prototype
+### What became of the prototype
 
-`src/wizard.py` and `src/modules/objects/` are v0. The plan:
+`src/wizard.py` and `src/modules/objects/` were v0. They are gone as of phase
+4; this is where each part of them ended up.
 
-| v0 | Becomes |
+| v0 | Became |
 |---|---|
 | `modules/objects/game.py` | `mace/model/game.py` (frozen) + `mace/engine/state.py` |
 | `modules/objects/interaction.py` | `mace/model/scene.py` — with ids, so scenes are referenceable rather than only nested |
-| `wizard.py` prompt helpers | `mace/cli/prompt.py` |
 | `modules/objects/*` mutable state | `mace/wizard/project.py` — raw authored mappings, compiled on demand |
-| `wizard.py` `create*` functions | `mace/wizard/flows/*.py` as declarative steps |
+| `wizard.py` `create*` functions | `mace/wizard/flows.py` as declarative steps |
+| `wizard.py` `defineConditions()` | `mace/wizard/builders.py` — a cascade, plus `language.py` to read it back in English |
+| `wizard.py` prompt helpers | `mace/cli/author.py`, which is rendering and nothing else |
 | `src/games/` | `packs/games/` |
 
-Nothing in v0 is thrown away conceptually — the interaction model
+Nothing in v0 was thrown away conceptually — the interaction model
 (visible / description / conditions / dialog / modifiers / nextActions /
-fallbacks) is a good design and survives nearly intact as the Scene. What changes
-is that scenes get ids, conditions and effects get structure instead of being
-free strings, and the whole thing gets validated.
+fallbacks) is a good design and survives nearly intact as the Scene. What
+changed is that scenes got ids, conditions and effects got structure instead of
+being free strings, the whole thing gets validated, and the questions became
+data so a browser can ask them too.
 
 ## Why Python for the core
 

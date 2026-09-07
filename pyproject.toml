@@ -73,11 +73,6 @@ select = [
     "UP",   # pyupgrade
 ]
 
-[tool.ruff.lint.per-file-ignores]
-# The v0 prototype is scheduled for migration into src/mace/, not cleanup.
-"src/wizard.py" = ["ALL"]
-"src/modules/**" = ["ALL"]
-
 [tool.mypy]
 python_version = "3.12"
 # `files`, not `packages` — pre-commit passes explicit filenames, and mypy
@@ -85,11 +80,6 @@ python_version = "3.12"
 files = ["src/mace", "tests"]
 mypy_path = "src"
 strict = true
-
-[[tool.mypy.overrides]]
-# The v0 prototype predates type annotations and is being replaced, not typed.
-module = ["wizard", "modules.*"]
-ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

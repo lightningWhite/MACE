@@ -68,8 +68,9 @@ web/             PWA client (later phases)
 tests/           Unit tests + golden replay conformance tests
 ```
 
-Legacy code still lives at `src/wizard.py` and `src/modules/`. It is the v0
-prototype. Migrate it into `src/mace/` rather than extending it in place.
+The v0 prototype (`src/wizard.py`, `src/modules/`) is gone as of phase 4 —
+`mace.wizard` replaced it. Git history has it if you want to see what a
+decision used to look like.
 
 ## Conventions
 
@@ -80,8 +81,9 @@ prototype. Migrate it into `src/mace/` rather than extending it in place.
   use `camelCase` (this is deliberate and consistent across all packs).
 - **Content ids** are `kebab-case` and namespaced `pack-id:local-id`. Inside a
   pack, bare local ids resolve to that pack first, then to its dependencies.
-- **Docstrings** use the numpy-style parameter blocks already established in
-  `src/modules/objects/*.py`.
+- **Docstrings** use numpy-style parameter blocks — a summary line, then
+  `Parameters` / `Returns` / `Raises` / `Yields` / `Attributes` as they apply.
+  `src/mace/wizard/project.py` is a representative example.
 
 ## Testing expectations
 

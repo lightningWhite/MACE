@@ -90,25 +90,25 @@ pattern, and win.
 
 ---
 
-## Phase 4 — The wizard, properly *(current)*
+## Phase 4 — The wizard, properly *(done)*
 
 **Usable at the end:** someone who isn't you can build a small game without
 writing YAML.
 
-- [ ] Declarative step/flow model and field types
-- [ ] `Query`-backed selection so every reference is picked, never typed
-- [ ] Condition and effect builders with plain-English rendering
-- [ ] Project model, resumable task list, save/load round-trip through YAML
-- [ ] Live validation with a problem list
-- [ ] Playtest-from-anywhere with seed and start-state control
-- [ ] Debug overlay: condition evaluation, encounter rolls, active modifiers
-- [ ] World starter and encounter-table suggestions
+- [x] Declarative step/flow model and field types
+- [x] `Query`-backed selection so every reference is picked, never typed
+- [x] Condition and effect builders with plain-English rendering
+- [x] Project model, resumable task list, save/load round-trip through YAML
+- [x] Live validation with a problem list
+- [x] Playtest-from-anywhere with seed and start-state control
+- [x] Debug overlay: condition evaluation, encounter rolls, active modifiers
+- [x] World starter and encounter-table suggestions
 - [x] Backgrounds and creation-point allocation at character creation
-- [ ] Retire `src/wizard.py`
+- [x] Retire `src/wizard.py`
 
 ---
 
-## Phase 5 — The web client
+## Phase 5 — The web client *(current)*
 
 **Playable at the end:** a browser tab, no install, with a real map.
 

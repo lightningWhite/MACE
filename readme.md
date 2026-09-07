@@ -138,11 +138,15 @@ Deactivate with `deactivate` when you're done.
 Requires **Python 3.12+**. `black`, `ruff`, and `mypy` run on commit; `pytest`
 runs on push.
 
-**Playing.** The first playable game pack, and the first working commands:
+**Playing.**
 
 ```bash
 mace play packs/ --pack peasants-quest
 mace play packs/ --pack peasants-quest --seed autumn   # replays identically
+
+# Character creation is session setup, so it can be skipped from the
+# command line — which is also how a scripted run stays reproducible.
+mace play packs/ --background poacher --spend stealth=10 speed=5
 ```
 
 **Checking content.**  It loads every pack under a
@@ -155,13 +159,20 @@ mace validate packs/
 mace validate --errors-only packs/     # what CI cares about
 ```
 
-**Running the v0 prototype wizard** (superseded by the design in
-[docs/09](docs/09-authoring-and-wizard.md), but it runs). It writes generated
-games into `packs/games/`:
+**Building a game**, without writing YAML. The wizard is a task list you work
+through in any order, with every reference picked from a list of things that
+exist, conditions built by answering questions and read back in English, live
+validation, and a playtest from any point in the world at any time:
 
 ```bash
-cd src && python3 wizard.py
+mace new packs/games/my-world --id my-world --name "My World"
+mace author packs/games/my-world
 ```
+
+Inside it: `[g]` on the World Map generates a starter map to rearrange, `[p]`
+plays what you have — unsaved changes included, from wherever you like, in
+whatever weather — and `[s]` saves. Saving rewrites only the files that changed
+and leaves your comments exactly where they were.
 
 **The v0 templates** in [`templates/`](templates/) documented the original
 design. The generated JSON Schemas in [`schemas/`](schemas/) now describe the

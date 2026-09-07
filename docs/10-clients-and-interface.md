@@ -76,6 +76,9 @@ anything the terminal can render is provably engine data rather than UI logic.
 - An ASCII map view on demand.
 - Combat via single keypress against a monotonic deadline.
 - The status line as a persistent bottom row.
+- `mace author` — the whole wizard, rendering the same declarative steps the
+  web client will. It is the proof that the flow graph is data: the terminal
+  contains no questions.
 
 ## Technology
 

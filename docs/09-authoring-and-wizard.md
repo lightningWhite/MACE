@@ -6,8 +6,11 @@ ever builds a world.
 
 ## The problem with the v0 wizard
 
-The prototype in `src/wizard.py` establishes the right *tone* — patient,
-explanatory, walks you through nested interactions. Its limits are structural:
+The prototype at `src/wizard.py` established the right *tone* — patient,
+explanatory, walking you through nested interactions — and its tone is the one
+thing about it that survived into `mace.wizard`. Its limits were structural, and
+this table is what phase 4 was built against. It is now history: the prototype
+was removed once every row of it had a replacement.
 
 | Problem | Fix |
 |---|---|
@@ -47,13 +50,25 @@ Step(
 )
 ```
 
-Field types: `Text`, `TextList`, `Number`, `Bool`, `Select`, `MultiSelect`,
-`StatAllocator`, `ConditionBuilder`, `EffectBuilder`, `MapEditor`, `Repeat`.
+Field types (`mace.wizard.fields`): `Text`, `TextList`, `Number`, `Bool`,
+`Select`, `MultiSelect`, `StatAllocator`, `ConditionBuilder`, `EffectBuilder`,
+`MapEditor`, `Repeat`. Each one answers two questions — `describe`, what the
+current value is in English, and `parse`, how to read one typed line — which is
+what keeps the terminal renderer thin and the field types testable without a
+terminal. The ones a builder drives instead say so with `interactive`.
 
 `Query` is the piece that fixes the biggest v0 gap: it asks the loaded project
 and its libraries for valid options, so the author picks `Bridge Troll` from a
 list and the wizard writes `fantasy.core:bridge-troll`. Dangling references stop
-being possible to create.
+being possible to create. Two details the implementation adds: it reads the
+project's **raw mappings** rather than compiled models, so a half-written
+location is still something you can point at; and it resolves `extends`, so an
+entity that inherits from `fantasy.core:soldier` and never writes `kind` is
+still offered as an actor.
+
+A step's **binding** says where the answer goes — `locations[{id}].entities`,
+`game.player.startLocation`. Bindings read through `extends` as well, so the
+wizard does not ask again about a field an object already has from its parent.
 
 ## The condition and effect builders
 
@@ -62,30 +77,48 @@ is a guided cascade, and it's the single highest-value piece of the wizard:
 
 ```
   What should this depend on?
-    1. Something the player has        5. The weather or time of day
-    2. Where the player is             6. A quest's progress
-    3. A character's stats             7. Something you flagged earlier
-    4. A character's mood toward you   8. Random chance
-    9. Advanced: write an expression
+    — The player
+     1. Something somebody is carrying     — The story
+     2. Where somebody is                 10. A quest is finished
+     3. A character's stat is high enough 11. A quest has failed
+     4. A character's stat is low enough  12. A quest has reached a stage
+    — The world                            — Chance and combinations
+     5. Something you flagged earlier     13. Random chance
+     6. The weather                       14. All of several things
+     7. The kind of weather — wet, cold   15. Any of several things
+     8. The season                        16. The opposite of something
+     9. The time of day                   17. Advanced: write an expression
 
   > 1
 
   Which item?
-    1. gold                    (fantasy.core)
-    2. magic sword             (this game)
-    3. king's token            (this game)
-    ...
-  > 1
+     1. The King's Token        (this pack)
+     2. Reaping Hook            (this pack)
+     3. Bread                   (fantasy.core)
+     4. Gold                    (fantasy.core)
+     ...
+  > 4
 
-  How many?  > 10
+  How many, at least?  > 10
+  Who is carrying it?  (blank for player)  >
 
-  ✓  Player is carrying at least 10 gold
+  ✓  the player is carrying at least 10 Gold
 ```
 
-It emits `{hasItem: {actor: player, item: fantasy.core:gold, qty: 10}}` and shows
-the plain-English rendering back. The same renderer displays existing conditions
-everywhere in the UI, so authors read English and only see YAML if they go
-looking. Option 9 exists for power users and is never required.
+It emits `{hasItem: {item: fantasy.core:gold, qty: 10}}` and shows the
+plain-English rendering back. Note what is *not* in that mapping: the cascade
+filled `actor: player` in on the author's behalf and the round-trip through the
+model dropped it again, so the file carries the smallest content that means what
+the author said.
+
+Both vocabularies are covered completely — every condition tag and every effect
+tag has a recipe (`mace.wizard.builders`) and a phrasing
+(`mace.wizard.language`), each guarded by a test that fails when a tag is added
+without one. A tag the builder cannot produce is a tag an author has to
+hand-write YAML for, and a tag the renderer cannot phrase is a line of YAML they
+have to read. The same renderer displays existing conditions everywhere in the
+UI, which is why an author can build a whole game and only see YAML if they go
+looking. The `expr` option exists for power users and is never required.
 
 ## The authoring model
 
@@ -113,6 +146,15 @@ The top level is a resumable task list, not a linear interview:
 
 You can work on anything in any order, leave things half-done, and come back.
 That's how hobby projects actually get built.
+
+Sections are groupings of **work**, not of collections: the world map is places,
+roads, and regions together, and "characters" and "items" are two halves of one
+collection. Completion is advisory in both directions — a section counts as done
+when it holds something and has no errors, and an author can also mark one done
+themselves and the wizard believes them. Nothing blocks anything, ever.
+
+The terminal renders this as `mace author <pack>`, four screens deep — the task
+list, a section, one object, one step — and you can leave any of them.
 
 ## The project, and loading content that is still wrong
 
@@ -188,33 +230,62 @@ the wizard: **`[ Playtest ]`** launches a session with
 - the current in-memory project (unsaved changes included)
 - a fixed seed by default, so behavior is reproducible while iterating
 - the ability to start at any location, with any items, at any tick, in any
-  weather
+  weather, as any background
 - a debug overlay: current conditions being evaluated, encounter rolls with their
   results, active modifiers and their sources, the RNG stream positions
 
 Being able to say "start me at the Troll Bridge at midnight in a blizzard with a
 magic sword" and immediately see it is what turns authoring from a chore into
-play.
+play. Every part of that is a **session-opening parameter**, the way the seed is
+— `begin()` takes `start_at` and `start_tick`, and the weather and the extra kit
+are set on the opening state — so a playtest is still an ordinary replayable
+session rather than a special mode. The weather is *set* and then left to the
+simulation, because watching a blizzard lift is half of why you asked for one.
+
+The setup is remembered in `.mace/project.yml`, because iterating means running
+the same awkward corner twenty times and retyping "the bridge, at midnight, in a
+blizzard" twenty times is how people stop iterating.
+
+The overlay (`mace.engine.debug`) is a **projection**, not a second event
+channel: it reads state and content and returns a description, and the engine
+emits nothing extra when somebody is watching. A test asserts that a playthrough
+with it open records the same events as one without, because otherwise the
+overlay would be a second engine. It hands conditions back unrendered and the
+front-end puts them into English, which is how the engine avoids importing the
+wizard.
 
 ## Generators and assists
 
 For authors staring at an empty world, the wizard offers scaffolding — always
 editable, never mandatory:
 
-- **World starter** — pick a genre and a size, get a plausible map of regions,
-  locations, routes with sensible travel times, and a climate. A skeleton to
-  rearrange rather than a blank page.
-- **Encounter table suggestions** — from the route's `dangerLevel` and terrain,
+- **World starter** *(built)* — pick a flavour and a size, get a hub, some
+  settlements, one dangerous place at the far end, roads between them with
+  sensible travel times, and a region per band. A skeleton to rearrange rather
+  than a blank page. It writes exits as well as routes, because a route is a
+  road and an exit is the option to walk down it, and a starter map that opened
+  with five "cannot leave" notes would be a worse start than an empty file.
+- **Encounter table suggestions** *(built)* — from the route's `dangerLevel`,
   propose a table drawn from the loaded libraries, with the tuning presets from
   [Travel & Encounters](06-travel-and-encounters.md#tuning-guidance-for-authors).
-- **Statblock assistant** — "how hard should this fight be?" on a five-point
-  scale, given the player's expected state at that point in the game, and it
-  proposes stats and a combat profile.
-- **Balance report** — walks the quest graph and reports the expected player
-  power curve against encounter difficulty by region, flagging spikes.
+  The entries are borrowed, never invented, so every reference in the result is
+  real — the same rule the pickers follow.
+- **Statblock assistant** *(partly)* — the `StatAllocator` field takes a budget
+  and spreads it, which is the shape of it. What is still missing is the part
+  that reads the player's expected state at that point in the game and proposes
+  a number, which needs the balance report below to exist first.
+- **Balance report** *(not yet)* — walk the quest graph and report the expected
+  player power curve against encounter difficulty by region, flagging spikes.
 
 These are the difference between "I have an idea for a world" and "I have a
 world."
+
+A flavour is a **naming palette and nothing else**. The shape of the map is
+identical in all of them, checked by a test, because "a road between two
+settlements" is not a fantasy idea and a generator that assumed otherwise would
+make `scifi.core` a second-class citizen ([Vision](01-vision.md)). Generation
+goes through the seeded RNG service, so "give me another one" is a different
+seed rather than a dice roll and the one you liked is still there.
 
 **Generation is an authoring assist and never a play-time feature.** Everything
 above produces content the author reviews and edits before anyone plays it.
