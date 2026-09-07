@@ -29,6 +29,7 @@ __all__ = [
     "Event",
     "FlagChanged",
     "GameOver",
+    "Haggled",
     "NewsHeard",
     "PricesShocked",
     "LocationRevealed",
@@ -659,6 +660,46 @@ class StallOpened(Event):
             "currency": self.currency,
             "purse": self.purse,
             "goods": [dict(row) for row in self.goods],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class Haggled(Event):
+    """The player pushed on a price, and something came of it.
+
+    Attributes
+    ----------
+    merchant : str
+        The merchant's instance id.
+    name : str
+        What to call them.
+    result : {'gave', 'held', 'soured'}
+        Which of the three things happened.
+    swing : float
+        How far the bill has been moved in the player's favour. Negative
+        after a souring.
+    pushes : int
+        How many times the player has pressed.
+    leverage : bool
+        Whether they had a better price elsewhere to point at, and did.
+    """
+
+    kind: ClassVar[str] = "trade.haggled"
+    merchant: str
+    name: str
+    result: str
+    swing: float
+    pushes: int
+    leverage: bool = False
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "merchant": self.merchant,
+            "name": self.name,
+            "result": self.result,
+            "swing": round(self.swing, 4),
+            "pushes": self.pushes,
+            "leverage": self.leverage,
         }
 
 

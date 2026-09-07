@@ -316,6 +316,14 @@ class Merchant(ContentModel):
         the week's takings banked. None means it never does, so a merchant
         cleaned out stays cleaned out. Restocking never takes money *away*: a
         merchant who had a good day keeps it.
+    max_swing : float or None
+        How far haggling can move this merchant's price, as a fraction of the
+        item's value. None is a merchant who does not haggle — a quartermaster
+        with a ledger and a fixed rate, which is a real kind of person and the
+        right default. 0.2 is a peddler who expects to be argued with.
+    patience : int
+        How many pushes it takes before the odds turn against the player. Low
+        is a merchant who sours fast. Only meaningful with `maxSwing`.
     prompt : str or None
         What the option to trade is called. None is `Trade with <name>`.
     remarks : Description
@@ -331,6 +339,8 @@ class Merchant(ContentModel):
     sells: Deals = Deals()
     capital: float | None = Field(default=None, ge=0.0)
     restock_ticks: int | None = Field(default=None, gt=0)
+    max_swing: float | None = Field(default=None, gt=0.0, le=1.0)
+    patience: int = Field(default=3, ge=1)
     prompt: str | None = None
     remarks: Description = ()
 

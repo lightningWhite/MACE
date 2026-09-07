@@ -766,11 +766,12 @@ with you. Only offered under `rules.economy: market`.
 | `buys` / `sells` | {goods: [Ref]?, categories: [str]?}? | What it will take off you, and what it will part with. Naming nothing means everything its market deals in; a filter is for the specialist. The two are separate — a quartermaster buys food and sells only iron. |
 | `capital` | number? | What it can pay out. Omit for bottomless — a stall backed by a whole town. A number makes it a person with a purse, and the purse *is* the coin in its own `inventory`, so a scene that hands it money has made it richer. A merchant with no coin written into its inventory opens holding its `capital`. |
 | `restockTicks` | int? | How often the purse comes back up to `capital` — the caravan arriving, the week's takings banked. Omit and a merchant cleaned out stays cleaned out. Restocking never takes money away: a good day is kept. Needs a `capital`. |
+| `maxSwing` | number? | How far haggling can move this merchant's bill, as a fraction. Omit and they do not haggle at all. |
+| `patience` | int? | How many pushes they take in their stride before the odds turn. Default 3. Only meaningful with `maxSwing`. |
 | `prompt` | str? | What the option to trade is called. Defaults to `Trade with <name>`. |
 | `remarks` | Description? | What it says about its own prices, first matching line. Ordinary conditional description, so `priceOf` is what makes a line about a shortage and the weather and the season can join in. |
 
-Not there yet: `mobile` for caravans that carry their own prices, and
-`maxSwing` for haggling. Until then `spread` is the whole of the negotiation.
+Not there yet: `mobile`, for caravans that carry their own prices.
 
 ### Trading
 
@@ -783,10 +784,16 @@ choice. A front-end with a quantity control sends the action directly:
 {"kind": "trade", "good": "fantasy.core:grain", "qty": 20, "sell": false}
 ```
 
-Two events come back. `trade.stall` carries the whole price list, reissued
+Three events come back. `trade.stall` carries the whole price list, reissued
 every turn the stall is open because a price moves when the player buys;
-`trade.done` says what the deal was. The same list is on the view-model as
-`view.stall` for as long as the player is at the counter.
+`trade.done` says what the deal was; `trade.haggled` says how an argument
+went. The same list is on the view-model as `view.stall` for as long as the
+player is at the counter.
+
+`{"kind": "haggle"}` presses the merchant on their price. It takes nothing:
+what a push is worth is decided by who the player is, how many times they have
+already pushed, and what they know about prices elsewhere — none of which a
+front-end should be choosing.
 
 **Every unit is priced separately, as the shelf moves under it.** The tenth
 sack costs more than the first because there are nine fewer sacks by then.

@@ -26,8 +26,8 @@ richer, and a player who arrives with forty sacks of grain can find out that
 the buyer has run out of money. A merchant without `capital` is a stall backed
 by a whole town, and its pockets cannot be emptied.
 
-Haggling is the one thing still missing: `spread` is the whole of the
-negotiation. See docs/08-economy.md § Merchants.
+`spread` is where a bill starts; `haggle`, next door, is what an argument does
+to it. See docs/08-economy.md § Merchants.
 """
 
 from __future__ import annotations
@@ -50,6 +50,7 @@ __all__ = [
     "Sale",
     "Stall",
     "deal",
+    "haggled",
     "look",
     "merchant_at",
     "purse_at",
@@ -130,6 +131,13 @@ class Stall:
         Qualified item id trade is settled in.
     coin : int
         What the player has of it.
+    swing : float
+        How far an argument has moved the bill in the player's favour. Zero
+        before anything is said, negative after a merchant has soured.
+    haggles : bool
+        Whether this merchant will argue about a price at all.
+    soured : bool
+        Whether they have heard enough for now.
     purse : int or None
         What the merchant can pay out. None is bottomless — a stall backed by
         a whole town is not somebody whose pockets can be emptied.
@@ -142,6 +150,9 @@ class Stall:
     market: str
     currency: str
     coin: int
+    swing: float
+    haggles: bool
+    soured: bool
     purse: int | None
     goods: tuple[Priced, ...]
 
@@ -177,6 +188,9 @@ class Stall:
             "market": self.market,
             "currency": self.currency,
             "coin": self.coin,
+            "swing": round(self.swing, 4),
+            "haggles": self.haggles,
+            "soured": self.soured,
             "purse": self.purse,
             "goods": [priced.record() for priced in self.goods],
         }
@@ -294,15 +308,21 @@ def quote(
     dealt = prepared.goods.get(good)
     if dealt is None:  # pragma: no cover — the stall listed it
         return None
+    from mace.engine.economy.haggle import swing_of
+
     held = projected(context.state, network, prepared.id, context.state.tick)
-    return _lot(
-        dealt,
-        prepared,
-        merchant,
-        held.get(good, 0.0),
-        qty,
+    return haggled(
+        _lot(
+            dealt,
+            prepared,
+            merchant.spread,
+            held.get(good, 0.0),
+            qty,
+            sell=sell,
+            shock=shock_on(context.state, prepared, good, context.state.tick),
+        ),
+        swing_of(context, entity),
         sell=sell,
-        shock=shock_on(context.state, prepared, good, context.state.tick),
     )
 
 
@@ -380,14 +400,20 @@ def deal(
     elif int(held) < qty:
         raise RuleError(f"they do not have {qty} {dealt.item.name} to sell you")
 
-    coin = _lot(
-        dealt,
-        prepared,
-        merchant,
-        held,
-        qty,
+    from mace.engine.economy.haggle import swing_of
+
+    coin = haggled(
+        _lot(
+            dealt,
+            prepared,
+            merchant.spread,
+            held,
+            qty,
+            sell=sell,
+            shock=shock_on(context.state, prepared, good_id, context.state.tick),
+        ),
+        swing_of(context, entity),
         sell=sell,
-        shock=shock_on(context.state, prepared, good_id, context.state.tick),
     )
     if sell and coin <= 0:
         raise RuleError(f"nobody here will give you anything for {dealt.item.name}")
@@ -583,7 +609,7 @@ def unit_price(
 def _lot(
     dealt: Dealt,
     prepared: Prepared,
-    merchant: Merchant,
+    spread: float,
     held: float,
     qty: int,
     *,
@@ -598,8 +624,8 @@ def _lot(
         The good.
     prepared : Prepared
         The market.
-    merchant : Merchant
-        Whose spread applies.
+    spread : float
+        The merchant's cut, after anything a haggle has done to it.
     held : float
         Units on the shelf before the trade.
     qty : int
@@ -617,9 +643,7 @@ def _lot(
     wealth = prepared.market.wealth
     step = 1.0 if sell else -1.0
     return sum(
-        unit_price(
-            dealt, wealth, merchant.spread, held + step * unit, sell=sell, shock=shock
-        )
+        unit_price(dealt, wealth, spread, held + step * unit, sell=sell, shock=shock)
         for unit in range(qty)
     )
 
@@ -693,8 +717,11 @@ def _stall(
     Stall
         The offer.
     """
+    from mace.engine.economy.haggle import swing_of
+
     player = context.state.protagonist
     wealth = prepared.market.wealth
+    spread, swing = merchant.spread, swing_of(context, entity)
     will_buy, will_sell = _named(context, merchant.buys), _named(
         context, merchant.sells
     )
@@ -716,25 +743,23 @@ def _stall(
                 item=item,
                 name=dealt.item.name,
                 buy=(
-                    unit_price(
-                        dealt,
-                        wealth,
-                        merchant.spread,
-                        on_shelf,
+                    haggled(
+                        unit_price(
+                            dealt, wealth, spread, on_shelf, sell=False, shock=shock
+                        ),
+                        swing,
                         sell=False,
-                        shock=shock,
                     )
                     if sells and int(on_shelf) >= 1
                     else None
                 ),
                 sell=(
-                    unit_price(
-                        dealt,
-                        wealth,
-                        merchant.spread,
-                        on_shelf,
+                    haggled(
+                        unit_price(
+                            dealt, wealth, spread, on_shelf, sell=True, shock=shock
+                        ),
+                        swing,
                         sell=True,
-                        shock=shock,
                     )
                     if buys
                     else None
@@ -750,9 +775,65 @@ def _stall(
         market=prepared.id,
         currency=currency,
         coin=player.inventory.get(currency, 0),
+        swing=swing,
+        haggles=merchant.max_swing is not None,
+        soured=_soured(context, entity),
         purse=purse_at(context, entity, merchant, currency),
         goods=tuple(rows),
     )
+
+
+def haggled(total: int, swing: float, *, sell: bool) -> int:
+    """What a bill comes to after an argument.
+
+    A haggle moves the **bill**, not the unit price, and that is a design
+    decision rather than an implementation one. Coin is whole; a fifth off a
+    five-coin sack is a coin the rounding eats, so a per-unit haggle would be
+    a mechanic that visibly did nothing on anything cheap. Arguing over the
+    lot is also what people do — nobody haggles a penny a sack, they haggle
+    the load.
+
+    Parameters
+    ----------
+    total : int
+        What it would come to without the argument.
+    swing : float
+        How far the price has been moved in the player's favour. Negative
+        after a merchant has soured.
+    sell : bool
+        Whether the player is the one being paid.
+
+    Returns
+    -------
+    int
+        Whole coin, still rounded against the player.
+    """
+    if swing == 0.0:
+        return total
+    moved = total * (1.0 + swing) if sell else total * (1.0 - swing)
+    if sell:
+        return max(0, math.floor(moved))
+    return max(1, math.ceil(moved))
+
+
+def _soured(context: RuleContext, entity: EntityState) -> bool:
+    """Whether a merchant has heard enough from the player for now.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough. Read only.
+    entity : EntityState
+        The merchant's instance.
+
+    Returns
+    -------
+    bool
+        Whether they are still sour.
+    """
+    from mace.engine.economy.haggle import standing
+
+    return standing(context, entity).soured_until is not None
 
 
 def _named(context: RuleContext, deals: Deals) -> frozenset[str]:

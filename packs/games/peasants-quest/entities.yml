@@ -54,6 +54,10 @@ entities:
       # everything but name — mobile markets are still to come.
       capital: 30
       restockTicks: 48
+      # He expects to be argued with, and he will take three goes at it before
+      # he starts taking it personally.
+      maxSwing: 0.2
+      patience: 3
       remarks:
         - text: "\"Grain?\" He does not look up. \"You'll pay for grain this week. Nothing's come down the north road since the guard went up it.\""
           when: [{priceOf: {good: fantasy.core:grain, above: 1.4}}]
@@ -74,6 +78,9 @@ entities:
     merchant:
       spread: 0.15                 # a neighbour, not a middleman
       prompt: "Deal with Mereth over the barley"
+      # She will shift a little, and not twice. You have to live here.
+      maxSwing: 0.1
+      patience: 1
       remarks:
         - text: "\"Take it,\" she says. \"It'll only go stale in the loft.\""
           when: [{priceOf: {good: fantasy.core:grain, below: 0.9}}]

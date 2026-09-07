@@ -189,7 +189,11 @@ writing YAML.
         price clamp because a clamp is for runaway loops and a siege is not
         one. Threaded through the hauling loop, so a famine pulls carts
         toward it for exactly as long as it lasts
-  - [ ] Haggling as a real negotiation
+  - [x] Haggling as a real negotiation: every push likelier to sour than the
+        last, so knowing when to stop is the skill. Charisma sets the odds,
+        `patience` sets where they turn, and the leverage is a price the
+        player has personally been quoted somewhere else — which is what the
+        journal's price memory is for
   - [ ] Caravans as mobile markets
   - [ ] The map's price overlay
 

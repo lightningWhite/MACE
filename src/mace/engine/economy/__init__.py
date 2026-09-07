@@ -11,11 +11,15 @@ road makes two markets depend on each other, they are carried forward a whole
 trading group at a time. See `flow` for why that is a fast-forward and not a
 different world.
 
-Nothing here draws randomness yet. When it does — production jitter, merchant
-restock — it must draw from a *position*, hashed from the tick, rather than
-walking the `economy` stream in sequence: a lazily caught-up subsystem would
-otherwise land at a different stream position depending on when the player
-happened to look, and two playthroughs with the same action log would diverge.
+`trade` is the counter — buying, selling, and a merchant's purse — and
+`haggle` is the argument over the bill.
+
+**Only `haggle` draws randomness, and only because it is an action.** Anything
+caught up lazily must draw from a *position* hashed from the tick rather than
+walking a stream in sequence: it would otherwise land at a different stream
+position depending on when the player happened to look, and two playthroughs
+with the same action log would diverge. A push is taken in sequence like a
+sword swing, so a named stream is both allowed and correct.
 
 See docs/08-economy.md.
 """

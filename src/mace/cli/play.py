@@ -129,6 +129,11 @@ class Renderer:
                 self.line(str(payload["text"]))
             return
 
+        if event.kind == "trade.haggled":
+            self.line("")
+            self.line(f"  {_haggling(payload)}")
+            return
+
         if event.kind == "trade.stall":
             # The prices are in the menu; what the menu cannot say is why a
             # merchant has stopped buying, and that is their purse.
@@ -358,6 +363,28 @@ def _describe(kind: str, payload: dict[str, Any]) -> str:
     if kind == "engine.unsupported":
         return f"{payload['feature']} is not in the engine yet ({payload['arrives']})."
     return str(payload.get("message", payload))
+
+
+def _haggling(payload: dict[str, Any]) -> str:
+    """Say how a push went, without printing a spread at the player.
+
+    Parameters
+    ----------
+    payload : dict
+        A `trade.haggled` event's fields.
+
+    Returns
+    -------
+    str
+        A line a player can read.
+    """
+    who = payload["name"]
+    said = " You mention what it costs elsewhere." if payload["leverage"] else ""
+    if payload["result"] == "gave":
+        return f"{who} comes down a little.{said}"
+    if payload["result"] == "soured":
+        return f"{who} has heard enough, and it will cost you.{said}"
+    return f"{who} does not move.{said}"
 
 
 def _timing(precision: float) -> str:

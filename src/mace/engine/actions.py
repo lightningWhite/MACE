@@ -25,6 +25,7 @@ from typing import Any, ClassVar
 __all__ = [
     "Action",
     "Choose",
+    "Haggle",
     "Interact",
     "Look",
     "Respond",
@@ -159,6 +160,18 @@ class Use(BaseAction):
 
 
 @dataclass(frozen=True, slots=True)
+class Haggle(BaseAction):
+    """Press the merchant you are dealing with on their price.
+
+    Takes nothing: what a push is worth is decided by who the player is, how
+    many times they have already pushed, and what they know about prices
+    elsewhere — none of which a front-end should be choosing.
+    """
+
+    kind: ClassVar[str] = "haggle"
+
+
+@dataclass(frozen=True, slots=True)
 class Trade(BaseAction):
     """Buy from the merchant you are dealing with, or sell to them.
 
@@ -215,12 +228,22 @@ class Respond(BaseAction):
         return {"response": self.response, "elapsedMs": self.elapsed_ms}
 
 
-Action = Look | Choose | Interact | Respond | Trade | Travel | Use | Wait
+Action = Choose | Haggle | Interact | Look | Respond | Trade | Travel | Use | Wait
 
 #: Every action kind, for decoding a saved log.
 ACTIONS: dict[str, type[BaseAction]] = {
     action.kind: action
-    for action in (Look, Choose, Interact, Respond, Trade, Travel, Use, Wait)
+    for action in (
+        Choose,
+        Haggle,
+        Interact,
+        Look,
+        Respond,
+        Trade,
+        Travel,
+        Use,
+        Wait,
+    )
 }
 
 #: Fields whose recorded name differs from the constructor's, so an action log
@@ -268,7 +291,8 @@ def decode(record: dict[str, Any], *, offered: Sequence[str] | None = None) -> A
     fields = {RECORD_FIELDS.get(name, name): value for name, value in fields.items()}
     built = ACTIONS[kind](**fields)
     assert isinstance(
-        built, Look | Choose | Interact | Respond | Trade | Travel | Use | Wait
+        built,
+        Choose | Haggle | Interact | Look | Respond | Trade | Travel | Use | Wait,
     )
     return built
 

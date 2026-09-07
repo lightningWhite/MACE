@@ -37,6 +37,7 @@ __all__ = [
     "EventPhase",
     "EventState",
     "FrontState",
+    "Haggle",
     "RegionWeather",
     "RouteState",
     "Shock",
@@ -294,6 +295,28 @@ class MarketState:
     market: str
     stock: dict[str, float] = field(default_factory=dict)
     stepped_to: int = 0
+
+
+@dataclass(slots=True)
+class Haggle:
+    """Where an argument over a price has got to, with one merchant.
+
+    Attributes
+    ----------
+    swing : float
+        How far the price has been moved in the player's favour, as a
+        fraction. Negative after a merchant has soured.
+    pushes : int
+        How many times the player has pressed. The number that turns a
+        negotiation into a decision: every push is likelier to sour than the
+        last, so knowing when to stop is the whole skill.
+    soured_until : int or None
+        The tick this merchant will deal properly again. None is not soured.
+    """
+
+    swing: float = 0.0
+    pushes: int = 0
+    soured_until: int | None = None
 
 
 @dataclass(slots=True)
@@ -759,6 +782,8 @@ class PendingChoice:
     trade : str or None
         Instance id of a merchant to open a stall with. Set on the menu the
         engine offers; a scene's own choices never trade.
+    haggle : bool
+        Whether this option argues the price rather than moving anything.
     deal : tuple or None
         A good, a quantity, and whether the player is selling — the one-click
         form of a `trade` action, so a terminal can trade without a quantity
@@ -779,6 +804,7 @@ class PendingChoice:
     journey: str | None = None
     use: str | None = None
     trade: str | None = None
+    haggle: bool = False
     deal: tuple[str, int, bool] | None = None
     effects: tuple[Any, ...] = ()
     available: bool = True
@@ -864,6 +890,14 @@ class GameState:
         Merchant instance id to the tick its purse was last brought back up
         to its `capital`. Only merchants with a purse appear here, and only
         once one has been looked at.
+    haggles : dict
+        Merchant instance id to where the argument with them stands.
+    prices : dict
+        Qualified market id to good id to the last unit price the player was
+        quoted there. What the journal shows and the map shades by, and what
+        gives an author's "I know what this costs two towns over" something
+        real to stand on — only prices the player has personally seen are in
+        it, which is the whole point.
     shocks : list of Shock
         Pressures on prices, each fading on its own clock. Spent ones are
         left in place rather than swept up: they multiply by exactly 1.0, and
@@ -936,6 +970,8 @@ class GameState:
     routes: dict[str, RouteState] = field(default_factory=dict)
     markets: dict[str, MarketState] = field(default_factory=dict)
     restocked: dict[str, int] = field(default_factory=dict)
+    haggles: dict[str, Haggle] = field(default_factory=dict)
+    prices: dict[str, dict[str, int]] = field(default_factory=dict)
     shocks: list[Shock] = field(default_factory=list)
     news: list[NewsItem] = field(default_factory=list)
     light_override: float | None = None

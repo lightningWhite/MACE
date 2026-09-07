@@ -3950,7 +3950,7 @@
     },
     "Merchant": {
       "additionalProperties": false,
-      "description": "An actor who buys and sells against a market's prices.\n\nA merchant is the way a player reaches a market at all. The shelves and\nthe prices belong to the settlement \u2014 a market is a town, not a shop \u2014 and\nthis is the person standing in front of them who will deal with you, which\nis why the block sits on an actor rather than on a location.\n\nAttributes\n----------\nmarket : str or None\n    Which market it deals for. None is the market where it is standing,\n    which is what a merchant usually is.\nspread : float\n    The gap between what it buys at and what it sells at, as a fraction of\n    the market price. 0.25 buys at 0.875\u00d7 and sells at 1.125\u00d7. This is the\n    merchant's living, and the reason carrying goods somewhere else can\n    beat selling them here.\nbuys, sells : Deals\n    What it will take off you, and what it will part with.\ncapital : float or None\n    What it can pay out, in the game's currency. None is bottomless, which\n    is what a market stall backed by a whole town is; a number makes it a\n    person with a purse, and the difference is that a player who arrives\n    with forty sacks of grain finds out the buyer has run out of money.\n    The purse is the coin in the merchant's own `inventory`, so an author\n    who wrote one has already set the opening balance and a scene that\n    hands the merchant money is not a second system.\nrestock_ticks : int or None\n    How often the purse comes back up to `capital` \u2014 the caravan arriving,\n    the week's takings banked. None means it never does, so a merchant\n    cleaned out stays cleaned out. Restocking never takes money *away*: a\n    merchant who had a good day keeps it.\nprompt : str or None\n    What the option to trade is called. None is `Trade with <name>`.\nremarks : Description\n    What it says about its own prices, first matching line. Written as\n    ordinary conditional description, so `priceOf` is what makes a line\n    about a shortage and the weather and the season can join in \u2014\n    \"Grain? You'll pay for grain this week.\"",
+      "description": "An actor who buys and sells against a market's prices.\n\nA merchant is the way a player reaches a market at all. The shelves and\nthe prices belong to the settlement \u2014 a market is a town, not a shop \u2014 and\nthis is the person standing in front of them who will deal with you, which\nis why the block sits on an actor rather than on a location.\n\nAttributes\n----------\nmarket : str or None\n    Which market it deals for. None is the market where it is standing,\n    which is what a merchant usually is.\nspread : float\n    The gap between what it buys at and what it sells at, as a fraction of\n    the market price. 0.25 buys at 0.875\u00d7 and sells at 1.125\u00d7. This is the\n    merchant's living, and the reason carrying goods somewhere else can\n    beat selling them here.\nbuys, sells : Deals\n    What it will take off you, and what it will part with.\ncapital : float or None\n    What it can pay out, in the game's currency. None is bottomless, which\n    is what a market stall backed by a whole town is; a number makes it a\n    person with a purse, and the difference is that a player who arrives\n    with forty sacks of grain finds out the buyer has run out of money.\n    The purse is the coin in the merchant's own `inventory`, so an author\n    who wrote one has already set the opening balance and a scene that\n    hands the merchant money is not a second system.\nrestock_ticks : int or None\n    How often the purse comes back up to `capital` \u2014 the caravan arriving,\n    the week's takings banked. None means it never does, so a merchant\n    cleaned out stays cleaned out. Restocking never takes money *away*: a\n    merchant who had a good day keeps it.\nmax_swing : float or None\n    How far haggling can move this merchant's price, as a fraction of the\n    item's value. None is a merchant who does not haggle \u2014 a quartermaster\n    with a ledger and a fixed rate, which is a real kind of person and the\n    right default. 0.2 is a peddler who expects to be argued with.\npatience : int\n    How many pushes it takes before the odds turn against the player. Low\n    is a merchant who sours fast. Only meaningful with `maxSwing`.\nprompt : str or None\n    What the option to trade is called. None is `Trade with <name>`.\nremarks : Description\n    What it says about its own prices, first matching line. Written as\n    ordinary conditional description, so `priceOf` is what makes a line\n    about a shortage and the weather and the season can join in \u2014\n    \"Grain? You'll pay for grain this week.\"",
       "properties": {
         "market": {
           "anyOf": [
@@ -4005,6 +4005,26 @@
           ],
           "default": null,
           "title": "Restockticks"
+        },
+        "maxSwing": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxswing"
+        },
+        "patience": {
+          "default": 3,
+          "minimum": 1,
+          "title": "Patience",
+          "type": "integer"
         },
         "prompt": {
           "anyOf": [

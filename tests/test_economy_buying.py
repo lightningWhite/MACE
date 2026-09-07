@@ -28,7 +28,9 @@ import pytest
 from conftest import game_pack
 from mace.content import Library, load_library
 from mace.engine.actions import Choose, Look, Trade
+from mace.engine.actions import Haggle as HaggleAction
 from mace.engine.conditions import holds
+from mace.engine.economy import haggle as bargaining
 from mace.engine.economy import prepare, projected, shock_on, trade
 from mace.engine.state import RouteState
 from mace.engine.step import begin, context_for, step
@@ -966,3 +968,229 @@ def test_a_shock_is_what_a_merchant_can_be_made_to_remark_on(
 
     shocked(library, result, category="food", mult=2.0, decayTicks=100)
     assert holds(dear, context_for(library, result.state))
+
+
+# ── Arguing about it ──────────────────────────────────────────────────────────
+
+
+def talker(root: Path, **merchant: Any) -> Library:
+    """The valley, with a keeper who expects to be argued with.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write the pack.
+    **merchant
+        Extra fields for the keeper's `merchant` block.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    return valley(root, **{"max_swing": 0.3, "patience": 2, **merchant})
+
+
+def pushed(library: Library, result: Any, times: int = 1) -> Any:
+    """Press the keeper on their price, some number of times.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    result : StepResult
+        The playthrough.
+    times : int
+        How many pushes.
+
+    Returns
+    -------
+    StepResult
+        What the last push produced.
+    """
+    for _ in range(times):
+        result = step(result.state, HaggleAction(), library)
+    return result
+
+
+def said(result: Any) -> dict[str, Any]:
+    """The `trade.haggled` event a push produced.
+
+    Parameters
+    ----------
+    result : StepResult
+        What a push produced.
+
+    Returns
+    -------
+    dict
+        The event record.
+    """
+    return next(
+        one.record() for one in result.events if one.record()["kind"] == "trade.haggled"
+    )
+
+
+def test_a_merchant_who_does_not_haggle_is_not_offered_an_argument(
+    tmp_path: Path,
+) -> None:
+    """A quartermaster with a ledger and a fixed rate is a real kind of person."""
+    library = valley(tmp_path)
+    result = opened(library)
+    assert not any("Argue" in prompt for prompt in offered(result))
+    assert stall(library, result.state).haggles is False
+
+
+def test_a_merchant_who_does_is(tmp_path: Path) -> None:
+    library = talker(tmp_path)
+    assert any("Argue" in prompt for prompt in offered(opened(library)))
+
+
+def test_pushing_someone_who_will_not_argue_is_refused(tmp_path: Path) -> None:
+    library = valley(tmp_path)
+    result = pushed(library, opened(library))
+    assert "not going to argue" in result.events[0].record()["message"]
+
+
+def test_a_concession_comes_off_the_bill(tmp_path: Path) -> None:
+    library = talker(tmp_path)
+    result = opened(library)
+    before = trade.quote(
+        context_for(library, result.state),
+        result.state.entities[KEEPER],
+        GRAIN,
+        20,
+        sell=False,
+    )
+
+    result = pushed(library, result, 3)
+    assert stall(library, result.state).swing > 0.0
+    after = trade.quote(
+        context_for(library, result.state),
+        result.state.entities[KEEPER],
+        GRAIN,
+        20,
+        sell=False,
+    )
+    assert after is not None and before is not None and after < before
+
+
+def test_a_haggle_moves_the_bill_rather_than_the_penny(tmp_path: Path) -> None:
+    """Coin is whole, so a per-unit haggle would visibly do nothing."""
+    assert trade.haggled(5, 0.2, sell=False) == 4
+    assert trade.haggled(100, 0.2, sell=False) == 80
+    assert trade.haggled(100, 0.2, sell=True) == 120
+    # Rounded against the player at both ends, still.
+    assert trade.haggled(10, 0.15, sell=False) == 9
+    assert trade.haggled(10, 0.15, sell=True) == 11
+
+
+def test_pushing_past_patience_eventually_sours_them(tmp_path: Path) -> None:
+    """Knowing when to stop is the skill, so stopping has to be a real choice."""
+    library = talker(tmp_path, patience=1)
+    result = pushed(library, opened(library), 8)
+
+    standing = bargaining.standing(
+        context_for(library, result.state), result.state.entities[KEEPER]
+    )
+    assert standing.soured_until is not None
+    assert standing.swing < 0.0
+
+
+def test_a_soured_merchant_charges_more_and_will_not_argue(tmp_path: Path) -> None:
+    library = talker(tmp_path, patience=1)
+    result = opened(library)
+    plain = stall(library, result.state)
+
+    result = pushed(library, result, 8)
+    sour = stall(library, result.state)
+    assert sour.soured is True
+    assert not any("Argue" in prompt for prompt in offered(result))
+
+    plain_row, sour_row = plain.row(GRAIN), sour.row(GRAIN)
+    assert plain_row is not None and sour_row is not None
+    assert plain_row.buy is not None and sour_row.buy is not None
+    assert sour_row.buy >= plain_row.buy
+
+
+def test_a_mood_wears_off(tmp_path: Path) -> None:
+    """A player who overreached should feel it, not be locked out."""
+    library = talker(tmp_path, patience=1)
+    result = pushed(library, opened(library), 8)
+    result.state.tick = result.state.world_tick = bargaining.MOOD_TICKS + 1
+
+    context = context_for(library, result.state)
+    assert bargaining.standing(context, result.state.entities[KEEPER]).swing == 0.0
+
+
+def test_reading_a_standing_does_not_start_or_end_one(tmp_path: Path) -> None:
+    library = talker(tmp_path)
+    result = opened(library)
+    for _ in range(5):
+        stall(library, result.state)
+    assert result.state.haggles == {}
+
+
+def test_charisma_is_what_wins_an_argument(tmp_path: Path) -> None:
+    """The one place in the game where a talker beats a fighter."""
+    charmless = bargaining.odds(0, 0, 3, knowing=False)
+    charming = bargaining.odds(90, 0, 3, knowing=False)
+    assert charming > charmless > 0
+
+
+def test_every_push_is_likelier_to_sour_than_the_last(tmp_path: Path) -> None:
+    over = [bargaining.souring(50, pushes, 2, knowing=False) for pushes in range(6)]
+    assert over[0] == over[1] == 0.0
+    assert over[2] < over[3] < over[4]
+
+
+def test_knowing_a_better_price_elsewhere_is_worth_something(
+    tmp_path: Path,
+) -> None:
+    """Local knowledge, made of the only honest thing it could be made of."""
+    assert bargaining.odds(50, 0, 3, knowing=True) > bargaining.odds(
+        50, 0, 3, knowing=False
+    )
+
+
+def test_the_journal_remembers_only_prices_the_player_was_quoted(
+    tmp_path: Path,
+) -> None:
+    library = valley(tmp_path)
+    result = begin(library, "valley", seed="trade")
+    assert result.state.prices == {}
+
+    result = opened(library)
+    assert GRAIN in result.state.prices["valley:farm-market"]
+    assert "valley:fort-market" not in result.state.prices
+
+
+def test_a_price_seen_elsewhere_is_the_leverage(tmp_path: Path) -> None:
+    library = talker(tmp_path)
+    result = opened(library)
+    context = context_for(library, result.state)
+    counter = stall(library, result.state)
+    goods = tuple(row.good for row in counter.goods)
+    quoted = {row.good: row.buy for row in counter.goods if row.buy is not None}
+
+    assert not bargaining.leverage(context, counter.market, goods, quoted)
+    result.state.prices["valley:fort-market"] = {GRAIN: 1}
+    assert bargaining.leverage(context, counter.market, goods, quoted)
+
+
+def test_the_same_counter_is_not_leverage_against_itself(tmp_path: Path) -> None:
+    library = talker(tmp_path)
+    result = opened(library)
+    context = context_for(library, result.state)
+    counter = stall(library, result.state)
+    goods = tuple(row.good for row in counter.goods)
+
+    assert not bargaining.leverage(
+        context, counter.market, goods, dict.fromkeys(goods, 999)
+    )
+
+
+def test_a_haggle_is_a_record_a_save_can_replay() -> None:
+    from mace.engine.actions import decode
+
+    assert decode(HaggleAction().record()) == HaggleAction()

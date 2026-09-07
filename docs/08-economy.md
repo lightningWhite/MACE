@@ -355,20 +355,44 @@ arithmetic on the tick, so a player who visits every day and one who arrives
 after a season find the same purse. It never takes money *away* — a merchant
 who had a good day keeps it.
 
-Haggling is the one thing still missing.
+**Haggling** is where charisma finally does something, and the design
+constraint is one sentence: **knowing when to stop is the skill.** A single
+roll against charisma would be a button pressed once and never thought about;
+an uncapped one would be a button pressed until the price was zero. So:
 
-**Haggling** is where charisma finally does something. It's a small,
-skill-adjacent negotiation rather than a stat check:
+- `maxSwing` is the ceiling — how far this merchant will ever move. A merchant
+  with none does not haggle at all, which is a quartermaster with a ledger and
+  a fixed rate, and the right default.
+- Each push either **gives** a third of the room, **holds**, or **sours** them.
+- Charisma sets the odds. Deliberately not a threshold: a charmless player can
+  still win an argument, less often.
+- `patience` is how many pushes a merchant takes in their stride. Past it the
+  chance of a concession falls and the chance of souring rises, which is what
+  makes the third push a decision rather than a free one.
+- Souring costs a *worse* spread for a couple of days, not a refusal to trade.
+  A player who overreached should feel it in the price and be able to come
+  back, not be locked out of the only shop in the valley.
 
-- Charisma sets how far the price *can* move (`maxSwing`).
-- The player makes an offer; the merchant accepts, counters, or takes offense.
-- Pushing too hard risks souring the merchant — worse prices, or refusal to trade
-  for a while. Knowing when to stop is the skill.
-- Local knowledge helps: if you know grain is cheap two towns over, that becomes
-  a dialog option with real leverage.
+**Local knowledge helps, and it is made of something real.** The journal
+records the prices the player has personally been quoted, market by market. If
+anywhere else they have actually been quoted a better price for something on
+this counter, the odds move — "I know what this costs in Fenmoor" is a thing
+they can only say if they have been to Fenmoor.
 
-This reuses the scene system entirely. `mace.core` ships a generic haggle scene
-that any merchant can point at.
+**A haggle moves the bill, not the penny.** Coin is whole, so a fifth off a
+five-coin sack is a coin the rounding eats, and a per-unit haggle would be a
+mechanic that visibly did nothing on anything cheap. Arguing over the lot is
+also what people actually do: nobody haggles a penny a sack, they haggle the
+load. It is still rounded against the player at both ends.
+
+Randomness comes from a named stream in sequence, which is allowed here and
+nowhere else in the economy: a haggle is an action the player takes, not a
+subsystem caught up lazily, so it cannot land at a different stream position
+depending on when somebody looked.
+
+An earlier version of this document proposed building haggling out of scenes.
+It is not, and could not be: a scene can say things and set flags, and what a
+haggle has to do is move a number the pricing model owns.
 
 ---
 

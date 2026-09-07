@@ -23,6 +23,7 @@ from mace.engine import environment
 from mace.engine.actions import (
     Action,
     Choose,
+    Haggle,
     Interact,
     Look,
     Respond,
@@ -36,6 +37,7 @@ from mace.engine.conditions import RuleError, all_hold, holds
 from mace.engine.context import RuleContext
 from mace.engine.creation import Character, check
 from mace.engine.creation import offer as creation_offer
+from mace.engine.economy import haggle as bargaining
 from mace.engine.economy import trade as market_trade
 from mace.engine.effects import EffectOutcome, apply_all
 from mace.engine.encounter import Rolled, roll, table_for
@@ -48,6 +50,7 @@ from mace.engine.events import (
     FlagChanged,
     FrontMoved,
     GameOver,
+    Haggled,
     InventoryChanged,
     Moved,
     Narrated,
@@ -351,6 +354,11 @@ def _perform(action: Action, context: RuleContext, events: list[Event]) -> bool:
         state.pending = None
         return _travel(context.qualify(action.to, "locations"), context, events)
 
+    if isinstance(action, Haggle):
+        _haggle(context, events)
+        state.pending = None
+        return False
+
     if isinstance(action, Trade):
         # Cleared only once the deal is made, so a refused trade leaves the
         # stall's menu where it was — being told you cannot afford something
@@ -408,6 +416,10 @@ def _choose(action: Choose, context: RuleContext, events: list[Event]) -> bool:
 
     if option.travel is not None:
         return _travel(option.travel, context, events)
+
+    if option.haggle:
+        _haggle(context, events)
+        return False
 
     if option.trade is not None:
         if option.trade == CLOSE_STALL:
@@ -803,6 +815,7 @@ def _show_stall(context: RuleContext, events: list[Event]) -> None:
     stall = _stall(context)
     if stall is None:
         return
+    _remember_prices(context, stall)
     events.append(
         StallOpened(
             merchant=stall.merchant,
@@ -830,6 +843,72 @@ def _stall(context: RuleContext) -> market_trade.Stall | None:
     """
     entity = _merchant(context)
     return None if entity is None else market_trade.look(context, entity)
+
+
+def _haggle(context: RuleContext, events: list[Event]) -> None:
+    """Press the open stall on its price.
+
+    Whether the player has something to point at is worked out here rather
+    than asked for, because "I know what this costs two towns over" is a fact
+    about the journal, not a thing a front-end should be allowed to claim.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Raises
+    ------
+    RuleError
+        If there is nobody to argue with, or they will not argue.
+    """
+    entity = _merchant(context)
+    stall = _stall(context)
+    if entity is None or stall is None:
+        raise RuleError("you are not trading with anybody")
+    block = market_trade.merchant_at(context, entity)
+    assert block is not None
+
+    knowing = bargaining.leverage(
+        context,
+        stall.market,
+        tuple(row.good for row in stall.goods),
+        {row.good: row.buy for row in stall.goods if row.buy is not None},
+    )
+    outcome = bargaining.push(context, entity, block, knowing=knowing)
+    events.append(
+        Haggled(
+            merchant=entity.instance_id,
+            name=stall.name,
+            result=outcome.result,
+            swing=outcome.swing,
+            pushes=outcome.pushes,
+            leverage=outcome.leverage,
+        )
+    )
+
+
+def _remember_prices(context: RuleContext, stall: market_trade.Stall) -> None:
+    """Write down what the player was just quoted, market by market.
+
+    Only prices they were personally shown, which is what makes the journal
+    worth reading and what gives "it is cheaper in Fenmoor" something honest
+    to stand on. Recorded where the stall is *offered* rather than where it is
+    read, so a projection never writes.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    stall : Stall
+        What is on the counter.
+    """
+    seen = context.state.prices.setdefault(stall.market, {})
+    for row in stall.goods:
+        if row.buy is not None:
+            seen[row.good] = row.buy
 
 
 def _trade(
@@ -943,6 +1022,12 @@ def _offer_stall(context: RuleContext, options: list[PendingChoice]) -> None:
                             deal=(row.good, lot, True),
                         )
                     )
+    if stall.haggles and not stall.soured:
+        options.append(
+            PendingChoice(
+                prompt=f"Argue about the price with {stall.name}", haggle=True
+            )
+        )
     options.append(PendingChoice(prompt=f"Done with {stall.name}", trade=CLOSE_STALL))
 
 

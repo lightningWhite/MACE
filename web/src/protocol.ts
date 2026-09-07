@@ -423,6 +423,12 @@ export interface Stall {
   coin: number;
   /** What the merchant can pay out. `null` is bottomless — a whole town. */
   purse: number | null;
+  /** How far an argument has moved the bill. Negative once they have soured. */
+  swing: number;
+  /** Whether this merchant will argue about a price at all. */
+  haggles: boolean;
+  /** Whether they have heard enough for now. */
+  soured: boolean;
   goods: Priced[];
 }
 
@@ -467,6 +473,7 @@ export type Action =
   | { kind: "combat.input"; response: string; elapsedMs?: number }
   | { kind: "wait"; ticks: number }
   | { kind: "trade"; good: string; qty: number; sell: boolean }
+  | { kind: "haggle" }
   | { kind: "look" };
 
 /** A save file: packs, seed, character, and everything the player did. */
