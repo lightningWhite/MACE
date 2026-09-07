@@ -16,31 +16,45 @@ same kind of insight as noticing a storm front and leaving early.
 The unit of trade is a **good** — an item with market behavior. Most items aren't
 goods; a quest token has no market.
 
+A good is not a second kind of thing. It **names an item** that already exists
+and adds the market's view of it:
+
 ```yaml
+# entities.yml — what the thing is, and what the player carries
+entities:
+  - id: grain
+    kind: item
+    name: "Grain"
+    item: {weight: 1, stackable: true, baseValue: 4}
+
+# economy.yml — how the market treats it
 goods:
   - id: grain
-    name: "Grain"
-    baseValue: 4
+    item: grain
     category: food
-    weight: 1
     perishable: {ticksToSpoil: 480}
     elasticity: 0.4        # necessity: demand barely falls as price rises
     producedBy: [farmland]
     consumedBy: [settlement]
 
   - id: iron-ingot
-    name: "Iron Ingot"
-    baseValue: 30
+    item: iron-ingot
     category: metal
-    weight: 8
     elasticity: 1.3        # luxury-ish: demand collapses when it gets dear
     producedBy: [mine]
     consumedBy: [smithy, garrison]
 ```
 
+The split matters. [ADR-0002](decisions/0002-unified-entity-model.md) spent a
+whole decision on there being one `Entity`, and a good that carried its own
+`name`, `weight` and `baseValue` would quietly undo it — a `grain` that is a good
+and a separate `grain` that is an item, drifting apart, until a shop sells
+something the player cannot carry. So weight and value live on the item, where
+the inventory can see them, and a good adds only what a market needs.
+
 `elasticity` is the single most important number: it decides whether a shortage
 means *expensive* (food) or *absent* (luxuries). Getting these right is most of
-economic balance.
+economic balance — which is why it's content and not engine.
 
 ---
 
@@ -54,7 +68,8 @@ markets:
   - id: fenmoor-market
     location: fenmoor
     size: hamlet                    # hamlet | village | town | city
-    wealth: 0.3                     # 0-1, scales stock depth and price floors
+    wealth: 0.3                     # 0-1, what this place can afford to pay
+    tags: [farmland, settlement]    # matched against goods' producedBy/consumedBy
     produces:
       - {good: grain, perTick: 0.8}
       - {good: wool,  perTick: 0.3}
@@ -65,6 +80,13 @@ markets:
       grain: {initial: 400, capacity: 800}
       iron-ingot: {initial: 6, capacity: 20}
 ```
+
+`size` scales how deep a market's shelves are (a city holds roughly twenty-five
+times a hamlet), so an author who writes `size: city` gets a city's stock without
+writing a number per good. Within one good's `stock`, `target` is what the market
+aims to hold and therefore what scarcity is measured against; it defaults to half
+of `capacity`. `initial` defaults to `target`, so a world opens at its ordinary
+prices — a shortage on turn one should be something an author asked for.
 
 ### Price formation
 

@@ -1,37 +1,37 @@
 # A small market network. Grain is cheap in the barley country and dear in the
 # mountains — and when the Ashfell closes the pass, that gap becomes a chasm.
 # See docs/08-economy.md.
+#
+# A good is not a new kind of thing: it is the market behaviour of an item that
+# already exists, which is why each one names an item in entities.yml rather
+# than repeating its name, weight and value here.
 
 goods:
   - id: grain
-    name: "Grain"
-    baseValue: 4
+    item: grain
     category: food
-    weight: 1
     elasticity: 0.4              # necessity: people pay, they don't stop buying
     perishable: {ticksToSpoil: 960}
     producedBy: [farmland]
     consumedBy: [settlement]
 
   - id: salt
-    name: "Salt"
-    baseValue: 12
+    item: salt
     category: food
-    weight: 1
     elasticity: 0.6
     producedBy: [coast]
     consumedBy: [settlement]
 
   - id: iron-ingot
-    name: "Iron Ingot"
-    baseValue: 30
+    item: iron-ingot
     category: metal
-    weight: 8
     elasticity: 1.3              # luxury-ish: demand collapses when it gets dear
     producedBy: [mine]
     consumedBy: [smithy, garrison]
 
 markets:
+  # Fenmoor grows barley and can afford very little else. Everything it needs
+  # comes over the road, which is what makes the road worth watching.
   - id: fenmoor-market
     location: fenmoor
     size: hamlet
@@ -46,6 +46,7 @@ markets:
       grain: {initial: 400, capacity: 800}
       salt:  {initial: 20,  capacity: 60}
 
+  # A middleman: it makes nothing, and it will buy and sell all three.
   - id: traders-post-market
     location: traders-post
     size: village
@@ -53,18 +54,20 @@ markets:
     tags: [settlement]
     consumes:
       - {good: grain, perTick: 0.4}
+    trades: [salt, iron-ingot]
     stock:
       grain:      {initial: 120, capacity: 300}
       salt:       {initial: 60,  capacity: 120}
       iron-ingot: {initial: 12,  capacity: 40}
 
+  # A garrison eats, and pays for the privilege.
   - id: castle-market
     location: hagans-castle
     size: town
     wealth: 0.8
     tags: [settlement, smithy, garrison]
     consumes:
-      - {good: grain,      perTick: 1.6}     # a garrison eats
+      - {good: grain,      perTick: 1.6}
       - {good: iron-ingot, perTick: 0.4}
     stock:
       grain:      {initial: 300, capacity: 900}

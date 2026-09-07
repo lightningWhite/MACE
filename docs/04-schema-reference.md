@@ -718,28 +718,37 @@ creation points went are passed in when a playthrough opens, alongside the seed
 
 ## Good
 
-An item with market behavior. Most items are not goods. See [Economy](08-economy.md).
-
-| Field | Type | Notes |
-|---|---|---|
-| `id`, `name` | | |
-| `baseValue` | number | The price anchor. |
-| `category` | str | `food`, `metal`, `cloth`, ... author-defined. Shocks target categories. |
-| `weight` | number? | |
-| `elasticity` | number | How sharply demand falls as price rises. <1 = necessity, >1 = luxury. The most important balance number. |
-| `perishable` | {ticksToSpoil}? | |
-| `producedBy` / `consumedBy` | [str]? | Market tags that produce or consume it. |
-
-## Market
+The **market behavior of an item**. Most items are not goods — a quest token has
+no market. A good names the item it is the behavior of rather than describing one
+of its own: the price anchor is that item's `baseValue` and a cartload weighs its
+`weight`, so the sack of grain the player carries and the sack the market prices
+are the same sack. See [Economy](08-economy.md).
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | str | |
-| `location` | Ref | |
-| `size` | `hamlet`\|`village`\|`town`\|`city` | Scales stock depth. |
-| `wealth` | number | 0–1. Scales price floors and capital. |
-| `produces` / `consumes` | [{good: Ref, perTick: number}]? | |
-| `stock` | {Ref: {initial, capacity}}? | |
+| `extends` | Ref? | A good to inherit from. |
+| `item` | Ref | The item this is the market behavior of. Its `baseValue` anchors the price. |
+| `category` | str? | `food`, `metal`, `cloth`, ... author-defined. Shocks target categories. |
+| `elasticity` | number | How sharply demand falls as price rises. <1 = necessity, >1 = luxury. The most important balance number. Default 1. |
+| `perishable` | {ticksToSpoil}? | What spoils, and how fast. Perishability is what stops a player buying out a harvest and sitting on it. |
+| `producedBy` / `consumedBy` | [str]? | Market tags that produce or consume it. A market tagged `farmland` grows every good naming `farmland` here, without listing them one by one. |
+
+## Market
+
+A settlement's shelves and what it charges for what is on them.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | str | |
+| `extends` | Ref? | A market to inherit from. |
+| `location` | Ref | Where it is. The player has to be standing here to trade. |
+| `name` | str? | Defaults to the location's name. |
+| `size` | `hamlet`\|`village`\|`town`\|`city` | Scales default stock depth (×0.35, ×1, ×3, ×9). Default `village`. |
+| `wealth` | number | 0–1. What this place will pay: a city bids over the odds, a hamlet cannot. Default 0.5. |
+| `produces` / `consumes` | [{good: Ref, perTick: number}]? | Spelled out, overriding whatever the tags imply. |
+| `stock` | {Ref: {capacity, target?, initial?}}? | `target` defaults to half of `capacity` and is what scarcity is measured against; `initial` defaults to `target`, so a game opens at the ordinary price rather than in a shortage nobody wrote. A good this market trades but does not list gets a default depth from its `size`. |
+| `trades` | [Ref]? | Goods it buys and sells without making or using them — a middleman's stock in trade. |
 | `tags` | [str]? | `farmland`, `mine`, `smithy` — matched against goods' `producedBy`. |
 
 ## Merchant

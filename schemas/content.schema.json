@@ -47,10 +47,22 @@
         "$ref": "#/$defs/Entity"
       }
     },
+    "goods": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Good"
+      }
+    },
     "locations": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/Location"
+      }
+    },
+    "markets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Market"
       }
     },
     "moves": {
@@ -109,14 +121,6 @@
     },
     "game": {
       "$ref": "#/$defs/Game"
-    },
-    "goods": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 5 \u2014 economy."
-    },
-    "markets": {
-      "type": "array",
-      "description": "Not yet modelled \u2014 phase 5 \u2014 economy."
     }
   },
   "additionalProperties": false,
@@ -2815,6 +2819,28 @@
       "title": "FlagIs",
       "type": "object"
     },
+    "Flow": {
+      "additionalProperties": false,
+      "description": "A good a market makes or uses, and how fast.\n\nAttributes\n----------\ngood : str\n    Which good.\nper_tick : float\n    Units per tick. Small numbers: a hamlet growing 0.8 grain a tick is\n    producing a few hundred over a season, which is what its shelves hold.",
+      "properties": {
+        "good": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Good",
+          "type": "string"
+        },
+        "perTick": {
+          "exclusiveMinimum": 0.0,
+          "title": "Pertick",
+          "type": "number"
+        }
+      },
+      "required": [
+        "good",
+        "perTick"
+      ],
+      "title": "Flow",
+      "type": "object"
+    },
     "Game": {
       "additionalProperties": false,
       "description": "The contents of a game pack's `game.yml`, under its `game:` key.",
@@ -3023,6 +3049,121 @@
       },
       "title": "GameRules",
       "type": "object"
+    },
+    "Good": {
+      "additionalProperties": false,
+      "description": "An item with market behaviour.\n\nAttributes\n----------\nid : str\n    Identity.\nextends : str or None\n    A good to inherit from.\nitem : str\n    The item this is the market behaviour of. Its `baseValue` is the price\n    anchor and its `weight` is what a cartload costs to carry \u2014 both live\n    on the item, because a good is not a second kind of bread.\ncategory : str or None\n    A label a shock or a merchant can name a whole class of goods by:\n    `food`, `metal`, `luxury`.\nelasticity : float\n    How hard demand falls as the price rises. Below 1 is a necessity \u2014\n    scarcity makes it expensive. Above 1 is a luxury \u2014 scarcity makes it\n    simply absent. This is the single most load-bearing number in the\n    economy.\nperishable : Perishable or None\n    What spoils, and how fast.\nproduced_by, consumed_by : tuple of str\n    Market tags. A market tagged `farmland` grows every good that names\n    `farmland` here, without listing them one by one \u2014 which is what\n    makes a world of twenty markets cheap to write. An explicit\n    `produces`/`consumes` entry on the market overrides it.\n\nExtending another definition makes item optional here \u2014 the parent supplies them.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "item": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Item",
+          "type": "string"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        },
+        "elasticity": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Elasticity",
+          "type": "number"
+        },
+        "perishable": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Perishable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "producedBy": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Producedby",
+          "type": "array"
+        },
+        "consumedBy": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Consumedby",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Good",
+      "type": "object",
+      "if": {
+        "not": {
+          "required": [
+            "extends"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "item"
+        ]
+      }
     },
     "HasItem": {
       "additionalProperties": false,
@@ -3493,6 +3634,160 @@
       "title": "MapPosition",
       "type": "object"
     },
+    "Market": {
+      "additionalProperties": false,
+      "description": "A settlement's shelves and what it charges for what is on them.\n\nAttributes\n----------\nid : str\n    Identity.\nextends : str or None\n    A market to inherit from.\nlocation : str\n    Where it is. A player has to be standing here to trade.\nname : str or None\n    What to call it. None takes the location's name.\nsize : {'hamlet', 'village', 'town', 'city'}\n    How deep its shelves are, by way of `MARKET_SIZES`.\nwealth : float\n    0 to 1. What this place will pay: a city bids over the odds for what\n    it wants, a hamlet cannot afford to.\ntags : tuple of str\n    Labels a good's `producedBy` and `consumedBy` match against.\nproduces, consumes : tuple of Flow\n    What it makes and uses, per tick, spelled out. Overrides whatever the\n    tags would have implied.\nstock : mapping\n    Good to how much of it this market holds. A good it produces,\n    consumes or trades and does not list here gets a default depth from\n    its `size`.\ntrades : tuple of str\n    Goods it will buy and sell without making or using them \u2014 a\n    middleman's stock in trade.\n\nExtending another definition makes location optional here \u2014 the parent supplies them.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "extends": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extends"
+        },
+        "location": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Location",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "size": {
+          "default": "village",
+          "enum": [
+            "hamlet",
+            "village",
+            "town",
+            "city"
+          ],
+          "title": "Size",
+          "type": "string"
+        },
+        "wealth": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Wealth",
+          "type": "number"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "produces": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Flow"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Produces",
+          "type": "array"
+        },
+        "consumes": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Flow"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Consumes",
+          "type": "array"
+        },
+        "stock": {
+          "patternProperties": {
+            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
+              "$ref": "#/$defs/Stock"
+            }
+          },
+          "title": "Stock",
+          "type": "object"
+        },
+        "trades": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "const": "$append"
+              }
+            ]
+          },
+          "title": "Trades",
+          "type": "array"
+        },
+        "$remove": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys to drop from the inherited definition."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Market",
+      "type": "object",
+      "if": {
+        "not": {
+          "required": [
+            "extends"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "location"
+        ]
+      }
+    },
     "Move": {
       "additionalProperties": false,
       "description": "One thing a fighter can do in an exchange.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A move to inherit from.\nkind : {'attack', 'defense'}\n    Whether this is something you telegraph or something you answer with.\ntype : str\n    Author-defined: `overhead`, `thrust`, `sweep` for attacks; `parry`,\n    `dodge`, `block` for defenses. An attack's `counters` names defense\n    types, so the two vocabularies meet here and nowhere in the engine.\ntell : Description or None\n    The telegraph, for an attack. \"The troll hauls the club over its head.\"\nvague_tell : Description or None\n    The same windup, badly read \u2014 what a low `tellClarity` shows instead.\n    Without one, an unclear tell is simply withheld, which is worse\n    atmosphere and the same information.\nwindup_ms : int\n    How long the defender has, before their speed widens it.\ncounters : tuple of str\n    Defense *types* that beat this attack.\ndamage : Damage or None\n    What it does when it lands. A defense may carry damage too \u2014 that is\n    what `strike` is: an interrupt that answers a grapple by hurting it.\ncost : float\n    Effort-pool cost of using it.\nmitigation : float\n    For a defense: the share of damage it stops when the read was right\n    but the timing was not. A dodge is cheap and stops everything or\n    nothing; a block is expensive and always takes some of the sting out.\nfeint : bool\n    Marks a move as the pack's feint: a windup that means nothing, whose\n    only correct answer is whatever `counters` names.\neffects : tuple of Effect\n    Applied to the defender when the move lands.\ntags : tuple of str\n    Free-form labels.\n\nExtending another definition makes type optional here \u2014 the parent supplies them.",
@@ -3832,6 +4127,22 @@
         "days"
       ],
       "title": "Period",
+      "type": "object"
+    },
+    "Perishable": {
+      "additionalProperties": false,
+      "description": "A good that does not keep.\n\nAttributes\n----------\nticks_to_spoil : int\n    How long a unit lasts before it is worth nothing. Perishability is\n    what stops a player buying out a harvest and sitting on it.",
+      "properties": {
+        "ticksToSpoil": {
+          "exclusiveMinimum": 0,
+          "title": "Tickstospoil",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ticksToSpoil"
+      ],
+      "title": "Perishable",
       "type": "object"
     },
     "Phase": {
@@ -5483,6 +5794,48 @@
         "stat"
       ],
       "title": "StatModifier",
+      "type": "object"
+    },
+    "Stock": {
+      "additionalProperties": false,
+      "description": "How much of one good a market holds, and how much it wants.\n\nAttributes\n----------\ncapacity : float\n    The most it can hold. Above this, production spills and is lost \u2014\n    a market is a town, not a warehouse.\ntarget : float or None\n    What it aims to have. Scarcity is measured against this, so it is the\n    number that decides the price. None is half of capacity: a place that\n    would like its shelves comfortably stocked and not groaning.\ninitial : float or None\n    What it starts a playthrough with. None is `target`, so a game opens\n    at the ordinary price rather than in a shortage nobody wrote.",
+      "properties": {
+        "capacity": {
+          "exclusiveMinimum": 0.0,
+          "title": "Capacity",
+          "type": "number"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        },
+        "initial": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Initial"
+        }
+      },
+      "required": [
+        "capacity"
+      ],
+      "title": "Stock",
       "type": "object"
     },
     "TellNews": {

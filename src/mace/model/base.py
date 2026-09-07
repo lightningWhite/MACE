@@ -41,7 +41,9 @@ __all__ = [
     "EncounterRef",
     "FrontRef",
     "EntityRef",
+    "GoodRef",
     "LocationRef",
+    "MarketRef",
     "MoveRef",
     "QuestRef",
     "RESERVED_ACTORS",
@@ -129,7 +131,9 @@ FrontRef = Annotated[Ref, Reference("weatherFronts")]
 ClimateRef = Annotated[Ref, Reference("climates")]
 CombatProfileRef = Annotated[Ref, Reference("combatProfiles")]
 EntityRef = Annotated[Ref, Reference("entities")]
+GoodRef = Annotated[Ref, Reference("goods")]
 LocationRef = Annotated[Ref, Reference("locations")]
+MarketRef = Annotated[Ref, Reference("markets")]
 MoveRef = Annotated[Ref, Reference("moves")]
 RouteRef = Annotated[Ref, Reference("routes")]
 SceneRef = Annotated[Ref, Reference("scenes")]

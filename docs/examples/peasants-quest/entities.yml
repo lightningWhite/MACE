@@ -97,6 +97,31 @@ entities:
     tags: [quest]
     item: {weight: 0, stackable: false, baseValue: 0}
 
+  # The traded goods are items first and goods second — see economy.yml. A sack
+  # of grain the player can carry and a sack of grain the market prices are the
+  # same sack, which is the whole reason a good names an item instead of
+  # describing one of its own.
+  - id: grain
+    kind: item
+    name: "Grain"
+    description: "A sack of barley, threshed and dusty."
+    tags: [trade, food]
+    item: {weight: 1, stackable: true, baseValue: 4}
+
+  - id: salt
+    kind: item
+    name: "Salt"
+    description: "Coarse grey crystals from the coast. Worth carrying inland."
+    tags: [trade, food]
+    item: {weight: 1, stackable: true, baseValue: 12}
+
+  - id: iron-ingot
+    kind: item
+    name: "Iron Ingot"
+    description: "A bar of pig iron, heavier than it looks."
+    tags: [trade, metal]
+    item: {weight: 8, stackable: true, baseValue: 30}
+
   # ── A fixture and a container ─────────────────────────────────────────────
   - id: fenmoor-well
     kind: fixture

@@ -12,7 +12,18 @@ import pytest
 import yaml
 from pydantic import BaseModel
 
-from mace.model import Background, Entity, Game, Location, Pack, Quest, Route, Scene
+from mace.model import (
+    Background,
+    Entity,
+    Game,
+    Good,
+    Location,
+    Market,
+    Pack,
+    Quest,
+    Route,
+    Scene,
+)
 
 EXAMPLE_ROOT = Path(__file__).resolve().parent.parent / "docs" / "examples"
 PACK_ROOT = EXAMPLE_ROOT / "peasants-quest"
@@ -28,6 +39,8 @@ SECTIONS: list[tuple[str, str | None, type[BaseModel]]] = [
     ("routes.yml", "routes", Route),
     ("scenes.yml", "scenes", Scene),
     ("quests.yml", "quests", Quest),
+    ("economy.yml", "goods", Good),
+    ("economy.yml", "markets", Market),
 ]
 
 

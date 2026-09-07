@@ -144,6 +144,14 @@ writing YAML.
       between turns, reduced motion, and nothing carried by colour alone
 - [ ] **Economy**: goods, markets, stock, price formation, trade flow between
       connected markets (`economy: market`)
+  - [x] The content half: `goods` and `markets` as modelled, schema-validated
+        collections. A good names the item it is the market behaviour of
+        rather than describing one of its own, so the sack the player carries
+        and the sack the market prices stay the same sack
+  - [ ] Price formation from scarcity, and stock that moves with production
+        and consumption
+  - [ ] Trade flow between connected markets, throttled by route length and
+        danger — the part that makes a closed pass move a price
 
 ---
 

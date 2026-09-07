@@ -40,6 +40,7 @@ from mace.model.calendar import Calendar
 from mace.model.climate import Climate
 from mace.model.combat import CombatProfile, Move
 from mace.model.conditions import CONDITION_PAYLOADS, Condition
+from mace.model.economy import Good, Market
 from mace.model.effects import EFFECT_PAYLOADS, Effect
 from mace.model.encounter import EncounterTable
 from mace.model.entity import Entity
@@ -77,7 +78,9 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "combatProfiles": CombatProfile,
     "encounterTables": EncounterTable,
     "entities": Entity,
+    "goods": Good,
     "locations": Location,
+    "markets": Market,
     "moves": Move,
     "pressureEvents": PressureEvent,
     "regions": Region,
@@ -89,13 +92,15 @@ CONTENT_COLLECTIONS: dict[str, type[ContentModel]] = {
     "quests": Quest,
 }
 
-#: Collections the docs describe but no model covers yet. Listing them keeps a
+#: Collections the docs describe but no model covers yet. Listing one keeps a
 #: misspelled collection key an error while leaving room for the phase that
-#: models them — see docs/12-roadmap.md.
-UNMODELLED_COLLECTIONS: dict[str, str] = {
-    "goods": "phase 5 — economy",
-    "markets": "phase 5 — economy",
-}
+#: models it — see docs/12-roadmap.md.
+#:
+#: Empty since the economy phase modelled `goods` and `markets`, which were the
+#: last two. The mechanism stays: it is what stops the next collection the docs
+#: describe from eating an author's work between the doc and the model, and the
+#: loader, the wizard, and the schema all still read it.
+UNMODELLED_COLLECTIONS: dict[str, str] = {}
 
 #: Merge sentinels the loader resolves. They are legal in an authored file and
 #: impossible in a compiled one.

@@ -271,13 +271,16 @@ def test_a_saved_file_is_stable_across_saves(tmp_path: Path) -> None:
     assert (root / "locations.yml").read_text() == once
 
 
-def test_content_no_model_covers_yet_survives_a_round_trip(tmp_path: Path) -> None:
+def test_content_no_model_covers_yet_survives_a_round_trip(
+    tmp_path: Path, unmodelled_collection: str
+) -> None:
     """An author must not lose work to a phase that has not happened."""
-    root = world(tmp_path, goods={"goods": [{"id": "iron", "density": 3}]})
+    entry = {"id": "salt-train", "wagons": 3}
+    root = world(tmp_path, trade={unmodelled_collection: [entry]})
     project = Project.open(root)
     project.put("locations", {"id": "mill", "name": "The Mill"})
     project.save()
-    assert Project.open(root).unmodelled["goods"] == ({"id": "iron", "density": 3},)
+    assert Project.open(root).unmodelled[unmodelled_collection] == (entry,)
 
 
 # ── Comments ──────────────────────────────────────────────────────────────────

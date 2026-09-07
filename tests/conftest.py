@@ -5,10 +5,36 @@ two files claiming one id, a dependency that isn't there — are facts about
 directories, so the tests build directories.
 """
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
+
+from mace.model.jsonschema import UNMODELLED_COLLECTIONS
+
+#: A collection no model covers, for the tests that check an author's work
+#: survives a phase that has not happened yet. It has to be invented, because
+#: as of the economy phase every collection the docs describe is modelled —
+#: and the mechanism still has to work for the next one that isn't.
+FUTURE_COLLECTION = "caravans"
+
+
+@pytest.fixture
+def unmodelled_collection() -> Iterator[str]:
+    """Register a collection no model covers, for the length of one test.
+
+    Yields
+    ------
+    str
+        The collection name to write content under.
+    """
+    UNMODELLED_COLLECTIONS[FUTURE_COLLECTION] = "a later phase"
+    try:
+        yield FUTURE_COLLECTION
+    finally:
+        del UNMODELLED_COLLECTIONS[FUTURE_COLLECTION]
 
 
 def write_pack(

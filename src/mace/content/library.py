@@ -23,7 +23,9 @@ from mace.model import (
     EncounterTable,
     Entity,
     Game,
+    Good,
     Location,
+    Market,
     Move,
     Pack,
     PressureEvent,
@@ -50,7 +52,9 @@ COLLECTION_MODELS: dict[str, type[ContentModel]] = {
     "combatProfiles": CombatProfile,
     "encounterTables": EncounterTable,
     "entities": Entity,
+    "goods": Good,
     "locations": Location,
+    "markets": Market,
     "moves": Move,
     "pressureEvents": PressureEvent,
     "regions": Region,
@@ -74,7 +78,9 @@ SINGULAR: dict[str, str] = {
     "combatProfiles": "combat profile",
     "encounterTables": "encounter table",
     "entities": "entity",
+    "goods": "good",
     "locations": "location",
+    "markets": "market",
     "moves": "move",
     "pressureEvents": "pressure event",
     "regions": "region",
@@ -112,8 +118,8 @@ class LoadedPack:
         The directory it was read from.
     backgrounds, calendars, celestialEvents, climates, combatProfiles,
     encounterTables,
-    entities, locations, moves, pressureEvents, regions, routes, scenes,
-    quests, terrains, weatherConditions, weatherFronts : mapping
+    entities, goods, locations, markets, moves, pressureEvents, regions,
+    routes, scenes, quests, terrains, weatherConditions, weatherFronts : mapping
         Local id to definition, for each modelled collection.
     game : Game or None
         The game manifest, for `kind: game` packs.
@@ -131,7 +137,9 @@ class LoadedPack:
     combat_profiles: Mapping[str, CombatProfile]
     encounter_tables: Mapping[str, EncounterTable]
     entities: Mapping[str, Entity]
+    goods: Mapping[str, Good]
     locations: Mapping[str, Location]
+    markets: Mapping[str, Market]
     moves: Mapping[str, Move]
     pressure_events: Mapping[str, PressureEvent]
     regions: Mapping[str, Region]
