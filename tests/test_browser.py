@@ -144,9 +144,7 @@ def test_it_asks_the_creation_question_the_service_asks(
     )
 
 
-def test_it_opens_the_frame_the_service_opens(
-    runtime: Runtime, tmp_path: Path
-) -> None:
+def test_it_opens_the_frame_the_service_opens(runtime: Runtime, tmp_path: Path) -> None:
     """The whole of ADR-0005 in one assertion: same engine, same answer."""
     here = runtime.open({"pack": "tiny"})
     there = served(tmp_path).post("/api/sessions", json={"pack": "tiny"}).json()
@@ -183,9 +181,9 @@ def test_it_writes_the_save_the_service_writes(
     runtime.act(action)
     client.post(f"/api/sessions/{opened['session']}/actions", json=action)
 
-    assert runtime.save() == client.get(
-        f"/api/sessions/{opened['session']}/save"
-    ).json()
+    assert (
+        runtime.save() == client.get(f"/api/sessions/{opened['session']}/save").json()
+    )
 
 
 def test_a_save_carries_on_in_the_tab_it_was_not_made_in(runtime: Runtime) -> None:
