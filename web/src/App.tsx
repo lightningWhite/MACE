@@ -274,7 +274,12 @@ export function App() {
       </main>
 
       <aside className="sidebar">
-        <MapView atlas={frame.view.atlas} onTravel={choose} busy={busy} />
+        <MapView
+          atlas={frame.view.atlas}
+          carried={frame.view.carried}
+          onTravel={choose}
+          busy={busy}
+        />
         <Character sheet={frame.view.sheet} />
         <Pack carried={frame.view.carried} />
         <Journal journal={frame.view.journal} />

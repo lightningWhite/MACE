@@ -211,6 +211,11 @@ class Place:
         only the engine knows that "Take the north road" is the option that
         walks to Hagan's Castle, and a front-end that matched prompts to
         places by their wording would be guessing at content.
+    prices : dict
+        Good id to the last unit price the player was quoted here. Only prices
+        they have personally seen, which is what makes shading a map by them
+        honest — a price overlay drawn from what the engine knows would be a
+        map that told the player where to go.
     x, y : float or None
         Authored map coordinates. None means the client lays it out itself,
         which is what `mapPosition` being optional is for.
@@ -224,6 +229,7 @@ class Place:
     sky: str | None
     indoors: bool
     choice: int | None
+    prices: dict[str, int]
     x: float | None
     y: float | None
 
@@ -244,6 +250,7 @@ class Place:
             "sky": self.sky,
             "indoors": self.indoors,
             "choice": self.choice,
+            "prices": dict(self.prices),
             "x": self.x,
             "y": self.y,
         }
@@ -725,8 +732,9 @@ def _atlas(context: RuleContext) -> Atlas:
         if qualified in state.revealed
     }
     ways = _ways_out(context)
+    seen_prices = _prices_seen(context)
     places = tuple(
-        _place(context, qualified, known[qualified], ways)
+        _place(context, qualified, known[qualified], ways, seen_prices)
         for qualified in sorted(known)
     )
     roads = tuple(
@@ -775,11 +783,43 @@ def _ways_out(context: RuleContext) -> dict[str, int]:
     return ways
 
 
+def _prices_seen(context: RuleContext) -> dict[str, dict[str, int]]:
+    """The player's price journal, keyed by *place* rather than by market.
+
+    The engine records prices against the market that quoted them, because
+    that is the thing that has them. A map draws places, and a player thinks
+    in places, so the translation happens once here rather than in every
+    front-end.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    dict
+        Qualified location id to good id to the last price seen there.
+    """
+    from mace.engine.economy import prepare
+
+    if not context.state.prices:
+        return {}
+    network = prepare(context.library)
+    found: dict[str, dict[str, int]] = {}
+    for market_id, quoted in context.state.prices.items():
+        market = network.markets.get(market_id)
+        if market is not None:
+            found.setdefault(market.location, {}).update(quoted)
+    return found
+
+
 def _place(
     context: RuleContext,
     qualified: str,
     definition: Location,
     ways: dict[str, int],
+    seen_prices: dict[str, dict[str, int]],
 ) -> Place:
     """Project one location the player knows about.
 
@@ -793,6 +833,8 @@ def _place(
         Its content.
     ways : dict
         Location id to the offered option that goes there.
+    seen_prices : dict
+        Location id to the prices the player has been quoted there.
 
     Returns
     -------
@@ -824,6 +866,7 @@ def _place(
         sky=None if seen.condition is None else seen.condition.name,
         indoors=definition.indoors,
         choice=ways.get(qualified),
+        prices=seen_prices.get(qualified, {}),
         x=None if definition.map_position is None else definition.map_position.x,
         y=None if definition.map_position is None else definition.map_position.y,
     )

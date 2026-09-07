@@ -217,6 +217,7 @@
             "sky": "drizzle",
             "indoors": false,
             "choice": null,
+            "prices": {},
             "x": 0.0,
             "y": 120.0
           },
@@ -229,6 +230,7 @@
             "sky": "light snow",
             "indoors": false,
             "choice": 3,
+            "prices": {},
             "x": 20.0,
             "y": 0.0
           },
@@ -241,6 +243,7 @@
             "sky": "drizzle",
             "indoors": true,
             "choice": 2,
+            "prices": {},
             "x": -60.0,
             "y": 160.0
           }
@@ -489,6 +492,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -501,6 +505,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -513,6 +518,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -525,6 +531,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }
@@ -747,6 +754,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -759,6 +767,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -771,6 +780,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -783,6 +793,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }
@@ -1061,6 +1072,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -1073,6 +1085,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -1085,6 +1098,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -1097,6 +1111,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }
@@ -1354,6 +1369,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -1366,6 +1382,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -1378,6 +1395,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -1390,6 +1408,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }
@@ -1612,6 +1631,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -1624,6 +1644,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -1636,6 +1657,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -1648,6 +1670,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }
@@ -1926,6 +1949,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -1938,6 +1962,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -1950,6 +1975,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -1962,6 +1988,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }
@@ -2214,6 +2241,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -2226,6 +2254,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -2238,6 +2267,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -2250,6 +2280,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }
@@ -2502,6 +2533,7 @@
                 "sky": "drizzle",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 0.0,
                 "y": 120.0
               },
@@ -2514,6 +2546,7 @@
                 "sky": "overcast",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 20.0,
                 "y": 0.0
               },
@@ -2526,6 +2559,7 @@
                 "sky": "drizzle",
                 "indoors": true,
                 "choice": null,
+                "prices": {},
                 "x": -60.0,
                 "y": 160.0
               },
@@ -2538,6 +2572,7 @@
                 "sky": "clear",
                 "indoors": false,
                 "choice": null,
+                "prices": {},
                 "x": 10.0,
                 "y": 60.0
               }

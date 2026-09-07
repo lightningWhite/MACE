@@ -180,7 +180,7 @@ writing YAML.
 - [ ] Entity/item editors with live preview
 - [ ] Export a pack; import someone else's and remix it
 - [ ] One-click playtest from any point in the editor
-- [ ] Economy phase 2
+- [x] Economy phase 2
   - [x] Merchant capital: a purse that is the coin in the merchant's own
         pack, `restockTicks` to bring it back up, and a sale the merchant
         cannot cover simply not offered. What turns "carry grain north" into
@@ -200,7 +200,9 @@ writing YAML.
         the road through a new `spawnEntity` effect and `transient`
         instances, which is what an encounter needed to introduce a person
         rather than a fight
-  - [ ] The map's price overlay
+  - [x] The map's price overlay, drawn from the player's own price journal
+        and nothing else — a map that shaded every market would be a map that
+        told them where to go
 
 ---
 

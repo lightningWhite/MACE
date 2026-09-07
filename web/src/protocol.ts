@@ -361,6 +361,13 @@ export interface Place {
    * wording would be guessing at content.
    */
   choice: number | null;
+  /**
+   * Good id to the last unit price the player was quoted here.
+   *
+   * Only prices they have personally seen. An overlay drawn from what the
+   * engine knows would be a map that told the player where to go.
+   */
+  prices: Record<string, number>;
   x: number | null;
   y: number | null;
 }

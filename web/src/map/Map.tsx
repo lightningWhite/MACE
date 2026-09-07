@@ -19,9 +19,19 @@
  * it, with a longer and better label written by the author. Duplicating those
  * as bare place names inside a graphic would give a screen-reader user two
  * ways to do the same thing and make the worse one come first.
+ *
+ * The price overlay is the one thing here a player switches on, and it draws
+ * **only what they have personally been quoted** — `place.prices` holds the
+ * journal, not the engine's answer. A map that shaded every market would be a
+ * map that told the player where to go, and the whole intended experience is
+ * that they work out there is money in carrying salt north on their own.
+ * Prices are drawn as numbers as well as shades for the usual reason: a map
+ * legible only in colour is not legible.
  */
 
-import type { Atlas, Place } from "../protocol";
+import { useState } from "react";
+
+import type { Atlas, Carried, Place } from "../protocol";
 import { fit, isAuthored, layout, type Positions } from "./layout";
 
 /** Room around the outermost node, for its label. */
@@ -65,15 +75,33 @@ function Node({ place, at }: { place: Place; at: { x: number; y: number } }) {
   return <circle cx={at.x} cy={at.y} r={5.5} className="node-ring" />;
 }
 
+/** Which goods the player has ever been quoted a price for, in name order. */
+function priced(atlas: Atlas, carried: Carried[]): Array<[string, string]> {
+  const seen = new Map<string, string>();
+  for (const place of atlas.places) {
+    for (const good of Object.keys(place.prices)) {
+      // The good's id and the item's are the same word often enough to be
+      // worth trying, and the pack is the only place a readable name lives.
+      const named = carried.find((stack) => stack.item === good);
+      seen.set(good, named?.name ?? good.split(":").pop() ?? good);
+    }
+  }
+  return [...seen].sort((one, two) => one[1].localeCompare(two[1]));
+}
+
 export function MapView({
   atlas,
+  carried = [],
   onTravel,
   busy,
 }: {
   atlas: Atlas;
+  /** The player's pack, only so a good can be named rather than id'd. */
+  carried?: Carried[];
   onTravel: (choice: number) => void;
   busy: boolean;
 }) {
+  const [shading, setShading] = useState<string | null>(null);
   if (atlas.places.length === 0) {
     return (
       <section className="panel" aria-labelledby="map-heading">
@@ -82,6 +110,17 @@ export function MapView({
       </section>
     );
   }
+
+  const goods = priced(atlas, carried);
+  const showing = shading !== null && goods.some(([good]) => good === shading);
+  const quoted = showing
+    ? atlas.places.flatMap((place) => {
+        const price = place.prices[shading];
+        return price === undefined ? [] : [price];
+      })
+    : [];
+  const cheapest = quoted.length > 0 ? Math.min(...quoted) : 0;
+  const dearest = quoted.length > 0 ? Math.max(...quoted) : 0;
 
   const positions = layout(atlas);
   const box = fit(positions, PAD);
@@ -197,6 +236,27 @@ export function MapView({
               <text x={at.x + 10} y={at.y + 4} className="place-name">
                 {place.name}
               </text>
+              {showing && place.prices[shading] !== undefined && (
+                <>
+                  <circle
+                    cx={at.x}
+                    cy={at.y}
+                    r={16}
+                    className={
+                      dearest === cheapest
+                        ? "price-blob"
+                        : place.prices[shading] === cheapest
+                          ? "price-blob price-cheap"
+                          : place.prices[shading] === dearest
+                            ? "price-blob price-dear"
+                            : "price-blob"
+                    }
+                  />
+                  <text x={at.x + 10} y={at.y + 16} className="price-mark">
+                    {place.prices[shading]}
+                  </text>
+                </>
+              )}
             </g>
           );
         })}
@@ -206,6 +266,25 @@ export function MapView({
         <span className="dim">
           {authored ? "as the author drew it" : "roads to scale"}
         </span>
+        {goods.length === 0 ? null : (
+          <label className="price-picker">
+            <span className="dim">prices seen for</span>
+            <select
+              value={shading ?? ""}
+              aria-label="Shade the map by the price of"
+              onChange={(event) =>
+                setShading(event.target.value === "" ? null : event.target.value)
+              }
+            >
+              <option value="">— nothing —</option>
+              {goods.map(([good, name]) => (
+                <option key={good} value={good}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </p>
     </section>
   );

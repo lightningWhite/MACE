@@ -5,7 +5,7 @@
  * check is that the picture says what MACE said.
  */
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -149,5 +149,79 @@ describe("roads worth a second look", () => {
       (from!.y! + to!.y!) / 2,
       5,
     );
+  });
+});
+
+// ── The price overlay ─────────────────────────────────────────────────────────
+
+describe("prices the player has seen", () => {
+  /** The real atlas, with a couple of quoted prices written into it. */
+  function quoted(): Atlas {
+    const [first, second, ...rest] = REAL.places;
+    if (first === undefined || second === undefined) throw new Error("no places");
+    return {
+      ...REAL,
+      places: [
+        { ...first, prices: { "fantasy.core:grain": 4 } },
+        { ...second, prices: { "fantasy.core:grain": 9 } },
+        ...rest,
+      ],
+    };
+  }
+
+  it("offers nothing to shade by until a price has been seen", () => {
+    draw(REAL);
+    expect(screen.queryByLabelText(/Shade the map by/)).toBeNull();
+  });
+
+  it("offers the goods the player has been quoted, by name", () => {
+    render(
+      <MapView
+        atlas={quoted()}
+        carried={[
+          { item: "fantasy.core:grain", name: "Grain", qty: 0, value: 4 },
+        ]}
+        onTravel={vi.fn()}
+        busy={false}
+      />,
+    );
+    const picker = screen.getByLabelText(/Shade the map by/);
+    expect(
+      within(picker as HTMLSelectElement).getByRole("option", { name: "Grain" }),
+    ).toBeTruthy();
+  });
+
+  it("draws nothing until one is picked", () => {
+    const { container } = draw(quoted());
+    expect(container.querySelectorAll(".price-mark")).toHaveLength(0);
+  });
+
+  it("writes the number as well as shading, and marks both ends", async () => {
+    const user = userEvent.setup();
+    const { container } = draw(quoted());
+    await user.selectOptions(
+      screen.getByLabelText(/Shade the map by/),
+      "fantasy.core:grain",
+    );
+
+    const written = [...container.querySelectorAll(".price-mark")].map(
+      (node) => node.textContent,
+    );
+    expect(written).toEqual(["4", "9"]);
+    expect(container.querySelectorAll(".price-cheap")).toHaveLength(1);
+    expect(container.querySelectorAll(".price-dear")).toHaveLength(1);
+  });
+
+  it("shades only the places the player has actually been quoted at", async () => {
+    const user = userEvent.setup();
+    const { container } = draw(quoted());
+    await user.selectOptions(
+      screen.getByLabelText(/Shade the map by/),
+      "fantasy.core:grain",
+    );
+    // Two of the places carry a price; the rest are unshaded, because a map
+    // that filled them in would be telling the player what they have not seen.
+    expect(container.querySelectorAll(".price-blob")).toHaveLength(2);
+    expect(REAL.places.length).toBeGreaterThan(2);
   });
 });

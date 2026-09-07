@@ -464,8 +464,13 @@ Same principle as weather and omens: no numbers, no dashboards.
   without taking notes.
 - News and rumor carry economic information the same way they carry event
   news — a trader on the road tells you what's dear where.
-- The map can optionally shade regions by the price of a chosen good, for players
-  who want to trade seriously.
+- The map can shade places by the price of a chosen good, for players who want
+  to trade seriously — and it shades **only prices they have personally been
+  quoted**. An overlay drawn from what the engine knows would be a map that
+  told the player where to go, which is the opposite of the intended
+  experience. It writes the number as well as the shade, and tints only the
+  cheapest and the dearest, because what a trader wants off a map is the two
+  ends rather than a gradient to squint at.
 
 The intended experience is that a player who pays attention discovers, on their
 own, that there's money in carrying salt north — and that a player who doesn't

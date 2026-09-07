@@ -1120,3 +1120,50 @@ button:focus-visible {
   flex: 0 0 9rem;
   font-family: var(--font);
 }
+
+/*
+ * The price overlay.
+ *
+ * Shaded *and* numbered, for the same reason a shut road is dashed and says
+ * "shut": a map legible only in colour is not legible. The two ends of the
+ * range are the only ones tinted, because what a trader wants off a map is
+ * where it is cheapest and where it is dearest, not a gradient to squint at.
+ */
+
+.price-blob {
+  fill: var(--ink-dim);
+  opacity: 0.18;
+}
+
+.price-cheap {
+  fill: var(--cold);
+  opacity: 0.34;
+}
+
+.price-dear {
+  fill: var(--warm);
+  opacity: 0.34;
+}
+
+.price-mark {
+  font-size: 8px;
+  font-family: var(--font-ui);
+  fill: var(--ink);
+}
+
+.price-picker {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-left: 0.6rem;
+}
+
+.price-picker select {
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink);
+  background: var(--ground-raised);
+  border: 1px solid var(--edge);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.25rem;
+}
