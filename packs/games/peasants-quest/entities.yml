@@ -49,6 +49,11 @@ entities:
     merchant:
       spread: 0.25
       prompt: "Look over the peddler's stall"
+      # He is one man with a pack, so his purse is the thirty gold above and
+      # it runs out. It comes back once a day, which is a caravan arriving in
+      # everything but name — mobile markets are still to come.
+      capital: 30
+      restockTicks: 48
       remarks:
         - text: "\"Grain?\" He does not look up. \"You'll pay for grain this week. Nothing's come down the north road since the guard went up it.\""
           when: [{priceOf: {good: fantasy.core:grain, above: 1.4}}]
@@ -86,6 +91,10 @@ entities:
       prompt: "Sell to the quartermaster"
       buys: {categories: [food, metal]}
       sells: {goods: [fantasy.core:iron-ingot]}
+      # A garrison's chest, not a man's purse: deep, and refilled by whoever
+      # is paying for this war.
+      capital: 400
+      restockTicks: 96
       remarks:
         - text: "\"Grain,\" he says, before you have said anything. \"Whatever you have. Name it.\""
           when: [{priceOf: {good: fantasy.core:grain, above: 1.3}}]

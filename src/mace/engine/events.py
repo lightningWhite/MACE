@@ -626,10 +626,17 @@ class StallOpened(Event):
     ----------
     merchant : str
         The merchant's instance id — what a `trade` action is addressed to.
+    name : str
+        What to call them. Carried rather than looked up, because resolving an
+        instance id to a name is reaching into state, which is the one thing a
+        front-end may not do.
     market : str
         Qualified market id.
     currency : str
         Qualified item id trade is settled in.
+    purse : int or None
+        What the merchant can pay out. None is bottomless — a stall backed by
+        a whole town is not somebody whose pockets can be emptied.
     goods : tuple of dict
         One row per good: id, name, unit prices, shelf, and what the player
         already carries.
@@ -639,13 +646,17 @@ class StallOpened(Event):
     merchant: str
     market: str
     currency: str
+    name: str = ""
+    purse: int | None = None
     goods: tuple[Mapping[str, Any], ...] = ()
 
     def payload(self) -> dict[str, Any]:
         return {
             "merchant": self.merchant,
+            "name": self.name,
             "market": self.market,
             "currency": self.currency,
+            "purse": self.purse,
             "goods": [dict(row) for row in self.goods],
         }
 

@@ -764,13 +764,13 @@ with you. Only offered under `rules.economy: market`.
 | `market` | Ref? | The market it trades against. Omit for the market where it is standing, which is what a merchant usually is. |
 | `spread` | number | Buy/sell margin, and the merchant's living. 0.25 buys at 0.875×, sells at 1.125×. Default 0.2. |
 | `buys` / `sells` | {goods: [Ref]?, categories: [str]?}? | What it will take off you, and what it will part with. Naming nothing means everything its market deals in; a filter is for the specialist. The two are separate — a quartermaster buys food and sells only iron. |
+| `capital` | number? | What it can pay out. Omit for bottomless — a stall backed by a whole town. A number makes it a person with a purse, and the purse *is* the coin in its own `inventory`, so a scene that hands it money has made it richer. A merchant with no coin written into its inventory opens holding its `capital`. |
+| `restockTicks` | int? | How often the purse comes back up to `capital` — the caravan arriving, the week's takings banked. Omit and a merchant cleaned out stays cleaned out. Restocking never takes money away: a good day is kept. Needs a `capital`. |
 | `prompt` | str? | What the option to trade is called. Defaults to `Trade with <name>`. |
 | `remarks` | Description? | What it says about its own prices, first matching line. Ordinary conditional description, so `priceOf` is what makes a line about a shortage and the weather and the season can join in. |
 
-Not there yet, and all phase 6: `capital` (it can't buy what it can't
-afford), `restockTicks`, `mobile` for caravans that carry their own prices, and
-`maxSwing` for haggling. Until then a merchant has bottomless coin and `spread`
-is the whole of the negotiation.
+Not there yet: `mobile` for caravans that carry their own prices, and
+`maxSwing` for haggling. Until then `spread` is the whole of the negotiation.
 
 ### Trading
 

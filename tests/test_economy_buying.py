@@ -27,7 +27,7 @@ import pytest
 
 from conftest import game_pack
 from mace.content import Library, load_library
-from mace.engine.actions import Choose, Trade
+from mace.engine.actions import Choose, Look, Trade
 from mace.engine.conditions import holds
 from mace.engine.economy import trade
 from mace.engine.state import RouteState
@@ -155,6 +155,24 @@ def opened(library: Library) -> Any:
     where = list(result.state.pending.options)  # type: ignore[union-attr]
     which = next(index for index, option in enumerate(where) if option.trade == KEEPER)
     return step(result.state, Choose(which), library)
+
+
+def offered(result: Any) -> list[str]:
+    """The prompts the menu is currently showing.
+
+    Parameters
+    ----------
+    result : StepResult
+        What the last action produced.
+
+    Returns
+    -------
+    list of str
+        The prompts, in order.
+    """
+    pending = result.state.pending
+    assert pending is not None
+    return [option.prompt for option in pending.options]
 
 
 def stall(library: Library, state: Any) -> trade.Stall:
@@ -594,3 +612,185 @@ def test_the_stall_event_is_reissued_as_prices_move(tmp_path: Path) -> None:
     ).record()
 
     assert first["goods"][0]["available"] - second["goods"][0]["available"] == 40
+
+
+# ── The purse ─────────────────────────────────────────────────────────────────
+
+
+def rich(root: Path, **merchant: Any) -> Library:
+    """The valley, with a keeper who has a purse rather than a town behind him.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write the pack.
+    **merchant
+        Extra fields for the keeper's `merchant` block.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    return valley(root, capital=60, **merchant)
+
+
+def test_a_merchant_without_capital_has_pockets_that_cannot_be_emptied(
+    tmp_path: Path,
+) -> None:
+    """A stall backed by a whole town is not somebody with a purse."""
+    library = valley(tmp_path)
+    assert stall(library, opened(library).state).purse is None
+
+
+def test_a_merchant_with_capital_opens_holding_it(tmp_path: Path) -> None:
+    """The rule a market's `initial` follows against its `target`."""
+    library = rich(tmp_path)
+    assert stall(library, opened(library).state).purse == 60
+
+
+def test_selling_takes_the_coin_out_of_the_merchants_own_pack(
+    tmp_path: Path,
+) -> None:
+    library = rich(tmp_path)
+    result = step(opened(library).state, Trade(good="grain", qty=2), library)
+    before = result.state.entities[KEEPER].inventory[GOLD]
+
+    result = step(result.state, Trade(good="grain", qty=2, sell=True), library)
+    paid = next(
+        event.record()
+        for event in result.events
+        if event.record()["kind"] == "trade.done"
+    )["coin"]
+    assert result.state.entities[KEEPER].inventory[GOLD] == before - paid
+
+
+def test_buying_puts_the_coin_into_it(tmp_path: Path) -> None:
+    library = rich(tmp_path)
+    result = opened(library)
+    before = result.state.entities[KEEPER].inventory[GOLD]
+
+    result = step(result.state, Trade(good="grain", qty=3), library)
+    spent = next(
+        event.record()
+        for event in result.events
+        if event.record()["kind"] == "trade.done"
+    )["coin"]
+    assert result.state.entities[KEEPER].inventory[GOLD] == before + spent
+
+
+def test_a_merchant_who_has_run_out_says_so(tmp_path: Path) -> None:
+    """The payoff: forty sacks and a buyer who cannot pay for them."""
+    library = rich(tmp_path)
+    result = opened(library)
+    result.state.protagonist.inventory[GRAIN] = 200
+
+    result = step(result.state, Trade(good="grain", qty=200, sell=True), library)
+    said = result.events[0].record()
+    assert said["kind"] == "engine.rule-failed"
+    assert "to their name" in said["message"]
+    assert result.state.protagonist.inventory[GRAIN] == 200
+
+
+def test_a_sale_the_merchant_cannot_cover_is_not_on_the_menu(
+    tmp_path: Path,
+) -> None:
+    """A price they cannot pay is not an offer; the purse line says why."""
+    library = rich(tmp_path)
+    result = step(opened(library).state, Trade(good="grain", qty=5), library)
+    assert any(prompt.startswith("Sell") for prompt in offered(result))
+
+    result.state.entities[KEEPER].inventory[GOLD] = 1
+    result = step(result.state, Look(), library)
+    prompts = offered(result)
+    assert any(prompt.startswith("Buy") for prompt in prompts)
+    assert not any(prompt.startswith("Sell") for prompt in prompts)
+
+
+def test_a_purse_comes_back_up_on_its_own_clock(tmp_path: Path) -> None:
+    library = rich(tmp_path, restock_ticks=20)
+    result = opened(library)
+    result.state.entities[KEEPER].inventory[GOLD] = 5
+
+    context = context_for(library, result.state)
+    keeper = result.state.entities[KEEPER]
+    block = trade.merchant_at(context, keeper)
+    assert block is not None
+
+    assert trade.purse_at(context, keeper, block, GOLD) == 5
+    result.state.tick = result.state.world_tick = 20
+    assert trade.restock(context, keeper, block, GOLD) == 60
+
+
+def test_restocking_never_takes_money_away(tmp_path: Path) -> None:
+    """A merchant who had a good day keeps it."""
+    library = rich(tmp_path, restock_ticks=20)
+    result = opened(library)
+    result.state.entities[KEEPER].inventory[GOLD] = 500
+    result.state.tick = result.state.world_tick = 100
+
+    context = context_for(library, result.state)
+    keeper = result.state.entities[KEEPER]
+    block = trade.merchant_at(context, keeper)
+    assert block is not None
+    assert trade.restock(context, keeper, block, GOLD) == 500
+
+
+def test_a_purse_that_never_refills_never_does(tmp_path: Path) -> None:
+    library = rich(tmp_path)
+    result = opened(library)
+    result.state.entities[KEEPER].inventory[GOLD] = 2
+    result.state.tick = result.state.world_tick = 10_000
+
+    context = context_for(library, result.state)
+    keeper = result.state.entities[KEEPER]
+    block = trade.merchant_at(context, keeper)
+    assert block is not None
+    assert trade.restock(context, keeper, block, GOLD) == 2
+
+
+def test_looking_at_a_purse_does_not_refill_it(tmp_path: Path) -> None:
+    """The projection rule again: a shop panel is not why a merchant is rich."""
+    library = rich(tmp_path, restock_ticks=20)
+    result = opened(library)
+    result.state.entities[KEEPER].inventory[GOLD] = 5
+    result.state.tick = result.state.world_tick = 100
+
+    for _ in range(5):
+        assert stall(library, result.state).purse == 60
+    assert result.state.entities[KEEPER].inventory[GOLD] == 5
+
+
+def test_an_author_who_wrote_an_opening_balance_gets_that_balance(
+    tmp_path: Path,
+) -> None:
+    """`capital` is what it comes back to, not what it must start at."""
+    library = valley(tmp_path, capital=500)
+    result = begin(library, "valley", seed="trade")
+    # The keeper carries no coin in the fixture, so he opens at his capital;
+    # the sergeant is the same. What this checks is the other branch.
+    result.state.entities[KEEPER].inventory[GOLD] = 7
+    result.state.restocked[KEEPER] = 0
+
+    context = context_for(library, result.state)
+    keeper = result.state.entities[KEEPER]
+    block = trade.merchant_at(context, keeper)
+    assert block is not None
+    assert trade.purse_at(context, keeper, block, GOLD) == 7
+
+
+def test_restock_without_capital_is_a_content_error() -> None:
+    from mace.model import Merchant
+
+    with pytest.raises(ValueError, match="capital"):
+        Merchant.model_validate({"restockTicks": 48})
+
+
+def test_a_purse_that_never_refills_is_a_note(tmp_path: Path) -> None:
+    from mace.content.validation import Severity, validate_library
+
+    report = validate_library(rich(tmp_path))
+    assert any(
+        one.severity is Severity.NOTE and "never refills" in one.message
+        for one in report.problems
+    )

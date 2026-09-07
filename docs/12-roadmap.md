@@ -180,8 +180,15 @@ writing YAML.
 - [ ] Entity/item editors with live preview
 - [ ] Export a pack; import someone else's and remix it
 - [ ] One-click playtest from any point in the editor
-- [ ] Economy phase 2: event shocks, haggling as negotiation, merchant capital,
-      caravans as mobile markets, the map's price overlay
+- [ ] Economy phase 2
+  - [x] Merchant capital: a purse that is the coin in the merchant's own
+        pack, `restockTicks` to bring it back up, and a sale the merchant
+        cannot cover simply not offered. What turns "carry grain north" into
+        a route with a ceiling on it
+  - [ ] Event shocks
+  - [ ] Haggling as a real negotiation
+  - [ ] Caravans as mobile markets
+  - [ ] The map's price overlay
 
 ---
 

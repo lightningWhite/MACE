@@ -129,6 +129,14 @@ class Renderer:
                 self.line(str(payload["text"]))
             return
 
+        if event.kind == "trade.stall":
+            # The prices are in the menu; what the menu cannot say is why a
+            # merchant has stopped buying, and that is their purse.
+            if payload["purse"] is not None:
+                self.line("")
+                self.line(f"  {payload['name']} has {payload['purse']} to spend.")
+            return
+
         if event.kind == "world.status" and not self.fighting:
             self.status(payload)
             return

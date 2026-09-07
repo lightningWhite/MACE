@@ -806,6 +806,10 @@ class GameState:
     markets : dict
         Qualified market id to that market's shelves. A market appears here
         once something has looked at it, and not before.
+    restocked : dict
+        Merchant instance id to the tick its purse was last brought back up
+        to its `capital`. Only merchants with a purse appear here, and only
+        once one has been looked at.
     news : list of NewsItem
         Things that happened out of sight, waiting to travel.
     light_override : float or None
@@ -872,6 +876,7 @@ class GameState:
     events: dict[str, EventState] = field(default_factory=dict)
     routes: dict[str, RouteState] = field(default_factory=dict)
     markets: dict[str, MarketState] = field(default_factory=dict)
+    restocked: dict[str, int] = field(default_factory=dict)
     news: list[NewsItem] = field(default_factory=list)
     light_override: float | None = None
     journey: Journey | None = None

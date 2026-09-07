@@ -419,7 +419,10 @@ export interface Stall {
   name: string;
   market: string;
   currency: string;
+  /** What the player has. */
   coin: number;
+  /** What the merchant can pay out. `null` is bottomless — a whole town. */
+  purse: number | null;
   goods: Priced[];
 }
 

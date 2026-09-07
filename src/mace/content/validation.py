@@ -659,22 +659,35 @@ def _check_economy(library: Library, pack: LoadedPack) -> Iterator[Problem]:
                 field="rules.economy",
             )
 
-    if game is None or game.rules.economy == "market":
-        return
+    simple = game is not None and game.rules.economy != "market"
     for local_id in sorted(pack.entities):
-        if pack.entities[local_id].merchant is None:
+        merchant = pack.entities[local_id].merchant
+        if merchant is None:
             continue
-        yield Problem(
-            severity=Severity.WARNING,
-            message=(
-                "keeps a market stall, but this game runs `economy: simple` — "
-                "the stall will never be offered"
-            ),
-            pack=pack.id,
-            collection="entities",
-            object_id=local_id,
-            field="merchant",
-        )
+        if simple:
+            yield Problem(
+                severity=Severity.WARNING,
+                message=(
+                    "keeps a market stall, but this game runs `economy: "
+                    "simple` — the stall will never be offered"
+                ),
+                pack=pack.id,
+                collection="entities",
+                object_id=local_id,
+                field="merchant",
+            )
+        if merchant.capital is not None and merchant.restock_ticks is None:
+            yield Problem(
+                severity=Severity.NOTE,
+                message=(
+                    "has a purse that never refills, so once a player has "
+                    "sold them out they stop buying for the rest of the game"
+                ),
+                pack=pack.id,
+                collection="entities",
+                object_id=local_id,
+                field="merchant.restockTicks",
+            )
 
 
 def _check_backgrounds(library: Library, pack: LoadedPack) -> Iterator[Problem]:

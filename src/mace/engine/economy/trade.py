@@ -19,9 +19,15 @@ they buy, down when they sell — so the spread cannot be arbitraged away by
 trading one unit at a time, and so nobody ever has to render a third of a
 penny.
 
-Two things this deliberately does not have yet, both phase 6: a merchant has
-no capital, so it will buy whatever you bring it, and there is no haggling, so
-`spread` is the whole of the negotiation. See docs/08-economy.md § Merchants.
+A merchant with `capital` has a **purse**, and the purse is simply the coin in
+its own `inventory` — not a second money system beside the one the player
+carries. So a scene that hands the peddler ten gold has made him ten gold
+richer, and a player who arrives with forty sacks of grain can find out that
+the buyer has run out of money. A merchant without `capital` is a stall backed
+by a whole town, and its pockets cannot be emptied.
+
+Haggling is the one thing still missing: `spread` is the whole of the
+negotiation. See docs/08-economy.md § Merchants.
 """
 
 from __future__ import annotations
@@ -46,7 +52,9 @@ __all__ = [
     "deal",
     "look",
     "merchant_at",
+    "purse_at",
     "quote",
+    "restock",
     "unit_price",
 ]
 
@@ -122,6 +130,9 @@ class Stall:
         Qualified item id trade is settled in.
     coin : int
         What the player has of it.
+    purse : int or None
+        What the merchant can pay out. None is bottomless — a stall backed by
+        a whole town is not somebody whose pockets can be emptied.
     goods : tuple of Priced
         Everything on offer, in good-id order.
     """
@@ -131,6 +142,7 @@ class Stall:
     market: str
     currency: str
     coin: int
+    purse: int | None
     goods: tuple[Priced, ...]
 
     def row(self, good_id: str) -> Priced | None:
@@ -165,6 +177,7 @@ class Stall:
             "market": self.market,
             "currency": self.currency,
             "coin": self.coin,
+            "purse": self.purse,
             "goods": [priced.record() for priced in self.goods],
         }
 
@@ -365,11 +378,148 @@ def deal(
     if not sell and player.inventory.get(currency, 0) < coin:
         raise RuleError(f"you cannot afford that — it is {coin}")
 
+    purse = restock(context, entity, merchant, currency)
+    if sell and purse is not None and purse < coin:
+        raise RuleError(f"they have {purse} to their name, and that is worth {coin}")
+
     _move(player.inventory, item, qty if not sell else -qty)
     _move(player.inventory, currency, -coin if not sell else coin)
+    if purse is not None:
+        # Only a merchant with a purse holds the coin. A stall backed by a
+        # whole town is not somebody whose pockets can be emptied.
+        _move(entity.inventory, currency, coin if not sell else -coin)
     state.stock[good_id] = held + (qty if sell else -qty)
 
     return Sale(good=good_id, item=item, qty=qty, sell=sell, coin=coin)
+
+
+def purse_at(
+    context: RuleContext, entity: EntityState, merchant: Merchant, currency: str
+) -> int | None:
+    """What a merchant could pay out now, without moving anything.
+
+    Pure, the way `flow.projected` is: a shop panel drawn every frame must not
+    be the reason a purse refilled. `restock` runs the identical arithmetic
+    and keeps the answer.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough. Read only.
+    entity : EntityState
+        The merchant's instance.
+    merchant : Merchant
+        Its block.
+    currency : str
+        Qualified item id trade is settled in.
+
+    Returns
+    -------
+    int or None
+        Coin, or None for a merchant with no purse at all — a stall backed by
+        a whole town is not somebody whose pockets can be emptied.
+    """
+    if merchant.capital is None:
+        return None
+    purse = entity.inventory.get(currency, 0)
+    if _due(context, entity, merchant) < 1:
+        return purse
+    return max(purse, int(merchant.capital))
+
+
+def restock(
+    context: RuleContext,
+    entity: EntityState,
+    merchant: Merchant,
+    currency: str,
+) -> int | None:
+    """Bring a merchant's purse up to date, and say what is in it.
+
+    Lazy, the way a market's shelves are: a merchant nobody has spoken to for
+    a season is topped up when somebody looks, not on every tick, and there is
+    no roll in it — only arithmetic on the tick — so a playthrough that
+    visited every day and one that arrived late find the same purse.
+
+    Restocking never takes money *away*. A merchant who sold a lot keeps the
+    takings; `capital` is a floor it comes back up to, not a level it is
+    clamped at.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough. The purse and the restock tick are updated in place.
+    entity : EntityState
+        The merchant's instance.
+    merchant : Merchant
+        Its block.
+    currency : str
+        Qualified item id trade is settled in.
+
+    Returns
+    -------
+    int or None
+        What the merchant can pay out, or None when it has no purse at all.
+    """
+    if merchant.capital is None:
+        return None
+
+    state = context.state
+    purse = entity.inventory.get(currency, 0)
+    due = _due(context, entity, merchant)
+    if due < 1:
+        state.restocked.setdefault(entity.instance_id, state.start_tick)
+        return purse
+
+    assert merchant.restock_ticks is not None
+    state.restocked[entity.instance_id] = (
+        state.restocked.get(entity.instance_id, state.start_tick)
+        + due * merchant.restock_ticks
+    )
+    filled = max(purse, int(merchant.capital))
+    _write(entity, currency, filled)
+    return filled
+
+
+def _write(entity: EntityState, currency: str, coin: int) -> None:
+    """Put a purse back into the merchant's pack.
+
+    Parameters
+    ----------
+    entity : EntityState
+        The merchant's instance.
+    currency : str
+        Qualified item id trade is settled in.
+    coin : int
+        How much.
+    """
+    if coin > 0:
+        entity.inventory[currency] = coin
+    else:
+        entity.inventory.pop(currency, None)
+
+
+def _due(context: RuleContext, entity: EntityState, merchant: Merchant) -> int:
+    """How many restocks a merchant has coming.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough. Read only.
+    entity : EntityState
+        The merchant's instance.
+    merchant : Merchant
+        Its block.
+
+    Returns
+    -------
+    int
+        The count, or 0 for a merchant whose purse never refills.
+    """
+    if merchant.restock_ticks is None:
+        return 0
+    state = context.state
+    since = state.restocked.get(entity.instance_id, state.start_tick)
+    return (state.tick - since) // merchant.restock_ticks
 
 
 # ── Working out a price ───────────────────────────────────────────────────────
@@ -556,6 +706,7 @@ def _stall(
         market=prepared.id,
         currency=currency,
         coin=player.inventory.get(currency, 0),
+        purse=purse_at(context, entity, merchant, currency),
         goods=tuple(rows),
     )
 

@@ -806,8 +806,10 @@ def _show_stall(context: RuleContext, events: list[Event]) -> None:
     events.append(
         StallOpened(
             merchant=stall.merchant,
+            name=stall.name,
             market=stall.market,
             currency=stall.currency,
+            purse=stall.purse,
             goods=tuple(row.record() for row in stall.goods),
         )
     )
@@ -901,6 +903,10 @@ def _offer_stall(context: RuleContext, options: list[PendingChoice]) -> None:
     instead of greyed, because ten of everything you cannot afford one of is
     a screen of noise.
 
+    A sale the merchant cannot pay for is dropped rather than greyed, because
+    the reason is not about this good — it is that they are out of money, and
+    the line above the menu says so once instead of on every row.
+
     Parameters
     ----------
     context : RuleContext
@@ -928,7 +934,9 @@ def _offer_stall(context: RuleContext, options: list[PendingChoice]) -> None:
                     )
             if row.sell is not None and row.carried >= lot:
                 paid = _lot_price(context, stall.merchant, row.good, lot, sell=True)
-                if paid:
+                # A price the merchant cannot cover is not an offer. Their
+                # purse is the reason, and the line above the menu says so.
+                if paid and (stall.purse is None or stall.purse >= paid):
                     options.append(
                         PendingChoice(
                             prompt=f"Sell {_lot_of(lot, row.name)} ({paid} coin)",
@@ -2440,13 +2448,22 @@ def _initial_state(
         start_tick=opens_at,
     )
 
-    state.entities[state.player] = _instantiate(library, protagonist_id, start, pack_id)
+    coin = _currency_of(library, game, pack_id)
+    state.entities[state.player] = _instantiate(
+        library, protagonist_id, start, pack_id, currency=coin
+    )
     for pack in library.packs:
         for local_id, location in sorted(pack.locations.items()):
             qualified_location = f"{pack.id}:{local_id}"
             for entity_ref in location.entities:
                 qualified = library.resolve(entity_ref, "entities", within=pack.id)
-                instance = _instantiate(library, qualified, qualified_location, pack.id)
+                instance = _instantiate(
+                    library,
+                    qualified,
+                    qualified_location,
+                    pack.id,
+                    currency=coin,
+                )
                 state.entities[instance.instance_id] = instance
             if location.starts_discovered:
                 state.revealed.add(qualified_location)
@@ -2545,6 +2562,7 @@ def _instantiate(
     within: str,
     *,
     taken: Container[str] = (),
+    currency: str | None = None,
 ) -> EntityState:
     """Make a session instance of a content entity.
 
@@ -2560,6 +2578,12 @@ def _instantiate(
         The pack whose references its inventory resolves against.
     taken : container of str
         Instance ids already in use, so a second wolf gets its own.
+    currency : str or None
+        Qualified id of the item trade is settled in, so a merchant with
+        `capital` and no coin written into its inventory opens holding its
+        capital. The same rule a market's `initial` follows against its
+        `target`: a world should not open in a shortage nobody asked for, and
+        a quartermaster with an empty chest on day one is one.
 
     Returns
     -------
@@ -2573,6 +2597,15 @@ def _instantiate(
     for entry in definition.inventory:
         item = library.resolve(entry.item, "entities", within=within)
         inventory[item] = inventory.get(item, 0) + entry.qty
+
+    merchant = definition.merchant
+    if (
+        currency is not None
+        and merchant is not None
+        and merchant.capital is not None
+        and currency not in inventory
+    ):
+        inventory[currency] = int(merchant.capital)
 
     return EntityState(
         instance_id=_instance_id(definition_id, taken),
@@ -2591,6 +2624,32 @@ def _instantiate(
             for item, level in (definition.skills or {}).items()
         },
     )
+
+
+def _currency_of(library: Library, game: Game, pack_id: str) -> str | None:
+    """The item this game settles trade in, qualified.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    game : Game
+        The manifest.
+    pack_id : str
+        The game pack, for resolving a bare reference.
+
+    Returns
+    -------
+    str or None
+        The qualified item id, or None when the game names none.
+    """
+    named = game.rules.currency
+    if named is None:
+        return None
+    try:
+        return library.resolve(named, "entities", within=pack_id)
+    except ContentError:  # pragma: no cover — validation catches these
+        return None
 
 
 def _instance_id(definition_id: str, taken: Container[str] = ()) -> str:

@@ -270,6 +270,8 @@ market with nobody at it cannot be traded with at all.
     spread: 0.25                     # buys at 0.875×, sells at 1.125×
     buys: {categories: [food, metal]}
     sells: {goods: [grain, salt]}
+    capital: 200                     # can't buy what it can't afford
+    restockTicks: 48                 # the caravan comes back
     prompt: "Look over the peddler's stall"
     remarks:
       - text: "\"You'll pay for grain this week. Nothing's come over the pass.\""
@@ -308,8 +310,29 @@ Coin is whole, and rounded against the player at each end — up when they buy,
 down when they sell — so the spread cannot be arbitraged away by trading one
 unit at a time.
 
-A merchant has **no capital** yet, so it will buy whatever you bring it. That,
-and haggling, are what phase 6 adds.
+**A merchant's purse is the coin in its own `inventory`**, not a second money
+system beside the one the player carries. `capital` is what it comes back up
+to, and a merchant an author gave no coin opens holding it — the rule a
+market's `initial` follows against its `target`, because a quartermaster with
+an empty chest on day one is a shortage nobody asked for. Omit `capital` and
+the merchant is a stall backed by a whole town, whose pockets cannot be
+emptied; that is the right shape for a village reeve and the wrong one for a
+peddler with a pack.
+
+The purse is what turns "carry grain north" into a route with a *ceiling* on
+it. Forty sacks arrive at a buyer who has two hundred coin, and the rest of
+the load has to go somewhere else — which is a reason to know a second town,
+and the first thing in the economy that makes the map matter to a trader
+rather than only to a traveller. A sale a merchant cannot cover is not offered
+at all, and the line above the stall says what they have to spend, so a player
+is never left guessing why a row went away.
+
+Restocking is lazy and positional, like everything else here: no roll, only
+arithmetic on the tick, so a player who visits every day and one who arrives
+after a season find the same purse. It never takes money *away* — a merchant
+who had a good day keeps it.
+
+Haggling is the one thing still missing.
 
 **Haggling** is where charisma finally does something. It's a small,
 skill-adjacent negotiation rather than a stat check:

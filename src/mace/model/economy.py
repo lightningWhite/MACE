@@ -303,6 +303,19 @@ class Merchant(ContentModel):
         beat selling them here.
     buys, sells : Deals
         What it will take off you, and what it will part with.
+    capital : float or None
+        What it can pay out, in the game's currency. None is bottomless, which
+        is what a market stall backed by a whole town is; a number makes it a
+        person with a purse, and the difference is that a player who arrives
+        with forty sacks of grain finds out the buyer has run out of money.
+        The purse is the coin in the merchant's own `inventory`, so an author
+        who wrote one has already set the opening balance and a scene that
+        hands the merchant money is not a second system.
+    restock_ticks : int or None
+        How often the purse comes back up to `capital` — the caravan arriving,
+        the week's takings banked. None means it never does, so a merchant
+        cleaned out stays cleaned out. Restocking never takes money *away*: a
+        merchant who had a good day keeps it.
     prompt : str or None
         What the option to trade is called. None is `Trade with <name>`.
     remarks : Description
@@ -316,5 +329,14 @@ class Merchant(ContentModel):
     spread: float = Field(default=0.2, ge=0.0, lt=1.0)
     buys: Deals = Deals()
     sells: Deals = Deals()
+    capital: float | None = Field(default=None, ge=0.0)
+    restock_ticks: int | None = Field(default=None, gt=0)
     prompt: str | None = None
     remarks: Description = ()
+
+    @model_validator(mode="after")
+    def _restock_has_something_to_restock(self) -> Merchant:
+        """A purse that refills to nothing in particular is a typo."""
+        if self.restock_ticks is not None and self.capital is None:
+            raise ValueError("`restockTicks` needs a `capital` to come back up to")
+        return self
