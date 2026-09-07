@@ -185,7 +185,10 @@ writing YAML.
         pack, `restockTicks` to bring it back up, and a sale the merchant
         cannot cover simply not offered. What turns "carry grain north" into
         a route with a ceiling on it
-  - [ ] Event shocks
+  - [x] Event shocks: `marketShock` in an event's aftermath, outside the
+        price clamp because a clamp is for runaway loops and a siege is not
+        one. Threaded through the hauling loop, so a famine pulls carts
+        toward it for exactly as long as it lasts
   - [ ] Haggling as a real negotiation
   - [ ] Caravans as mobile markets
   - [ ] The map's price overlay

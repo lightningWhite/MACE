@@ -29,10 +29,10 @@ from conftest import game_pack
 from mace.content import Library, load_library
 from mace.engine.actions import Choose, Look, Trade
 from mace.engine.conditions import holds
-from mace.engine.economy import trade
+from mace.engine.economy import prepare, projected, shock_on, trade
 from mace.engine.state import RouteState
 from mace.engine.step import begin, context_for, step
-from mace.model import Condition
+from mace.model import Condition, Effect
 
 GRAIN = "valley:grain"
 GOLD = "valley:gold"
@@ -794,3 +794,175 @@ def test_a_purse_that_never_refills_is_a_note(tmp_path: Path) -> None:
         one.severity is Severity.NOTE and "never refills" in one.message
         for one in report.problems
     )
+
+
+# ── What an event does to a price ─────────────────────────────────────────────
+
+
+def shocked(library: Library, result: Any, **body: Any) -> Any:
+    """Apply a `marketShock` to a playthrough.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    result : StepResult
+        The playthrough.
+    **body
+        The effect's fields.
+
+    Returns
+    -------
+    EffectOutcome
+        What the effect did.
+    """
+    from mace.engine.effects import apply_all
+
+    return apply_all(
+        [Effect.model_validate({"marketShock": body})],
+        context_for(library, result.state),
+        source="test",
+    )
+
+
+def priced(library: Library, state: Any, who: str = KEEPER) -> int:
+    """What one unit of grain costs at somebody's counter.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    state : GameState
+        The playthrough.
+    who : str
+        The merchant's instance id.
+
+    Returns
+    -------
+    int
+        The buy price.
+    """
+    context = context_for(library, state)
+    found = trade.look(context, state.entities[who])
+    assert found is not None
+    row = found.row(GRAIN)
+    assert row is not None and row.buy is not None
+    return row.buy
+
+
+def test_a_shock_moves_what_a_merchant_charges(tmp_path: Path) -> None:
+    library = valley(tmp_path)
+    result = opened(library)
+    before = priced(library, result.state)
+
+    shocked(library, result, category="food", mult=2.0, decayTicks=100)
+    assert priced(library, result.state) > before
+
+
+def test_a_shock_fades_back_to_nothing(tmp_path: Path) -> None:
+    """A world that never recovers is a world with nothing to read."""
+    library = valley(tmp_path)
+    result = opened(library)
+    shocked(library, result, category="food", mult=3.0, decayTicks=100)
+
+    farm = prepare(library).markets["valley:farm-market"]
+    factors = [shock_on(result.state, farm, GRAIN, tick) for tick in (0, 50, 100, 400)]
+    assert factors == [3.0, 2.0, 1.0, 1.0]
+
+
+def test_a_shock_lands_only_where_it_was_aimed(tmp_path: Path) -> None:
+    library = valley(tmp_path)
+    result = opened(library)
+    farm, fort = (
+        priced(library, result.state),
+        priced(library, result.state, "valley:sergeant"),
+    )
+
+    shocked(library, result, market="fort-market", mult=2.0, decayTicks=100)
+    assert priced(library, result.state) == farm
+    assert priced(library, result.state, "valley:sergeant") > fort
+
+
+def test_a_shock_lands_only_on_what_it_was_aimed_at(tmp_path: Path) -> None:
+    library = valley(tmp_path)
+    result = opened(library)
+    before = priced(library, result.state)
+    shocked(library, result, category="metal", mult=3.0, decayTicks=100)
+    assert priced(library, result.state) == before
+
+
+def test_two_shocks_multiply(tmp_path: Path) -> None:
+    library = valley(tmp_path)
+    result = opened(library)
+    before = priced(library, result.state)
+
+    shocked(library, result, category="food", mult=2.0, decayTicks=100)
+    once = priced(library, result.state)
+    shocked(library, result, good="grain", mult=2.0, decayTicks=100)
+    assert priced(library, result.state) > once > before
+
+
+def test_a_shock_moves_goods_as_well_as_prices(tmp_path: Path) -> None:
+    """A price nobody carted anything toward is a price, not an economy."""
+    library = valley(tmp_path)
+
+    def held(shock: bool) -> float:
+        result = begin(library, "valley", seed="trade")
+        if shock:
+            shocked(library, result, market="fort-market", mult=3.0, decayTicks=400)
+        result.state.tick = result.state.world_tick = 120
+        return projected(result.state, prepare(library), "valley:fort-market", 120)[
+            GRAIN
+        ]
+
+    assert held(True) > held(False)
+
+
+def test_a_shock_does_not_reach_back_before_it_landed(tmp_path: Path) -> None:
+    """The rule a road change follows: today's world is not every day's world."""
+    library = valley(tmp_path)
+    result = begin(library, "valley", seed="trade")
+    result.state.tick = result.state.world_tick = 200
+
+    shocked(library, result, market="fort-market", mult=3.0, decayTicks=400)
+    # Applying it committed the two hundred ticks before it, so the span the
+    # shock applies to starts here rather than at the beginning of the world.
+    assert result.state.markets["valley:fort-market"].stepped_to == 200
+
+
+def test_a_shock_is_reported_as_an_event(tmp_path: Path) -> None:
+    library = valley(tmp_path)
+    outcome = shocked(
+        library,
+        opened(library),
+        category="food",
+        mult=2.0,
+        decayTicks=100,
+        reason="the storm",
+    )
+    said = [one.record() for one in outcome.events]
+    assert said == [
+        {
+            "kind": "market.shocked",
+            "region": None,
+            "market": None,
+            "category": "food",
+            "good": None,
+            "mult": 2.0,
+            "ticks": 100,
+            "reason": "the storm",
+        }
+    ]
+
+
+def test_a_shock_is_what_a_merchant_can_be_made_to_remark_on(
+    tmp_path: Path,
+) -> None:
+    """`priceOf` sees the shock, so a line about a famine is content."""
+    library = valley(tmp_path)
+    result = opened(library)
+    dear = Condition.model_validate({"priceOf": {"good": "grain", "above": 1.5}})
+    assert not holds(dear, context_for(library, result.state))
+
+    shocked(library, result, category="food", mult=2.0, decayTicks=100)
+    assert holds(dear, context_for(library, result.state))

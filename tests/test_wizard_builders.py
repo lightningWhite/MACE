@@ -58,6 +58,7 @@ EFFECT_ANSWERS: dict[str, dict[str, Any]] = {
     "applyModifier": {"stat": "speed", "add": 5, "ticks": 12},
     "damage": {"amount": 8},
     "rest": {},
+    "marketShock": {"mult": 2.5, "decayTicks": 600},
     "move": {"to": "home"},
     "reveal": {"location": "castle"},
     "advanceTime": {"ticks": 4},

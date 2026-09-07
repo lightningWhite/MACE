@@ -248,6 +248,45 @@ def _price(get: Any, names: Names) -> str:
     return f"{good} costs {band}{where}"
 
 
+def _shock(get: Any, names: Names) -> str:
+    """Say a price shock in the words an author was thinking in.
+
+    Parameters
+    ----------
+    get : callable
+        Field reader for the payload.
+    names : Names
+        The naming service.
+
+    Returns
+    -------
+    str
+        `food doubles in price in The Range, fading over 600 ticks`.
+    """
+    good, category = get("good"), get("category")
+    if good is not None:
+        what = names.of(good, "goods")
+    elif category is not None:
+        what = f"anything {category}"
+    else:
+        what = "everything"
+
+    mult = get("mult")
+    moves = (
+        f"costs {_number(mult)}× as much" if mult >= 1 else f"costs {_number(mult)}×"
+    )
+
+    market, region = get("market"), get("region")
+    if market is not None:
+        where = f" at {names.of(market, 'markets')}"
+    elif region is not None:
+        where = f" in {names.of(region, 'regions')}"
+    else:
+        where = " everywhere"
+
+    return f"{what} {moves}{where}, fading over {_ticks(get('decay_ticks'))}"
+
+
 def say_effects(effects: Sequence[Effect], names: Names) -> str:
     """Say a list of effects, which happen in order.
 
@@ -356,6 +395,8 @@ def say_effect(effect: Effect, names: Names) -> str:
         return f"{route} closes{' for good' if get('permanent') else ''}"
     if tag == "openRoute":
         return f"{names.of(get('route'), 'routes')} reopens"
+    if tag == "marketShock":
+        return _shock(get, names)
     if tag == "setRouteTicks":
         route = names.of(get("route"), "routes")
         return f"{route} now takes {_ticks(get('ticks'))}"

@@ -68,6 +68,7 @@ __all__ = [
     "levelling",
     "opening",
     "projected",
+    "shock_on",
     "sync",
 ]
 
@@ -214,6 +215,49 @@ def opening(prepared: Prepared, start_tick: int) -> MarketState:
     )
 
 
+def shock_on(state: GameState, prepared: Prepared, good_id: str, tick: int) -> float:
+    """What the world is doing to one good's price at one market, at one tick.
+
+    Every shock that matches multiplies, so a siege on top of an eruption is
+    both. Spent shocks contribute exactly 1.0, which is why they can be left
+    in the list rather than swept up — a list that quietly reordered itself is
+    a list a replay could disagree about.
+
+    Parameters
+    ----------
+    state : GameState
+        The playthrough. Read only.
+    prepared : Prepared
+        The market.
+    good_id : str
+        Qualified good id.
+    tick : int
+        When.
+
+    Returns
+    -------
+    float
+        The multiplier. 1.0 when nothing is happening.
+    """
+    if not state.shocks:
+        return 1.0
+
+    dealt = prepared.goods.get(good_id)
+    category = None if dealt is None else dealt.good.category
+    factor = 1.0
+    for shock in state.shocks:
+        if shock.market is not None and shock.market != prepared.id:
+            continue
+        if shock.region is not None and shock.region != prepared.region:
+            continue
+        if shock.good is not None and shock.good != good_id:
+            continue
+        if shock.category is not None and shock.category != category:
+            continue
+        factor *= shock.at(tick)
+    return factor
+
+
 def projected(
     state: GameState, network: Network, market_id: str, to_tick: int
 ) -> dict[str, float]:
@@ -352,8 +396,9 @@ def _carry(
         )
         for member in group.markets
     }
-    for _ in range(max(0, to_tick - _from_tick(state, group))):
-        _step(shelves, network.markets, group, state.routes)
+    from_tick = _from_tick(state, group)
+    for tick in range(from_tick, max(from_tick, to_tick)):
+        _step(shelves, network.markets, group, state, tick)
     return shelves
 
 
@@ -361,7 +406,8 @@ def _step(
     shelves: dict[str, dict[str, float]],
     markets: Mapping[str, Prepared],
     group: Group,
-    roads: Mapping[str, RouteState],
+    state: GameState,
+    tick: int,
 ) -> None:
     """Move a group's shelves by one tick, in place.
 
@@ -377,13 +423,17 @@ def _step(
         The resolved markets.
     group : Group
         The markets and roads being stepped.
-    roads : mapping
-        The playthrough's route states, for what is shut and what is long.
+    state : GameState
+        The playthrough. Read only — for the roads and the shocks.
+    tick : int
+        Which tick this is, so a shock is worth what it was worth *then*. A
+        catch-up that priced every crossed tick at today's shock would ship
+        grain into a siege that had already lifted.
     """
     for member in group.markets:
         _make_and_use(shelves[member], markets[member])
     for link in group.links:
-        _haul(shelves, markets, link, roads.get(link.route))
+        _haul(shelves, markets, link, state.routes.get(link.route), state, tick)
 
 
 def _make_and_use(stock: dict[str, float], prepared: Prepared) -> None:
@@ -411,6 +461,8 @@ def _haul(
     markets: Mapping[str, Prepared],
     link: Link,
     road: RouteState | None,
+    state: GameState,
+    tick: int,
 ) -> None:
     """Move goods along one road, for one tick, in place.
 
@@ -429,6 +481,10 @@ def _haul(
         The road.
     road : RouteState or None
         What the playthrough has done to it.
+    state : GameState
+        The playthrough, for any shock on the prices at either end.
+    tick : int
+        Which tick this is.
     """
     rate = haulage(link, road)
     if rate <= 0.0:
@@ -442,9 +498,17 @@ def _haul(
 
         gap = (
             price_of(
-                there, shelves[link.destination][good_id], destination.market.wealth
+                there,
+                shelves[link.destination][good_id],
+                destination.market.wealth,
+                shock_on(state, destination, good_id, tick),
             )
-            - price_of(here, shelves[link.origin][good_id], origin.market.wealth)
+            - price_of(
+                here,
+                shelves[link.origin][good_id],
+                origin.market.wealth,
+                shock_on(state, origin, good_id, tick),
+            )
         ) / here.base_value
 
         if gap > 0.0:

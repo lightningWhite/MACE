@@ -28,6 +28,7 @@ from mace.engine.economy.flow import (
     hauled,
     opening,
     projected,
+    shock_on,
     sync,
 )
 from mace.engine.economy.markets import (
@@ -70,6 +71,7 @@ __all__ = [
     "price_of",
     "projected",
     "scarcity_of",
+    "shock_on",
     "sync",
     "wealth_factor",
 ]

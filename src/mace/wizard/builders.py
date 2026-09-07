@@ -576,6 +576,51 @@ EFFECTS: tuple[Recipe, ...] = (
         ),
     ),
     Recipe(
+        label="Move what things cost, somewhere",
+        tag="marketShock",
+        group="Place and time",
+        help=(
+            "A siege, an eruption, a good harvest. It fades on its own, which "
+            "is what lets a player watch a world recover."
+        ),
+        asks=(
+            Ask(
+                "mult",
+                "Times what, at its worst?",
+                Number(minimum=0.05, maximum=20, integer=False),
+                help="Above 1 is a shortage; below 1 is a glut.",
+            ),
+            Ask(
+                "decayTicks",
+                "Over how many ticks does it fade?",
+                Number(minimum=1),
+            ),
+            Ask(
+                "category",
+                "Which kind of goods?",
+                Text(placeholder="food", optional=True),
+                help="Blank for everything.",
+            ),
+            Ask(
+                "good",
+                "Or one good in particular?",
+                Select(options=Query("goods"), optional=True),
+            ),
+            Ask(
+                "region",
+                "Where — which region?",
+                Select(options=Query("regions"), optional=True),
+                help="Blank for everywhere.",
+            ),
+            Ask(
+                "market",
+                "Or one market in particular?",
+                Select(options=Query("markets"), optional=True),
+            ),
+            Ask("reason", "What is it called?", Text(optional=True)),
+        ),
+    ),
+    Recipe(
         label="Reopen a road",
         tag="openRoute",
         group="Place and time",

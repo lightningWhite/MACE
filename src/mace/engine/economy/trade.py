@@ -37,7 +37,7 @@ from dataclasses import dataclass
 
 from mace.content import ContentError
 from mace.engine.context import RuleContext
-from mace.engine.economy.flow import projected, sync
+from mace.engine.economy.flow import projected, shock_on, sync
 from mace.engine.economy.markets import Dealt, Network, Prepared, at, prepare
 from mace.engine.economy.pricing import price_of
 from mace.engine.state import EntityState
@@ -295,7 +295,15 @@ def quote(
     if dealt is None:  # pragma: no cover — the stall listed it
         return None
     held = projected(context.state, network, prepared.id, context.state.tick)
-    return _lot(dealt, prepared, merchant, held.get(good, 0.0), qty, sell=sell)
+    return _lot(
+        dealt,
+        prepared,
+        merchant,
+        held.get(good, 0.0),
+        qty,
+        sell=sell,
+        shock=shock_on(context.state, prepared, good, context.state.tick),
+    )
 
 
 def deal(
@@ -372,7 +380,15 @@ def deal(
     elif int(held) < qty:
         raise RuleError(f"they do not have {qty} {dealt.item.name} to sell you")
 
-    coin = _lot(dealt, prepared, merchant, held, qty, sell=sell)
+    coin = _lot(
+        dealt,
+        prepared,
+        merchant,
+        held,
+        qty,
+        sell=sell,
+        shock=shock_on(context.state, prepared, good_id, context.state.tick),
+    )
     if sell and coin <= 0:
         raise RuleError(f"nobody here will give you anything for {dealt.item.name}")
     if not sell and player.inventory.get(currency, 0) < coin:
@@ -526,7 +542,13 @@ def _due(context: RuleContext, entity: EntityState, merchant: Merchant) -> int:
 
 
 def unit_price(
-    dealt: Dealt, wealth: float, spread: float, held: float, *, sell: bool
+    dealt: Dealt,
+    wealth: float,
+    spread: float,
+    held: float,
+    *,
+    sell: bool,
+    shock: float = 1.0,
 ) -> int:
     """What one unit costs, or fetches, at a given shelf level.
 
@@ -542,6 +564,8 @@ def unit_price(
         Units on the shelf at the moment this unit changes hands.
     sell : bool
         Whether the player is the one handing it over.
+    shock : float
+        What the world is doing to this price — a siege, an eruption.
 
     Returns
     -------
@@ -550,7 +574,7 @@ def unit_price(
         they buy. Never negative, and never zero when they are buying — a
         market with more than it can use still asks for a coin.
     """
-    price = price_of(dealt, held, wealth)
+    price = price_of(dealt, held, wealth, shock)
     if sell:
         return max(0, math.floor(price * (1.0 - spread / 2.0)))
     return max(1, math.ceil(price * (1.0 + spread / 2.0)))
@@ -564,6 +588,7 @@ def _lot(
     qty: int,
     *,
     sell: bool,
+    shock: float = 1.0,
 ) -> int:
     """What a whole lot comes to, priced a unit at a time as the shelf moves.
 
@@ -581,6 +606,8 @@ def _lot(
         How many units.
     sell : bool
         Whether the player is handing them over.
+    shock : float
+        What the world is doing to this price.
 
     Returns
     -------
@@ -590,7 +617,9 @@ def _lot(
     wealth = prepared.market.wealth
     step = 1.0 if sell else -1.0
     return sum(
-        unit_price(dealt, wealth, merchant.spread, held + step * unit, sell=sell)
+        unit_price(
+            dealt, wealth, merchant.spread, held + step * unit, sell=sell, shock=shock
+        )
         for unit in range(qty)
     )
 
@@ -677,6 +706,7 @@ def _stall(
             # A market that dealt in coin would price money in money.
             continue
         on_shelf = held.get(good_id, 0.0)
+        shock = shock_on(context.state, prepared, good_id, context.state.tick)
         carried = player.inventory.get(item, 0)
         sells = _deals_in(merchant.sells, will_sell, dealt, good_id)
         buys = _deals_in(merchant.buys, will_buy, dealt, good_id)
@@ -686,12 +716,26 @@ def _stall(
                 item=item,
                 name=dealt.item.name,
                 buy=(
-                    unit_price(dealt, wealth, merchant.spread, on_shelf, sell=False)
+                    unit_price(
+                        dealt,
+                        wealth,
+                        merchant.spread,
+                        on_shelf,
+                        sell=False,
+                        shock=shock,
+                    )
                     if sells and int(on_shelf) >= 1
                     else None
                 ),
                 sell=(
-                    unit_price(dealt, wealth, merchant.spread, on_shelf, sell=True)
+                    unit_price(
+                        dealt,
+                        wealth,
+                        merchant.spread,
+                        on_shelf,
+                        sell=True,
+                        shock=shock,
+                    )
                     if buys
                     else None
                 ),

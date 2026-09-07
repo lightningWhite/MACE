@@ -61,6 +61,9 @@ EFFECTS: dict[str, Any] = {
     "endGame": {"endGame": {}},
     "fireEvent": {"fireEvent": "the-kings-riders"},
     "giveItem": {"giveItem": {"item": "fantasy.core:gold", "qty": 4}},
+    "marketShock": {
+        "marketShock": {"category": "food", "mult": 2.5, "decayTicks": 600}
+    },
     "move": {"move": {"to": "fenmoor"}},
     "openRoute": {"openRoute": "north-road"},
     "playScene": {"playScene": "victory"},

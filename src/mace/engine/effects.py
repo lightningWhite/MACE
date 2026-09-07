@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import Any
 
 from mace.content import ContentError
 from mace.engine import economy
@@ -28,6 +29,7 @@ from mace.engine.events import (
     Moved,
     Narrated,
     NewsHeard,
+    PricesShocked,
     QuestUpdated,
     RouteChanged,
     StatChanged,
@@ -42,6 +44,7 @@ from mace.engine.state import (
     QuestState,
     QuestStatus,
     RouteState,
+    Shock,
 )
 from mace.engine.stats import pool_bounds
 from mace.model import Effect, Quest
@@ -56,6 +59,7 @@ from mace.model.effects import (
     DismissAlly,
     FireEvent,
     ItemTransfer,
+    MarketShock,
     MoveActor,
     NoArguments,
     OpenRoute,
@@ -278,6 +282,10 @@ def apply(
             return
         outcome.elapsed += payload.ticks
         outcome.rest = payload
+        return
+
+    if isinstance(payload, MarketShock):
+        _shock(payload, context, outcome)
         return
 
     if isinstance(payload, CloseRoute | OpenRoute):
@@ -627,6 +635,99 @@ def _reference(reference: str, collection: str, context: RuleContext) -> str:
         return context.qualify(reference, collection)
     except ContentError as error:
         raise RuleError(error.message) from error
+
+
+def _shock(payload: MarketShock, context: RuleContext, outcome: EffectOutcome) -> None:
+    """Put a pressure on prices somewhere, and start its clock.
+
+    The same rule a road change follows, for the same reason: a shock changes
+    what every crossed tick would have been worth, so the ticks *before* it
+    have to be committed first. Otherwise a market nobody had looked at since
+    the world began would find the siege had been on all along.
+
+    Everything it touches is caught up rather than only the region it names,
+    because a shock on one end of a road changes what crosses that road — and
+    the group is the unit that moves together.
+
+    Parameters
+    ----------
+    payload : MarketShock
+        What the author asked for.
+    context : RuleContext
+        The playthrough. The shock is recorded and the markets caught up.
+    outcome : EffectOutcome
+        Accumulator, for the event.
+    """
+    state = context.state
+    region = (
+        None
+        if payload.region is None
+        else _reference(payload.region, "regions", context)
+    )
+    market = (
+        None
+        if payload.market is None
+        else _reference(payload.market, "markets", context)
+    )
+    good = None if payload.good is None else _reference(payload.good, "goods", context)
+
+    network = economy.prepare(context.library)
+    touched = [
+        group
+        for group in network.groups
+        if any(
+            _shocked(network.markets[member], region, market)
+            for member in group.markets
+        )
+    ]
+    for group in touched:
+        economy.sync(state, network, group.markets[0])
+
+    state.shocks.append(
+        Shock(
+            mult=payload.mult,
+            from_tick=state.tick,
+            decay_ticks=payload.decay_ticks,
+            region=region,
+            market=market,
+            category=payload.category,
+            good=good,
+            reason=payload.reason,
+        )
+    )
+    outcome.events.append(
+        PricesShocked(
+            region=region,
+            market=market,
+            category=payload.category,
+            good=good,
+            mult=payload.mult,
+            ticks=payload.decay_ticks,
+            reason=payload.reason,
+        )
+    )
+
+
+def _shocked(prepared: Any, region: str | None, market: str | None) -> bool:
+    """Whether one market is inside a shock's reach.
+
+    Parameters
+    ----------
+    prepared : Prepared
+        The market.
+    region : str or None
+        Qualified region id, or None for anywhere.
+    market : str or None
+        Qualified market id, or None for any.
+
+    Returns
+    -------
+    bool
+        Whether both filters let it through.
+    """
+    if market is not None and market != prepared.id:
+        return False
+    return not (region is not None and region != prepared.region)
 
 
 def _settle_trade(context: RuleContext, route: str) -> None:

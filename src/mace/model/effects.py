@@ -26,8 +26,10 @@ from mace.model.base import (
     EntityRef,
     Flag,
     FrontRef,
+    GoodRef,
     Id,
     LocationRef,
+    MarketRef,
     Name,
     QuestRef,
     Ref,
@@ -35,6 +37,7 @@ from mace.model.base import (
     RouteRef,
     SceneRef,
     SlotName,
+    Tag,
     unwrap_tagged,
 )
 from mace.model.conditions import Condition
@@ -57,6 +60,7 @@ EffectTag = Literal[
     "endGame",
     "fireEvent",
     "giveItem",
+    "marketShock",
     "move",
     "openRoute",
     "playScene",
@@ -254,6 +258,48 @@ class Rest(EffectPayload):
     fraction: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
+class MarketShock(EffectPayload):
+    """Move what a whole class of goods costs, somewhere, for a while.
+
+    The other half of what makes an event worth simulating. A closed pass
+    stops trade; an eruption or a siege does not stop it, it changes what
+    people will pay — and the two together are what turn a world event into
+    something a trader feels three towns away.
+
+    Where it lands is narrowed by `region` or `market`, and what it lands on
+    by `category` or `good`. Naming none of them is a shock to everything,
+    everywhere, which is a plague.
+
+    Attributes
+    ----------
+    region : str or None
+        Only markets in this region. None is everywhere.
+    market : str or None
+        Only this market. Narrower than `region`, and both may be given.
+    category : str or None
+        Only goods with this `category` — `food`, `metal`.
+    good : str or None
+        Only this good.
+    mult : float
+        What it does to the price at its peak. Above 1 is a shortage, below 1
+        a glut — an eruption is 2.5, a good harvest is 0.7.
+    decay_ticks : int
+        How long it takes to fade back to nothing, straight-line. Shocks
+        recover, because a world that never recovers is a world where the
+        player's only information is how long ago something happened.
+    reason : str or None
+        What to call it, for a debug overlay and a merchant's remark.
+    """
+
+    region: RegionRef | None = None
+    market: MarketRef | None = None
+    category: Tag | None = None
+    good: GoodRef | None = None
+    mult: float = Field(gt=0.0)
+    decay_ticks: int = Field(gt=0)
+    reason: str | None = None
+
+
 class CloseRoute(EffectPayload):
     """Shut a road, for a while or for good.
 
@@ -449,6 +495,7 @@ EFFECT_PAYLOADS: dict[EffectTag, type[EffectPayload]] = {
     "endGame": NoArguments,
     "fireEvent": FireEvent,
     "giveItem": ItemTransfer,
+    "marketShock": MarketShock,
     "move": MoveActor,
     "openRoute": OpenRoute,
     "playScene": PlayScene,

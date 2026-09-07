@@ -250,7 +250,30 @@ aftermath:
   - {marketShock: {region: the-range, category: food, mult: 2.5, decayTicks: 600}}
 ```
 
-Shocks decay, so the world recovers — on a timescale the player can watch.
+`region` and `market` narrow where it lands; `category` and `good` narrow what
+it lands on. Naming none of them is a shock to everything, everywhere, which is
+a plague. Several shocks multiply, so a siege on top of an eruption is both.
+
+Shocks decay straight-line, so the world recovers on a timescale the player can
+watch — and a world that never recovered would be a world where the player's
+only information is how long ago something happened.
+
+Three things about it that are load-bearing:
+
+- **The shock is outside the price clamp.** The clamp exists so no feedback
+  loop can run away; a shock is not a feedback loop, it is an author saying
+  how bad a siege is. An eruption that could not push food past 4× base would
+  be an eruption a bad winter had already swallowed.
+- **It moves goods, not only numbers.** A market caught up across a hundred
+  ticks prices each of them at the shock in force *then*, so carts flow toward
+  a famine while it lasts and stop when it lifts. A catch-up that used today's
+  shock would ship grain into a siege that had already ended.
+- **Applying one commits the ticks before it**, the same rule a road change
+  follows. Otherwise a market nobody had looked at since the world began would
+  find the siege had been on all along.
+
+`priceOf` sees shocks, which is what lets a merchant's line about a famine be
+content conditioned on the price rather than a flag somebody remembered to set.
 
 ---
 

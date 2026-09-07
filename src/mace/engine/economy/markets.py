@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from mace.content import Library
+from mace.content import ContentError, Library
 from mace.model import Entity, Good, Market, Stock
 
 __all__ = [
@@ -131,6 +131,11 @@ class Prepared:
         The pack it was written in, which its bare references resolve against.
     location : str
         Qualified id of the location it sits at.
+    region : str or None
+        Qualified id of the region that location is in, resolved once here
+        rather than per price — a shock lands on a region, and asking which
+        region a market is in inside the hauling loop would be asking the same
+        question a few thousand times a season.
     goods : dict
         Qualified good id to what this market does with it, in a fixed order
         so that anything iterating it does so identically every replay.
@@ -139,6 +144,7 @@ class Prepared:
     market: Market
     home: str
     location: str
+    region: str | None = None
     goods: dict[str, Dealt] = field(default_factory=dict)
 
     @property
@@ -477,7 +483,43 @@ def _resolve(library: Library, home: str, market: Market) -> Prepared:
             produced=produced.get(good_id, 0.0),
             consumed=consumed.get(good_id, 0.0),
         )
-    return Prepared(market=market, home=home, location=location, goods=dealt)
+    return Prepared(
+        market=market,
+        home=home,
+        location=location,
+        region=_region(library, home, location),
+        goods=dealt,
+    )
+
+
+def _region(library: Library, home: str, location: str) -> str | None:
+    """Which region a market's location belongs to.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    home : str
+        The pack the market was written in.
+    location : str
+        Qualified location id.
+
+    Returns
+    -------
+    str or None
+        Qualified region id, or None where the location names none. A game's
+        `startRegion` fallback is deliberately *not* applied: a shock on the
+        lowlands should hit the places an author put in the lowlands, not
+        every place they never got round to assigning.
+    """
+    pack_id, local_id = location.split(":", 1)
+    found = library.pack(pack_id).locations.get(local_id)
+    if found is None or found.region is None:  # pragma: no cover — validated
+        return None
+    try:
+        return library.resolve(found.region, "regions", within=home)
+    except ContentError:  # pragma: no cover — validation catches these
+        return None
 
 
 def _good_id(library: Library, home: str, reference: str) -> str:

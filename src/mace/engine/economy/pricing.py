@@ -29,8 +29,13 @@ There is no transport-cost multiplier and there is not going to be one. The
 design doc listed one, but distance already reaches the price by the honest
 road: a market far from a producer gets less carted to it, so it holds less,
 so scarcity prices it up. Charging a second time for the same distance would
-be double-counting — see `flow`. Event shocks and haggling are the two
-multipliers still genuinely missing, and they arrive in phase 6.
+be double-counting — see `flow`.
+
+The one multiplier that is *not* clamped is the event shock, and that is
+deliberate. The clamp exists so no feedback loop can run away; a shock is not
+a feedback loop, it is an author saying how bad a siege is. An eruption that
+could not push food past four times base would be an eruption a bad winter
+had already swallowed. Haggling is the multiplier still missing.
 
 See docs/08-economy.md and ADR-0007.
 """
@@ -104,7 +109,7 @@ def wealth_factor(wealth: float) -> float:
     return 1.0 + (wealth - 0.5) * WEALTH_SWING
 
 
-def price_of(dealt: Dealt, held: float, wealth: float) -> float:
+def price_of(dealt: Dealt, held: float, wealth: float, shock: float = 1.0) -> float:
     """What one unit of a good costs at a market.
 
     Parameters
@@ -115,18 +120,24 @@ def price_of(dealt: Dealt, held: float, wealth: float) -> float:
         Units on the shelf right now.
     wealth : float
         The market's `wealth`.
+    shock : float
+        What the world is doing to this price — a siege, an eruption, a good
+        harvest. 1.0 is nothing happening. Applied *outside* the clamp on
+        purpose: the clamp exists so no feedback loop can run away, and a
+        shock is not a feedback loop, it is an author saying how bad this is.
+        A world event that could not move a price past four times base would
+        be an event a famine could swallow.
 
     Returns
     -------
     float
-        The price. Never below `MIN_RATIO` or above `MAX_RATIO` times the
-        item's `baseValue`, whatever the elasticity — see the module
-        docstring.
+        The price. Scarcity may move it by no more than `MIN_RATIO` to
+        `MAX_RATIO`, whatever the elasticity — see the module docstring.
     """
     ratio = _clamp(
         scarcity_of(dealt, held) ** dealt.good.elasticity, MIN_RATIO, MAX_RATIO
     )
-    return dealt.base_value * ratio * wealth_factor(wealth)
+    return dealt.base_value * ratio * wealth_factor(wealth) * shock
 
 
 def _clamp(value: float, low: float, high: float) -> float:

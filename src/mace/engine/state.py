@@ -39,6 +39,7 @@ __all__ = [
     "FrontState",
     "RegionWeather",
     "RouteState",
+    "Shock",
 ]
 
 
@@ -293,6 +294,59 @@ class MarketState:
     market: str
     stock: dict[str, float] = field(default_factory=dict)
     stepped_to: int = 0
+
+
+@dataclass(slots=True)
+class Shock:
+    """A pressure on prices somewhere, fading on its own clock.
+
+    The event system's hand on the economy. A closed pass stops trade; a
+    siege or an eruption does not stop it, it changes what people will pay,
+    and this is that. Every field is a filter — the ones set are the ones
+    that have to match.
+
+    Attributes
+    ----------
+    region, market : str or None
+        Qualified ids narrowing where it lands. None matches anywhere.
+    category, good : str or None
+        What it lands on. None matches anything.
+    mult : float
+        What it does to a price at its peak.
+    from_tick : int
+        When it started.
+    decay_ticks : int
+        How long it takes to fade to nothing, straight-line.
+    reason : str or None
+        What to call it.
+    """
+
+    mult: float
+    from_tick: int
+    decay_ticks: int
+    region: str | None = None
+    market: str | None = None
+    category: str | None = None
+    good: str | None = None
+    reason: str | None = None
+
+    def at(self, tick: int) -> float:
+        """What this shock multiplies a price by, at some tick.
+
+        Parameters
+        ----------
+        tick : int
+            When.
+
+        Returns
+        -------
+        float
+            The multiplier, decaying straight-line to 1.0 and staying there.
+        """
+        left = 1.0 - (tick - self.from_tick) / self.decay_ticks
+        if left <= 0.0:
+            return 1.0
+        return 1.0 + (self.mult - 1.0) * min(left, 1.0)
 
 
 @dataclass(slots=True)
@@ -810,6 +864,11 @@ class GameState:
         Merchant instance id to the tick its purse was last brought back up
         to its `capital`. Only merchants with a purse appear here, and only
         once one has been looked at.
+    shocks : list of Shock
+        Pressures on prices, each fading on its own clock. Spent ones are
+        left in place rather than swept up: they multiply by exactly 1.0, and
+        a list that quietly reordered itself would be a list a replay could
+        disagree about.
     news : list of NewsItem
         Things that happened out of sight, waiting to travel.
     light_override : float or None
@@ -877,6 +936,7 @@ class GameState:
     routes: dict[str, RouteState] = field(default_factory=dict)
     markets: dict[str, MarketState] = field(default_factory=dict)
     restocked: dict[str, int] = field(default_factory=dict)
+    shocks: list[Shock] = field(default_factory=list)
     news: list[NewsItem] = field(default_factory=list)
     light_override: float | None = None
     journey: Journey | None = None

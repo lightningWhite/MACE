@@ -30,6 +30,7 @@ __all__ = [
     "FlagChanged",
     "GameOver",
     "NewsHeard",
+    "PricesShocked",
     "LocationRevealed",
     "InventoryChanged",
     "Moved",
@@ -798,6 +799,50 @@ class RouteChanged(Event):
         return {
             "route": self.route,
             "closed": self.closed,
+            "ticks": self.ticks,
+            "reason": self.reason,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class PricesShocked(Event):
+    """Something has moved what a class of goods is worth, somewhere.
+
+    A front-end has no reason to render this as prose — the merchant's own
+    remark is where a player hears about it, and the price itself is where
+    they feel it. It exists so a debug overlay, a journal, and a second
+    implementation of this engine can all see the same world changing.
+
+    Attributes
+    ----------
+    region, market : str or None
+        Qualified ids narrowing where it landed.
+    category, good : str or None
+        What it landed on.
+    mult : float
+        What it does to a price at its peak.
+    ticks : int
+        How long it takes to fade to nothing.
+    reason : str or None
+        What to call it.
+    """
+
+    kind: ClassVar[str] = "market.shocked"
+    mult: float
+    ticks: int
+    region: str | None = None
+    market: str | None = None
+    category: str | None = None
+    good: str | None = None
+    reason: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "region": self.region,
+            "market": self.market,
+            "category": self.category,
+            "good": self.good,
+            "mult": self.mult,
             "ticks": self.ticks,
             "reason": self.reason,
         }

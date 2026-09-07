@@ -195,7 +195,7 @@ def _price(payload: PriceIs, context: RuleContext) -> bool:
     RuleError
         If the good or the market names nothing.
     """
-    from mace.engine.economy import at, prepare, price_of, projected
+    from mace.engine.economy import at, prepare, price_of, projected, shock_on
 
     try:
         good_id = context.qualify(payload.good, "goods")
@@ -218,9 +218,15 @@ def _price(payload: PriceIs, context: RuleContext) -> bool:
     if dealt is None or dealt.base_value <= 0.0:
         return False
 
-    held = projected(context.state, network, prepared.id, context.state.tick)
+    tick = context.state.tick
+    held = projected(context.state, network, prepared.id, tick)
     ratio = (
-        price_of(dealt, held.get(good_id, 0.0), prepared.market.wealth)
+        price_of(
+            dealt,
+            held.get(good_id, 0.0),
+            prepared.market.wealth,
+            shock_on(context.state, prepared, good_id, tick),
+        )
         / dealt.base_value
     )
     if payload.above is not None and ratio <= payload.above:

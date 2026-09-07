@@ -60,6 +60,12 @@ pressureEvents:
       travelMultiplier: 1.6
     aftermath:
       - {setRouteTicks: {route: north-road, ticks: 9}}
+      # Three ticks longer is three ticks less trade, so the castle's grain
+      # gets dear on its own. The shock is the rest of it: the carts that were
+      # already on the road are under the hillside. It fades over four days,
+      # which is long enough for a player to walk up and sell into it.
+      - {marketShock: {region: the-marches, category: food, mult: 1.6,
+                       decayTicks: 200, reason: "the road is under a hill"}}
       - {setVar: {name: theCuttingFell, value: true}}
 
   # The big one, bounded at both ends: it cannot fire before the player has
@@ -100,4 +106,9 @@ pressureEvents:
       travelMultiplier: 1.5
       weatherTags: [severe]
     aftermath:
+      # A storm over the Marches is a week the castle is not fed, and a
+      # garrison that has to buy at whatever price is asked. This is the one
+      # moment in the game where carrying grain north is worth the walk.
+      - {marketShock: {region: the-marches, category: food, mult: 2.2,
+                       decayTicks: 320, reason: "the storm"}}
       - {setVar: {name: theStormPassed, value: true}}
