@@ -16,6 +16,7 @@ import {
   LiveSocket,
   afterStep,
   fakeService,
+  fight,
   opening,
 } from "./test/wire";
 
@@ -214,6 +215,62 @@ describe("the panels", () => {
         "The Old Bridge",
       ),
     );
+  });
+});
+
+// ── A fight takes over the pane ───────────────────────────────────────────────
+
+describe("combat", () => {
+  /** Walk the recorded reflex fight up to the troll. */
+  async function reach(user: ReturnType<typeof userEvent.setup>) {
+    stub(fakeService({ script: fight }));
+    render(<App />);
+    await play(user);
+    await user.click(screen.getByRole("button", { name: /Take the north road/ }));
+    await user.click(await screen.findByRole("button", { name: /Speak to the troll/ }));
+    await user.click(
+      await screen.findByRole("button", { name: /Refuse, and put a hand/ }),
+    );
+  }
+
+  it("shows the tell and the answers instead of the menu", async () => {
+    const user = userEvent.setup();
+    await reach(user);
+
+    expect(await screen.findByText(/The troll shifts its weight/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /dodge/ })).toBeTruthy();
+    // The world's options are gone: this is a fight now.
+    expect(screen.queryByRole("button", { name: /Turn back to Fenmoor/ })).toBeNull();
+  });
+
+  it("draws the window, because this recording is on the clock", async () => {
+    const user = userEvent.setup();
+    await reach(user);
+    await screen.findByText(/The troll shifts its weight/);
+    expect(document.querySelector(".timing")).toBeTruthy();
+  });
+
+  it("says why an exchange went the way it did", async () => {
+    const user = userEvent.setup();
+    await reach(user);
+    await screen.findByText(/The troll shifts its weight/);
+
+    await user.click(screen.getByRole("button", { name: /dodge/ }));
+
+    // Attribution, not arithmetic: "-8 hp" teaches nobody anything.
+    expect(await screen.findByText(/Clean counter — you read it/)).toBeTruthy();
+  });
+
+  it("carries the fight's mode and matrix across exchanges", async () => {
+    const user = userEvent.setup();
+    await reach(user);
+    await screen.findByText(/The troll shifts its weight/);
+
+    await user.click(screen.getByRole("button", { name: /dodge/ }));
+    // The next tell arrives without another `combat.begin`.
+    await screen.findByText(/hauls the club up over its head/);
+    expect(document.querySelector(".timing")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Hide what beats what/ })).toBeTruthy();
   });
 });
 

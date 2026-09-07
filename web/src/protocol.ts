@@ -163,6 +163,93 @@ export interface NewsHeard {
   region: string | null;
 }
 
+// ── Combat ───────────────────────────────────────────────────────────────────
+
+export interface Combatant {
+  actor: string;
+  name: string;
+  side: "player" | "enemy";
+  profile: string | null;
+}
+
+/** One row of the counter matrix: what beats a move of this type. */
+export interface Counter {
+  type: string;
+  beatenBy: string[];
+}
+
+export interface CombatBegan {
+  kind: "combat.begin";
+  combat: string;
+  mode: "reflex" | "tactical" | "auto";
+  combatants: Combatant[];
+  canFlee: boolean;
+  /** The training wheels. Shown until the player turns them off. */
+  matrix: Counter[];
+}
+
+export interface CombatTell {
+  kind: "combat.tell";
+  combat: string;
+  attacker: string;
+  defender: string;
+  move: string;
+  /** The move's type, or empty when the tell was not legible. */
+  type: string;
+  text: string;
+  /** How long the window is open. The bar drains over this. */
+  windowMs: number;
+  /** Whether the tell gave the move away. */
+  clear: boolean;
+}
+
+export interface CombatResponse {
+  response: string;
+  label: string;
+}
+
+export interface ResponsesOffered {
+  kind: "combat.responses";
+  combat: string;
+  options: CombatResponse[];
+  stamina: number;
+  momentum: number;
+  streak: number;
+}
+
+export interface CombatResolved {
+  kind: "combat.resolve";
+  combat: string;
+  exchange: number;
+  attacker: string;
+  defender: string;
+  move: string;
+  response: string;
+  read: "correct" | "wrong" | string;
+  result: string;
+  /** 0 to 1. How close to the sweet spot the answer landed. */
+  precision: number;
+  damageTaken: number;
+  damageDealt: number;
+  critical: boolean;
+  momentum: number;
+  stamina: number;
+  feint: boolean;
+}
+
+export interface Spoil {
+  item: string;
+  qty: number;
+}
+
+export interface CombatEnded {
+  kind: "combat.end";
+  combat: string;
+  outcome: "won" | "lost" | "fled" | string;
+  exchanges: number;
+  spoils: Spoil[];
+}
+
 export interface GameOver {
   kind: "game.over";
   outcome: string;
@@ -193,6 +280,11 @@ export type GameEvent =
   | InventoryChanged
   | QuestUpdated
   | NewsHeard
+  | CombatBegan
+  | CombatTell
+  | ResponsesOffered
+  | CombatResolved
+  | CombatEnded
   | GameOver
   | RuleFailed
   | OtherEvent;

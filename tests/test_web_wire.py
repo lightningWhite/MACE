@@ -23,6 +23,7 @@ from typing import Any
 import pytest
 
 from mace.api.app import frame
+from mace.cli.play import keys_for
 from mace.content import load_library
 from mace.engine.actions import decode
 from mace.engine.creation import Character
@@ -37,6 +38,16 @@ SCRIPT: tuple[dict[str, Any], ...] = (
     {"kind": "choose", "prompt": "Take the north road"},
     {"kind": "choose", "prompt": "Speak to the troll"},
     {"kind": "choose", "prompt": "Refuse, and put a hand on your hook"},
+)
+
+#: The same road, fought on the clock. `reflex` is the mode with a window in
+#: it, so it is the one the timing bar has to be written against — and the two
+#: answers carry an `elapsedMs`, because a front-end that leaves it out is
+#: asking for the untimed precision and would never exercise the bar.
+FIGHT: tuple[dict[str, Any], ...] = (
+    *SCRIPT,
+    {"kind": "combat.input", "response": "dodge", "elapsedMs": 640},
+    {"kind": "combat.input", "response": "block", "elapsedMs": 300},
 )
 
 
@@ -57,10 +68,15 @@ def recorded() -> dict[str, Any]:
         character=Character(background="peasants-quest:farmhand", spend={}),
     )
 
-    steps = []
-    for action in SCRIPT:
-        session.perform(decode(dict(action), offered=session.offered))
-        steps.append({"action": action, "frame": frame("fixture", session)})
+    steps = _walk(session, SCRIPT)
+
+    fighting = Session.begin(
+        library,
+        "peasants-quest",
+        seed="mace",
+        combat_mode="reflex",
+        character=Character(background="peasants-quest:farmhand", spend={}),
+    )
 
     return {
         "note": (
@@ -69,7 +85,57 @@ def recorded() -> dict[str, Any]:
         ),
         "opening": _opening(library),
         "steps": steps,
+        "fight": (fought := _walk(fighting, FIGHT)),
+        "keys": _keys(fought),
     }
+
+
+def _keys(fought: list[dict[str, Any]]) -> dict[str, str]:
+    """Which key the terminal binds to each answer in the recorded fight.
+
+    The web client picks its own keys by the same rule, and a player who
+    learns a fight in one front-end and finishes it in the other should not
+    have to learn them twice. Recording the terminal's bindings is what lets
+    the client's tests prove the two agree.
+
+    Parameters
+    ----------
+    fought : list of dict
+        The recorded fight's steps.
+
+    Returns
+    -------
+    dict
+        Response to the key that answers it, from the last menu offered.
+    """
+    offered: list[tuple[str, str]] = []
+    for step in fought:
+        for event in step["frame"]["events"]:
+            if event["kind"] == "combat.responses":
+                offered = [(one["response"], one["label"]) for one in event["options"]]
+    return {response: key for key, (response, _label) in keys_for(offered).items()}
+
+
+def _walk(session: Session, script: tuple[dict[str, Any], ...]) -> list[dict[str, Any]]:
+    """Play a script, keeping the frame each action produced.
+
+    Parameters
+    ----------
+    session : Session
+        The playthrough, freshly opened.
+    script : tuple of dict
+        Action records, in order.
+
+    Returns
+    -------
+    list of dict
+        One `{action, frame}` per step.
+    """
+    walked = []
+    for action in script:
+        session.perform(decode(dict(action), offered=session.offered))
+        walked.append({"action": action, "frame": frame("fixture", session)})
+    return walked
 
 
 def _opening(library: Any) -> dict[str, Any]:
@@ -124,3 +190,29 @@ def test_the_recording_reaches_a_fight() -> None:
         for event in step["frame"]["events"]
     }
     assert {"narrate", "choices", "travel.leg", "combat.tell"} <= kinds
+
+
+def test_the_terminals_keys_are_recorded_for_the_browser() -> None:
+    """Two front-ends that bind different keys are two fights to learn."""
+    keys = recorded()["keys"]
+    assert keys["dodge"] == "d"
+    assert keys["block"] == "b"
+    # `Bread` wants `b`, which `block` has, and then `r`, which `recover` has,
+    # so it walks the word to `e`. This is exactly the case worth recording:
+    # nobody would guess it, and both front-ends have to guess it the same.
+    assert keys["use:fantasy.core:bread"] == "e"
+
+
+def test_the_fight_is_recorded_on_the_clock() -> None:
+    """The timing bar has nothing to draw without a window and an exchange."""
+    events = [
+        event for step in recorded()["fight"] for event in step["frame"]["events"]
+    ]
+    began = next(one for one in events if one["kind"] == "combat.begin")
+    assert began["mode"] == "reflex"
+
+    tell = next(one for one in events if one["kind"] == "combat.tell")
+    assert tell["windowMs"] > 0
+
+    resolved = [one for one in events if one["kind"] == "combat.resolve"]
+    assert resolved, "the recording answers a tell, so it has to resolve one"

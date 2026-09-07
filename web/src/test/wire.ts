@@ -14,12 +14,25 @@ import type { CreationOffer, Frame, GameSummary } from "../protocol";
 interface Recording {
   opening: Frame;
   steps: Array<{ action: Record<string, unknown>; frame: Frame }>;
+  /** The same road fought on the clock, in `reflex` mode. */
+  fight: Array<{ action: Record<string, unknown>; frame: Frame }>;
+  /** Which key the *terminal* binds to each answer in that fight. */
+  keys: Record<string, string>;
 }
 
 const wire = recording as unknown as Recording;
 
 export const opening: Frame = wire.opening;
 export const steps = wire.steps;
+export const fight = wire.fight;
+export const terminalKeys = wire.keys;
+
+/** The frame the nth action of the recorded fight produced. */
+export function afterFight(index: number): Frame {
+  const step = fight[index];
+  if (step === undefined) throw new Error(`no recorded fight step ${index}`);
+  return step.frame;
+}
 
 /** The frame the nth scripted action produced. */
 export function afterStep(index: number): Frame {
@@ -73,8 +86,11 @@ export interface Call {
  * Actions walk the recording in order, so a test that clicks three times sees
  * the three frames the engine actually produced for those three actions.
  */
-export function fakeService(options: { failOpen?: string } = {}) {
+export function fakeService(
+  options: { failOpen?: string; script?: typeof steps } = {},
+) {
   const calls: Call[] = [];
+  const script = options.script ?? steps;
   let step = 0;
 
   const fetcher = async (
@@ -106,11 +122,11 @@ export function fakeService(options: { failOpen?: string } = {}) {
         pack: "peasants-quest",
         seed: "mace",
         packs: {},
-        actions: steps.slice(0, step).map((one) => one.action),
+        actions: script.slice(0, step).map((one) => one.action),
       });
     }
     if (path.endsWith("/actions")) {
-      const frame = steps[step]?.frame;
+      const frame = script[step]?.frame;
       step += 1;
       if (frame === undefined) return reply({ detail: "nothing recorded" }, 400);
       return reply(frame);

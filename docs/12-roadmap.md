@@ -130,7 +130,9 @@ writing YAML.
 - [x] SVG map with fog of war, route lengths, weather overlay, and
       click-to-travel — the projection says which offered option goes where,
       so the map never guesses at content
-- [ ] Combat view with timing bar and momentum
+- [x] Combat view with timing bar and momentum. The bar marks the spot
+      `precision_of` actually rewards, and a window that runs out spends
+      itself the way the terminal's does
 - [ ] Offline-capable PWA shell
 - [ ] Pyodide build: engine client-side, static deploy to GitHub Pages
 - [ ] Accessibility pass — ARIA live regions, keyboard nav, reduced motion

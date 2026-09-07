@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import type { GameEvent } from "./protocol";
 import { menuOf, statusOf, transcribe } from "./transcript";
-import { afterStep, opening } from "./test/wire";
+import { afterStep, fight, opening } from "./test/wire";
 
 describe("transcribe", () => {
   it("reads the opening prose in the order it was narrated", () => {
@@ -66,6 +66,91 @@ describe("transcribe", () => {
       { kind: "stat.changed", actor: "h", stat: "hp", delta: 8, value: 8, reason: null },
     ];
     expect(transcribe(events)[0]?.text).toBe("+8 hp");
+  });
+});
+
+describe("an exchange", () => {
+  /** Every exchange the recorded reflex fight resolved, as lines. */
+  function lines() {
+    return fight.flatMap((step) => transcribe(step.frame.events)).map((one) => one.text);
+  }
+
+  it("names the result and the read, not the arithmetic", () => {
+    // The recording reads the first tell right and the second one wrong.
+    const said = lines();
+    expect(said).toContain(
+      "Clean counter — you read it, perfectly timed. Your opening lands for 3.7.",
+    );
+    expect(
+      said.some((one) => one.startsWith("Caught square — you misread it,")),
+    ).toBe(true);
+  });
+
+  it("says what a blow cost", () => {
+    expect(lines().some((one) => one.includes("You take 13.7."))).toBe(true);
+  });
+
+  it("names who the fight is with", () => {
+    expect(lines()).toContain("Fighting: Gorm");
+  });
+
+  it("uses the words the terminal uses", () => {
+    const events: GameEvent[] = [
+      {
+        kind: "combat.resolve",
+        combat: "c",
+        exchange: 1,
+        attacker: "a",
+        defender: "d",
+        move: "m",
+        response: "parry",
+        read: "correct",
+        result: "absorbed",
+        precision: 0.7,
+        damageTaken: 0,
+        damageDealt: 0,
+        critical: false,
+        momentum: 1,
+        stamina: 20,
+        feint: false,
+      },
+    ];
+    expect(transcribe(events)[0]?.text).toBe(
+      "Taken on the guard — you read it, well timed.",
+    );
+  });
+
+  it("owns up to a feint the player fell for", () => {
+    const events: GameEvent[] = [
+      {
+        kind: "combat.resolve",
+        combat: "c",
+        exchange: 1,
+        attacker: "a",
+        defender: "d",
+        move: "m",
+        response: "block",
+        read: "wrong",
+        result: "clean",
+        precision: 0.1,
+        damageTaken: 4,
+        damageDealt: 0,
+        critical: false,
+        momentum: 1,
+        stamina: 20,
+        feint: true,
+      },
+    ];
+    expect(transcribe(events)[0]?.text).toContain("It was a feint.");
+  });
+
+  it("says how a fight ended, in the terminal's words", () => {
+    const events: GameEvent[] = [
+      { kind: "combat.end", combat: "c", outcome: "fled", exchanges: 3, spoils: [] },
+    ];
+    expect(transcribe(events)[0]?.text).toBe(
+      "You are away, and it is behind you.",
+    );
   });
 });
 

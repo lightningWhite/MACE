@@ -88,6 +88,27 @@ Takes over the narrative pane during a fight. From
 
 In `tactical` mode the timing bar is absent and everything else is identical.
 
+Two things the web client had to get right, and they are the same thing twice.
+The bar marks the spot the engine actually rewards: `precision_of` puts the
+sweet spot three quarters of the way through the window and falls off linearly
+half a window either side, so the bar marks three quarters and shades the band
+worth answering in. A bar that marked somewhere else would be worse than no
+bar. And **a window that runs out spends itself** — the browser sends
+`recover` with the whole window gone, exactly as the terminal does on a wrong
+key or no key, because a front-end whose window is kinder than the other's is
+a different game with the same content.
+
+The keys are the terminal's keys too, by the same rule (`keys_for`): first
+free alphanumeric of the label, then a digit. A player who learns a fight in
+one front-end and finishes it in the other should not have to learn them
+twice, and `tests/test_web_wire.py` records the terminal's bindings so the
+client's tests can prove the two agree — including the case nobody would
+guess, where `Bread` walks past `b` and `r` to land on `e`.
+
+Momentum is shown as the multiplier `combat.responses` carries, in words,
+rather than as a bar: the wire states the value and not its ceiling, and a bar
+would have to invent one.
+
 ### The CLI
 
 Not a fallback — a real client, and the one that keeps the project honest, since

@@ -19,6 +19,7 @@ import {
   resumeSession,
   type Transport,
 } from "./api";
+import { Combat, type Fight } from "./combat/Combat";
 import { Character } from "./panels/Character";
 import { Choices } from "./panels/Choices";
 import { Journal } from "./panels/Journal";
@@ -26,9 +27,26 @@ import { MapView } from "./map/Map";
 import { Opening } from "./panels/Opening";
 import { Pack } from "./panels/Pack";
 import { StatusLine } from "./panels/StatusLine";
-import type { Frame, Made, Option, SaveRecord, WorldStatus } from "./protocol";
+import type {
+  Action,
+  CombatBegan,
+  Frame,
+  Made,
+  Option,
+  SaveRecord,
+  WorldStatus,
+} from "./protocol";
 import { forget, keep, kept } from "./storage";
-import { menuOf, statusOf, transcribe, type Line } from "./transcript";
+import {
+  fightEnded,
+  fightOf,
+  menuOf,
+  responsesOf,
+  statusOf,
+  tellOf,
+  transcribe,
+  type Line,
+} from "./transcript";
 
 export function App() {
   const [frame, setFrame] = useState<Frame | null>(null);
@@ -39,6 +57,7 @@ export function App() {
   const [refusal, setRefusal] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [fight, setFight] = useState<Fight | null>(null);
   const [saved, setSaved] = useState<SaveRecord | null>(() => kept());
 
   const connection = useRef<Connection | null>(null);
@@ -58,6 +77,24 @@ export function App() {
     if (standing !== null) setStatus(standing);
     const options = menuOf(next.events);
     if (options !== null) setMenu(options);
+
+    // A fight is a tell and the answers to it. `combat.begin` arrives once and
+    // carries the mode and the counter matrix, so it is carried forward across
+    // exchanges; the tell and the responses come with every one.
+    const tell = tellOf(next.events);
+    const responses = responsesOf(next.events);
+    if (tell !== null && responses !== null) {
+      setFight((current) => {
+        const began: CombatBegan | null = fightOf(next.events) ?? current?.began ?? null;
+        if (began === null) return null;
+        // The window opens when the tell reaches the player, not when the
+        // engine wrote it: the time on the wire is theirs, not the network's.
+        return { began, tell, responses, openedAt: performance.now() };
+      });
+    } else if (fightEnded(next.events)) {
+      setFight(null);
+    }
+
     setRefusal(null);
     setBusy(false);
   }, []);
@@ -135,6 +172,11 @@ export function App() {
     void connection.current?.send({ kind: "choose", option });
   }
 
+  function answer(action: Action): void {
+    setBusy(true);
+    void connection.current?.send(action);
+  }
+
   if (frame === null) {
     return (
       <Opening
@@ -160,7 +202,17 @@ export function App() {
 
         {refusal !== null && <p className="trouble">{refusal}</p>}
 
-        {frame.playing ? (
+        {frame.playing && fight !== null ? (
+          <Combat
+            fight={fight}
+            onAnswer={answer}
+            busy={busy}
+            staminaOf={
+              frame.view.sheet.stats.find((gauge) => gauge.role === "effort")
+                ?.maximum ?? null
+            }
+          />
+        ) : frame.playing ? (
           <Choices options={menu} onChoose={choose} busy={busy} />
         ) : (
           <div className="ending-panel">

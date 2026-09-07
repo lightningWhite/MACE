@@ -11,7 +11,7 @@
  * of those.
  */
 
-import type { GameEvent } from "./protocol";
+import type { CombatResolved, GameEvent } from "./protocol";
 import { isKind } from "./protocol";
 
 /** How a line reads, which is all a stylesheet needs to know about it. */
@@ -20,6 +20,7 @@ export type Tone =
   | "journey"
   | "weather"
   | "aside"
+  | "exchange"
   | "warning"
   | "ending";
 
@@ -51,6 +52,58 @@ function amount(value: number): string {
 function signed(value: number): string {
   return `${value > 0 ? "+" : ""}${amount(value)}`;
 }
+
+/**
+ * What each outcome of an exchange is called.
+ *
+ * The same words the terminal uses, from `mace/cli/play.py`, because two
+ * front-ends that describe the same exchange differently are two games.
+ */
+const RESULTS: Record<string, string> = {
+  counter: "Clean counter",
+  absorbed: "Taken on the guard",
+  glancing: "Glancing",
+  clean: "Caught square",
+};
+
+/** How the timing half of an exchange is described, by precision. */
+const TIMING: Array<[number, string]> = [
+  [0.9, "perfectly timed"],
+  [0.6, "well timed"],
+  [0.3, "a shade early"],
+  [0.0, "mistimed"],
+];
+
+function timing(precision: number): string {
+  for (const [floor, said] of TIMING) if (precision >= floor) return said;
+  return "mistimed";
+}
+
+/**
+ * Say how one exchange went, and why.
+ *
+ * Attribution is what turns an outcome into learning: "Clean counter — you
+ * read the overhead" tells a player what to do again, and "-8 hp" does not.
+ */
+function exchange(event: CombatResolved): string {
+  const result = RESULTS[event.result] ?? event.result;
+  const read = event.read === "correct" ? "read" : "misread";
+  const parts = [`${result} — you ${read} it, ${timing(event.precision)}.`];
+  if (event.damageTaken) parts.push(`You take ${amount(event.damageTaken)}.`);
+  if (event.damageDealt) {
+    const hit = event.critical ? "Critical opening" : "Your opening lands";
+    parts.push(`${hit} for ${amount(event.damageDealt)}.`);
+  }
+  if (event.feint && event.read !== "correct") parts.push("It was a feint.");
+  return parts.join(" ");
+}
+
+/** How a fight ended, in the terminal's own words. */
+const FINISHED: Record<string, string> = {
+  won: "You are still standing.",
+  lost: "You are not.",
+  fled: "You are away, and it is behind you.",
+};
 
 /**
  * Render one event, or decline to.
@@ -88,6 +141,19 @@ function describe(event: GameEvent): Line | null {
     const days = event.daysOld === 1 ? "a day" : `${event.daysOld} days`;
     return line("aside", `Word reaches you, ${days} old.`);
   }
+  if (isKind(event, "combat.begin")) {
+    const against = event.combatants
+      .filter((one) => one.side === "enemy")
+      .map((one) => one.name)
+      .join(", ");
+    return line("exchange", `Fighting: ${against}`);
+  }
+  if (isKind(event, "combat.resolve")) {
+    return line("exchange", exchange(event));
+  }
+  if (isKind(event, "combat.end")) {
+    return line("exchange", FINISHED[event.outcome] ?? event.outcome);
+  }
   if (isKind(event, "engine.rule-failed")) {
     return line("warning", event.message);
   }
@@ -119,6 +185,37 @@ export function statusOf(events: GameEvent[]) {
     if (event !== undefined && isKind(event, "world.status")) return event;
   }
   return null;
+}
+
+/** The tell a frame ended on, if a fight is waiting on an answer. */
+export function tellOf(events: GameEvent[]) {
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (event !== undefined && isKind(event, "combat.tell")) return event;
+  }
+  return null;
+}
+
+/** The responses a frame ended on, if it offered any. */
+export function responsesOf(events: GameEvent[]) {
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (event !== undefined && isKind(event, "combat.responses")) return event;
+  }
+  return null;
+}
+
+/** The fight a frame started, if it started one. */
+export function fightOf(events: GameEvent[]) {
+  for (const event of events) {
+    if (isKind(event, "combat.begin")) return event;
+  }
+  return null;
+}
+
+/** Whether a frame ended a fight. */
+export function fightEnded(events: GameEvent[]): boolean {
+  return events.some((event) => event.kind === "combat.end");
 }
 
 /** The menu a frame ended on, if it offered one. */
