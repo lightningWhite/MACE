@@ -23,7 +23,8 @@ from __future__ import annotations
 
 from mace.content import ContentError, Library
 from mace.engine.creation import Character
-from mace.engine.step import StepResult, begin, context_for
+from mace.engine.step import context_for
+from mace.session import Session
 from mace.wizard.notes import PlaytestSetup
 from mace.wizard.project import Project
 
@@ -35,7 +36,7 @@ __all__ = ["OPENING_INTENSITY", "start", "start_from"]
 OPENING_INTENSITY = 0.6
 
 
-def start_from(project: Project, setup: PlaytestSetup) -> tuple[StepResult, Library]:
+def start_from(project: Project, setup: PlaytestSetup) -> Session:
     """Open a session on the project as it stands, unsaved changes included.
 
     Parameters
@@ -47,9 +48,9 @@ def start_from(project: Project, setup: PlaytestSetup) -> tuple[StepResult, Libr
 
     Returns
     -------
-    tuple of (StepResult, Library)
-        The opening step and the library it was compiled from — the caller
-        needs both, because every later `step` takes the same library.
+    Session
+        The playthrough, opened. It carries the library it was compiled from,
+        so a caller needs nothing else to keep playing.
 
     Raises
     ------
@@ -58,11 +59,18 @@ def start_from(project: Project, setup: PlaytestSetup) -> tuple[StepResult, Libr
         that does not exist.
     """
     loaded = project.compile()
-    return start(loaded.library, project.manifest.id, setup), loaded.library
+    return start(loaded.library, project.manifest.id, setup)
 
 
-def start(library: Library, pack_id: str, setup: PlaytestSetup) -> StepResult:
+def start(library: Library, pack_id: str, setup: PlaytestSetup) -> Session:
     """Open a session set up the way an author asked for.
+
+    The kit and the weather are applied to the opening state rather than
+    smuggled into content, which is the honest way to do it and has one
+    consequence worth naming: they are not `begin` parameters, so they are not
+    in the action log either. A playtest session is a session, but its save
+    would open without the rope and under a different sky. Saving one is not
+    offered for exactly that reason.
 
     Parameters
     ----------
@@ -75,8 +83,8 @@ def start(library: Library, pack_id: str, setup: PlaytestSetup) -> StepResult:
 
     Returns
     -------
-    StepResult
-        The opening state and everything it produced.
+    Session
+        The playthrough, opened.
 
     Raises
     ------
@@ -87,7 +95,7 @@ def start(library: Library, pack_id: str, setup: PlaytestSetup) -> StepResult:
     if setup.background or setup.spend:
         character = Character(background=setup.background, spend=dict(setup.spend))
 
-    result = begin(
+    session = Session.begin(
         library,
         pack_id,
         seed=setup.seed,
@@ -97,13 +105,13 @@ def start(library: Library, pack_id: str, setup: PlaytestSetup) -> StepResult:
         start_tick=setup.start_tick,
     )
 
-    _stock(library, pack_id, result, setup)
-    _sky(library, pack_id, result, setup)
-    return result
+    _stock(library, pack_id, session, setup)
+    _sky(library, pack_id, session, setup)
+    return session
 
 
 def _stock(
-    library: Library, pack_id: str, result: StepResult, setup: PlaytestSetup
+    library: Library, pack_id: str, session: Session, setup: PlaytestSetup
 ) -> None:
     """Put the author's extra kit into the protagonist's hands.
 
@@ -113,8 +121,8 @@ def _stock(
         The compiled content.
     pack_id : str
         The game pack, which the references resolve against.
-    result : StepResult
-        The opening step, whose state is stocked in place.
+    session : Session
+        The opened playthrough, whose state is stocked in place.
     setup : PlaytestSetup
         The setup.
 
@@ -123,14 +131,14 @@ def _stock(
     ContentError
         If an item reference names nothing.
     """
-    player = result.state.protagonist
+    player = session.state.protagonist
     for reference, qty in setup.items.items():
         item = library.resolve(reference, "entities", within=pack_id)
         player.inventory[item] = player.inventory.get(item, 0) + int(qty)
 
 
 def _sky(
-    library: Library, pack_id: str, result: StepResult, setup: PlaytestSetup
+    library: Library, pack_id: str, session: Session, setup: PlaytestSetup
 ) -> None:
     """Make the weather be what the author wanted to look at.
 
@@ -145,8 +153,8 @@ def _sky(
         The compiled content.
     pack_id : str
         The game pack.
-    result : StepResult
-        The opening step, whose state is adjusted in place.
+    session : Session
+        The opened playthrough, whose state is adjusted in place.
     setup : PlaytestSetup
         The setup.
 
@@ -159,7 +167,7 @@ def _sky(
     if setup.weather is None:
         return
     condition = library.resolve(setup.weather, "weatherConditions", within=pack_id)
-    state = result.state
+    state = session.state
     here = context_for(library, state).weather().region
     if here is None or here not in state.weather:
         raise ContentError(

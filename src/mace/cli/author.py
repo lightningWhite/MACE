@@ -28,8 +28,6 @@ from mace.cli.timing import raw_terminal_available
 from mace.content import ContentError
 from mace.content.validation import Severity
 from mace.engine.debug import Overlay, overlay
-from mace.engine.state import Outcome
-from mace.engine.step import step
 from mace.wizard.builders import (
     CONDITIONS,
     EFFECTS,
@@ -1170,7 +1168,7 @@ class Wizard:
         )
 
         try:
-            result, library = start_from(self.project, setup)
+            session = start_from(self.project, setup)
         except ContentError as error:
             self.say(f"  ! it will not start: {error}")
             return
@@ -1178,21 +1176,21 @@ class Wizard:
         self.say("")
         self.say(RULE)
         renderer = Renderer(self.out, interactive=self.interactive)
-        renderer.show(result.events)
-        timed = raw_terminal_available() and result.state.combat_mode == "reflex"
+        renderer.show(session.events)
+        timed = raw_terminal_available() and session.state.combat_mode == "reflex"
 
-        while result.state.outcome is Outcome.PLAYING:
+        while session.playing:
             if setup.debug:
-                self._overlay(overlay(library, result.state))
-            combat = result.state.combat
+                self._overlay(overlay(session.library, session.state))
+            combat = session.state.combat
             if combat is not None and combat.tell is not None:
-                action = fight(renderer, result, timed)
+                action = fight(renderer, session, timed)
             else:
-                action = choose(renderer, result)
+                action = choose(renderer, session)
             if action is None:
                 break
-            result = step(result.state, action, library)
-            renderer.show(result.events)
+            session.perform(action)
+            renderer.show(session.events)
 
         self.say("")
         self.say(RULE)

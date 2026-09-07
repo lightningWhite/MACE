@@ -105,6 +105,25 @@ def build_parser() -> argparse.ArgumentParser:
             "otherwise."
         ),
     )
+    player.add_argument(
+        "--save",
+        type=Path,
+        metavar="FILE",
+        help=(
+            "write the playthrough here when it ends. A save is the packs, "
+            "the seed and everything you did — small enough to send someone, "
+            "exact enough for them to watch it happen."
+        ),
+    )
+    player.add_argument(
+        "--load",
+        type=Path,
+        metavar="FILE",
+        help=(
+            "carry on from a save. Its seed, combat mode and character are "
+            "the session's, so --seed, --combat and --background are ignored."
+        ),
+    )
     player.set_defaults(run=run_play)
 
     started = commands.add_parser(
@@ -249,6 +268,8 @@ def run_play(options: argparse.Namespace) -> int:
         seed=options.seed,
         combat_mode=options.combat,
         character=character,
+        save=options.save,
+        resume=options.load,
     )
 
 

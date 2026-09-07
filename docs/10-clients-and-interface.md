@@ -102,13 +102,18 @@ See [ADR-0005](decisions/0005-python-core-with-pyodide.md).
 
 ## Saves
 
-A save is `(pack ids + versions, seed, action log, snapshot)`. Tiny, diffable,
-shareable. Sharing a save shares an exact playthrough, which makes bug reports
-trivially reproducible and makes "watch how I beat the troll" a thing that works.
+A save is `(pack ids + versions, seed, character, action log)`, and one day a
+periodic snapshot beside it. Tiny, diffable, shareable. Sharing a save shares an
+exact playthrough, which makes bug reports trivially reproducible and makes
+"watch how I beat the troll" a thing that works — a save is a golden recording
+missing only its expected events.
 
 If content changes under a save (an author updates the pack), the loader compares
-versions and warns. Replaying an action log against changed content may diverge;
-the snapshot lets the session continue anyway, with the divergence flagged.
+versions and warns before it replays anything. Replaying an action log against
+changed content may then diverge. **Today a divergence stops the load**, naming
+the action it stopped at and the menu that was on offer instead. The snapshot
+that would let the session continue anyway, with the divergence flagged, is the
+half of this that is designed and not yet built.
 
 A log meant to survive that should record its choices by **prompt** rather than
 by index — see [Architecture § Determinism](02-architecture.md#determinism-and-randomness).

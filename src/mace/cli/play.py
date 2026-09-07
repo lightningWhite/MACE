@@ -16,13 +16,14 @@ from typing import Any, TextIO
 
 from mace.cli.create import ask
 from mace.cli.timing import Keypress, raw_terminal_available, read_key
-from mace.content import ContentError, Library, load_library
+from mace.content import ContentError, load_library
 from mace.engine.actions import Action, Choose, Respond
 from mace.engine.creation import Character
 from mace.engine.creation import offer as creation_offer
 from mace.engine.events import Event
-from mace.engine.state import Outcome
-from mace.engine.step import StepResult, begin, step
+from mace.session import SaveError, Session, choose_game
+from mace.session import load as load_save
+from mace.session import write as write_save
 
 __all__ = ["Renderer", "keys_for", "play"]
 
@@ -447,7 +448,7 @@ def _marked(key: str, label: str) -> str:
     return f"{label[:at]}[{key}]{label[at + 1 :]}"
 
 
-def fight(renderer: Renderer, result: StepResult, timed: bool) -> Action | None:
+def fight(renderer: Renderer, session: Session, timed: bool) -> Action | None:
     """Collect the player's answer to a telegraphed move.
 
     Two presentations of one window. Timed, a key is read against a monotonic
@@ -460,8 +461,8 @@ def fight(renderer: Renderer, result: StepResult, timed: bool) -> Action | None:
     ----------
     renderer : Renderer
         For prompting.
-    result : StepResult
-        The last step, whose pending tell is what needs answering.
+    session : Session
+        The playthrough, whose pending tell is what needs answering.
     timed : bool
         Whether to run the clock.
 
@@ -470,12 +471,12 @@ def fight(renderer: Renderer, result: StepResult, timed: bool) -> Action | None:
     Action or None
         The response, or None to stop playing.
     """
-    combat = result.state.combat
+    combat = session.state.combat
     assert combat is not None and combat.tell is not None
     offered = next(
         (
             event.payload()
-            for event in reversed(result.events)
+            for event in reversed(session.events)
             if event.kind == "combat.responses"
         ),
         None,
@@ -577,23 +578,22 @@ def _timed(
     return Respond(chosen[0], pressed.elapsed_ms)
 
 
-def choose(renderer: Renderer, result: StepResult) -> Action | None:
+def choose(renderer: Renderer, session: Session) -> Action | None:
     """Ask the player what to do next.
 
     Parameters
     ----------
     renderer : Renderer
         For prompting and complaining.
-    result : StepResult
-        The last step, whose pending options are what may be chosen.
+    session : Session
+        The playthrough, whose pending options are what may be chosen.
 
     Returns
     -------
     Action or None
         The action, or None to stop playing.
     """
-    pending = result.state.pending
-    count = len(pending.options) if pending else 0
+    count = len(session.offered)
 
     while True:
         try:
@@ -622,6 +622,8 @@ def play(
     seed: str = "mace",
     combat_mode: str | None = None,
     character: Character | None = None,
+    save: Path | None = None,
+    resume: Path | None = None,
     out: TextIO | None = None,
 ) -> int:
     """Load some packs and play one of them.
@@ -639,6 +641,11 @@ def play(
     character : Character or None
         Skip character creation and start as this. None asks, for a game that
         has something to ask.
+    save : Path or None
+        Where to write the playthrough when it ends, however it ends.
+    resume : Path or None
+        A save to carry on from. Its seed, combat mode and character are the
+        session's, so the arguments that would have set those are ignored.
     out : TextIO or None
         Where to write. Defaults to standard output.
 
@@ -653,17 +660,22 @@ def play(
 
     try:
         library = load_library(*paths)
-        chosen = _pick_game(library, pack_id)
-        if character is None and creation_offer(library, chosen).asks_anything:
-            character = ask(library, chosen, stream, interactive=interactive)
-        result = begin(
-            library,
-            chosen,
-            seed=seed,
-            combat_mode=combat_mode,
-            character=character,
-        )
-    except ContentError as error:
+        if resume is not None:
+            session, drift = load_save(resume, library)
+            for line in drift:
+                print(f"warning {line}", file=sys.stderr)
+        else:
+            chosen = choose_game(library, pack_id)
+            if character is None and creation_offer(library, chosen).asks_anything:
+                character = ask(library, chosen, stream, interactive=interactive)
+            session = Session.begin(
+                library,
+                chosen,
+                seed=seed,
+                combat_mode=combat_mode,
+                character=character,
+            )
+    except (ContentError, SaveError) as error:
         print(f"error   {error}", file=sys.stderr)
         return 1
 
@@ -671,54 +683,56 @@ def play(
     # so a piped or unsupported terminal drops to the untimed presentation
     # rather than pretending to run a clock.
     timed = raw_terminal_available()
-    if result.state.combat_mode == "reflex" and not timed:
+    if session.state.combat_mode == "reflex" and not timed:
         renderer.line("  (no timed input available here — playing combat untimed)")
 
     renderer.line(RULE)
-    renderer.show(result.events)
+    if resume is not None:
+        # The replay already happened, in silence: re-reading a whole
+        # playthrough is not resuming it. What the player needs is the world
+        # they are standing in, which is the last step's events.
+        renderer.fighting = session.state.combat is not None
+        renderer.line(f"  Resumed — {len(session.log)} actions replayed.")
+    renderer.show(session.events)
 
-    while result.state.outcome is Outcome.PLAYING:
-        if result.state.combat is not None and result.state.combat.tell is not None:
-            mode = result.state.combat.mode
-            action = fight(renderer, result, timed and mode == "reflex")
+    while session.playing:
+        combat = session.state.combat
+        if combat is not None and combat.tell is not None:
+            action = fight(renderer, session, timed and combat.mode == "reflex")
         else:
-            action = choose(renderer, result)
+            action = choose(renderer, session)
         if action is None:
             renderer.line("\nUntil next time.")
-            return 0
-        result = step(result.state, action, library)
-        renderer.show(result.events)
+            break
+        session.perform(action)
+        renderer.show(session.events)
 
-    return 0
+    return _keep(session, save, renderer)
 
 
-def _pick_game(library: Library, pack_id: str | None) -> str:
-    """Decide which loaded pack to play.
+def _keep(session: Session, save: Path | None, renderer: Renderer) -> int:
+    """Write the playthrough down, if the player asked for that.
 
     Parameters
     ----------
-    library : Library
-        The loaded packs.
-    pack_id : str or None
-        The pack the player named, if they named one.
+    session : Session
+        The playthrough, ended or abandoned.
+    save : Path or None
+        Where to write it.
+    renderer : Renderer
+        For saying where it went.
 
     Returns
     -------
-    str
-        The pack id to play.
-
-    Raises
-    ------
-    ContentError
-        If there is no game, or more than one and no choice was made.
+    int
+        The process exit code.
     """
-    if pack_id is not None:
-        return pack_id
-
-    games = library.games
-    if not games:
-        raise ContentError("no game packs found — a game pack has `kind: game`")
-    if len(games) > 1:
-        names = ", ".join(pack.id for pack in games)
-        raise ContentError(f"several games found; choose one with --pack: {names}")
-    return games[0].id
+    if save is None:
+        return 0
+    try:
+        written = write_save(session, save)
+    except SaveError as error:
+        print(f"error   {error}", file=sys.stderr)
+        return 1
+    renderer.line(f"  Saved to {written}.")
+    return 0

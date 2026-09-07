@@ -3,6 +3,7 @@
 CI runs `mace validate packs/`, so the exit code is a contract.
 """
 
+import json
 from pathlib import Path
 
 import pytest
@@ -146,6 +147,52 @@ def test_play_reports_a_broken_pack(
     write_pack(tmp_path / "packs", "broken", kind="game")
     assert main(["play", str(tmp_path / "packs")]) == 1
     assert "game" in capsys.readouterr().err
+
+
+# ── Saving and carrying on ────────────────────────────────────────────────────
+
+
+def test_play_writes_the_save_it_was_asked_for(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    save = tmp_path / "saves" / "north.json"
+    scripted(monkeypatch, ["1", "2", "q"])
+    assert main(["play", "packs", "--pack", "peasants-quest", "--save", str(save)]) == 0
+
+    assert "Saved to" in capsys.readouterr().out
+    written = json.loads(save.read_text())
+    assert written["pack"] == "peasants-quest"
+    assert [action["prompt"] for action in written["actions"]] == [
+        "Say goodbye to Hallam",
+        "Take the north road",
+    ]
+
+
+def test_play_carries_on_from_a_save(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    save = tmp_path / "north.json"
+    scripted(monkeypatch, ["1", "2", "q"])
+    assert main(["play", "packs", "--pack", "peasants-quest", "--save", str(save)]) == 0
+    ended = capsys.readouterr().out
+
+    scripted(monkeypatch, ["q"])
+    assert main(["play", "packs", "--load", str(save)]) == 0
+    resumed = capsys.readouterr().out
+
+    # The replay happens in silence — what a player wants back is the room they
+    # were standing in, not the whole game read out to them again.
+    assert "Resumed — 2 actions replayed." in resumed
+    assert "You are a peasant." not in resumed
+    assert "The Old Bridge" in ended
+    assert "The Old Bridge" in resumed
+
+
+def test_play_reports_a_save_it_cannot_read(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["play", "packs", "--load", str(tmp_path / "nowhere.json")]) == 1
+    assert "could not read the save" in capsys.readouterr().err
 
 
 # ── Combat in a terminal ──────────────────────────────────────────────────────

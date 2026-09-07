@@ -145,9 +145,13 @@ A session is fully described by:
 (pack references + versions, seed, ordered action log)
 ```
 
-Replaying that triple reproduces the playthrough exactly. Save files store the
-triple plus a periodic state snapshot for fast loading; the snapshot is an
-optimization, never the source of truth.
+Replaying that triple reproduces the playthrough exactly, and that triple *is*
+the save file — `mace.session.saves`, one JSON object, small enough to paste
+into a bug report. A periodic state snapshot alongside it, for fast loading,
+is an optimization and never the source of truth. It is not written yet, which
+has two consequences worth knowing: a long playthrough reloads by re-simulating
+itself, and a save whose content has moved under it cannot be continued past
+the divergence, only reported.
 
 A logged choice may name its option two ways. `{"kind": "choose", "option": 2}`
 is the protocol form — an index into the last `choices` event, which is what
@@ -233,7 +237,7 @@ MACE/
 │   │   ├── encounter/          Encounter table resolution
 │   │   ├── economy/            Goods, markets, price formation, trade flow
 │   │   └── combat/             Tempo combat
-│   ├── session.py              Session lifecycle, saves, view-model projection
+│   ├── session/                Session lifecycle, saves, view-model projection
 │   ├── wizard/                 Declarative authoring flow graph
 │   ├── cli/                    Terminal front-end
 │   └── api/                    FastAPI service (phase 4+)

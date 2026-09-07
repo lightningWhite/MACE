@@ -61,6 +61,7 @@ src/mace/
     economy/     Goods, markets, price formation, trade flow
     combat/      Tempo combat resolution
     expr/        Safe condition/effect expression evaluation
+  session/       A running game: actions in, events out, saves
   wizard/        Declarative authoring flow (shared by CLI and web)
   cli/           Terminal front-end (play + author)
   api/           FastAPI service (later phases)

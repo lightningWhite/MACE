@@ -112,6 +112,11 @@ writing YAML.
 
 **Playable at the end:** a browser tab, no install, with a real map.
 
+- [x] `mace.session` — a running game held open, so a terminal, a browser tab
+      and an HTTP request all drive the engine the same way
+- [x] Saves: the packs, the seed and the action log, with choices recorded by
+      prompt so a save survives an author editing the menu. `mace play --save`
+      and `--load`
 - [ ] FastAPI session service; WebSocket event stream
 - [ ] React + TS PWA: narrative pane, choices, character, inventory, journal
 - [ ] SVG map with fog of war, route lengths, weather overlay
