@@ -145,9 +145,7 @@ def test_an_object_nobody_has_is_a_404(client: TestClient) -> None:
 def test_a_picker_arrives_with_its_options_on_it(client: TestClient) -> None:
     """The whole reason the wire exists — a browser cannot ask the catalog."""
     screen = got(client, "/api/author/objects/locations/home")["screen"]
-    entities = next(
-        one for one in screen["steps"] if one["id"] == "location.entities"
-    )
+    entities = next(one for one in screen["steps"] if one["id"] == "location.entities")
     assert {one["value"] for one in entities["field"]["options"]} >= {"hero", "gold"}
 
 
@@ -261,9 +259,7 @@ def test_deleting_what_things_point_at_is_allowed_and_reported(
 
 def test_the_vocabulary_carries_this_packs_options(client: TestClient) -> None:
     described = got(client, "/api/author/vocabulary")
-    has_item = next(
-        one for one in described["conditions"] if one["tag"] == "hasItem"
-    )
+    has_item = next(one for one in described["conditions"] if one["tag"] == "hasItem")
     which = has_item["asks"][0]
     assert {one["value"] for one in which["field"]["options"]} == {"gold"}
 

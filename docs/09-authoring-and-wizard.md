@@ -303,3 +303,46 @@ terminal can't do — dragging map nodes, drawing routes, seeing the scene graph
 
 Neither is a second-class citizen. A step type that can't render usefully in the
 terminal (`MapEditor`) must declare a text fallback.
+
+### The authoring session
+
+Phase 4 made the *questions* data and left the screens around them inside the
+terminal loop, which meant "the same flow graph drives CLI and web" was true of
+the steps and untrue of everything holding them. `mace.wizard.studio` is the
+other half, and `mace.session` is its twin: a session holds a playthrough open
+and hands out frames, a studio holds a **project** open and hands out screens.
+
+One shape for every reply — the pack, which files are unsaved, the task list,
+and whatever was asked for — so a client has one renderer, and so the problem
+count in the header moves on every answer without anybody asking for it.
+
+Three things it adds over the flow graph, and none of them is a rule:
+
+- **Options are resolved.** A `Select` reaches a browser as the list a `Query`
+  produced, because a browser cannot ask the catalog a question in the middle
+  of a render. This is the piece that makes a web form possible at all; without
+  it a form would go straight back to typing references by hand, which is the
+  exact hole `Query` exists to close.
+- **Screens are described.** The task list, a section's contents, one object's
+  steps — the same three the terminal walks, as JSON.
+- **The cascade is data too.** Both vocabularies ship with their questions, so
+  a tag added to `mace.wizard.builders` appears in the browser without anybody
+  touching the browser. `build` round-trips through the model on the Python
+  side, which is what stops a browser writing content the loader would reject.
+
+`mace.api.author` is the HTTP surface and **it is off unless asked for**.
+Authoring writes to the author's disk and the session service never does, so
+the routes are a separate router that `create_app` mounts only when handed an
+open studio. `mace author --web` is the way in: one pack, bound to localhost,
+the same questions and the same validator as the terminal. One pack per
+process, the way the terminal is one pack per window — a project holds unsaved
+edits in memory, and two behind one process would be two authors overwriting
+each other.
+
+The client lives at `#author` in the same build as the game. It renders the
+three screens and every field type that can be answered with a control; a
+field a builder drives — a condition, a repeat, a statblock — is shown as its
+English description and says the terminal can change it, because rendering
+nothing would lose an author's content silently. Its tests replay frames
+recorded from a real project by `tests/test_web_author_wire.py`, the same
+arrangement the game client has and for the same reason.

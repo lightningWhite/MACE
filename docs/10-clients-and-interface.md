@@ -139,6 +139,13 @@ recorded from a real playthrough, and `tests/test_web_wire.py` fails when the
 engine stops sending what was recorded, so the client cannot keep passing
 against a protocol that has moved.
 
+**The same build is also the wizard**, at `#author`, and it is held to exactly
+the same bar: it renders screens `mace.wizard.studio` projects and contains no
+questions. `mace author --web` serves those routes, and only that command
+does — authoring writes to the author's disk and the session service never
+does, so a hosted game has no way to reach a filesystem. See
+[Authoring](09-authoring-and-wizard.md#the-authoring-session).
+
 **Where the engine runs:** the engine is Python and stays Python.
 
 - **Phase 4** — FastAPI serves sessions over HTTP/WebSocket; the browser is a

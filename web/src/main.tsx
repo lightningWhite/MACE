@@ -2,15 +2,23 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
+import { Studio } from "./author/Studio";
 import "./styles.css";
 
 const root = document.getElementById("root");
 if (root === null) throw new Error("no #root to mount on");
 
+// One build, two front-ends, and a fragment rather than a router: `#author`
+// is the wizard and everything else is the game. A fragment because the other
+// two ways cost something — a path needs the server to serve index.html for a
+// URL it has no file for, which a static host on GitHub Pages will not do,
+// and a router is a dependency for one decision. The wizard is only
+// *answered* when somebody ran `mace author --web`, so a hosted game stays a
+// game and nothing else.
+const authoring = window.location.hash.replace(/^#\/?/, "") === "author";
+
 createRoot(root).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+  <StrictMode>{authoring ? <Studio /> : <App />}</StrictMode>,
 );
 
 // The offline shell. Registered after the app is mounted and never awaited:

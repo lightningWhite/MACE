@@ -247,9 +247,7 @@ def author_routes(studio: Studio) -> APIRouter:
             404 for a step nobody has, 400 for an answer that will not land.
         """
         try:
-            changed = studio.answer(
-                body.collection, body.step, body.value, body.object
-            )
+            changed = studio.answer(body.collection, body.step, body.value, body.object)
         except Unknown as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ContentError as error:

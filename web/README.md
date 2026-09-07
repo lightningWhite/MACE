@@ -6,6 +6,14 @@ A renderer for the engine's event stream. It holds no rules: every panel draws
 not on the wire, the fix is a field on the projection in
 `src/mace/session/view.py` — never a computation in a component.
 
+The same build is also the **wizard**, at `#author`. It renders screens
+`mace.wizard.studio` projects and holds no questions of its own: a step type
+is added in `src/mace/wizard/fields.py` and appears here, and a condition tag
+added to `builders.py` appears here without anybody touching this directory.
+A fragment rather than a path or a router — a path would need the server to
+serve `index.html` for a URL it has no file for, which a static host will not
+do, and a router is a dependency for one decision.
+
 ## Running it
 
 Two processes in development, because Vite wants to own the reload:
@@ -22,6 +30,18 @@ that; in a deployment the service serves the built files itself:
 npm --prefix web run build
 mace serve packs/ --client web/dist   # one origin, nothing to configure
 ```
+
+The wizard is a different process, because it writes to your disk and the
+session service never does:
+
+```bash
+mace author packs/games/peasants-quest --web --client web/dist
+# then open http://127.0.0.1:8000/#author
+```
+
+`/api/author` only exists when something asked for it, so a hosted game is a
+game and nothing else — and `#author` in a deployment without it just says the
+wizard is not answering.
 
 ## Checking it
 
@@ -44,6 +64,10 @@ contract every front-end is written against — with:
 ```bash
 MACE_UPDATE_FIXTURES=1 pytest tests/test_web_wire.py
 ```
+
+The wizard's screens are recorded the same way, in `src/test/author.json` by
+`tests/test_web_author_wire.py`, from a copy of the same pack. Both
+regenerate with `MACE_UPDATE_FIXTURES=1`.
 
 ## Two deployments, one build
 
@@ -99,4 +123,5 @@ src/
   map/            The SVG map and its layout
   combat/         The tell, the window, and the answers
   panels/         Character, Pack, Journal, Choices, StatusLine, Opening
+  author/         The wizard: the task list, a section, one object, one field
 ```

@@ -766,3 +766,244 @@ button:focus-visible {
     scroll-behavior: auto;
   }
 }
+
+/*
+ * The wizard.
+ *
+ * Deliberately plainer than the game: this is a tool, and a tool that tried to
+ * be atmospheric would be a tool that is harder to read. It keeps the palette
+ * so the two do not look like different products, and it keeps the two rules —
+ * a state is a word as well as a mark, and a problem says its severity rather
+ * than only wearing a colour.
+ */
+
+.studio {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.studio-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--edge);
+  padding-bottom: 0.9rem;
+  margin-bottom: 1.2rem;
+}
+
+.studio-head h1 {
+  font-size: 1.4rem;
+  margin: 0 0 0.2rem;
+}
+
+.studio-head p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.studio-save,
+.studio-back,
+.make button,
+.object-delete {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--ground-raised);
+  border: 1px solid var(--edge);
+  border-radius: 0.3rem;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+
+.studio-save:hover:not(:disabled),
+.make button:hover:not(:disabled) {
+  border-color: var(--warm);
+}
+
+.studio-back {
+  margin-bottom: 1rem;
+}
+
+.studio-failure {
+  color: var(--loss);
+  margin: 0 0 1rem;
+}
+
+.studio-saved,
+.studio-unreadable {
+  color: var(--cold);
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.task-list,
+.object-list,
+.problems,
+.field-many {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-list li,
+.object-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--edge);
+}
+
+.task,
+.object {
+  display: grid;
+  grid-template-columns: 1.4rem 12rem 1fr;
+  gap: 0.6rem;
+  align-items: baseline;
+  flex: 1;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0.7rem 0.2rem;
+  cursor: pointer;
+}
+
+.task:hover,
+.object:hover,
+.task:focus-visible,
+.object:focus-visible {
+  background: var(--ground-raised);
+}
+
+.object {
+  grid-template-columns: 1fr auto auto;
+}
+
+.task-mark {
+  color: var(--warm);
+}
+
+.task-note {
+  color: var(--loss);
+  font-size: 0.9rem;
+}
+
+.object-unfinished {
+  color: var(--warm);
+  font-size: 0.85rem;
+}
+
+.studio-section h2,
+.studio-object h2 {
+  font-size: 1.1rem;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  margin-bottom: 0.2rem;
+}
+
+.make {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.2rem 0;
+}
+
+.problems li {
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--edge);
+}
+
+.problem-severity {
+  display: inline-block;
+  min-width: 4.5rem;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
+
+.problem-error .problem-severity {
+  color: var(--loss);
+}
+
+.problem-warning .problem-severity {
+  color: var(--warm);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  margin-top: 1.2rem;
+}
+
+.field-title {
+  display: block;
+  font-family: var(--font);
+  font-size: 1rem;
+}
+
+.field-help,
+.field-reading,
+.field-unbuilt {
+  margin: 0.25rem 0 0;
+  font-size: 0.87rem;
+  color: var(--ink-dim);
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.field-input {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--ground-raised);
+  border: 1px solid var(--edge);
+  border-radius: 0.3rem;
+  padding: 0.4rem 0.55rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.field-input:focus-visible {
+  outline: 2px solid var(--warm);
+  outline-offset: 1px;
+}
+
+.field-number {
+  flex: 0 0 7rem;
+}
+
+.field-lines {
+  font-family: var(--font);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.field-check {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.field-many {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.2rem 1rem;
+  margin-top: 0.45rem;
+}
+
+.field-unbuilt code {
+  color: var(--ink);
+}

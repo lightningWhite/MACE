@@ -207,11 +207,11 @@ class Studio:
                 "collection": collection,
                 "id": option.value,
                 "label": option.label,
-                "unfinished": bool(
-                    FLOWS[collection].unanswered(self.project, option.value)
-                )
-                if collection in FLOWS
-                else False,
+                "unfinished": (
+                    bool(FLOWS[collection].unanswered(self.project, option.value))
+                    if collection in FLOWS
+                    else False
+                ),
             }
             for collection in found.collections
             for option in Query(
@@ -270,9 +270,7 @@ class Studio:
                 if object_id is None
                 else catalog.label(object_id, flow.collection or collection)
             ),
-            "steps": [
-                self._step(one, object_id, catalog) for one in flow.steps
-            ],
+            "steps": [self._step(one, object_id, catalog) for one in flow.steps],
         }
 
     def step(

@@ -168,7 +168,13 @@ writing YAML.
 
 **Usable at the end:** build a world by dragging nodes on a map.
 
-- [ ] Wizard flow graph rendered as web forms
+- [x] Wizard flow graph rendered as web forms. `mace.wizard.studio` is the
+      authoring session `mace.session` is the twin of: one shape for every
+      reply, and pickers that arrive *resolved*, because a browser cannot ask
+      the catalog a question mid-render. `mace author --web` serves it, off
+      unless asked for because it writes to the author's disk. Repeats,
+      statblocks and the condition cascade still say "open it in the terminal"
+      — the vocabulary is on the wire, the browser does not draw it yet
 - [ ] Visual map editor — drag locations, draw routes, set travel times
 - [ ] Scene graph visualization with unreachable-node detection
 - [ ] Entity/item editors with live preview
