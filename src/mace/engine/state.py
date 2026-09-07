@@ -188,6 +188,10 @@ class EntityState:
         them can be stored (docs/07-combat.md § Growth).
     ally : bool
         Whether this entity travels with the player and fights on their side.
+    transient : bool
+        Whether this instance goes when the player moves on. What an encounter
+        spawns is here while you are here; what an author placed at a location
+        stays where they put it.
     ally_until : object or None
         The condition that ends the arrangement, when one was set. Held as the
         authored `Condition` rather than re-derived, because the effect that
@@ -208,6 +212,7 @@ class EntityState:
     skills: dict[str, float] = field(default_factory=dict)
     familiarity: dict[str, int] = field(default_factory=dict)
     ally: bool = False
+    transient: bool = False
     ally_until: Any = None
 
 

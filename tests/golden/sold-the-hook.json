@@ -838,17 +838,17 @@
         {
           "kind": "encounter",
           "table": "peasants-quest:forest-road",
-          "entry": "a-traveller",
+          "entry": "nothing-much",
           "chance": 0.34,
           "where": "peasants-quest:north-road"
         },
         {
           "kind": "scene.entered",
-          "scene": "fantasy.core:someone-on-the-road"
+          "scene": "fantasy.core:nothing-much-happens"
         },
         {
           "kind": "narrate",
-          "text": "A carter comes the other way, nods, and says nothing worth repeating.",
+          "text": "A long stretch of nothing. Somewhere out of sight, water.",
           "pause": false
         },
         {

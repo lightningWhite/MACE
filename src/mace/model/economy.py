@@ -295,7 +295,18 @@ class Merchant(ContentModel):
     ----------
     market : str or None
         Which market it deals for. None is the market where it is standing,
-        which is what a merchant usually is.
+        which is what a merchant usually is — unless it is `mobile`, in which
+        case it deals for nowhere and carries its own.
+    mobile : bool
+        A caravan rather than a stall. It deals out of its own `inventory` at
+        prices anchored to what things are ordinarily worth, because it is not
+        from here and does not know what this valley is short of. That is the
+        whole of what makes one worth meeting: it brings iron to a place with
+        no iron, and it charges the same for it wherever you find it.
+    wealth : float
+        0 to 1, for a caravan: what it will pay, the way a market's `wealth`
+        is. Meaningless for a merchant standing at a market, whose prices come
+        from the market's.
     spread : float
         The gap between what it buys at and what it sells at, as a fraction of
         the market price. 0.25 buys at 0.875× and sells at 1.125×. This is the
@@ -334,6 +345,8 @@ class Merchant(ContentModel):
     """
 
     market: MarketRef | None = None
+    mobile: bool = False
+    wealth: float = Field(default=0.5, ge=0.0, le=1.0)
     spread: float = Field(default=0.2, ge=0.0, lt=1.0)
     buys: Deals = Deals()
     sells: Deals = Deals()
@@ -349,4 +362,11 @@ class Merchant(ContentModel):
         """A purse that refills to nothing in particular is a typo."""
         if self.restock_ticks is not None and self.capital is None:
             raise ValueError("`restockTicks` needs a `capital` to come back up to")
+        return self
+
+    @model_validator(mode="after")
+    def _a_caravan_deals_for_nobody_else(self) -> Merchant:
+        """A caravan that also named a market is two answers to one question."""
+        if self.mobile and self.market is not None:
+            raise ValueError("a `mobile` merchant carries its own prices, not a market")
         return self

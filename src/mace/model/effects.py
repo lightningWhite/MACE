@@ -74,6 +74,7 @@ EffectTag = Literal[
     "setRouteTicks",
     "setStat",
     "setVar",
+    "spawnEntity",
     "spawnFront",
     "startCombat",
     "takeItem",
@@ -256,6 +257,35 @@ class Rest(EffectPayload):
     ticks: int = Field(default=8, gt=0)
     pools: tuple[Name, ...] = ()
     fraction: float = Field(default=1.0, ge=0.0, le=1.0)
+
+
+class SpawnEntity(EffectPayload):
+    """Put somebody, or something, into the world.
+
+    What an encounter needs to introduce a person rather than a fight. A
+    caravan on the road, a beggar at the gate, a body in the ditch: all of
+    them are entities that were not there a moment ago, and until now the only
+    thing that could make one appear was `startCombat`.
+
+    Attributes
+    ----------
+    entity : str
+        Which definition to make one of.
+    at : str or None
+        Where. None is wherever the player is, which is what an encounter
+        means.
+    transient : bool
+        Whether it goes when the player does. True by default, because
+        something met on the road is met on the road — a caravan that waited
+        at that waypoint for the rest of the game would stop being a caravan,
+        and a road that accumulated one per journey would be a crowd.
+    """
+
+    shorthand_field: ClassVar[str] = "entity"
+
+    entity: EntityRef
+    at: LocationRef | None = None
+    transient: bool = True
 
 
 class MarketShock(EffectPayload):
@@ -509,6 +539,7 @@ EFFECT_PAYLOADS: dict[EffectTag, type[EffectPayload]] = {
     "setRouteTicks": SetRouteTicks,
     "setStat": SetStat,
     "setVar": SetVar,
+    "spawnEntity": SpawnEntity,
     "spawnFront": SpawnFront,
     "startCombat": StartCombat,
     "takeItem": ItemTransfer,

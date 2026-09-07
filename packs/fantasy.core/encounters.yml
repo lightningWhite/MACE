@@ -14,3 +14,7 @@ encounterTables:
       - {id: the-weather-turns, weight: 20, scene: the-road-notices-you}
       - {id: a-traveller, weight: 18, scene: someone-on-the-road}
       - {id: something-worth-having, weight: 12, scene: something-in-the-grass}
+      # Rare, and worth stopping for. A caravan carries its own prices, so it
+      # is the one thing on the road that is *cheap in a famine*.
+      - {id: a-caravan, weight: 8, cooldownTicks: 120,
+         scene: a-caravan-on-the-road}

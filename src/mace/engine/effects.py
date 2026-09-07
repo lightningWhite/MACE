@@ -73,6 +73,7 @@ from mace.model.effects import (
     SetRouteTicks,
     SetStat,
     SetVar,
+    SpawnEntity,
     SpawnFront,
     StartCombat,
     TellNews,
@@ -282,6 +283,17 @@ def apply(
             return
         outcome.elapsed += payload.ticks
         outcome.rest = payload
+        return
+
+    if isinstance(payload, SpawnEntity):
+        from mace.engine.step import spawn  # noqa: PLC0415 — the runner owns it
+
+        where = (
+            state.location
+            if payload.at is None
+            else _reference(payload.at, "locations", context)
+        )
+        spawn(payload.entity, context, where, transient=payload.transient)
         return
 
     if isinstance(payload, MarketShock):

@@ -417,7 +417,10 @@ export interface Priced {
 export interface Stall {
   merchant: string;
   name: string;
+  /** Empty for a caravan, which deals for nowhere. */
   market: string;
+  /** Whether this is a caravan carrying its own prices. */
+  mobile: boolean;
   currency: string;
   /** What the player has. */
   coin: number;

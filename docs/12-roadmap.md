@@ -194,7 +194,12 @@ writing YAML.
         `patience` sets where they turn, and the leverage is a price the
         player has personally been quoted somewhere else — which is what the
         journal's price memory is for
-  - [ ] Caravans as mobile markets
+  - [x] Caravans as mobile markets: `mobile: true` deals out of its own pack
+        at its own prices, and a shock is a fact about a place — so the salt
+        carrier in a famine is still asking what it asked last week. Reached
+        the road through a new `spawnEntity` effect and `transient`
+        instances, which is what an encounter needed to introduce a person
+        rather than a fight
   - [ ] The map's price overlay
 
 ---

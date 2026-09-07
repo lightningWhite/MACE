@@ -66,6 +66,7 @@ EFFECT_ANSWERS: dict[str, dict[str, Any]] = {
     "openRoute": {"": "road"},
     "setRouteTicks": {"route": "road", "ticks": 12},
     "setLight": {"": 0.2},
+    "spawnEntity": {"entity": "gorm"},
     "spawnFront": {"front": "gale", "at": "lowlands"},
     "startCombat": {"against": ["gorm"]},
     "attachAlly": {"entity": "gorm"},

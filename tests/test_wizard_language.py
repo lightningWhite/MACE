@@ -77,6 +77,7 @@ EFFECTS: dict[str, Any] = {
     "setRouteTicks": {"setRouteTicks": {"route": "north-road", "ticks": 12}},
     "setStat": {"setStat": {"stat": "hitpoints", "value": 50}},
     "setVar": {"setVar": {"name": "kingWarned", "value": True}},
+    "spawnEntity": {"spawnEntity": "gorm"},
     "spawnFront": {
         "spawnFront": {"front": "autumn-gale", "at": "the-lowlands"},
     },

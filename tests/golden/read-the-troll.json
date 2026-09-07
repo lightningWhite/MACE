@@ -187,18 +187,25 @@
         {
           "kind": "encounter",
           "table": "peasants-quest:forest-road",
-          "entry": "nothing-much",
+          "entry": "something-worth-having",
           "chance": 0.3,
           "where": "peasants-quest:north-road"
         },
         {
           "kind": "scene.entered",
-          "scene": "fantasy.core:nothing-much-happens"
+          "scene": "fantasy.core:something-in-the-grass"
         },
         {
           "kind": "narrate",
-          "text": "A long stretch of nothing. Somewhere out of sight, water.",
+          "text": "Something pale in the grass at the roadside. A loaf, wrapped, dropped by somebody in a hurry.",
           "pause": false
+        },
+        {
+          "kind": "inventory.changed",
+          "actor": "peasants-quest:letholin",
+          "item": "fantasy.core:bread",
+          "delta": 1,
+          "quantity": 3
         },
         {
           "kind": "travel.leg",

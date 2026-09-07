@@ -762,6 +762,8 @@ with you. Only offered under `rules.economy: market`.
 | Field | Type | Notes |
 |---|---|---|
 | `market` | Ref? | The market it trades against. Omit for the market where it is standing, which is what a merchant usually is. |
+| `mobile` | bool? | A caravan rather than a stall: it deals out of its own `inventory` at prices anchored to what things are ordinarily worth, with no scarcity term and no shock, because it is not from here. Cannot also name a `market`. |
+| `wealth` | number? | 0–1, for a caravan: what it will pay, the way a market's `wealth` is. Meaningless for a merchant standing at a market. |
 | `spread` | number | Buy/sell margin, and the merchant's living. 0.25 buys at 0.875×, sells at 1.125×. Default 0.2. |
 | `buys` / `sells` | {goods: [Ref]?, categories: [str]?}? | What it will take off you, and what it will part with. Naming nothing means everything its market deals in; a filter is for the specialist. The two are separate — a quartermaster buys food and sells only iron. |
 | `capital` | number? | What it can pay out. Omit for bottomless — a stall backed by a whole town. A number makes it a person with a purse, and the purse *is* the coin in its own `inventory`, so a scene that hands it money has made it richer. A merchant with no coin written into its inventory opens holding its `capital`. |
@@ -770,8 +772,6 @@ with you. Only offered under `rules.economy: market`.
 | `patience` | int? | How many pushes they take in their stride before the odds turn. Default 3. Only meaningful with `maxSwing`. |
 | `prompt` | str? | What the option to trade is called. Defaults to `Trade with <name>`. |
 | `remarks` | Description? | What it says about its own prices, first matching line. Ordinary conditional description, so `priceOf` is what makes a line about a shortage and the weather and the season can join in. |
-
-Not there yet: `mobile`, for caravans that carry their own prices.
 
 ### Trading
 

@@ -633,7 +633,9 @@ class StallOpened(Event):
         instance id to a name is reaching into state, which is the one thing a
         front-end may not do.
     market : str
-        Qualified market id.
+        Qualified market id. Empty for a caravan, which deals for nowhere.
+    mobile : bool
+        Whether this is a caravan carrying its own prices.
     currency : str
         Qualified item id trade is settled in.
     purse : int or None
@@ -649,6 +651,7 @@ class StallOpened(Event):
     market: str
     currency: str
     name: str = ""
+    mobile: bool = False
     purse: int | None = None
     goods: tuple[Mapping[str, Any], ...] = ()
 
@@ -657,6 +660,7 @@ class StallOpened(Event):
             "merchant": self.merchant,
             "name": self.name,
             "market": self.market,
+            "mobile": self.mobile,
             "currency": self.currency,
             "purse": self.purse,
             "goods": [dict(row) for row in self.goods],

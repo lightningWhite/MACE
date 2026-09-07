@@ -400,6 +400,12 @@ def say_effect(effect: Effect, names: Names) -> str:
     if tag == "setRouteTicks":
         route = names.of(get("route"), "routes")
         return f"{route} now takes {_ticks(get('ticks'))}"
+    if tag == "spawnEntity":
+        who = names.of(get("entity"), "entities")
+        at = get("at")
+        where = " here" if at is None else f" at {names.of(at, 'locations')}"
+        lingers = "" if get("transient") else ", and stays"
+        return f"{who} appears{where}{lingers}"
     if tag == "spawnFront":
         front = names.of(get("front"), "weatherFronts")
         return f"{front} forms over {names.of(get('at'), 'regions')}"

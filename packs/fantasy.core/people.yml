@@ -27,6 +27,41 @@ entities:
       stamina:   {base: 25, max: 25}
       charisma:  {base: 55}
 
+  # A caravan is a market you meet rather than a market you visit. It carries
+  # its own prices — anchored to what things are ordinarily worth, because it
+  # is not from here and does not know what this valley is short of — and it
+  # carries its own stock, which is a pack rather than a shelf.
+  #
+  # That is the whole of what makes one worth meeting. In a famine the local
+  # market prices grain at four times base and the caravan does not, because a
+  # shock lands on a place and a caravan is not one.
+  - id: salt-carrier
+    kind: actor
+    name: "A Salt Carrier"
+    description: "Three mules, two men, and a load that has come a long way to be here."
+    tags: [human, merchant, caravan]
+    disposition: neutral
+    combat: {profile: brawler}
+    stats:
+      hitpoints: {base: 30, max: 30}
+      stamina:   {base: 25, max: 25}
+      charisma:  {base: 45}
+    inventory:
+      - {item: salt, qty: 40}
+      - {item: iron-ingot, qty: 6}
+    merchant:
+      mobile: true
+      wealth: 0.5              # neither desperate nor generous
+      spread: 0.3              # the road is a cost, and it is in the spread
+      maxSwing: 0.25           # they have all day, and so do you
+      patience: 2
+      capital: 60
+      restockTicks: 240        # they get paid at the other end, eventually
+      buys: {categories: [food, metal, cloth]}
+      prompt: "See what the carrier is carrying"
+      remarks:
+        - "\"Salt,\" one of them says, before you have asked. \"And what you have, if it is worth carrying.\""
+
   - id: soldier
     kind: actor
     name: "Soldier"

@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 
 from conftest import game_pack
 from mace.content import Library, load_library
@@ -33,7 +34,7 @@ from mace.engine.conditions import holds
 from mace.engine.economy import haggle as bargaining
 from mace.engine.economy import prepare, projected, shock_on, trade
 from mace.engine.state import RouteState
-from mace.engine.step import begin, context_for, step
+from mace.engine.step import begin, context_for, spawn, step
 from mace.model import Condition, Effect
 
 GRAIN = "valley:grain"
@@ -1194,3 +1195,177 @@ def test_a_haggle_is_a_record_a_save_can_replay() -> None:
     from mace.engine.actions import decode
 
     assert decode(HaggleAction().record()) == HaggleAction()
+
+
+# ── A market you meet rather than a market you visit ──────────────────────────
+
+
+CARAVAN = "valley:carrier"
+
+
+def road(root: Path, **merchant: Any) -> Library:
+    """The valley, with a caravan standing at the farm.
+
+    Written by editing the pack `valley` just wrote, because a caravan is
+    ordinary content — an actor with a `merchant` block and something in its
+    pack — and a second fixture builder would only prove that.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write the pack.
+    **merchant
+        Extra fields for the carrier's `merchant` block.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    valley(root)
+    pack = root / "valley"
+    world = yaml.safe_load((pack / "world.yml").read_text())
+    world["entities"].append(
+        {
+            "id": "carrier",
+            "kind": "actor",
+            "name": "A Salt Carrier",
+            "inventory": [{"item": "grain", "qty": 12}],
+            "merchant": {
+                "mobile": True,
+                "wealth": 0.5,
+                "spread": 0.3,
+                "capital": 40,
+                **merchant,
+            },
+        }
+    )
+    for location in world["locations"]:
+        if location["id"] == "farm":
+            location["entities"] = [*location["entities"], "carrier"]
+    (pack / "world.yml").write_text(yaml.safe_dump(world, sort_keys=False))
+    return load_library(root)
+
+
+def carrier(library: Library, state: Any) -> trade.Stall:
+    """The caravan's counter.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    state : GameState
+        The playthrough.
+
+    Returns
+    -------
+    Stall
+        The offer.
+    """
+    found = trade.look(context_for(library, state), state.entities[CARAVAN])
+    assert found is not None
+    return found
+
+
+def test_a_caravan_deals_for_nowhere(tmp_path: Path) -> None:
+    library = road(tmp_path)
+    counter = carrier(library, begin(library, "valley", seed="trade").state)
+    assert counter.mobile is True
+    assert counter.market == ""
+
+
+def test_a_caravan_offers_only_what_it_is_carrying(tmp_path: Path) -> None:
+    """An empty shelf at a market is news; an empty pack is just a pack."""
+    library = road(tmp_path)
+    counter = carrier(library, begin(library, "valley", seed="trade").state)
+    row = counter.row(GRAIN)
+    assert row is not None and row.available == 12
+
+
+def test_buying_from_a_caravan_comes_out_of_its_pack(tmp_path: Path) -> None:
+    library = road(tmp_path)
+    result = begin(library, "valley", seed="trade")
+    which = next(
+        index
+        for index, option in enumerate(result.state.pending.options)  # type: ignore[union-attr]
+        if option.trade == CARAVAN
+    )
+    result = step(result.state, Choose(which), library)
+    result = step(result.state, Trade(good="grain", qty=4), library)
+
+    assert result.state.entities[CARAVAN].inventory[GRAIN] == 8
+    assert result.state.protagonist.inventory[GRAIN] == 4
+    # And nothing was taken off a shelf, because there is no shelf.
+    assert "valley:farm-market" not in result.state.markets
+
+
+def test_a_caravan_carries_its_own_prices_through_a_famine(
+    tmp_path: Path,
+) -> None:
+    """The whole reason one is worth meeting."""
+    library = road(tmp_path)
+    result = begin(library, "valley", seed="trade")
+    before = carrier(library, result.state).row(GRAIN)
+    assert before is not None and before.buy is not None
+
+    shocked(library, result, category="food", mult=3.0, decayTicks=400)
+    after = carrier(library, result.state).row(GRAIN)
+    assert after is not None and after.buy == before.buy
+
+    # The market next to it went up, which is what makes the difference read.
+    local = stall(library, result.state).row(GRAIN)
+    assert local is not None and local.buy is not None and local.buy > before.buy
+
+
+def test_a_price_from_a_caravan_is_not_a_fact_about_anywhere(
+    tmp_path: Path,
+) -> None:
+    """A caravan is not a place, so its price cannot become leverage."""
+    library = road(tmp_path)
+    result = begin(library, "valley", seed="trade")
+    which = next(
+        index
+        for index, option in enumerate(result.state.pending.options)  # type: ignore[union-attr]
+        if option.trade == CARAVAN
+    )
+    result = step(result.state, Choose(which), library)
+    assert result.state.prices == {}
+
+
+def test_a_caravan_that_also_named_a_market_is_a_content_error() -> None:
+    from mace.model import Merchant
+
+    with pytest.raises(ValueError, match="carries its own prices"):
+        Merchant.model_validate({"mobile": True, "market": "somewhere"})
+
+
+def test_something_met_on_the_road_is_met_on_the_road(tmp_path: Path) -> None:
+    """A caravan that waited at that bend forever would stop being a caravan."""
+    library = valley(tmp_path)
+    result = begin(library, "valley", seed="trade")
+    made = spawn(
+        "keeper", context_for(library, result.state), "valley:farm", transient=True
+    )
+    assert made in result.state.entities
+
+    travel = next(
+        index
+        for index, option in enumerate(result.state.pending.options)  # type: ignore[union-attr]
+        if option.travel is not None
+    )
+    result = step(result.state, Choose(travel), library)
+    assert made not in result.state.entities
+
+
+def test_something_an_author_placed_stays_where_they_put_it(
+    tmp_path: Path,
+) -> None:
+    library = valley(tmp_path)
+    result = begin(library, "valley", seed="trade")
+    travel = next(
+        index
+        for index, option in enumerate(result.state.pending.options)  # type: ignore[union-attr]
+        if option.travel is not None
+    )
+    result = step(result.state, Choose(travel), library)
+    assert KEEPER in result.state.entities

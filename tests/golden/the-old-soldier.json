@@ -263,17 +263,17 @@
         {
           "kind": "encounter",
           "table": "peasants-quest:forest-road",
-          "entry": "the-weather-turns",
+          "entry": "a-caravan",
           "chance": 0.34,
           "where": "peasants-quest:north-road"
         },
         {
           "kind": "scene.entered",
-          "scene": "fantasy.core:the-road-notices-you"
+          "scene": "fantasy.core:a-caravan-on-the-road"
         },
         {
           "kind": "narrate",
-          "text": "The road has been going up for longer than it looked like it would.",
+          "text": "Mules, coming the other way, and men walking beside them who have been walking a long time.",
           "pause": false
         },
         {

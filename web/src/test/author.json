@@ -1850,6 +1850,11 @@
                 "note": "mace.core"
               },
               {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
+              },
+              {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
                 "note": "fantasy.core"
@@ -2048,6 +2053,11 @@
                 "value": "mace.core:wait-here",
                 "label": "wait here",
                 "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
@@ -2438,6 +2448,11 @@
                 "note": "fantasy.core"
               },
               {
+                "value": "fantasy.core:salt-carrier",
+                "label": "A Salt Carrier",
+                "note": "fantasy.core"
+              },
+              {
                 "value": "fantasy.core:soldier",
                 "label": "Soldier",
                 "note": "fantasy.core"
@@ -2644,6 +2659,11 @@
                 "note": "mace.core"
               },
               {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
+              },
+              {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
                 "note": "fantasy.core"
@@ -2843,6 +2863,11 @@
                 "value": "mace.core:wait-here",
                 "label": "wait here",
                 "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
@@ -3608,6 +3633,11 @@
                       "note": "mace.core"
                     },
                     {
+                      "value": "fantasy.core:a-caravan-on-the-road",
+                      "label": "a caravan on the road",
+                      "note": "fantasy.core"
+                    },
+                    {
                       "value": "fantasy.core:nothing-much-happens",
                       "label": "nothing much happens",
                       "note": "fantasy.core"
@@ -3882,6 +3912,11 @@
                 "note": "mace.core"
               },
               {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
+              },
+              {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
                 "note": "fantasy.core"
@@ -4097,6 +4132,11 @@
                 "value": "mace.core:wait-here",
                 "label": "wait here",
                 "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
@@ -4455,6 +4495,11 @@
               {
                 "value": "fantasy.core:salt",
                 "label": "Salt",
+                "note": "fantasy.core"
+              },
+              {
+                "value": "fantasy.core:salt-carrier",
+                "label": "A Salt Carrier",
                 "note": "fantasy.core"
               },
               {
@@ -4920,6 +4965,11 @@
                 "value": "mace.core:wait-here",
                 "label": "wait here",
                 "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
@@ -5482,6 +5532,11 @@
                 "note": "fantasy.core"
               },
               {
+                "value": "fantasy.core:salt-carrier",
+                "label": "A Salt Carrier",
+                "note": "fantasy.core"
+              },
+              {
                 "value": "fantasy.core:soldier",
                 "label": "Soldier",
                 "note": "fantasy.core"
@@ -5688,6 +5743,11 @@
                 "note": "mace.core"
               },
               {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
+              },
+              {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
                 "note": "fantasy.core"
@@ -5887,6 +5947,11 @@
                 "value": "mace.core:wait-here",
                 "label": "wait here",
                 "note": "mace.core"
+              },
+              {
+                "value": "fantasy.core:a-caravan-on-the-road",
+                "label": "a caravan on the road",
+                "note": "fantasy.core"
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
@@ -6284,6 +6349,11 @@
                   "note": "fantasy.core"
                 },
                 {
+                  "value": "fantasy.core:salt-carrier",
+                  "label": "A Salt Carrier",
+                  "note": "fantasy.core"
+                },
+                {
                   "value": "fantasy.core:soldier",
                   "label": "Soldier",
                   "note": "fantasy.core"
@@ -6512,6 +6582,11 @@
                 {
                   "value": "fantasy.core:salt",
                   "label": "Salt",
+                  "note": "fantasy.core"
+                },
+                {
+                  "value": "fantasy.core:salt-carrier",
+                  "label": "A Salt Carrier",
                   "note": "fantasy.core"
                 },
                 {

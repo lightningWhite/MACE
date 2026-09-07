@@ -34,6 +34,20 @@ scenes:
       - {text: "Someone passes going the other way, too fast, and does not look at you.",
          when: {not: {dayPart: [dawn, day]}}}
 
+  # An encounter that introduces a person rather than a fight. The carrier is
+  # `transient`, so they are here while you are here and gone when you walk
+  # on — which is the difference between meeting a caravan and there being a
+  # shop at that bend in the road forever.
+  - id: a-caravan-on-the-road
+    visible: false
+    say:
+      - {text: "Mules, coming the other way, and men walking beside them who have been walking a long time.",
+         when: {dayPart: [dawn, day]}}
+      - {text: "Lanterns on the road ahead, moving slowly, and the smell of animals.",
+         when: {not: {dayPart: [dawn, day]}}}
+    effects:
+      - {spawnEntity: salt-carrier}
+
   - id: something-in-the-grass
     visible: false
     say:

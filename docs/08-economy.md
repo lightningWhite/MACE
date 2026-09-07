@@ -355,6 +355,29 @@ arithmetic on the tick, so a player who visits every day and one who arrives
 after a season find the same purse. It never takes money *away* — a merchant
 who had a good day keeps it.
 
+### Caravans are markets you meet
+
+`mobile: true` is a merchant who deals for nowhere. It carries its own stock —
+its `inventory`, not a shelf — and its own prices, anchored to what things are
+ordinarily worth and to its own `wealth`. No scarcity term, because it is not
+from here and does not know what this valley is short of.
+
+That is the whole of what makes one worth meeting, and it lands hardest in a
+famine: **a shock is a fact about a place, and a caravan is not a place.** When
+the storm has put the castle's grain at three times base, the salt carrier on
+the road is still asking what it asked last week. Finding one then is the kind
+of thing a player tells somebody about.
+
+A caravan gets onto a road through an ordinary encounter, using the
+`spawnEntity` effect, and it is `transient` — here while you are here, gone
+when you walk on. One that waited at that bend in the road for the rest of the
+game would stop being a caravan, and a road that accumulated one per journey
+would be a crowd.
+
+Its prices are not written into the journal, either. A price the player was
+quoted is a fact about a market they can go back to; a price a caravan quoted
+is a fact about an afternoon.
+
 **Haggling** is where charisma finally does something, and the design
 constraint is one sentence: **knowing when to stop is the skill.** A single
 roll against charisma would be a button pressed once and never thought about;

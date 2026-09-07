@@ -44,6 +44,7 @@ from mace.engine.economy.markets import (
     Network,
     Prepared,
     at,
+    dealt_in,
     prepare,
 )
 from mace.engine.economy.pricing import (
@@ -68,6 +69,7 @@ __all__ = [
     "Network",
     "Prepared",
     "at",
+    "dealt_in",
     "haulage",
     "hauled",
     "opening",

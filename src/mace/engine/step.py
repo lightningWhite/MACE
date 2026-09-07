@@ -98,7 +98,7 @@ from mace.model.calendar import STANDARD_YEAR
 from mace.model.effects import Rest
 from mace.model.text import DescriptionLine, SayLine
 
-__all__ = ["StepResult", "begin", "context_for", "step"]
+__all__ = ["StepResult", "begin", "context_for", "spawn", "step"]
 
 #: How many scenes may follow one another through `goto` before the engine
 #: decides the content is looping. Generous enough that no honest chain hits it.
@@ -821,6 +821,7 @@ def _show_stall(context: RuleContext, events: list[Event]) -> None:
             merchant=stall.merchant,
             name=stall.name,
             market=stall.market,
+            mobile=stall.mobile,
             currency=stall.currency,
             purse=stall.purse,
             goods=tuple(row.record() for row in stall.goods),
@@ -905,6 +906,11 @@ def _remember_prices(context: RuleContext, stall: market_trade.Stall) -> None:
     stall : Stall
         What is on the counter.
     """
+    if stall.mobile:
+        # A caravan is not a place, so a price from one is not a fact about
+        # anywhere, and writing it down as one would be a lie the leverage
+        # rule would then act on.
+        return
     seen = context.state.prices.setdefault(stall.market, {})
     for row in stall.goods:
         if row.buy is not None:
@@ -1692,7 +1698,7 @@ def _happens(
 
     assert fired.entry.combat is not None
     spawned = [
-        _spawn(reference, context, context.state.location)
+        spawn(reference, context, context.state.location)
         for reference in fired.entry.combat.against
     ]
     flee_to = fired.entry.combat.flee_to
@@ -1813,12 +1819,21 @@ def _stand_at(state: GameState, where: str) -> None:
     where : str
         Qualified location id.
     """
+    origin = state.protagonist.location
     state.protagonist.location = where
     state.revealed.add(where)
     state.visited.add(where)
     # Every way of leaving somewhere comes through here, so a stall cannot
-    # follow the player down the road.
+    # follow the player down the road — and neither can the caravan an
+    # encounter put on it. Something met on the road is met on the road.
     state.trading = None
+    if origin != where:
+        for instance in [
+            key
+            for key, entity in state.entities.items()
+            if entity.transient and entity.location == origin
+        ]:
+            del state.entities[instance]
 
 
 def _arrive(
@@ -2765,7 +2780,13 @@ def _instance_id(definition_id: str, taken: Container[str] = ()) -> str:
     return f"{definition_id}#{number}"
 
 
-def _spawn(reference: str, context: RuleContext, location: str | None) -> str:
+def spawn(
+    reference: str,
+    context: RuleContext,
+    location: str | None,
+    *,
+    transient: bool = False,
+) -> str:
     """Put a new instance of an entity into the session.
 
     Parameters
@@ -2776,6 +2797,14 @@ def _spawn(reference: str, context: RuleContext, location: str | None) -> str:
         The playthrough.
     location : str or None
         Where it appears.
+    transient : bool
+        Whether it goes when the player moves on.
+
+    Notes
+    -----
+    Public because `spawnEntity` reaches for it: making an instance is the
+    scene runner's job, and two implementations of "put a troll here" is how
+    they come to disagree about what a troll starts with.
 
     Returns
     -------
@@ -2785,8 +2814,14 @@ def _spawn(reference: str, context: RuleContext, location: str | None) -> str:
     state = context.state
     qualified = context.qualify(reference, "entities")
     instance = _instantiate(
-        context.library, qualified, location, state.pack, taken=state.entities
+        context.library,
+        qualified,
+        location,
+        state.pack,
+        taken=state.entities,
+        currency=_currency_of(context.library, context.game, state.pack),
     )
+    instance.transient = transient
     state.entities[instance.instance_id] = instance
     return instance.instance_id
 
@@ -2832,7 +2867,7 @@ def _opponents(
         ):
             actors.append(standing.instance_id)
             continue
-        made = _spawn(reference, context, state.location)
+        made = spawn(reference, context, state.location)
         actors.append(made)
         spawned.add(made)
     return actors, spawned

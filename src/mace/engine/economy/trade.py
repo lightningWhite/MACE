@@ -38,8 +38,15 @@ from dataclasses import dataclass
 from mace.content import ContentError
 from mace.engine.context import RuleContext
 from mace.engine.economy.flow import projected, shock_on, sync
-from mace.engine.economy.markets import Dealt, Network, Prepared, at, prepare
-from mace.engine.economy.pricing import price_of
+from mace.engine.economy.markets import (
+    Dealt,
+    Network,
+    Prepared,
+    at,
+    dealt_in,
+    prepare,
+)
+from mace.engine.economy.pricing import price_of, wealth_factor
 from mace.engine.state import EntityState
 from mace.model import Entity, Merchant
 from mace.model.economy import Deals
@@ -126,7 +133,11 @@ class Stall:
     name : str
         What to call them.
     market : str
-        Qualified id of the market they deal for.
+        Qualified id of the market they deal for. Empty for a caravan, which
+        deals for nowhere.
+    mobile : bool
+        Whether this is a caravan carrying its own prices rather than a stall
+        in front of a settlement's shelves.
     currency : str
         Qualified item id trade is settled in.
     coin : int
@@ -148,6 +159,7 @@ class Stall:
     merchant: str
     name: str
     market: str
+    mobile: bool
     currency: str
     coin: int
     swing: float
@@ -186,6 +198,7 @@ class Stall:
             "merchant": self.merchant,
             "name": self.name,
             "market": self.market,
+            "mobile": self.mobile,
             "currency": self.currency,
             "coin": self.coin,
             "swing": round(self.swing, 4),
@@ -263,16 +276,13 @@ def look(context: RuleContext, entity: EntityState) -> Stall | None:
         The offer, or None when this is not a merchant, its market is not
         there, or the game has named no currency.
     """
-    found = _resolve(context, entity)
-    if found is None:
-        return None
-    merchant, network, prepared = found
+    backing = _resolve(context, entity)
     currency = _currency(context)
-    if currency is None:
+    if backing is None or currency is None:
         return None
-
-    held = projected(context.state, network, prepared.id, context.state.tick)
-    return _stall(context, entity, merchant, prepared, currency, held)
+    return _stall(
+        context, entity, backing, currency, _shelves(context, backing, entity)
+    )
 
 
 def quote(
@@ -301,25 +311,23 @@ def quote(
     int or None
         Whole coin, or None when this merchant cannot price that.
     """
-    found = _resolve(context, entity)
-    if found is None:  # pragma: no cover — the caller has a stall already
-        return None
-    merchant, network, prepared = found
-    dealt = prepared.goods.get(good)
-    if dealt is None:  # pragma: no cover — the stall listed it
-        return None
     from mace.engine.economy.haggle import swing_of
 
-    held = projected(context.state, network, prepared.id, context.state.tick)
+    backing = _resolve(context, entity)
+    if backing is None:  # pragma: no cover — the caller has a stall already
+        return None
+    dealt = backing.goods.get(good)
+    if dealt is None:  # pragma: no cover — the stall listed it
+        return None
+    held = _shelves(context, backing, entity)
     return haggled(
         _lot(
+            backing,
             dealt,
-            prepared,
-            merchant.spread,
             held.get(good, 0.0),
             qty,
             sell=sell,
-            shock=shock_on(context.state, prepared, good, context.state.tick),
+            shock=_shock_for(context, backing, good),
         ),
         swing_of(context, entity),
         sell=sell,
@@ -367,50 +375,55 @@ def deal(
     if qty > MAX_LOT:
         raise RuleError(f"nobody deals in more than {MAX_LOT} at a time")
 
-    found = _resolve(context, entity)
-    if found is None:
+    from mace.engine.economy.haggle import swing_of
+
+    backing = _resolve(context, entity)
+    if backing is None:
         raise RuleError("there is nobody here to trade with")
-    merchant, network, prepared = found
+    merchant = backing.merchant
 
     currency = _currency(context)
     if currency is None:
         raise RuleError("this game has no currency to trade in")
 
     good_id = _good_id(context, good)
-    dealt = prepared.goods.get(good_id)
+    dealt = backing.goods.get(good_id)
     wanted = merchant.buys if sell else merchant.sells
     if dealt is None or not _deals_in(wanted, _named(context, wanted), dealt, good_id):
         raise RuleError("that is not something they deal in")
 
-    # Bring the whole trading group up to now *before* touching a shelf: the
-    # price the player is quoted has to be the price of the market they are
-    # standing in, not of the one it was when somebody last looked.
-    state = sync(context.state, network, prepared.id)
-    held = state.stock.get(good_id, 0.0)
     player = context.state.protagonist
     item = dealt.item_id
     carried = player.inventory.get(item, 0)
 
+    # A market's shelves are brought up to now *before* anything is touched:
+    # the price the player is quoted has to be the price of the market they
+    # are standing in, not of the one it was when somebody last looked. A
+    # caravan has no shelves — what it has is its pack.
+    if backing.mobile:
+        held = float(entity.inventory.get(item, 0))
+        shelves = None
+    else:
+        assert backing.network is not None and backing.market is not None
+        shelves = sync(context.state, backing.network, backing.market.id)
+        held = shelves.stock.get(good_id, 0.0)
+
     if sell:
         if carried < qty:
             raise RuleError(f"you do not have {qty} {dealt.item.name} to sell")
-        headroom = dealt.stock.capacity - held
-        if headroom < qty:
+        if not backing.mobile and dealt.stock.capacity - held < qty:
             raise RuleError(f"they have nowhere to put that much {dealt.item.name}")
     elif int(held) < qty:
         raise RuleError(f"they do not have {qty} {dealt.item.name} to sell you")
 
-    from mace.engine.economy.haggle import swing_of
-
     coin = haggled(
         _lot(
+            backing,
             dealt,
-            prepared,
-            merchant.spread,
             held,
             qty,
             sell=sell,
-            shock=shock_on(context.state, prepared, good_id, context.state.tick),
+            shock=_shock_for(context, backing, good_id),
         ),
         swing_of(context, entity),
         sell=sell,
@@ -430,7 +443,10 @@ def deal(
         # Only a merchant with a purse holds the coin. A stall backed by a
         # whole town is not somebody whose pockets can be emptied.
         _move(entity.inventory, currency, coin if not sell else -coin)
-    state.stock[good_id] = held + (qty if sell else -qty)
+    if shelves is None:
+        _move(entity.inventory, item, qty if sell else -qty)
+    else:
+        shelves.stock[good_id] = held + (qty if sell else -qty)
 
     return Sale(good=good_id, item=item, qty=qty, sell=sell, coin=coin)
 
@@ -606,41 +622,98 @@ def unit_price(
     return max(1, math.ceil(price * (1.0 + spread / 2.0)))
 
 
+@dataclass(frozen=True, slots=True)
+class Backing:
+    """What is behind a counter: a settlement's shelves, or a caravan's pack.
+
+    Attributes
+    ----------
+    merchant : Merchant
+        The block.
+    network : Network or None
+        Every market and the roads between them. None for a caravan, which is
+        not on the road network in the sense that matters — nothing hauls to
+        it and nothing hauls from it.
+    market : Prepared or None
+        The market it deals for. None for a caravan.
+    goods : dict
+        Qualified good id to the good. A market's own, or every good there is
+        for a caravan, since what it deals in is what it happens to carry.
+    """
+
+    merchant: Merchant
+    network: Network | None
+    market: Prepared | None
+    goods: dict[str, Dealt]
+
+    @property
+    def mobile(self) -> bool:
+        """Whether this is a caravan.
+
+        Returns
+        -------
+        bool
+            Whether there is no market behind it.
+        """
+        return self.market is None
+
+    @property
+    def id(self) -> str:
+        """What to call the thing behind the counter.
+
+        Returns
+        -------
+        str
+            The market's qualified id, or an empty string for a caravan —
+            which is not a place and cannot be one in a journal of prices.
+        """
+        return "" if self.market is None else self.market.id
+
+
 def _lot(
+    backing: Backing,
     dealt: Dealt,
-    prepared: Prepared,
-    spread: float,
     held: float,
     qty: int,
     *,
     sell: bool,
     shock: float = 1.0,
 ) -> int:
-    """What a whole lot comes to, priced a unit at a time as the shelf moves.
+    """What a whole lot comes to, before any argument about it.
+
+    A market's lot is priced a unit at a time as the shelf moves under it. A
+    caravan's is not: it carries a price list, which is the whole reason one
+    is worth meeting — it charges the same for iron in a valley with no iron
+    as it does anywhere else, and does not know or care what this place is
+    short of.
 
     Parameters
     ----------
+    backing : Backing
+        What is behind the counter.
     dealt : Dealt
         The good.
-    prepared : Prepared
-        The market.
-    spread : float
-        The merchant's cut, after anything a haggle has done to it.
     held : float
-        Units on the shelf before the trade.
+        Units the counter has before the trade.
     qty : int
         How many units.
     sell : bool
         Whether the player is handing them over.
     shock : float
-        What the world is doing to this price.
+        What the world is doing to prices here. Always 1.0 for a caravan: a
+        shock lands on a place, and a caravan is not one, which is the other
+        half of what makes one worth meeting in a famine.
 
     Returns
     -------
     int
         Whole coin for the lot.
     """
-    wealth = prepared.market.wealth
+    spread = backing.merchant.spread
+    if backing.market is None:
+        return qty * _carried_price(backing, dealt, sell=sell)
+
+    wealth = backing.market.market.wealth
     step = 1.0 if sell else -1.0
     return sum(
         unit_price(dealt, wealth, spread, held + step * unit, sell=sell, shock=shock)
@@ -648,13 +721,89 @@ def _lot(
     )
 
 
-# ── Resolving who and what ────────────────────────────────────────────────────
+def _shock_for(context: RuleContext, backing: Backing, good_id: str) -> float:
+    """What the world is doing to a price at this counter.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    backing : Backing
+        What is behind the counter.
+    good_id : str
+        Qualified good id.
+
+    Returns
+    -------
+    float
+        The multiplier. Always 1.0 for a caravan.
+    """
+    if backing.market is None:
+        return 1.0
+    return shock_on(context.state, backing.market, good_id, context.state.tick)
 
 
-def _resolve(
-    context: RuleContext, entity: EntityState
-) -> tuple[Merchant, Network, Prepared] | None:
-    """Find a merchant's market, and the network it trades in.
+def _shelves(
+    context: RuleContext, backing: Backing, entity: EntityState
+) -> dict[str, float]:
+    """What the counter has, without moving anything.
+
+    A market's shelves are projected forward; a caravan's are simply its pack.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough. Read only.
+    backing : Backing
+        What is behind the counter.
+    entity : EntityState
+        The merchant's instance.
+
+    Returns
+    -------
+    dict
+        Qualified good id to units on offer.
+    """
+    if backing.market is None:
+        return {
+            good_id: float(entity.inventory.get(dealt.item_id, 0))
+            for good_id, dealt in backing.goods.items()
+        }
+    assert backing.network is not None
+    return projected(
+        context.state, backing.network, backing.market.id, context.state.tick
+    )
+
+
+def _carried_price(backing: Backing, dealt: Dealt, *, sell: bool) -> int:
+    """What a caravan asks for one of something, wherever you meet it.
+
+    No scarcity term, deliberately. A caravan is not from here; it has a
+    price list, and the price list is why it is worth meeting.
+
+    Parameters
+    ----------
+    backing : Backing
+        The caravan.
+    dealt : Dealt
+        The good.
+    sell : bool
+        Whether the player is handing it over.
+
+    Returns
+    -------
+    int
+        Whole coin, rounded against the player.
+    """
+    price = dealt.base_value * wealth_factor(backing.merchant.wealth)
+    spread = backing.merchant.spread
+    if sell:
+        return max(0, math.floor(price * (1.0 - spread / 2.0)))
+    return max(1, math.ceil(price * (1.0 + spread / 2.0)))
+
+
+def _resolve(context: RuleContext, entity: EntityState) -> Backing | None:
+    """Find what is behind a merchant's counter.
 
     Parameters
     ----------
@@ -665,13 +814,21 @@ def _resolve(
 
     Returns
     -------
-    tuple or None
-        The merchant block, the network, and its market — or None when it is
-        not a merchant or its market is not there.
+    Backing or None
+        What it deals out of, or None when it is not a merchant or its market
+        is not there.
     """
     merchant = merchant_at(context, entity)
     if merchant is None:
         return None
+
+    if merchant.mobile:
+        return Backing(
+            merchant=merchant,
+            network=None,
+            market=None,
+            goods=dealt_in(context.library),
+        )
 
     network = prepare(context.library)
     if merchant.market is not None:
@@ -684,18 +841,21 @@ def _resolve(
         where = entity.location
         prepared = None if where is None else at(network, where)
 
-    return None if prepared is None else (merchant, network, prepared)
+    if prepared is None:
+        return None
+    return Backing(
+        merchant=merchant, network=network, market=prepared, goods=prepared.goods
+    )
 
 
 def _stall(
     context: RuleContext,
     entity: EntityState,
-    merchant: Merchant,
-    prepared: Prepared,
+    backing: Backing,
     currency: str,
     held: dict[str, float],
 ) -> Stall:
-    """Build the price list from shelves the caller has already worked out.
+    """Build the price list from whatever the counter has.
 
     Parameters
     ----------
@@ -703,40 +863,42 @@ def _stall(
         The playthrough.
     entity : EntityState
         The merchant's instance.
-    merchant : Merchant
-        Its block.
-    prepared : Prepared
-        Its market.
+    backing : Backing
+        What is behind the counter.
     currency : str
         Qualified item id trade is settled in.
     held : dict
-        Qualified good id to units on the shelf.
+        Qualified good id to units on offer.
 
     Returns
     -------
     Stall
-        The offer.
+        The offer. A caravan lists only what it is actually carrying and what
+        it will take off you; a market lists everything it deals in, because
+        an empty shelf at a market is news and an empty shelf on a caravan is
+        just a thing it does not have.
     """
     from mace.engine.economy.haggle import swing_of
 
+    merchant = backing.merchant
     player = context.state.protagonist
-    wealth = prepared.market.wealth
-    spread, swing = merchant.spread, swing_of(context, entity)
+    swing = swing_of(context, entity)
     will_buy, will_sell = _named(context, merchant.buys), _named(
         context, merchant.sells
     )
     rows: list[Priced] = []
 
-    for good_id, dealt in prepared.goods.items():
+    for good_id, dealt in backing.goods.items():
         item = dealt.item_id
         if item == currency:
-            # A market that dealt in coin would price money in money.
+            # A counter that dealt in coin would price money in money.
             continue
         on_shelf = held.get(good_id, 0.0)
-        shock = shock_on(context.state, prepared, good_id, context.state.tick)
         carried = player.inventory.get(item, 0)
         sells = _deals_in(merchant.sells, will_sell, dealt, good_id)
         buys = _deals_in(merchant.buys, will_buy, dealt, good_id)
+        if backing.mobile and not (int(on_shelf) >= 1 or (buys and carried >= 1)):
+            continue
         rows.append(
             Priced(
                 good=good_id,
@@ -744,8 +906,13 @@ def _stall(
                 name=dealt.item.name,
                 buy=(
                     haggled(
-                        unit_price(
-                            dealt, wealth, spread, on_shelf, sell=False, shock=shock
+                        _lot(
+                            backing,
+                            dealt,
+                            on_shelf,
+                            1,
+                            sell=False,
+                            shock=_shock_for(context, backing, good_id),
                         ),
                         swing,
                         sell=False,
@@ -755,8 +922,13 @@ def _stall(
                 ),
                 sell=(
                     haggled(
-                        unit_price(
-                            dealt, wealth, spread, on_shelf, sell=True, shock=shock
+                        _lot(
+                            backing,
+                            dealt,
+                            on_shelf,
+                            1,
+                            sell=True,
+                            shock=_shock_for(context, backing, good_id),
                         ),
                         swing,
                         sell=True,
@@ -772,7 +944,8 @@ def _stall(
     return Stall(
         merchant=entity.instance_id,
         name=context.definition(entity).name,
-        market=prepared.id,
+        market=backing.id,
+        mobile=backing.mobile,
         currency=currency,
         coin=player.inventory.get(currency, 0),
         swing=swing,

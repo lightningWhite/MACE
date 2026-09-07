@@ -621,6 +621,28 @@ EFFECTS: tuple[Recipe, ...] = (
         ),
     ),
     Recipe(
+        label="Put somebody, or something, here",
+        tag="spawnEntity",
+        group="Place and time",
+        help="What an encounter uses to introduce a person rather than a fight.",
+        asks=(
+            Ask("entity", "Who or what?", _ANY_ENTITY),
+            Ask(
+                "at",
+                "Where?",
+                Select(options=Query("locations"), optional=True),
+                help="Blank for wherever the player is.",
+            ),
+            Ask(
+                "transient",
+                "Do they go when the player moves on?",
+                Bool(optional=True),
+                default=True,
+                help="Something met on the road is met on the road.",
+            ),
+        ),
+    ),
+    Recipe(
         label="Reopen a road",
         tag="openRoute",
         group="Place and time",

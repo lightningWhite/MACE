@@ -46,6 +46,7 @@ __all__ = [
     "Network",
     "Prepared",
     "at",
+    "dealt_in",
     "prepare",
 ]
 
@@ -280,6 +281,37 @@ class Network:
             for group in self.groups
             if any(link.route == route_id for link in group.links)
         )
+
+
+def dealt_in(library: Library) -> dict[str, Dealt]:
+    """Every good in a library, resolved, with no market behind it.
+
+    What a caravan deals in. It has no shelves and no scarcity — it carries
+    what it carries — so the `stock` here is a placeholder and only the good
+    and its item mean anything.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+
+    Returns
+    -------
+    dict
+        Qualified good id to the good, in a fixed order.
+    """
+    found: dict[str, Dealt] = {}
+    for pack in library.packs:
+        for local_id in sorted(pack.goods):
+            good_id = f"{pack.id}:{local_id}"
+            item_id, item = _item(library, good_id, pack.goods[local_id])
+            found[good_id] = Dealt(
+                good=pack.goods[local_id],
+                item=item,
+                item_id=item_id,
+                stock=Stock(capacity=DEFAULT_DEPTH),
+            )
+    return found
 
 
 def prepare(library: Library) -> Network:
