@@ -630,6 +630,7 @@ def play(
     pack_id: str | None = None,
     seed: str = "mace",
     combat_mode: str | None = None,
+    time_pressure: float = 1.0,
     character: Character | None = None,
     save: Path | None = None,
     resume: Path | None = None,
@@ -647,6 +648,9 @@ def play(
         The session seed. The same seed and the same choices replay identically.
     combat_mode : str or None
         Override the game's default combat presentation.
+    time_pressure : float
+        How hard the clock presses in reflex combat. 1.0 is the fight as
+        written; below it gives more of the window.
     character : Character or None
         Skip character creation and start as this. None asks, for a game that
         has something to ask.
@@ -682,6 +686,7 @@ def play(
                 chosen,
                 seed=seed,
                 combat_mode=combat_mode,
+                time_pressure=time_pressure,
                 character=character,
             )
     except (ContentError, SaveError) as error:

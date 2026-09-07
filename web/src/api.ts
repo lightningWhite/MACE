@@ -77,6 +77,7 @@ export function openSession(request: {
   pack?: string;
   seed?: string;
   combatMode?: string;
+  timePressure?: number;
   character?: Made;
 }): Promise<Frame> {
   return ask("/api/sessions", { method: "POST", body: JSON.stringify(request) });

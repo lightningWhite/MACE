@@ -217,10 +217,25 @@ Not an afterthought, because the reflex layer in combat is exactly the kind of
 thing that excludes people by default.
 
 - `tactical` combat mode removes all time pressure with no loss of depth.
-- A global "time pressure" multiplier for players who want reflex mode but slower.
+- A global "time pressure" multiplier for players who want reflex mode but
+  slower. `--time-pressure` on the CLI, `timePressure` when a session opens,
+  and a row of choices on the web client's opening screen. It divides into the
+  same `ease` that familiarity multiplies, so "give me more time" and "I have
+  fought trolls before" widen the same door rather than two.
+
+  It is a **session** setting, kept in the save beside the seed, for the same
+  reason `combatMode` is: a recorded `elapsedMs` only means anything against
+  the window it was answered inside, so it cannot move mid-playthrough. And it
+  scales the window and nothing else — precision is still measured against the
+  window the player was actually given, so a slower clock is a longer door and
+  not an easier one to aim at.
 - Full keyboard navigation; the terminal client is inherently screen-reader
   friendly and the web client must be too — combat tells are announced in an ARIA
-  live region.
+  live region, and the fight's answers are bound to the same keys the terminal
+  binds. After a turn the web client moves focus to the next thing to press:
+  the button the player just used is gone by then, and without it a keyboard
+  player would tab back in from the top of the page every single turn.
 - Never encode information in color alone: weather, danger, and map states carry
-  a shape or label as well.
+  a shape or label as well. On the map, the three fog states are three shapes,
+  a closed road is dashed *and* says "shut", and each region's sky is named.
 - Respect `prefers-reduced-motion`; the timing bar degrades to a numeric countdown.

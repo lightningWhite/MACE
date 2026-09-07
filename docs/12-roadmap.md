@@ -135,7 +135,9 @@ writing YAML.
       itself the way the terminal's does
 - [ ] Offline-capable PWA shell
 - [ ] Pyodide build: engine client-side, static deploy to GitHub Pages
-- [ ] Accessibility pass — ARIA live regions, keyboard nav, reduced motion
+- [x] Accessibility pass — the time-pressure setting docs/10 asked for and
+      nothing had implemented, ARIA live regions, focus that stays in the game
+      between turns, reduced motion, and nothing carried by colour alone
 - [ ] **Economy**: goods, markets, stock, price formation, trade flow between
       connected markets (`economy: market`)
 

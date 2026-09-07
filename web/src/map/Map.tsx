@@ -134,12 +134,15 @@ export function MapView({
           return (
             <g key={road.route} className={road.closed ? "road road-shut" : "road"}>
               <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
+              {/* Shut is dashed *and* said. Colour alone would leave the
+                  only difference between a road and a closed one invisible
+                  to a third of the people who might read this map. */}
               <text
                 x={(from.x + to.x) / 2}
                 y={(from.y + to.y) / 2 - 4}
                 className="road-ticks"
               >
-                {road.ticks}
+                {road.closed ? "shut" : road.ticks}
               </text>
             </g>
           );

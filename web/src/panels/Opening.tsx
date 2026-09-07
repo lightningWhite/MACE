@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 
 import { creationFor, listGames } from "../api";
 import type { CreationOffer, GameSummary, Made, SaveRecord } from "../protocol";
+import { PRESSURES } from "../protocol";
 
 export function Opening({
   saved,
@@ -26,7 +27,11 @@ export function Opening({
   failure,
 }: {
   saved: SaveRecord | null;
-  onBegin: (pack: string, character: Made | null) => void;
+  onBegin: (
+    pack: string,
+    character: Made | null,
+    timePressure: number,
+  ) => void;
   onResume: (save: SaveRecord) => void;
   onForget: () => void;
   failure: string | null;
@@ -36,6 +41,7 @@ export function Opening({
   const [offer, setOffer] = useState<CreationOffer | null>(null);
   const [background, setBackground] = useState<string | null>(null);
   const [spend, setSpend] = useState<Record<string, number>>({});
+  const [pressure, setPressure] = useState(1);
   const [trouble, setTrouble] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,7 +75,7 @@ export function Opening({
   function begin(): void {
     if (pack === null) return;
     const asked = offer?.asksAnything ?? false;
-    onBegin(pack, asked ? { background, spend } : null);
+    onBegin(pack, asked ? { background, spend } : null, pressure);
   }
 
   const chooser = games !== null && games.length > 1;
@@ -196,6 +202,28 @@ export function Opening({
           )}
         </>
       )}
+
+      <section>
+        <h2>The clock</h2>
+        <p className="dim aside">
+          Fights telegraph, and you answer inside a window. This sets how long
+          that window is — it changes nothing else about the fight.
+        </p>
+        <ul className="pressures">
+          {PRESSURES.map((option) => (
+            <li key={option.value}>
+              <button
+                type="button"
+                className={option.value === pressure ? "game chosen" : "game"}
+                aria-pressed={option.value === pressure}
+                onClick={() => setPressure(option.value)}
+              >
+                <span className="game-name">{option.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <button type="button" className="primary begin" disabled={!ready} onClick={begin}>
         Begin

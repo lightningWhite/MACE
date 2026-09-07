@@ -785,6 +785,17 @@ class GameState:
         default. A session setting rather than an action: it belongs with the
         seed, in the parameters a save opens with, because changing it midway
         would change what a recorded elapsed time means.
+    time_pressure : float
+        How hard the clock presses in `reflex` combat. 1.0 is the fight as
+        authored; 0.5 gives twice the window; 2.0 gives half of it. An
+        accessibility setting (docs/10 § Accessibility) for players who want
+        the reading game without that much of the reaction game, and a session
+        setting for the same reason `combat_mode` is one — it changes what a
+        recorded elapsed time means, so it cannot move mid-playthrough.
+
+        It scales the window and nothing else. Precision is still measured
+        against the window the player was actually given, so a slower window
+        is a longer door and not an easier one to aim at.
     background : str or None
         The qualified background the protagonist was created with, kept
         because conditions ask about it and a save has to reopen as the same
@@ -823,6 +834,7 @@ class GameState:
     combat: CombatState | None = None
     combats_begun: int = 0
     combat_mode: str | None = None
+    time_pressure: float = 1.0
     background: str | None = None
     pending: PendingChoices | None = None
     outcome: Outcome = Outcome.PLAYING

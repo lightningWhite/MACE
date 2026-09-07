@@ -62,6 +62,10 @@ class Save:
         Every action, in order, in recorded form. Choices are named by prompt.
     combat_mode : str or None
         The combat presentation the session opened with.
+    time_pressure : float
+        How hard the clock pressed. Part of the recipe rather than a
+        preference, because a recorded `elapsedMs` only means anything against
+        the window it was answered inside.
     character : Character or None
         What the player answered at character creation.
     start_at : str or None
@@ -75,6 +79,7 @@ class Save:
     packs: Mapping[str, str] = field(default_factory=dict)
     actions: tuple[dict[str, Any], ...] = ()
     combat_mode: str | None = None
+    time_pressure: float = 1.0
     character: Character | None = None
     start_at: str | None = None
     start_tick: int | None = None
@@ -101,6 +106,7 @@ class Save:
             },
             actions=tuple(dict(record) for record in session.log),
             combat_mode=session.combat_mode,
+            time_pressure=session.time_pressure,
             character=session.character,
             start_at=session.start_at,
             start_tick=session.start_tick,
@@ -122,6 +128,8 @@ class Save:
         }
         if self.combat_mode is not None:
             written["combatMode"] = self.combat_mode
+        if self.time_pressure != 1.0:
+            written["timePressure"] = self.time_pressure
         if self.character is not None:
             written["character"] = {
                 "background": self.character.background,
@@ -179,6 +187,7 @@ class Save:
             },
             actions=tuple(dict(entry) for entry in actions),
             combat_mode=record.get("combatMode"),
+            time_pressure=float(record.get("timePressure", 1.0)),
             character=(
                 None
                 if made is None
@@ -283,6 +292,7 @@ def resume(save: Save, library: Library) -> tuple[Session, list[str]]:
             choose_game(library, save.pack),
             seed=save.seed,
             combat_mode=save.combat_mode,
+            time_pressure=save.time_pressure,
             character=save.character,
             start_at=save.start_at,
             start_tick=save.start_tick,

@@ -152,6 +152,17 @@ def test_a_game_that_is_not_loaded_is_refused(client: TestClient) -> None:
     assert refused.status_code == 400
 
 
+def test_the_clock_can_be_slowed_when_a_session_opens(client: TestClient) -> None:
+    frame = opened(client, pack="tiny", timePressure=0.5)
+    save = client.get(f"/api/sessions/{frame['session']}/save").json()
+    assert save["timePressure"] == 0.5
+
+
+def test_a_clock_that_would_stop_is_refused(client: TestClient) -> None:
+    refused = client.post("/api/sessions", json={"pack": "tiny", "timePressure": 0})
+    assert refused.status_code == 422
+
+
 # ── Saves are how a playthrough outlives the process ──────────────────────────
 
 

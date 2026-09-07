@@ -93,6 +93,9 @@ class New(Wire):
         The session seed.
     combat_mode : str or None
         Override the game's default combat presentation.
+    time_pressure : float
+        How hard the clock presses in `reflex` combat. 1.0 is the fight as
+        written; 0.5 gives twice the window.
     character : Made or None
         Who the player is.
     save : mapping or None
@@ -102,6 +105,7 @@ class New(Wire):
     pack: str | None = None
     seed: str = "mace"
     combat_mode: str | None = None
+    time_pressure: float = Field(default=1.0, gt=0.0, le=10.0)
     character: Made | None = None
     save: dict[str, Any] | None = None
 
@@ -345,6 +349,7 @@ def create_app(
                     choose_game(loaded, asked.pack),
                     seed=asked.seed,
                     combat_mode=asked.combat_mode,
+                    time_pressure=asked.time_pressure,
                     character=(
                         None
                         if asked.character is None

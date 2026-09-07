@@ -106,6 +106,17 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     player.add_argument(
+        "--time-pressure",
+        type=float,
+        default=1.0,
+        metavar="X",
+        help=(
+            "how hard the clock presses in reflex combat. 1.0 is the fight as "
+            "written; 0.5 gives twice the window and 2.0 gives half of it. For "
+            "playing the reading game without that much of the reaction game."
+        ),
+    )
+    player.add_argument(
         "--save",
         type=Path,
         metavar="FILE",
@@ -316,6 +327,7 @@ def run_play(options: argparse.Namespace) -> int:
         pack_id=options.pack,
         seed=options.seed,
         combat_mode=options.combat,
+        time_pressure=options.time_pressure,
         character=character,
         save=options.save,
         resume=options.load,

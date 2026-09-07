@@ -62,6 +62,8 @@ export function App() {
 
   const connection = useRef<Connection | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
+  const pane = useRef<HTMLElement | null>(null);
+  const acted = useRef(false);
 
   /**
    * Take in a frame: append what happened, replace what stands.
@@ -138,11 +140,33 @@ export function App() {
     if (box !== null) box.scrollTop = box.scrollHeight;
   }, [lines]);
 
+  // The button a player pressed is gone by the time the frame lands, so
+  // without this focus falls back to the document and the next Tab starts
+  // from the top of the page — a keyboard player would have to tab back into
+  // the game after every single turn. Focus moves only when the player
+  // acted, never on the opening frame, which would take it from whatever
+  // they were reading.
+  useEffect(() => {
+    if (!acted.current) return;
+    acted.current = false;
+    pane.current
+      ?.querySelector<HTMLButtonElement>("button:not(:disabled)")
+      ?.focus();
+  }, [frame]);
+
   useEffect(() => () => connection.current?.close(), []);
 
-  function begin(pack: string, character: Made | null): void {
+  function begin(
+    pack: string,
+    character: Made | null,
+    timePressure: number,
+  ): void {
     setFailure(null);
-    openSession(character === null ? { pack } : { pack, character })
+    openSession({
+      pack,
+      timePressure,
+      ...(character === null ? {} : { character }),
+    })
       .then(attach)
       .catch((error: Error) => setFailure(error.message));
   }
@@ -169,11 +193,13 @@ export function App() {
 
   function choose(option: number): void {
     setBusy(true);
+    acted.current = true;
     void connection.current?.send({ kind: "choose", option });
   }
 
   function answer(action: Action): void {
     setBusy(true);
+    acted.current = true;
     void connection.current?.send(action);
   }
 
@@ -191,7 +217,7 @@ export function App() {
 
   return (
     <div className="game">
-      <main className="narrative">
+      <main className="narrative" ref={pane} aria-busy={busy}>
         <div className="transcript" role="log" aria-live="polite" ref={scroller}>
           {lines.map((entry) => (
             <p key={entry.id} className={`line line-${entry.tone}`}>

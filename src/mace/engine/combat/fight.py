@@ -81,6 +81,11 @@ FLEE_BASE = 0.35
 #: How much familiarity with a profile widens its windows, at full knowledge.
 FAMILIARITY_WINDOW = 0.20
 
+#: The hardest a player may set the clock. A floor rather than an assertion:
+#: a session setting that could be zero would divide the window away entirely,
+#: and an unanswerable fight is a crash with better manners.
+MIN_TIME_PRESSURE = 0.05
+
 #: How much of the way to a legible tell full familiarity carries a vague one.
 FAMILIARITY_CLARITY = 0.5
 
@@ -1003,6 +1008,10 @@ def _telegraph(
     ease = 1.0 + FAMILIARITY_WINDOW * target.familiarity_with(
         attacker.combatant.profile
     )
+    # The player's own time-pressure setting divides into the same ease that
+    # familiarity multiplies, so "I want more time" and "I have fought trolls
+    # before" widen the same door rather than two.
+    ease /= max(context.state.time_pressure, MIN_TIME_PRESSURE)
     window = resolution.window_ms(move.windup_ms, target.stat("speed"), ease)
     clear = _is_clear(context, fight, attacker, target)
     fight.tell = PendingTell(

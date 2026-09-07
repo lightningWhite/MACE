@@ -175,6 +175,30 @@ def test_play_offers_the_map_when_the_player_types_nonsense(
     assert "`m` for the map" in capsys.readouterr().out
 
 
+def test_play_can_be_asked_to_slow_the_clock_down(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """docs/10 § Accessibility: reflex mode, with less of the reflex."""
+    save = tmp_path / "slow.json"
+    scripted(monkeypatch, ["q"])
+    assert (
+        main(
+            [
+                "play",
+                "packs",
+                "--pack",
+                "peasants-quest",
+                "--time-pressure",
+                "0.5",
+                "--save",
+                str(save),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(save.read_text())["timePressure"] == 0.5
+
+
 def test_serve_reports_content_it_cannot_load(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

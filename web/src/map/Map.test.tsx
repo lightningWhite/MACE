@@ -117,6 +117,8 @@ describe("roads worth a second look", () => {
       ),
     });
     expect(container.querySelectorAll(".road-shut").length).toBe(1);
+    // And says so in a word, because dashes and red are not enough on their own.
+    expect(screen.getByText("shut")).toBeTruthy();
   });
 
   it("draws a journey as far along as the player has got", () => {

@@ -93,6 +93,40 @@ describe("the opening", () => {
     expect(more).toHaveProperty("disabled", true);
   });
 
+  it("offers the clock a player wants, and sends it", async () => {
+    // docs/10 § Accessibility: reflex mode for people who want it slower.
+    const user = userEvent.setup();
+    const service = fakeService();
+    stub(service);
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Farmhand/ }));
+    await user.click(screen.getByRole("button", { name: "Twice the time" }));
+    await user.click(screen.getByRole("button", { name: "Begin" }));
+    await screen.findByText(/You are a peasant/);
+
+    const opened = service.calls.find(
+      (call) => call.path === "/api/sessions" && call.method === "POST",
+    );
+    expect(opened?.body).toMatchObject({ timePressure: 0.5 });
+  });
+
+  it("asks for the fight as written unless told otherwise", async () => {
+    const user = userEvent.setup();
+    const service = fakeService();
+    stub(service);
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Farmhand/ }));
+    await user.click(screen.getByRole("button", { name: "Begin" }));
+    await screen.findByText(/You are a peasant/);
+
+    const opened = service.calls.find(
+      (call) => call.path === "/api/sessions" && call.method === "POST",
+    );
+    expect(opened?.body).toMatchObject({ timePressure: 1 });
+  });
+
   it("says so when the service will not open a session", async () => {
     const user = userEvent.setup();
     stub(fakeService({ failOpen: "no game packs found" }));
@@ -156,6 +190,51 @@ describe("the game", () => {
     const toll = await screen.findByRole("button", { name: /Pay the toll/ });
     expect(toll).toHaveProperty("disabled", true);
     expect(toll.textContent).toContain("gold");
+  });
+});
+
+// ── Playing it with a keyboard ────────────────────────────────────────────────
+
+describe("keyboard play", () => {
+  it("keeps focus in the game after a turn", async () => {
+    // The button the player pressed is gone by the time the frame lands.
+    // Without this a keyboard player tabs back in from the top of the page
+    // after every single turn.
+    const user = userEvent.setup();
+    stub(fakeService());
+    render(<App />);
+    await play(user);
+
+    await user.click(screen.getByRole("button", { name: /Take the north road/ }));
+    await screen.findByText(/The journey stops:/);
+
+    await waitFor(() => {
+      expect(document.activeElement?.tagName).toBe("BUTTON");
+      expect(document.activeElement?.closest(".narrative")).toBeTruthy();
+    });
+  });
+
+  it("does not take focus before the player has done anything", async () => {
+    const user = userEvent.setup();
+    stub(fakeService());
+    render(<App />);
+    await play(user);
+
+    // The player is reading. Nothing has stolen the caret.
+    expect(document.activeElement?.className).not.toContain("choice");
+  });
+
+  it("says it is waiting, so a screen reader does not read a stale menu", async () => {
+    const user = userEvent.setup();
+    stub(fakeService());
+    render(<App />);
+    await play(user);
+
+    const pane = document.querySelector(".narrative");
+    expect(pane?.getAttribute("aria-busy")).toBe("false");
+    await user.click(screen.getByRole("button", { name: /Take the north road/ }));
+    await screen.findByText(/The journey stops:/);
+    expect(pane?.getAttribute("aria-busy")).toBe("false");
   });
 });
 

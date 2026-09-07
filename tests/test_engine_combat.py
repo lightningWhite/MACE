@@ -101,6 +101,27 @@ def test_skill_lifts_a_sloppy_answer_but_never_to_a_clean_one() -> None:
     assert sloppy < resolution.eased(sloppy, 100.0) < 1.0
 
 
+# ── Time pressure ─────────────────────────────────────────────────────────────
+
+
+def test_the_clock_can_be_asked_to_press_less_hard() -> None:
+    """docs/10 § Accessibility: reflex mode for people who want it slower."""
+    assert resolution.window_ms(1400, 50, 2.0) == 2800
+    assert resolution.window_ms(1400, 50, 0.5) == 700
+
+
+def test_a_wider_window_is_not_an_easier_one_to_aim_at() -> None:
+    """The setting is a longer door, not a bigger target.
+
+    Precision is measured against the window the player was actually given,
+    so the sweet spot stays three quarters of the way through whatever they
+    were given. Otherwise a slower clock would quietly be an easier fight.
+    """
+    for window in (700, 1400, 2800):
+        assert resolution.precision_of(int(window * 0.75), window) == 1.0
+        assert resolution.precision_of(int(window * 0.25), window) < 0.05
+
+
 # ── A fight, end to end ───────────────────────────────────────────────────────
 
 
@@ -389,6 +410,46 @@ def test_the_winning_scene_plays_afterwards(tmp_path: Path) -> None:
         result = answer(result.state, library, "block")
     assert "He stays down." in [
         e.payload()["text"] for e in result.events if e.kind == "narrate"
+    ]
+
+
+def test_a_players_time_pressure_widens_every_window(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+
+    windows = {}
+    for pressure in (0.5, 1.0, 2.0):
+        opened = begin(library, "brawl", seed="brawl", time_pressure=pressure)
+        result = step(opened.state, Choose(0), library)
+        tell = result.state.combat.tell if result.state.combat else None
+        assert tell is not None
+        windows[pressure] = tell.window_ms
+
+    assert windows[0.5] > windows[1.0] > windows[2.0]
+    assert windows[0.5] == pytest.approx(windows[1.0] * 2, rel=0.01)
+    assert windows[2.0] == pytest.approx(windows[1.0] / 2, rel=0.01)
+
+
+def test_the_clock_cannot_be_pressed_out_of_existence(tmp_path: Path) -> None:
+    """A setting that reached zero would divide the window away entirely."""
+    library = brawl_pack(tmp_path)
+    opened = begin(library, "brawl", seed="brawl", time_pressure=0.0)
+    result = step(opened.state, Choose(0), library)
+    tell = result.state.combat.tell if result.state.combat else None
+    assert tell is not None
+    assert tell.window_ms > 0
+
+
+def test_leaving_the_clock_alone_changes_nothing(tmp_path: Path) -> None:
+    """The default has to be inert, or every golden file is a lie."""
+    library = brawl_pack(tmp_path)
+    plain = step(begin(library, "brawl", seed="brawl").state, Choose(0), library)
+    asked = step(
+        begin(library, "brawl", seed="brawl", time_pressure=1.0).state,
+        Choose(0),
+        library,
+    )
+    assert [event.record() for event in plain.events] == [
+        event.record() for event in asked.events
     ]
 
 

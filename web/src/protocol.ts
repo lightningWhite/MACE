@@ -46,6 +46,20 @@ export interface CreationOffer {
   stats: StatOffer[];
 }
 
+/**
+ * How hard the clock presses in `reflex` combat.
+ *
+ * 1.0 is the fight as written; 0.5 gives twice the window. An accessibility
+ * setting, and a session one — a recorded `elapsedMs` only means anything
+ * against the window it was answered inside, so it cannot move mid-game.
+ */
+export const PRESSURES: Array<{ value: number; label: string }> = [
+  { value: 0.5, label: "Twice the time" },
+  { value: 0.75, label: "A little longer" },
+  { value: 1, label: "As written" },
+  { value: 1.5, label: "Harder" },
+];
+
 /** What the player answered at creation. */
 export interface Made {
   background: string | null;
@@ -433,6 +447,7 @@ export interface SaveRecord {
   seed: string;
   packs: Record<string, string>;
   combatMode?: string;
+  timePressure?: number;
   character?: Made;
   startAt?: string;
   startTick?: number;

@@ -144,6 +144,7 @@ def begin(
     seed: str = "mace",
     *,
     combat_mode: str | None = None,
+    time_pressure: float = 1.0,
     character: Character | None = None,
     start_at: str | None = None,
     start_tick: int | None = None,
@@ -158,6 +159,10 @@ def begin(
         Which game pack to play.
     seed : str
         The session seed. The same seed and actions replay identically.
+    time_pressure : float
+        How hard the clock presses in `reflex` combat. 1.0 is the fight as
+        authored, below 1.0 gives more of the window. See
+        `GameState.time_pressure`.
     combat_mode : str or None
         The player's choice of combat presentation, overriding the game's
         default. Part of what a session opens with, like the seed, because
@@ -200,6 +205,7 @@ def begin(
         library, pack_id, pack.game, seed, start_at=start_at, start_tick=start_tick
     )
     state.combat_mode = combat_mode
+    state.time_pressure = time_pressure
     opening = _create_character(library, pack_id, state, character)
     context = _context(library, state, pack.game)
     events: list[Event] = []
@@ -263,7 +269,13 @@ def step(state: GameState, action: Action, library: Library) -> StepResult:
         return StepResult(state, tuple(events))
 
     if restart:
-        fresh = begin(library, state.pack, state.seed, combat_mode=state.combat_mode)
+        fresh = begin(
+            library,
+            state.pack,
+            state.seed,
+            combat_mode=state.combat_mode,
+            time_pressure=state.time_pressure,
+        )
         return StepResult(fresh.state, tuple([*events, *fresh.events]))
 
     _after_action(context, events)

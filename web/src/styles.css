@@ -659,6 +659,24 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
+.pressures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pressures .game {
+  inline-size: auto;
+}
+
+.aside {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+}
+
 .spend {
   list-style: none;
   margin: 0;

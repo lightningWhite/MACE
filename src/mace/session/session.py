@@ -62,6 +62,8 @@ class Session:
         Every action taken, in order, in recorded form.
     combat_mode : str or None
         The player's choice of combat presentation, if they made one.
+    time_pressure : float
+        How hard the clock presses in `reflex` combat.
     character : Character or None
         What they answered at character creation.
     start_at : str or None
@@ -77,6 +79,7 @@ class Session:
     events: tuple[Event, ...] = ()
     log: list[dict[str, Any]] = field(default_factory=list)
     combat_mode: str | None = None
+    time_pressure: float = 1.0
     character: Character | None = None
     start_at: str | None = None
     start_tick: int | None = None
@@ -89,6 +92,7 @@ class Session:
         *,
         seed: str = "mace",
         combat_mode: str | None = None,
+        time_pressure: float = 1.0,
         character: Character | None = None,
         start_at: str | None = None,
         start_tick: int | None = None,
@@ -106,6 +110,9 @@ class Session:
             identically.
         combat_mode : str or None
             Override the game's default combat presentation.
+        time_pressure : float
+            How hard the clock presses in `reflex` combat. 1.0 is the fight
+            as authored; below it gives more of the window.
         character : Character or None
             Who the player is. None takes the protagonist as written.
         start_at : str or None
@@ -129,6 +136,7 @@ class Session:
             chosen,
             seed=seed,
             combat_mode=combat_mode,
+            time_pressure=time_pressure,
             character=character,
             start_at=start_at,
             start_tick=start_tick,
@@ -140,6 +148,7 @@ class Session:
             state=opened.state,
             events=opened.events,
             combat_mode=combat_mode,
+            time_pressure=time_pressure,
             character=character,
             start_at=start_at,
             start_tick=start_tick,

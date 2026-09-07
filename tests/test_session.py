@@ -209,6 +209,28 @@ def test_a_save_carries_the_character_that_was_made(tmp_path: Path) -> None:
     assert resumed.state.protagonist.pools == session.state.protagonist.pools
 
 
+def test_a_save_carries_the_clock_the_fight_was_answered_against(
+    tmp_path: Path,
+) -> None:
+    """A recorded elapsed time means nothing without the window it was in."""
+    forked(tmp_path / "packs")
+    library = load_library(tmp_path / "packs")
+    session = Session.begin(library, "tiny", time_pressure=0.5)
+
+    written = Save.of(session).record()
+    assert written["timePressure"] == 0.5
+
+    resumed, _ = load(write_save(session, tmp_path / "save.json"), library)
+    assert resumed.time_pressure == 0.5
+    assert resumed.state.time_pressure == 0.5
+
+
+def test_a_save_at_the_ordinary_clock_says_nothing_about_it(tmp_path: Path) -> None:
+    """A save should read as what the player did, not as a settings dump."""
+    session = opened(tmp_path / "packs")
+    assert "timePressure" not in Save.of(session).record()
+
+
 def test_a_save_records_the_packs_it_was_played_against(tmp_path: Path) -> None:
     session = opened(tmp_path / "packs")
     assert Save.of(session).packs == {"tiny": "0.1.0"}
