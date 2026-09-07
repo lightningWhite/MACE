@@ -153,6 +153,25 @@ against a protocol that has moved.
 
 See [ADR-0005](decisions/0005-python-core-with-pyodide.md).
 
+### The offline shell
+
+The client is installable: a manifest, an icon, and a service worker written
+by hand rather than generated, because what it has to do is small and a
+build-time precache manifest is a dependency and a moving part between a
+player and a page that loads. It caches what the page asks for as the page
+asks for it, so the first online visit fills the cache and a later visit
+without a network gets the shell back out of it.
+
+The API is deliberately never cached. A stale frame is a stale world: it would
+show a player a menu the session has already moved past, and they would click
+it and be told no.
+
+So what an installed client can do with no network is load, say exactly that,
+and point at the save — which is local, and is the whole playthrough. That is
+the honest shape of it until the engine moves into the tab
+([ADR-0005](decisions/0005-python-core-with-pyodide.md)), at which point there
+is no server to be offline from.
+
 ### The session service
 
 `mace serve packs/` runs it. It is a front-end like the terminal is a

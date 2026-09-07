@@ -16,6 +16,7 @@
 import { useEffect, useState } from "react";
 
 import { creationFor, listGames } from "../api";
+import { useOffline } from "../offline";
 import type { CreationOffer, GameSummary, Made, SaveRecord } from "../protocol";
 import { PRESSURES } from "../protocol";
 
@@ -43,6 +44,7 @@ export function Opening({
   const [spend, setSpend] = useState<Record<string, number>>({});
   const [pressure, setPressure] = useState(1);
   const [trouble, setTrouble] = useState<string | null>(null);
+  const offline = useOffline();
 
   useEffect(() => {
     listGames()
@@ -88,6 +90,13 @@ export function Opening({
     <main className="opening">
       <h1>MACE</h1>
 
+      {offline && (
+        <p className="trouble" role="status">
+          You are offline. MACE keeps its world on a server for now, so there
+          is nothing to play until you are back — but your save is here, on
+          this device, and nothing has been lost.
+        </p>
+      )}
       {trouble !== null && <p className="trouble">{trouble}</p>}
       {failure !== null && <p className="trouble">{failure}</p>}
 

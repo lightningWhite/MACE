@@ -45,6 +45,17 @@ contract every front-end is written against — with:
 MACE_UPDATE_FIXTURES=1 pytest tests/test_web_wire.py
 ```
 
+## Offline
+
+`public/sw.js` is a hand-written service worker: it caches the shell as the
+page asks for it, and never caches `/api` — a stale frame is a stale world.
+It is registered only in production builds, because a worker caching Vite's
+module graph makes every reload a lie.
+
+An installed client with no network loads, says the game needs its server for
+now, and points at the save in `localStorage`. That is the whole of it until
+the Pyodide build, when there will be no server to be offline from.
+
 ## Layout
 
 ```

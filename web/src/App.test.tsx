@@ -193,6 +193,29 @@ describe("the game", () => {
   });
 });
 
+// ── Offline ───────────────────────────────────────────────────────────────────
+
+describe("with no network", () => {
+  it("opens, and says what it can and cannot do", async () => {
+    // The shell is cached, so the app loads. The game is not, and will not be
+    // until the engine moves into the tab. Saying so beats a spinner.
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    stub(fakeService());
+    render(<App />);
+
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("your save is here");
+    vi.restoreAllMocks();
+  });
+
+  it("says nothing about it when the network is there", async () => {
+    stub(fakeService());
+    render(<App />);
+    await screen.findByRole("button", { name: /Farmhand/ });
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+
 // ── Playing it with a keyboard ────────────────────────────────────────────────
 
 describe("keyboard play", () => {

@@ -133,7 +133,8 @@ writing YAML.
 - [x] Combat view with timing bar and momentum. The bar marks the spot
       `precision_of` actually rewards, and a window that runs out spends
       itself the way the terminal's does
-- [ ] Offline-capable PWA shell
+- [x] Offline-capable PWA shell — installable, and honest about the fact
+      that the *game* still needs the server until Pyodide lands
 - [ ] Pyodide build: engine client-side, static deploy to GitHub Pages
 - [x] Accessibility pass — the time-pressure setting docs/10 asked for and
       nothing had implemented, ARIA live regions, focus that stays in the game
