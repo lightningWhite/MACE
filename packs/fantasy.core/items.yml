@@ -44,6 +44,37 @@ entities:
       # what makes `parry` one of your options.
       moves: [parry, strike]
 
+  # The traded goods. These are items first: what a market prices is the same
+  # sack the player puts in their pack, which is why `goods.yml` names these
+  # rather than describing sacks of its own.
+  - id: grain
+    kind: item
+    name: "Grain"
+    description: "A sack of barley, threshed and dusty."
+    tags: [trade, food]
+    item: {weight: 1, stackable: true, baseValue: 4}
+
+  - id: salt
+    kind: item
+    name: "Salt"
+    description: "Coarse grey crystals. Cheap at the coast and never inland."
+    tags: [trade, food]
+    item: {weight: 1, stackable: true, baseValue: 12}
+
+  - id: iron-ingot
+    kind: item
+    name: "Iron Ingot"
+    description: "A bar of pig iron, heavier than it looks."
+    tags: [trade, metal]
+    item: {weight: 8, stackable: true, baseValue: 30}
+
+  - id: wool
+    kind: item
+    name: "Wool"
+    description: "A greasy bale, still smelling of the sheep."
+    tags: [trade, cloth]
+    item: {weight: 4, stackable: true, baseValue: 7}
+
   - id: healing-draught
     kind: item
     name: "Healing Draught"

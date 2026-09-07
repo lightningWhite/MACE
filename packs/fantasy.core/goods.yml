@@ -1,0 +1,42 @@
+# What the market does with the items in items.yml. A good is not a second
+# kind of thing — it names the item it is the market behaviour of, so weight
+# and value stay where the inventory can see them. See docs/08-economy.md.
+#
+# `elasticity` is the number that matters most, and it is a claim about people
+# rather than about goods: below 1, a shortage makes a thing dear and they buy
+# it anyway; above 1, a shortage makes it simply absent.
+#
+# `producedBy` and `consumedBy` are market tags. A game that tags a settlement
+# `farmland` grows every good that names `farmland` here, without listing them
+# one by one — which is what makes a world of twenty markets cheap to write.
+
+goods:
+
+  - id: grain
+    item: grain
+    category: food
+    elasticity: 0.4              # bread money: people pay, they don't stop
+    perishable: {ticksToSpoil: 960}
+    producedBy: [farmland]
+    consumedBy: [settlement]
+
+  - id: salt
+    item: salt
+    category: food
+    elasticity: 0.6              # a necessity you can at least ration
+    producedBy: [coast, saltern]
+    consumedBy: [settlement]
+
+  - id: wool
+    item: wool
+    category: cloth
+    elasticity: 0.9
+    producedBy: [pasture]
+    consumedBy: [settlement, weaver]
+
+  - id: iron-ingot
+    item: iron-ingot
+    category: metal
+    elasticity: 1.3              # when it gets dear, the work waits instead
+    producedBy: [mine]
+    consumedBy: [smithy, garrison]

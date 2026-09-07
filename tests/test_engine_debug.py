@@ -118,6 +118,37 @@ def test_watching_changes_nothing(library: Library) -> None:
     assert watched.records() == quiet.records()
 
 
+def test_it_shows_what_the_market_here_is_charging(library: Library) -> None:
+    """Fenmoor has a market, and an author balancing it needs to see it."""
+    seen = overlay(library, begin(library, GAME, seed="autumn").state)
+
+    assert seen.market == "peasants-quest:fenmoor-market"
+    priced = {one.good: one for one in seen.prices}
+    assert "fantasy.core:grain" in priced
+    assert priced["fantasy.core:grain"].price > 0
+
+
+def test_a_place_with_no_market_shows_no_prices(library: Library) -> None:
+    """Most of the map is not a shop."""
+    seen = overlay(
+        library, begin(library, GAME, seed="autumn", start_at="troll-bridge").state
+    )
+
+    assert seen.market is None
+    assert seen.prices == ()
+
+
+def test_looking_at_a_price_does_not_move_the_shelf(library: Library) -> None:
+    """The overlay projects the market forward; it must not commit that."""
+    result = begin(library, GAME, seed="autumn")
+    before = dict(result.state.markets)
+
+    overlay(library, result.state)
+    overlay(library, result.state)
+
+    assert result.state.markets == before
+
+
 def test_an_engine_menu_has_no_authored_conditions_to_show(library: Library) -> None:
     """The travel menu is the engine's own; there is no `when` behind it."""
     seen = overlay(library, begin(library, GAME, seed="autumn").state)

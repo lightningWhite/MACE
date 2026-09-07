@@ -1,0 +1,53 @@
+# Three markets on one road. Fenmoor grows barley and can afford little else;
+# the castle has a garrison that eats and a smithy that does not; the Trader's
+# Post makes nothing and will buy anything, which is what a crossroads is for.
+#
+# The goods themselves live in `fantasy.core` — this pack only says where they
+# are made and used. See docs/08-economy.md.
+#
+# The shape to notice: grain is cheap where it grows and dear where it is
+# eaten, and the road between them is a day long. That gap is the reward for
+# noticing, and it gets wider the moment anything closes the north road.
+
+markets:
+
+  - id: fenmoor-market
+    location: fenmoor
+    size: hamlet
+    wealth: 0.3                    # six houses and a well; it cannot bid
+    tags: [farmland, pasture, settlement]
+    produces:
+      - {good: fantasy.core:grain, perTick: 0.8}
+      - {good: fantasy.core:wool,  perTick: 0.2}
+    consumes:
+      - {good: fantasy.core:salt,       perTick: 0.10}
+      - {good: fantasy.core:iron-ingot, perTick: 0.05}
+    stock:
+      fantasy.core:grain: {initial: 400, capacity: 800}
+      fantasy.core:salt:  {initial: 20,  capacity: 60}
+
+  - id: traders-post-market
+    location: traders-post
+    size: village
+    wealth: 0.5
+    tags: [settlement]
+    consumes:
+      - {good: fantasy.core:grain, perTick: 0.4}
+    # A middleman: it makes none of these and sells all of them.
+    trades: [fantasy.core:salt, fantasy.core:iron-ingot, fantasy.core:wool]
+    stock:
+      fantasy.core:grain:      {initial: 120, capacity: 300}
+      fantasy.core:salt:       {initial: 60,  capacity: 120}
+      fantasy.core:iron-ingot: {initial: 12,  capacity: 40}
+
+  - id: castle-market
+    location: hagans-castle
+    size: town
+    wealth: 0.8                    # a garrison pays, because it must
+    tags: [settlement, smithy, garrison]
+    consumes:
+      - {good: fantasy.core:grain,      perTick: 1.6}
+      - {good: fantasy.core:iron-ingot, perTick: 0.4}
+    stock:
+      fantasy.core:grain:      {initial: 300, capacity: 900}
+      fantasy.core:iron-ingot: {initial: 25,  capacity: 80}

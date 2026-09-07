@@ -25,6 +25,7 @@ __all__ = [
     "EntityState",
     "GameState",
     "Journey",
+    "MarketState",
     "Modifier",
     "Outcome",
     "PendingChoice",
@@ -267,6 +268,31 @@ class RouteState:
     permanent: bool = False
     reason: str | None = None
     ticks: int | None = None
+
+
+@dataclass(slots=True)
+class MarketState:
+    """One market's shelves, and how far they have been carried.
+
+    A market the player has never visited is not stepped every tick. It is
+    opened at the playthrough's start tick and carried forward when something
+    needs to look at it, the same way a region's weather is — so arriving
+    somewhere on day fifty finds the stock it would have had all along, not
+    stock that began when you looked.
+
+    Attributes
+    ----------
+    market : str
+        Qualified market id.
+    stock : dict
+        Qualified good id to units held.
+    stepped_to : int
+        The tick the shelves have been carried to.
+    """
+
+    market: str
+    stock: dict[str, float] = field(default_factory=dict)
+    stepped_to: int = 0
 
 
 @dataclass(slots=True)
@@ -768,6 +794,9 @@ class GameState:
         Qualified event id to how far along it is.
     routes : dict
         Qualified route id to what has happened to that road.
+    markets : dict
+        Qualified market id to that market's shelves. A market appears here
+        once something has looked at it, and not before.
     news : list of NewsItem
         Things that happened out of sight, waiting to travel.
     light_override : float or None
@@ -828,6 +857,7 @@ class GameState:
     encounters: dict[str, EncounterMemory] = field(default_factory=dict)
     events: dict[str, EventState] = field(default_factory=dict)
     routes: dict[str, RouteState] = field(default_factory=dict)
+    markets: dict[str, MarketState] = field(default_factory=dict)
     news: list[NewsItem] = field(default_factory=list)
     light_override: float | None = None
     journey: Journey | None = None

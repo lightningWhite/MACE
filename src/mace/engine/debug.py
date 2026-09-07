@@ -25,14 +25,15 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from mace.content import ContentError, Library
+from mace.engine import economy
 from mace.engine.conditions import RuleError, holds
 from mace.engine.context import RuleContext
-from mace.engine.state import GameState
+from mace.engine.state import GameState, MarketState
 from mace.engine.step import context_for
 from mace.engine.world import Observation
 from mace.model import Condition, Scene
 
-__all__ = ["Overlay", "Tested", "TableMemory", "Modifier", "overlay"]
+__all__ = ["Overlay", "Priced", "Tested", "TableMemory", "Modifier", "overlay"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,6 +112,32 @@ class Modifier:
 
 
 @dataclass(frozen=True, slots=True)
+class Priced:
+    """One good on one market's shelf, and what it would cost right now.
+
+    Attributes
+    ----------
+    good : str
+        Qualified good id.
+    held : float
+        Units on the shelf.
+    wanted : float
+        Units the market aims to hold. Scarcity is `wanted` against `held`,
+        so showing both is showing the price's working.
+    price : float
+        What one unit costs.
+    base : float
+        The item's `baseValue`, so the multiple is readable at a glance.
+    """
+
+    good: str
+    held: float
+    wanted: float
+    price: float
+    base: float
+
+
+@dataclass(frozen=True, slots=True)
 class Overlay:
     """Everything the debug view shows, as data.
 
@@ -142,6 +169,12 @@ class Overlay:
         The player's flags.
     variables : tuple of tuple
         Game variables and their values.
+    market : str or None
+        The market where the player is standing, if there is one.
+    prices : tuple of Priced
+        What that market is charging, and the stock the price came from.
+        Projected rather than read: the market is carried forward to now
+        without being written to, so opening the overlay cannot move a price.
     """
 
     tick: int
@@ -157,6 +190,8 @@ class Overlay:
     streams: tuple[tuple[str, int], ...] = ()
     flags: tuple[str, ...] = ()
     variables: tuple[tuple[str, object], ...] = field(default_factory=tuple)
+    market: str | None = None
+    prices: tuple[Priced, ...] = ()
 
 
 def overlay(library: Library, state: GameState) -> Overlay:
@@ -178,6 +213,7 @@ def overlay(library: Library, state: GameState) -> Overlay:
     clock = context.clock
     player = state.protagonist
     seen = context.weather()
+    standing = _market(library, state)
 
     return Overlay(
         tick=state.tick,
@@ -221,6 +257,71 @@ def overlay(library: Library, state: GameState) -> Overlay:
         ),
         flags=tuple(sorted(player.flags)),
         variables=tuple(sorted(state.variables.items())),
+        market=None if standing is None else standing.id,
+        prices=() if standing is None else _prices(state, standing),
+    )
+
+
+def _market(library: Library, state: GameState) -> economy.Prepared | None:
+    """The market where the player is standing, if there is one.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    state : GameState
+        The playthrough.
+
+    Returns
+    -------
+    Prepared or None
+        The market, resolved.
+    """
+    here = state.location
+    if here is None:
+        return None
+    return economy.at(economy.prepare(library), here)
+
+
+def _prices(state: GameState, standing: economy.Prepared) -> tuple[Priced, ...]:
+    """What a market is charging, without moving its shelves.
+
+    The market is projected to now rather than synced, because the overlay is
+    a projection: a playthrough with it open has to replay byte-identically to
+    one without.
+
+    Parameters
+    ----------
+    state : GameState
+        The playthrough. Read, never written.
+    standing : Prepared
+        The market.
+
+    Returns
+    -------
+    tuple of Priced
+        One entry per good, in the market's own order.
+    """
+    held = state.markets.get(standing.id) or MarketState(
+        market=standing.id,
+        stock={
+            good_id: dealt.stock.opening for good_id, dealt in standing.goods.items()
+        },
+        stepped_to=state.start_tick,
+    )
+    now = economy.projected(held, standing, state.tick)
+    return tuple(
+        Priced(
+            good=good_id,
+            held=round(now.get(good_id, 0.0), 4),
+            wanted=dealt.stock.wanted,
+            price=round(
+                economy.price_of(dealt, now.get(good_id, 0.0), standing.market.wealth),
+                4,
+            ),
+            base=dealt.base_value,
+        )
+        for good_id, dealt in standing.goods.items()
     )
 
 

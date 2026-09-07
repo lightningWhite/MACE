@@ -95,17 +95,60 @@ player can build an intuition for it:
 
 ```
 scarcity  = clamp(target_stock / max(current_stock, 1), 0.25, 4.0)
+ratio     = clamp(scarcity ^ elasticity, 0.25, 4.0)
 price     = baseValue
-            × scarcity ^ elasticity          # supply and demand
+            × ratio                          # supply and demand
             × (1 + transport_cost)           # distance from a producer
             × market_wealth_factor           # a city pays more than a hamlet
             × event_pressure                 # sieges, closed passes, disasters
             × haggle_factor                  # the player's charisma and skill
 ```
 
-Stock moves each tick: production adds, consumption removes, and stock drifts
-toward its target through **trade flow** with connected markets. That last part is
-what makes the map matter — a market's price depends on the routes reaching it.
+**Why the ratio is clamped twice.** An earlier version of this document clamped
+scarcity and stopped there, and said that clamp was what bounded a price to
+0.25×–4× base. It isn't, and the exponent is why: iron at `elasticity: 1.3` in
+a famine reaches `4 ^ 1.3` ≈ 6.06×, outside the bound ADR-0007 promises. Since
+that bound exists so that nobody ever has to debug hyperinflation in somebody
+else's game, the clamp has to come *after* the exponent as well.
+
+`market_wealth_factor` runs from 0.75× to 1.25× across the full range of
+`wealth`, with the default 0.5 sitting at exactly 1.0 — so a market whose
+author said nothing about money pays the going rate. It is deliberately a
+narrower lever than scarcity: wealth should be a reason to carry something
+somewhere, never a bigger reason than a shortage is.
+
+Stock moves each tick: production adds, consumption removes, what perishes
+rots — in that order, so a sack eaten this tick is not also spoiled this tick —
+and stock drifts toward its target through **trade flow** with connected
+markets. That last part is what makes the map matter: a market's price depends
+on the routes reaching it.
+
+### Markets are fast-forwarded, not stepped
+
+A market is not stepped every tick. It carries the tick its shelves have been
+brought to, and is carried forward when something looks at it — so a hundred
+markets cost nothing until they matter, and a market the player has never
+visited still holds what it *would* have held. A market first opened on day
+fifty opens at the playthrough's start tick and catches up, because a world
+that began when you looked at it is not a world.
+
+This is only allowed to be an optimization. Catching up runs exactly the loop
+that stepping runs, so visiting a town every day and arriving after a season
+give the same shelves; `tests/test_economy_markets.py` checks that directly
+rather than trusting it.
+
+Two consequences worth stating, because they are easy to break later:
+
+- **Reading a price must not move a shelf.** A price is a question about the
+  world, and a question that changes its answer breaks replay. So the catch-up
+  is split: a pure projection that anything may call, and a commit that only
+  the places where the engine already accepts that time moves may call. It is
+  the rule the weather model follows for the same reason.
+- **Any randomness here must be positional.** Production jitter and merchant
+  restock have to be derived from the tick, not drawn in sequence from the
+  `economy` stream — a lazily caught-up subsystem that walked a stream would
+  land at a different position depending on when the player happened to look,
+  and two playthroughs with the same action log would diverge.
 
 ### Trade flow is the reason routes exist
 

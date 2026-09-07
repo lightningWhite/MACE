@@ -148,8 +148,11 @@ writing YAML.
         collections. A good names the item it is the market behaviour of
         rather than describing one of its own, so the sack the player carries
         and the sack the market prices stay the same sack
-  - [ ] Price formation from scarcity, and stock that moves with production
-        and consumption
+  - [x] Price formation from scarcity, and stock that moves with production,
+        consumption and spoilage. Markets are fast-forwarded on being looked
+        at rather than stepped, and a test holds the two to the same answer
+  - [ ] Buying and selling: the trade action, the events it emits, and what a
+        merchant says about its own prices
   - [ ] Trade flow between connected markets, throttled by route length and
         danger — the part that makes a closed pass move a price
 

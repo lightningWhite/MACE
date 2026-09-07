@@ -1293,6 +1293,14 @@ class Wizard:
                 f"  ┊ ⚄ {_local(table.table)} pressure {table.pressure:+.3f}"
                 f" · fired {table.fired} · last {since}"
             )
+        for priced in seen.prices:
+            # The multiple is what an author is balancing, so it leads: `×1.7`
+            # says more about an elasticity than `6.80` does.
+            multiple = "—" if not priced.base else f"×{priced.price / priced.base:.2f}"
+            self.say(
+                f"  ┊ ⚖ {_local(priced.good)} {priced.price:.2f} {multiple}"
+                f" · {priced.held:.0f}/{priced.wanted:.0f} held"
+            )
         if seen.flags:
             self.say(f"  ┊ ⚑ {', '.join(seen.flags)}")
         if seen.streams:
