@@ -189,17 +189,13 @@ def test_closing_a_session_forgets_it(client: TestClient) -> None:
 
 def test_the_socket_opens_on_the_current_frame(client: TestClient) -> None:
     frame = opened(client, pack="tiny")
-    with client.websocket_connect(
-        f"/api/sessions/{frame['session']}/stream"
-    ) as socket:
+    with client.websocket_connect(f"/api/sessions/{frame['session']}/stream") as socket:
         assert socket.receive_json()["choices"] == frame["choices"]
 
 
 def test_the_socket_carries_the_same_frames(client: TestClient) -> None:
     frame = opened(client, pack="tiny")
-    with client.websocket_connect(
-        f"/api/sessions/{frame['session']}/stream"
-    ) as socket:
+    with client.websocket_connect(f"/api/sessions/{frame['session']}/stream") as socket:
         socket.receive_json()
         socket.send_json({"kind": "choose", "prompt": "Travel to The Mill"})
         assert socket.receive_json()["view"]["atlas"]["here"] == "tiny:mill"
@@ -208,9 +204,7 @@ def test_the_socket_carries_the_same_frames(client: TestClient) -> None:
 def test_a_bad_action_does_not_close_the_socket(client: TestClient) -> None:
     """A mistyped action is not a reason to reconnect in the middle of a fight."""
     frame = opened(client, pack="tiny")
-    with client.websocket_connect(
-        f"/api/sessions/{frame['session']}/stream"
-    ) as socket:
+    with client.websocket_connect(f"/api/sessions/{frame['session']}/stream") as socket:
         socket.receive_json()
         socket.send_json({"kind": "yodel"})
         assert "unknown action" in socket.receive_json()["error"]
@@ -222,6 +216,48 @@ def test_a_bad_action_does_not_close_the_socket(client: TestClient) -> None:
 def test_the_socket_says_when_there_is_no_session(client: TestClient) -> None:
     with client.websocket_connect("/api/sessions/nothing/stream") as socket:
         assert socket.receive_json() == {"error": "no such session"}
+
+
+# ── Serving the client too ────────────────────────────────────────────────────
+
+
+def test_a_built_client_is_served_beside_the_api(tmp_path: Path) -> None:
+    """One origin in a deployment, so there is no CORS list to get wrong."""
+    game_pack(tmp_path / "packs", world=WORLD)
+    built = tmp_path / "dist"
+    built.mkdir()
+    (built / "index.html").write_text("<title>MACE</title>", encoding="utf-8")
+
+    served = TestClient(
+        create_app(library=load_library(tmp_path / "packs"), client=built)
+    )
+    assert "MACE" in served.get("/").text
+    assert served.get("/api/games").status_code == 200
+
+
+def test_the_api_wins_over_the_client_at_the_same_path(tmp_path: Path) -> None:
+    """The client is mounted at the root, so `/api` has to be reached first."""
+    game_pack(tmp_path / "packs", world=WORLD)
+    built = tmp_path / "dist"
+    (built / "api").mkdir(parents=True)
+    (built / "index.html").write_text("client", encoding="utf-8")
+    (built / "api" / "games").write_text("not the api", encoding="utf-8")
+
+    served = TestClient(
+        create_app(library=load_library(tmp_path / "packs"), client=built)
+    )
+    assert served.get("/api/games").json()["games"][0]["id"] == "tiny"
+
+
+def test_a_client_that_is_not_built_is_simply_not_served(tmp_path: Path) -> None:
+    game_pack(tmp_path / "packs", world=WORLD)
+    served = TestClient(
+        create_app(
+            library=load_library(tmp_path / "packs"), client=tmp_path / "nothing"
+        )
+    )
+    assert served.get("/").status_code == 404
+    assert served.get("/api/games").status_code == 200
 
 
 # ── The registry ──────────────────────────────────────────────────────────────

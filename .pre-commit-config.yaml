@@ -42,3 +42,13 @@ repos:
         # Runs on push rather than commit — the golden replay suite in phase 2
         # will be slower than a commit should be.
         stages: [pre-push]
+    -   id: web
+        name: web client (tsc + vitest)
+        # The client is a front-end like the CLI is a front-end, so it is held
+        # to the same bar. `npm --prefix` rather than a `cd`, so the hook works
+        # from wherever git ran it.
+        entry: bash -c 'npm --prefix web run check && npm --prefix web test'
+        language: system
+        files: '^web/'
+        pass_filenames: false
+        stages: [pre-push]

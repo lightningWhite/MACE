@@ -1,0 +1,482 @@
+/*
+ * A text game is mostly type, so most of this is type.
+ *
+ * Two rules run through it. Nothing is carried by color alone — a disabled
+ * choice is also dimmed and also says why, a quest's state is also a word —
+ * because docs/10 asks for that and because it is the difference between a
+ * playable game and a pretty one. And motion is opt-in: the transcript
+ * scrolls smoothly unless the reader has asked it not to.
+ */
+
+:root {
+  --ink: #e8e3d9;
+  --ink-dim: #9a9287;
+  --ground: #14130f;
+  --ground-raised: #1d1b16;
+  --edge: #322e26;
+  --warm: #d8a657;
+  --cold: #7daea3;
+  --loss: #ea6962;
+  --font: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --ink: #262219;
+    --ink-dim: #6a6357;
+    --ground: #f6f2e8;
+    --ground-raised: #ffffff;
+    --edge: #ded6c5;
+    --warm: #9a6a12;
+    --cold: #3b6f66;
+    --loss: #b3352e;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1,
+h2 {
+  font-family: var(--font);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  margin: 0 0 0.6rem;
+}
+
+.dim {
+  color: var(--ink-dim);
+}
+
+.empty {
+  color: var(--ink-dim);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── The whole screen ────────────────────────────────────────────────────── */
+
+.game {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "narrative sidebar"
+    "status    status";
+  block-size: 100dvh;
+}
+
+@media (max-width: 52rem) {
+  .game {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "narrative"
+      "sidebar"
+      "status";
+    block-size: auto;
+  }
+}
+
+/* ── Narrative ───────────────────────────────────────────────────────────── */
+
+.narrative {
+  grid-area: narrative;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  padding: 1.5rem clamp(1rem, 4vw, 3rem);
+  gap: 1rem;
+}
+
+.transcript {
+  flex: 1;
+  scroll-behavior: smooth;
+  min-block-size: 0;
+  overflow-y: auto;
+  font-family: var(--font);
+  font-size: 1.05rem;
+  max-inline-size: 42rem;
+}
+
+.line {
+  margin: 0 0 0.75rem;
+}
+
+.line-journey {
+  color: var(--ink-dim);
+}
+
+.line-weather {
+  color: var(--cold);
+}
+
+.line-aside {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  margin-block-end: 0.4rem;
+}
+
+.line-warning {
+  color: var(--loss);
+}
+
+.line-ending {
+  font-size: 1.4rem;
+  color: var(--warm);
+}
+
+/* ── Choices ─────────────────────────────────────────────────────────────── */
+
+.choices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-inline-size: 42rem;
+}
+
+.choice {
+  inline-size: 100%;
+  text-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--ground-raised);
+  color: inherit;
+  border: 1px solid var(--edge);
+  border-radius: 0.35rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.choice::before {
+  content: "▸ ";
+  color: var(--warm);
+}
+
+.choice:hover:not(:disabled),
+.choice:focus-visible {
+  border-color: var(--warm);
+}
+
+.choice:disabled {
+  cursor: not-allowed;
+  color: var(--ink-dim);
+  opacity: 0.75;
+}
+
+.choice:disabled::before {
+  content: "· ";
+  color: var(--ink-dim);
+}
+
+.choice-hint {
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.ending-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.sidebar {
+  grid-area: sidebar;
+  border-inline-start: 1px solid var(--edge);
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (max-width: 52rem) {
+  .sidebar {
+    border-inline-start: none;
+    border-block-start: 1px solid var(--edge);
+  }
+}
+
+.panel > :last-child {
+  margin-block-end: 0;
+}
+
+.pool {
+  margin-block-end: 0.6rem;
+}
+
+.pool-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.bar {
+  block-size: 0.4rem;
+  background: var(--edge);
+  border-radius: 0.2rem;
+  overflow: hidden;
+  margin-block-start: 0.15rem;
+}
+
+.bar-fill {
+  block-size: 100%;
+  background: var(--warm);
+}
+
+.bar-effort .bar-fill {
+  background: var(--cold);
+}
+
+.abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.9rem;
+  margin: 0.7rem 0 0;
+  font-size: 0.85rem;
+}
+
+.ability {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.ability dt {
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+
+.ability dd {
+  margin: 0;
+}
+
+.exposure {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  color: var(--cold);
+}
+
+.stacks,
+.quests {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.stacks li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.quest {
+  margin-block-end: 0.6rem;
+}
+
+.quest-name {
+  margin: 0;
+  font-weight: 600;
+}
+
+.quest-stage {
+  margin: 0.1rem 0 0;
+  color: var(--ink-dim);
+  font-family: var(--font);
+}
+
+.quest-complete .quest-name,
+.quest-failed .quest-name {
+  color: var(--ink-dim);
+  text-decoration: line-through;
+}
+
+.transport {
+  margin-block-start: auto;
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+
+.transport-polling {
+  color: var(--warm);
+}
+
+/* ── The standing line ───────────────────────────────────────────────────── */
+
+.status {
+  grid-area: status;
+  border-block-start: 1px solid var(--edge);
+  padding: 0.5rem clamp(1rem, 4vw, 3rem);
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  min-block-size: 2.1rem;
+}
+
+/* ── Opening ─────────────────────────────────────────────────────────────── */
+
+.opening {
+  max-inline-size: 38rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.opening h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  letter-spacing: 0.3em;
+}
+
+.games,
+.backgrounds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.game {
+  inline-size: 100%;
+  text-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--ground-raised);
+  color: inherit;
+  border: 1px solid var(--edge);
+  border-radius: 0.35rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.game.chosen {
+  border-color: var(--warm);
+  box-shadow: inset 0.2rem 0 0 var(--warm);
+}
+
+.game-name {
+  font-family: var(--font);
+  font-size: 1.05rem;
+}
+
+.game-blurb,
+.grants {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+.grants {
+  font-variant-numeric: tabular-nums;
+}
+
+.spend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.spend li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spend-name {
+  text-transform: capitalize;
+}
+
+.spend-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--ground-raised);
+  border: 1px solid var(--edge);
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--warm);
+  outline-offset: 2px;
+}
+
+.primary {
+  border-color: var(--warm);
+  color: var(--warm);
+  padding: 0.5rem 1.2rem;
+}
+
+.begin {
+  align-self: flex-start;
+}
+
+.resume {
+  border: 1px solid var(--edge);
+  border-radius: 0.35rem;
+  padding: 0.9rem 1rem;
+  background: var(--ground-raised);
+}
+
+.resume p {
+  margin: 0 0 0.7rem;
+}
+
+.trouble {
+  color: var(--loss);
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transcript {
+    scroll-behavior: auto;
+  }
+}

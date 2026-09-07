@@ -1,0 +1,339 @@
+/**
+ * The wire, as TypeScript sees it.
+ *
+ * Every one of these shapes is produced by Python — `Event.record()`,
+ * `View.record()`, `Save.record()` — and this file is the only place that
+ * knows it. Nothing below it re-derives a fact the engine already stated, and
+ * nothing above it reads a field this file has not declared.
+ *
+ * The engine is the authority on all of it. If a panel wants something that
+ * is not here, the fix is a field on the projection in `mace/session/view.py`,
+ * never a computation in a component.
+ */
+
+/** What the service says about one playable pack. */
+export interface GameSummary {
+  id: string;
+  name: string;
+  version: string;
+  description: string | null;
+}
+
+/** One background on offer at character creation, already phrased. */
+export interface BackgroundOffer {
+  id: string;
+  name: string;
+  description: string;
+  /** What picking it does, in English. The engine phrases these, not us. */
+  grants: string[];
+}
+
+/** One stat creation points may be spent on. */
+export interface StatOffer {
+  stat: string;
+  base: number;
+  minimum: number;
+  maximum: number;
+  /** How many points this stat can still take. */
+  room: number;
+}
+
+/** The character-creation question, or the news that there isn't one. */
+export interface CreationOffer {
+  asksAnything: boolean;
+  points: number;
+  backgrounds: BackgroundOffer[];
+  stats: StatOffer[];
+}
+
+/** What the player answered at creation. */
+export interface Made {
+  background: string | null;
+  spend: Record<string, number>;
+}
+
+// ── Events: things that happened ─────────────────────────────────────────────
+
+/** One option on a menu. */
+export interface Option {
+  prompt: string;
+  available: boolean;
+  /** Why it is unavailable, when the author wrote a reason. */
+  hint: string | null;
+}
+
+export interface Narrated {
+  kind: "narrate";
+  text: string;
+  pause: boolean;
+}
+
+export interface ChoicesOffered {
+  kind: "choices";
+  scene: string;
+  options: Option[];
+}
+
+export interface WorldStatus {
+  kind: "world.status";
+  tick: number;
+  day: number;
+  dayPart: string;
+  season: string;
+  time: string;
+  location: string | null;
+  place: string;
+  region: string | null;
+  weather: string | null;
+  sky: string;
+  temperature: number | null;
+  light: number;
+  indoors: boolean;
+  /** 0 to 1. A number on purpose: how to say it is ours to decide. */
+  exposure: number;
+}
+
+export interface TravelLeg {
+  kind: "travel.leg";
+  route: string;
+  leg: number;
+  of: number;
+  waypoint: string | null;
+  text: string | null;
+}
+
+export interface TravelInterrupted {
+  kind: "travel.interrupted";
+  route: string;
+  at: string | null;
+  destination: string;
+  remaining: number;
+  reason: string;
+}
+
+export interface WeatherChanged {
+  kind: "weather.changed";
+  region: string;
+  condition: string;
+  name: string;
+  intensity: number;
+  tags: string[];
+  visibility: number;
+  temperature: number | null;
+  text: string | null;
+}
+
+export interface Moved {
+  kind: "moved";
+  from: string | null;
+  to: string;
+  route: string | null;
+  ticks: number;
+}
+
+export interface StatChanged {
+  kind: "stat.changed";
+  actor: string;
+  stat: string;
+  delta: number;
+  value: number;
+  reason: string | null;
+}
+
+export interface InventoryChanged {
+  kind: "inventory.changed";
+  actor: string;
+  item: string;
+  delta: number;
+  quantity: number;
+}
+
+export interface QuestUpdated {
+  kind: "quest.updated";
+  quest: string;
+  status: string;
+  stage: string | null;
+  journal: string | null;
+}
+
+export interface NewsHeard {
+  kind: "world.news";
+  event: string;
+  daysOld: number;
+  region: string | null;
+}
+
+export interface GameOver {
+  kind: "game.over";
+  outcome: string;
+  reason: string | null;
+}
+
+export interface RuleFailed {
+  kind: "engine.rule-failed";
+  message: string;
+  where: string | null;
+}
+
+/** Anything this client does not render. Kept, never guessed at. */
+export interface OtherEvent {
+  kind: string;
+  [field: string]: unknown;
+}
+
+export type GameEvent =
+  | Narrated
+  | ChoicesOffered
+  | WorldStatus
+  | TravelLeg
+  | TravelInterrupted
+  | WeatherChanged
+  | Moved
+  | StatChanged
+  | InventoryChanged
+  | QuestUpdated
+  | NewsHeard
+  | GameOver
+  | RuleFailed
+  | OtherEvent;
+
+/**
+ * Narrow an event by its kind.
+ *
+ * TypeScript cannot do it from a union with an open member in it, so this is
+ * the one cast in the client, made once and in the open.
+ */
+export function isKind<K extends GameEvent["kind"]>(
+  event: GameEvent,
+  kind: K,
+): event is Extract<GameEvent, { kind: K }> {
+  return event.kind === kind;
+}
+
+// ── The view-model: things that stand ────────────────────────────────────────
+
+export interface Gauge {
+  stat: string;
+  value: number;
+  maximum: number | null;
+  role: "vital" | "effort" | "ability";
+}
+
+export interface Carried {
+  item: string;
+  name: string;
+  qty: number;
+  value: number | null;
+}
+
+export interface Entry {
+  quest: string;
+  name: string;
+  summary: string | null;
+  status: "active" | "complete" | "failed";
+  stage: string | null;
+  journal: string | null;
+  startedAtTick: number | null;
+}
+
+export type Standing = "here" | "visited" | "known";
+
+export interface Place {
+  location: string;
+  name: string;
+  standing: Standing;
+  region: string | null;
+  weather: string | null;
+  sky: string | null;
+  indoors: boolean;
+  x: number | null;
+  y: number | null;
+}
+
+export interface Road {
+  route: string;
+  name: string | null;
+  from: string;
+  to: string;
+  bidirectional: boolean;
+  ticks: number;
+  closed: boolean;
+  reason: string | null;
+}
+
+export interface Underway {
+  route: string;
+  from: string;
+  to: string;
+  walked: number;
+  ticks: number;
+  blockedAt: string | null;
+}
+
+export interface Atlas {
+  here: string | null;
+  places: Place[];
+  roads: Road[];
+  journey: Underway | null;
+}
+
+export interface Sheet {
+  entity: string;
+  name: string;
+  background: string | null;
+  stats: Gauge[];
+  exposure: number;
+}
+
+export interface View {
+  pack: string;
+  tick: number;
+  outcome: "playing" | "won" | "lost";
+  endedBecause: string | null;
+  sheet: Sheet;
+  carried: Carried[];
+  journal: Entry[];
+  atlas: Atlas;
+}
+
+// ── One frame for every reply ────────────────────────────────────────────────
+
+export interface Frame {
+  session: string;
+  playing: boolean;
+  events: GameEvent[];
+  choices: string[];
+  view: View;
+  /** Only on the frame that opened a session from a save. */
+  warnings?: string[];
+}
+
+/** What the socket sends instead of a frame when it refuses one. */
+export interface Refusal {
+  error: string;
+}
+
+export function isRefusal(message: Frame | Refusal): message is Refusal {
+  return "error" in message;
+}
+
+/** An action, in the record form the engine decodes. */
+export type Action =
+  | { kind: "choose"; option: number }
+  | { kind: "choose"; prompt: string }
+  | { kind: "combat.input"; response: string; elapsedMs?: number }
+  | { kind: "wait"; ticks: number }
+  | { kind: "look" };
+
+/** A save file: packs, seed, character, and everything the player did. */
+export interface SaveRecord {
+  format: number;
+  pack: string;
+  seed: string;
+  packs: Record<string, string>;
+  combatMode?: string;
+  character?: Made;
+  startAt?: string;
+  startTick?: number;
+  actions: Array<Record<string, unknown>>;
+}

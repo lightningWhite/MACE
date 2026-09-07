@@ -154,6 +154,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     server.add_argument("--port", type=int, default=8000, help="port (default: 8000)")
     server.add_argument(
+        "--client",
+        type=Path,
+        metavar="DIR",
+        help=(
+            "a built web client to serve alongside the API (usually "
+            "web/dist). With one, the game and the service share an origin "
+            "and there is nothing to configure; without one, run the Vite "
+            "dev server and let it proxy."
+        ),
+    )
+    server.add_argument(
         "--origin",
         action="append",
         metavar="URL",
@@ -336,7 +347,11 @@ def run_serve(options: argparse.Namespace) -> int:
         return 1
 
     try:
-        app = create_app(options.paths, origins=options.origin or list(DEV_ORIGINS))
+        app = create_app(
+            options.paths,
+            origins=options.origin or list(DEV_ORIGINS),
+            client=options.client,
+        )
     except ContentError as error:
         print(f"error   {error}", file=sys.stderr)
         return 1

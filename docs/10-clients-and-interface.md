@@ -91,6 +91,14 @@ anything the terminal can render is provably engine data rather than UI logic.
 service worker). No heavy game framework — this is a text UI with a graph view.
 The map is SVG, which is cheap, accessible, themeable, and prints.
 
+It lives in `web/` and holds no rules. Panels render `frame.view`, the
+transcript renders `frame.events`, and `web/src/protocol.ts` is the only file
+that knows the wire — a panel that wants something not on it gets a field on
+`mace/session/view.py`, not a computation of its own. Its tests replay frames
+recorded from a real playthrough, and `tests/test_web_wire.py` fails when the
+engine stops sending what was recorded, so the client cannot keep passing
+against a protocol that has moved.
+
 **Where the engine runs:** the engine is Python and stays Python.
 
 - **Phase 4** — FastAPI serves sessions over HTTP/WebSocket; the browser is a

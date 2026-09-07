@@ -65,7 +65,7 @@ src/mace/
   wizard/        Declarative authoring flow (shared by CLI and web)
   cli/           Terminal front-end (play + author)
   api/           FastAPI session service (needs the `api` extra)
-web/             PWA client (later phases)
+web/             React + TS client (see web/README.md)
 tests/           Unit tests + golden replay conformance tests
 ```
 
@@ -85,6 +85,18 @@ decision used to look like.
 - **Docstrings** use numpy-style parameter blocks — a summary line, then
   `Parameters` / `Returns` / `Raises` / `Yields` / `Attributes` as they apply.
   `src/mace/wizard/project.py` is a representative example.
+
+## The web client
+
+`web/` is a front-end and is held to the same bar as the CLI: it renders
+events and the view-model, and holds no rules. `npm --prefix web run check`
+(tsc, strict) and `npm --prefix web test` (vitest) both run on `git push`.
+
+Its tests replay `web/src/test/frames.json` — real frames generated from a
+real playthrough by `tests/test_web_wire.py`. If you change the wire, that
+Python test fails; regenerate with `MACE_UPDATE_FIXTURES=1 pytest
+tests/test_web_wire.py` and say so in the commit message, because it is a
+change to the contract every front-end is written against.
 
 ## Testing expectations
 

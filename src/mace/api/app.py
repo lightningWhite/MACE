@@ -25,10 +25,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -177,6 +178,7 @@ def create_app(
     library: Library | None = None,
     origins: Sequence[str] = DEV_ORIGINS,
     capacity: int | None = None,
+    client: Path | None = None,
 ) -> FastAPI:
     """Build the service over some loaded content.
 
@@ -190,6 +192,11 @@ def create_app(
         Origins a browser may call this from.
     capacity : int or None
         How many playthroughs to hold open. None takes the default.
+    client : Path or None
+        A built web client (`web/dist`) to serve alongside the API. When it is
+        there, the game and the service share an origin and the CORS list is
+        beside the point; in development the two are separate and the Vite
+        dev server proxies `/api` to here instead.
 
     Returns
     -------
@@ -201,7 +208,9 @@ def create_app(
     ContentError
         If the content will not load.
     """
-    loaded = library if library is not None else load_library(*(paths or [Path("packs")]))
+    loaded = (
+        library if library is not None else load_library(*(paths or [Path("packs")]))
+    )
     registry = Registry() if capacity is None else Registry(capacity=capacity)
 
     app = FastAPI(
@@ -275,7 +284,7 @@ def create_app(
     @app.get("/api/games/{pack}/creation")
     def creation(
         pack: str,
-        background: str | None = Query(default=None),
+        background: Annotated[str | None, Query()] = None,
     ) -> dict[str, Any]:
         """The character-creation question, if the game asks one.
 
@@ -305,13 +314,15 @@ def create_app(
     # ── Playing ───────────────────────────────────────────────────────────
 
     @app.post("/api/sessions", status_code=201)
-    def open_session(new: New = Body(default_factory=New)) -> dict[str, Any]:
+    def open_session(
+        new: Annotated[New | None, Body()] = None,
+    ) -> dict[str, Any]:
         """Start a playthrough, or carry a saved one on.
 
         Parameters
         ----------
-        new : New
-            What to open.
+        new : New or None
+            What to open. An empty body opens the only game loaded.
 
         Returns
         -------
@@ -323,22 +334,23 @@ def create_app(
         HTTPException
             400 if the content will not open it, or the save will not replay.
         """
+        asked = new if new is not None else New()
         try:
-            if new.save is not None:
-                session, drift = resume(Save.restore(new.save), loaded)
+            if asked.save is not None:
+                session, drift = resume(Save.restore(asked.save), loaded)
             else:
                 drift = []
                 session = Session.begin(
                     loaded,
-                    choose_game(loaded, new.pack),
-                    seed=new.seed,
-                    combat_mode=new.combat_mode,
+                    choose_game(loaded, asked.pack),
+                    seed=asked.seed,
+                    combat_mode=asked.combat_mode,
                     character=(
                         None
-                        if new.character is None
+                        if asked.character is None
                         else Character(
-                            background=new.character.background,
-                            spend=dict(new.character.spend),
+                            background=asked.character.background,
+                            spend=dict(asked.character.spend),
                         )
                     ),
                 )
@@ -368,7 +380,7 @@ def create_app(
 
     @app.post("/api/sessions/{session_id}/actions")
     def act(
-        session_id: str, action: dict[str, Any] = Body(...)
+        session_id: str, action: Annotated[dict[str, Any], Body()]
     ) -> dict[str, Any]:
         """Do one thing.
 
@@ -458,6 +470,12 @@ def create_app(
                     await websocket.send_json({"error": error.detail})
         except WebSocketDisconnect:
             return
+
+    # Mounted last, at the root, so every `/api` route above wins. `html=True`
+    # serves index.html for a path the build has no file for, which is what a
+    # client with its own routes needs and costs nothing to a client without.
+    if client is not None and client.is_dir():
+        app.mount("/", StaticFiles(directory=client, html=True), name="client")
 
     return app
 

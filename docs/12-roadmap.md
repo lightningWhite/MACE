@@ -124,7 +124,9 @@ writing YAML.
 - [x] FastAPI session service; WebSocket event stream. `mace serve`, one
       frame shape for every reply, and [ADR-0009](decisions/0009-the-save-is-the-durability.md)
       — the server holds no playthroughs, the save does
-- [ ] React + TS PWA: narrative pane, choices, character, inventory, journal
+- [x] React + TS client: narrative pane, choices, character, inventory,
+      journal, standing status line. Tests replay frames recorded from the
+      real engine, guarded by `tests/test_web_wire.py`
 - [ ] SVG map with fog of war, route lengths, weather overlay
 - [ ] Combat view with timing bar and momentum
 - [ ] Offline-capable PWA shell
