@@ -64,6 +64,7 @@ SURVIVAL = Fixed.of(
 
 GAME = Flow(
     id="game",
+    noun="game",
     title="Game setup",
     collection=None,
     steps=(
@@ -294,6 +295,7 @@ GAME = Flow(
 
 LOCATION = Flow(
     id="location",
+    noun="place",
     title="A place",
     collection="locations",
     identity=("location.name",),
@@ -457,6 +459,7 @@ LOCATION = Flow(
 
 ENTITY = Flow(
     id="entity",
+    noun="entity",
     title="A person, a creature, or a thing",
     collection="entities",
     identity=("entity.name",),
@@ -596,6 +599,7 @@ ENTITY = Flow(
 
 ROUTE = Flow(
     id="route",
+    noun="road",
     title="A road between two places",
     collection="routes",
     identity=("route.from", "route.to", "route.ticks"),
@@ -690,6 +694,7 @@ ROUTE = Flow(
 
 SCENE = Flow(
     id="scene",
+    noun="scene",
     title="Something that happens",
     collection="scenes",
     identity=("scene.say",),
@@ -834,6 +839,7 @@ SCENE = Flow(
 
 QUEST = Flow(
     id="quest",
+    noun="quest",
     title="Something to be doing",
     collection="quests",
     identity=("quest.name",),
@@ -936,6 +942,7 @@ QUEST = Flow(
 
 BACKGROUND = Flow(
     id="background",
+    noun="background",
     title="Who the protagonist was",
     collection="backgrounds",
     identity=("background.name",),

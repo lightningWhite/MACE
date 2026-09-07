@@ -8,6 +8,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from mace import __version__
+from mace.cli.author import author
 from mace.cli.create import parse_spend
 from mace.cli.play import play
 from mace.content import ContentError, Severity, validate_paths
@@ -143,7 +144,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="where the packs it requires live (default: packs/)",
     )
     started.set_defaults(run=run_new)
+
+    writer = commands.add_parser(
+        "author",
+        help="build a game without writing YAML",
+        description=(
+            "Open a pack in the wizard: a task list you can work through in "
+            "any order, live validation, and a playtest from anywhere."
+        ),
+    )
+    writer.add_argument("directory", type=Path, help="the pack to author")
+    writer.add_argument(
+        "--packs",
+        type=Path,
+        default=Path("packs"),
+        help="where the packs it builds on live (default: packs/)",
+    )
+    writer.set_defaults(run=run_author)
     return parser
+
+
+def run_author(options: argparse.Namespace) -> int:
+    """Run `mace author`.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    return author(options.directory, options.packs)
 
 
 def run_new(options: argparse.Namespace) -> int:

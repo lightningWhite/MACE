@@ -14,6 +14,8 @@ location, because where a place sits on the map is part of the world.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from pydantic import Field
 
 from mace.model.base import ContentModel
@@ -57,14 +59,32 @@ class PlaytestSetup(ContentModel):
         Where to begin, overriding the game's own start.
     start_tick : int or None
         When to begin.
+    weather : str or None
+        A weather condition to open in, whatever the climate would have
+        rolled. "In a blizzard" is half of every awkward corner worth
+        testing, and waiting for one is not iterating.
+    items : mapping
+        Extra items to start with, by reference. "With a magic sword" is the
+        other half.
+    background : str or None
+        Which background to create the protagonist with.
+    spend : mapping
+        Where the creation points went.
     combat_mode : str or None
         Which combat presentation to use.
+    debug : bool
+        Whether the overlay is open.
     """
 
     seed: str = "mace"
     start_location: str | None = None
     start_tick: int | None = Field(default=None, ge=0)
+    weather: str | None = None
+    items: Mapping[str, int] = Field(default_factory=dict)
+    background: str | None = None
+    spend: Mapping[str, int] = Field(default_factory=dict)
     combat_mode: str | None = None
+    debug: bool = False
 
 
 class ProjectNotes(ContentModel):

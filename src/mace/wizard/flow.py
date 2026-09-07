@@ -251,6 +251,10 @@ class Flow:
         every step is independently addressable and any of them can be left.
     collection : str or None
         Which collection it authors, or None for the game manifest.
+    noun : str
+        What one of these is called mid-sentence. `title` is a heading and
+        reads like one ("A place"); this is the word that goes in "what is
+        the new ___ called".
     identity : tuple of str
         The steps that must be answered before the object exists at all —
         an id and a name. Everything else can wait.
@@ -260,6 +264,7 @@ class Flow:
     title: str
     steps: tuple[Step, ...]
     collection: str | None = None
+    noun: str = "thing"
     identity: tuple[str, ...] = ()
 
     def step(self, step_id: str) -> Step:

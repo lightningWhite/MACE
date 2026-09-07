@@ -91,7 +91,7 @@ from mace.model.calendar import STANDARD_YEAR
 from mace.model.effects import Rest
 from mace.model.text import DescriptionLine, SayLine
 
-__all__ = ["StepResult", "begin", "step"]
+__all__ = ["StepResult", "begin", "context_for", "step"]
 
 #: How many scenes may follow one another through `goto` before the engine
 #: decides the content is looping. Generous enough that no honest chain hits it.
@@ -145,6 +145,8 @@ def begin(
     *,
     combat_mode: str | None = None,
     character: Character | None = None,
+    start_at: str | None = None,
+    start_tick: int | None = None,
 ) -> StepResult:
     """Start a playthrough.
 
@@ -166,6 +168,12 @@ def begin(
         author wrote them, which is what a game offering neither of those has
         always meant. Setup rather than a turn, so a seed replays a poacher as
         exactly as it replays a farmhand (`mace.engine.creation`).
+    start_at : str or None
+        Open somewhere other than the game's own start location. This is what
+        "start me at the Troll Bridge" is made of — a session parameter, so a
+        playtest is still a replayable session rather than a special mode.
+    start_tick : int or None
+        Open at some other tick. "At midnight" is the other half of it.
 
     Returns
     -------
@@ -188,7 +196,9 @@ def begin(
         if problems:
             raise ContentError("; ".join(problems), pack=pack_id)
 
-    state = _initial_state(library, pack_id, pack.game, seed)
+    state = _initial_state(
+        library, pack_id, pack.game, seed, start_at=start_at, start_tick=start_tick
+    )
     state.combat_mode = combat_mode
     opening = _create_character(library, pack_id, state, character)
     context = _context(library, state, pack.game)
@@ -2013,7 +2023,15 @@ def _offer_scene(
 # ── Setting up ────────────────────────────────────────────────────────────────
 
 
-def _initial_state(library: Library, pack_id: str, game: Game, seed: str) -> GameState:
+def _initial_state(
+    library: Library,
+    pack_id: str,
+    game: Game,
+    seed: str,
+    *,
+    start_at: str | None = None,
+    start_tick: int | None = None,
+) -> GameState:
     """Build the state a playthrough starts from.
 
     Parameters
@@ -2026,6 +2044,10 @@ def _initial_state(library: Library, pack_id: str, game: Game, seed: str) -> Gam
         Its manifest.
     seed : str
         The session seed.
+    start_at : str or None
+        Where to open, overriding the game's own start location.
+    start_tick : int or None
+        When to open, overriding the game's own start tick.
 
     Returns
     -------
@@ -2033,16 +2055,19 @@ def _initial_state(library: Library, pack_id: str, game: Game, seed: str) -> Gam
         A world with the protagonist standing in it.
     """
     protagonist_id = library.resolve(game.player.entity, "entities", within=pack_id)
-    start = library.resolve(game.player.start_location, "locations", within=pack_id)
+    start = library.resolve(
+        start_at or game.player.start_location, "locations", within=pack_id
+    )
+    opens_at = game.world.start_tick if start_tick is None else start_tick
 
     state = GameState(
         pack=pack_id,
         seed=seed,
         rng=RandomSource(seed),
         player=_instance_id(protagonist_id),
-        tick=game.world.start_tick,
-        world_tick=game.world.start_tick,
-        start_tick=game.world.start_tick,
+        tick=opens_at,
+        world_tick=opens_at,
+        start_tick=opens_at,
     )
 
     state.entities[state.player] = _instantiate(library, protagonist_id, start, pack_id)
@@ -2319,6 +2344,38 @@ def _first_stage(library: Library, quest_id: str) -> str | None:
 
 
 # ── Small lookups ─────────────────────────────────────────────────────────────
+
+
+def context_for(library: Library, state: GameState) -> RuleContext:
+    """Build the context a playthrough's rules are evaluated against.
+
+    Public because a front-end's debug overlay has to be able to ask the same
+    questions the engine asks — "would this choice be available, and why not"
+    — without reaching into the engine to do it. It is read-only: a context
+    resolves references and reads state, and evaluating a condition through
+    one changes nothing.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    state : GameState
+        The playthrough.
+
+    Returns
+    -------
+    RuleContext
+        The context.
+
+    Raises
+    ------
+    ContentError
+        If the state names a pack that is not a playable game.
+    """
+    game = library.pack(state.pack).game
+    if game is None:
+        raise ContentError("is not a playable game pack", pack=state.pack)
+    return _context(library, state, game)
 
 
 def _context(library: Library, state: GameState, game: Game) -> RuleContext:
