@@ -47,14 +47,14 @@ from mace.wizard.fields import (
     StatAllocator,
     TextList,
 )
-from mace.wizard.flow import Flow, Step, answered, slug
+from mace.wizard.flow import Flow, Step, answered, dig, plant, slug
 from mace.wizard.flows import FLOWS, GAME
 from mace.wizard.generators import FLAVOURS, PRESETS, SIZES, start_world, suggest_table
 from mace.wizard.language import Names, say_conditions
 from mace.wizard.notes import Note, PlaytestSetup, ProjectNotes
 from mace.wizard.playtest import start_from
 from mace.wizard.project import Project
-from mace.wizard.query import Catalog, Option
+from mace.wizard.query import Catalog, Option, Scoped
 from mace.wizard.share import export_pack
 from mace.wizard.tasks import Task, TaskList, review
 
@@ -1009,7 +1009,7 @@ class Wizard:
             if ask.default is not None:
                 self.say(f"      (blank for {_shown(ask.default)})")
             try:
-                answers[ask.key] = self._collect(_askable(ask), None)
+                answers[ask.key] = self._collect(_askable(ask, answers), None)
             except Leave:
                 return None
 
@@ -1048,7 +1048,7 @@ class Wizard:
             if not kept:
                 self.say(f"      (no {one.of}s yet)")
             self.say("")
-            self.say("      [a] add   [r] remove   [d] done")
+            self.say("      [a] add   [e] edit   [r] remove   [d] done")
             typed = self.ask().lower()
             if typed in {"d", "done", ""}:
                 return kept
@@ -1057,32 +1057,48 @@ class Wizard:
                 if which.isdigit() and 1 <= int(which) <= len(kept):
                     kept.pop(int(which) - 1)
                 continue
+            if typed in {"e", "edit"} and kept:
+                which = self.ask("Edit which number?  ")
+                if which.isdigit() and 1 <= int(which) <= len(kept):
+                    index = int(which) - 1
+                    kept[index] = self._entry_fields(one, kept[index])
+                continue
             if typed in {"a", "add"}:
                 entry = self._entry_fields(one)
                 if entry:
                     kept.append(entry)
                 continue
-            self.say("      One of a / r / d.")
+            self.say("      One of a / e / r / d.")
 
-    def _entry_fields(self, one: Repeat) -> dict[str, Any]:
+    def _entry_fields(
+        self, one: Repeat, existing: Mapping[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Ask a repeat entry's own questions.
 
         Parameters
         ----------
         one : Repeat
             The field, whose `steps` describe one entry.
+        existing : mapping or None
+            The entry being edited, so each sub-step can show what is there
+            already. None builds a new entry from nothing.
 
         Returns
         -------
         dict
-            The entry, with the keys the author answered.
+            The entry, with the keys the author answered. A sub-step whose
+            binding has more than one segment past the repeat's own name —
+            `entries.combat.against` — nests, the same way a binding on an
+            ordinary object would. Editing keeps whatever the author did not
+            revisit, since `Leave` on one sub-step only backs out of the rest
+            of *this* entry, not the whole edit.
 
         Raises
         ------
         Stop
             When the author is done.
         """
-        entry: dict[str, Any] = {}
+        entry: dict[str, Any] = dict(existing) if existing else {}
         for sub in one.steps:
             assert isinstance(sub, Step)
             self.say("")
@@ -1090,12 +1106,14 @@ class Wizard:
             if sub.help:
                 for line in _wrap(sub.help):
                     self.say(f"      {line}")
+            current = dig(existing, sub.binding.path) if existing else None
+            if answered(current):
+                self.say(f"      now: {sub.field.describe(current, self.catalog)}")
             try:
-                value = self._collect(sub.field, None)
+                value = self._collect(sub.field, current)
             except Leave:
                 return entry
-            if answered(value):
-                entry[sub.binding.leaf] = value
+            plant(entry, sub.binding.path, value if answered(value) else None)
         return entry
 
     # ── The actions on the bottom row ─────────────────────────────────────
@@ -1415,26 +1433,36 @@ def _whole(typed: str) -> float | int:
     return int(value) if value.is_integer() else value
 
 
-def _askable(ask: Ask) -> Field:
-    """The field for one cascade question, made skippable where it has a default.
+def _askable(ask: Ask, answers: Mapping[str, Any]) -> Field:
+    """The field for one cascade question, ready to put in front of the author.
 
-    A question with a default is a question the author should be able to press
-    enter on — "who is carrying it" almost always means the player, and being
-    made to say so every time is what turns a cascade into a form.
+    Made skippable where it has a default — a question with a default is a
+    question the author should be able to press enter on — "who is carrying
+    it" almost always means the player, and being made to say so every time
+    is what turns a cascade into a form. And narrowed to whatever an earlier
+    question answered, when this one `depends_on` it — a `stage` picker
+    offering only the chosen quest's stages, rather than every quest's.
 
     Parameters
     ----------
     ask : Ask
         The question.
+    answers : mapping
+        What the earlier questions in this cascade were answered with.
 
     Returns
     -------
     Field
         The field, optional if there is something to fall back to.
     """
-    if ask.default is None or ask.field.optional:
-        return ask.field
-    return replace(ask.field, optional=True)
+    field = ask.field
+    if isinstance(field, Select | MultiSelect) and ask.depends_on:
+        scope = answers.get(ask.depends_on)
+        if isinstance(scope, str) and scope:
+            field = replace(field, options=Scoped(field.options, scope))
+    if ask.default is None or field.optional:
+        return field
+    return replace(field, optional=True)
 
 
 def _shown(value: Any) -> str:

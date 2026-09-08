@@ -416,6 +416,47 @@ def test_a_cascade_ask_arrives_with_this_packs_options_on_it(studio: Studio) -> 
     assert {option["value"] for option in which["field"]["options"]} == {"gold"}
 
 
+def test_a_dependent_asks_options_carry_the_scope_to_narrow_by(
+    tmp_path: Path,
+) -> None:
+    """The `stage` ask says it `dependsOn` `quest`, and each stage option's
+    `scope` is the quest it belongs to — what a client needs to narrow the
+    picker once an author has chosen a quest, without a second round trip."""
+
+    def stage(id_: str) -> dict[str, Any]:
+        return {"id": id_, "journal": "...", "complete": [{"chance": 1}]}
+
+    studio = Studio.open(
+        world(
+            tmp_path,
+            quests={
+                "quests": [
+                    {
+                        "id": "the-summons",
+                        "name": "The Summons",
+                        "stages": [stage("set-out")],
+                    },
+                    {
+                        "id": "the-heist",
+                        "name": "The Heist",
+                        "stages": [stage("case-the-vault")],
+                    },
+                ]
+            },
+        )
+    )
+    quest_stage = next(
+        one for one in studio.vocabulary()["conditions"] if one["tag"] == "questStage"
+    )
+    quest_ask, stage_ask = quest_stage["asks"]
+
+    assert quest_ask["dependsOn"] == ""
+    assert stage_ask["dependsOn"] == "quest"
+    assert {
+        (option["value"], option["scope"]) for option in stage_ask["field"]["options"]
+    } == {("set-out", "the-summons"), ("case-the-vault", "the-heist")}
+
+
 def test_building_a_condition_returns_content_and_english(studio: Studio) -> None:
     built = studio.build("conditions", "hasItem", {"item": "gold", "qty": 10})
     assert built["authored"] == {"hasItem": {"item": "gold", "qty": 10}}

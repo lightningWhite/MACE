@@ -27,7 +27,7 @@ from mace.content import ContentError
 from mace.wizard.fields import Field, Text
 from mace.wizard.project import Project
 
-__all__ = ["Binding", "Flow", "Step", "answered", "slug"]
+__all__ = ["Binding", "Flow", "Step", "answered", "dig", "plant", "slug"]
 
 #: The binding target that means the `game:` manifest rather than a collection.
 GAME_TARGET = "game"
@@ -108,7 +108,7 @@ class Binding:
         """
         if self.collection is None:
             game = project.game
-            return None if game is None else _dig(game, self.path)
+            return None if game is None else dig(game, self.path)
         if object_id is None:
             return None
         # Through `extends`, so a step is not asked again about a field the
@@ -117,7 +117,7 @@ class Binding:
         top = project.effective(self.collection, object_id, self.path[0])
         if len(self.path) == 1 or not isinstance(top, Mapping):
             return top
-        return _dig(top, self.path[1:])
+        return dig(top, self.path[1:])
 
     def write(self, project: Project, object_id: str | None, value: Any) -> None:
         """Put an answer into the project.
@@ -143,7 +143,7 @@ class Binding:
         """
         if self.collection is None:
             body = dict(project.game or {})
-            _plant(body, self.path, value)
+            plant(body, self.path, value)
             project.set_game(body)
             return
 
@@ -159,7 +159,7 @@ class Binding:
                 collection=self.collection,
             )
         body = dict(existing)
-        _plant(body, self.path, value)
+        plant(body, self.path, value)
         project.put(self.collection, body)
 
 
@@ -379,8 +379,12 @@ def slug(name: str) -> str:
     return "-".join(part for part in "".join(kept).split("-") if part) or "untitled"
 
 
-def _dig(holder: Mapping[str, Any], path: Sequence[str]) -> Any:
+def dig(holder: Mapping[str, Any], path: Sequence[str]) -> Any:
     """Follow a dotted path into an authored mapping.
+
+    Public so a repeat entry can be read the same way a binding reads one —
+    editing `choices.combat.against` needs to find what is already at
+    `{combat: {against: [...]}}` inside the entry before it can offer it back.
 
     Parameters
     ----------
@@ -402,8 +406,13 @@ def _dig(holder: Mapping[str, Any], path: Sequence[str]) -> Any:
     return current
 
 
-def _plant(holder: MutableMapping[str, Any], path: Sequence[str], value: Any) -> None:
+def plant(holder: MutableMapping[str, Any], path: Sequence[str], value: Any) -> None:
     """Set a dotted path in an authored mapping, making the way as it goes.
+
+    Public so a repeat entry can be built the same way a binding writes one —
+    `entries.combat.against` should land at `{combat: {against: [...]}}`
+    inside an entry exactly as `entities[{id}].combat.profile` would inside an
+    object.
 
     Parameters
     ----------

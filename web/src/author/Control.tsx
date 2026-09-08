@@ -180,7 +180,7 @@ function PickMany({ id, field, value, busy, onChange }: ControlProps) {
         ...suggested,
         ...chosen
           .filter((one) => !suggested.some((option) => option.value === one))
-          .map((one) => ({ value: one, label: one, note: "" })),
+          .map((one) => ({ value: one, label: one, note: "", scope: "" })),
       ]
     : suggested;
 

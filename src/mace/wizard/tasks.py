@@ -150,6 +150,7 @@ SECTIONS: tuple[Section, ...] = (
         id="encounters",
         title="Encounters",
         collections=("encounterTables",),
+        flow="encounterTables",
         help="What the roads might throw at somebody walking down them.",
     ),
     Section(

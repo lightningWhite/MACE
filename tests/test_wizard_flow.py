@@ -29,7 +29,7 @@ from mace.wizard.fields import (
 from mace.wizard.flow import Binding, Flow, Step, answered
 from mace.wizard.flows import ENTITY, GAME, LOCATION
 from mace.wizard.project import Project
-from mace.wizard.query import Catalog, Query
+from mace.wizard.query import Catalog, Query, QuestStages, Scoped
 from mace.wizard.tasks import SECTIONS, State, review
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -105,6 +105,49 @@ def test_the_player_is_offered_without_being_defined(catalog: Catalog) -> None:
 def test_a_reference_to_nothing_stays_visible(catalog: Catalog) -> None:
     assert catalog.label("atlantis", "locations") == "atlantis"
     assert not catalog.exists("atlantis", "locations")
+
+
+@pytest.fixture
+def two_quests(tmp_path: Path) -> Project:
+    """A pack with two quests, so a stage picker has something to narrow."""
+
+    def stage(id_: str) -> dict[str, Any]:
+        return {"id": id_, "journal": "...", "complete": [{"chance": 1}]}
+
+    quests = {
+        "quests": [
+            {
+                "id": "the-summons",
+                "name": "The Summons",
+                "stages": [stage("set-out"), stage("arrive")],
+            },
+            {
+                "id": "the-heist",
+                "name": "The Heist",
+                "stages": [stage("case-the-vault"), stage("crack-it")],
+            },
+        ]
+    }
+    return Project.open(game_pack(tmp_path, world=quests), tmp_path)
+
+
+def test_quest_stages_are_offered_scoped_to_their_quest(two_quests: Project) -> None:
+    catalog = Catalog(two_quests)
+    offered = QuestStages().options(catalog)
+
+    assert {(o.value, o.scope) for o in offered} == {
+        ("set-out", "the-summons"),
+        ("arrive", "the-summons"),
+        ("case-the-vault", "the-heist"),
+        ("crack-it", "the-heist"),
+    }
+
+
+def test_a_scoped_source_narrows_to_one_quest(two_quests: Project) -> None:
+    catalog = Catalog(two_quests)
+    narrowed = Scoped(QuestStages(), "the-heist").options(catalog)
+
+    assert {o.value for o in narrowed} == {"case-the-vault", "crack-it"}
 
 
 # ── Fields ────────────────────────────────────────────────────────────────────

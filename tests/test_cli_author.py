@@ -65,6 +65,30 @@ def project(tmp_path: Path) -> Project:
 
 
 @pytest.fixture
+def two_quests(tmp_path: Path) -> Project:
+    """A pack with two quests, so a stage picker has something to narrow."""
+
+    def stage(id_: str) -> dict[str, object]:
+        return {"id": id_, "journal": "...", "complete": [{"chance": 1}]}
+
+    quests = {
+        "quests": [
+            {
+                "id": "the-summons",
+                "name": "The Summons",
+                "stages": [stage("set-out"), stage("arrive")],
+            },
+            {
+                "id": "the-heist",
+                "name": "The Heist",
+                "stages": [stage("case-the-vault"), stage("crack-it")],
+            },
+        ]
+    }
+    return Project.open(game_pack(tmp_path, world=quests), tmp_path)
+
+
+@pytest.fixture
 def quest(tmp_path: Path) -> Project:
     """A copy of the real pack, so a test may edit and save it."""
     shutil.copytree(PACKS, tmp_path / "packs")
@@ -144,6 +168,111 @@ def test_the_cascade_builds_a_condition_and_reads_it_back(project: Project) -> N
     assert "the player is carrying at least 10 Gold" in shown
     written = dict(project.get("scenes", "the-gate") or {})
     assert written["when"] == [{"hasItem": {"item": "gold", "qty": 10}}]
+
+
+def test_an_encounter_table_can_be_built_from_the_wizard(project: Project) -> None:
+    """The encounters section used to have no flow at all — `[n] new` did
+    nothing because `encounterTables` was not in `FLOWS`."""
+    shown = drive(
+        project,
+        "7",  # encounters
+        "n",
+        "Forest Road",  # a new table
+        "6",  # entries
+        "a",
+        "wolf-pack",  # entry.id
+        "",  # entry.weight — blank
+        "d",  # entry.when — no conditions
+        "",  # entry.scene — blank, a fight instead
+        "1",  # entry.combatAgainst — hero, the only actor
+        "",  # entry.combatFleeTo — blank
+        "",  # entry.once — blank
+        "",  # entry.cooldownTicks — blank
+        "",  # entry.maxPerGame — blank
+        "d",  # done adding entries
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    assert "Made `forest-road`" in shown
+    written = dict(project.get("encounterTables", "forest-road") or {})
+    assert written["entries"] == [{"id": "wolf-pack", "combat": {"against": ["hero"]}}]
+
+
+def test_a_repeat_entry_can_be_edited_not_only_removed(project: Project) -> None:
+    """A choice used to be delete-and-retype-from-scratch. It should not be."""
+    shown = drive(
+        project,
+        "5",  # scenes
+        "n",
+        "The Gate",  # a new scene
+        "5",  # choices
+        "a",
+        "Pay the toll (10 gold)",  # choice.prompt
+        "d",  # choice.when — no conditions
+        "",  # choice.showWhenUnavailable — blank
+        "",  # choice.unavailableHint — blank
+        "",  # choice.goto — blank
+        "d",  # choice.effects — nothing happens
+        "a",
+        "Fight the goblin",  # choice.prompt
+        "d",
+        "",
+        "",
+        "",
+        "d",
+        "e",  # edit, not remove
+        "1",  # the toll choice
+        "Pay the toll (fifteen gold)",  # choice.prompt, changed
+        "d",
+        "",
+        "",
+        "",
+        "d",
+        "d",  # done with choices
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    assert "[e] edit" in shown
+    assert "now: Pay the toll (10 gold)" in shown
+    written = dict(project.get("scenes", "the-gate") or {})
+    prompts = [choice["prompt"] for choice in written["choices"]]
+    assert prompts == ["Pay the toll (fifteen gold)", "Fight the goblin"]
+
+
+def test_a_quest_stage_question_is_narrowed_to_the_chosen_quest(
+    two_quests: Project,
+) -> None:
+    shown = drive(
+        two_quests,
+        "5",  # scenes
+        "n",
+        "The Vault",  # a new scene
+        "2",  # when
+        "a",
+        "13",  # a quest has reached a stage
+        "1",  # the-heist
+        "1",  # case-the-vault
+        "d",
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    assert "case the vault" in shown
+    assert "crack it" in shown
+    assert "set out" not in shown
+    assert "arrive" not in shown
+    written = dict(two_quests.get("scenes", "the-vault") or {})
+    assert written["when"] == [
+        {"questStage": {"quest": "the-heist", "stage": "case-the-vault"}}
+    ]
 
 
 def test_saving_writes_only_what_changed(quest: Project) -> None:

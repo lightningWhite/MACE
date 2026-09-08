@@ -101,7 +101,7 @@
           "summary": "2 encounter tables",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "encounterTables",
           "collections": [
             "encounterTables"
           ]
@@ -241,7 +241,7 @@
             "summary": "2 encounter tables",
             "note": "",
             "errors": 0,
-            "flow": null,
+            "flow": "encounterTables",
             "collections": [
               "encounterTables"
             ]
@@ -446,7 +446,7 @@
             "summary": "2 encounter tables",
             "note": "",
             "errors": 0,
-            "flow": null,
+            "flow": "encounterTables",
             "collections": [
               "encounterTables"
             ]
@@ -764,7 +764,7 @@
             "summary": "2 encounter tables",
             "note": "",
             "errors": 0,
-            "flow": null,
+            "flow": "encounterTables",
             "collections": [
               "encounterTables"
             ]
@@ -957,7 +957,7 @@
           "summary": "2 encounter tables",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "encounterTables",
           "collections": [
             "encounterTables"
           ]
@@ -1080,7 +1080,8 @@
               {
                 "value": "letholin",
                 "label": "Letholin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               }
             ],
             "allowCreate": "entities"
@@ -1105,22 +1106,26 @@
               {
                 "value": "fenmoor",
                 "label": "Fenmoor",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "hagans-castle",
                 "label": "Hagan's Castle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "traders-post",
                 "label": "Trader's Post",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "troll-bridge",
                 "label": "The Old Bridge",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               }
             ],
             "allowCreate": "locations"
@@ -1169,17 +1174,20 @@
               {
                 "value": "farmhand",
                 "label": "Farmhand",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "old-soldier",
                 "label": "Old Soldier",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "poacher",
                 "label": "Poacher",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               }
             ],
             "allowCreate": "backgrounds",
@@ -1226,7 +1234,8 @@
               {
                 "value": "mace.core:standard-year",
                 "label": "The Standard Year",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -1289,17 +1298,20 @@
               {
                 "value": "the-lowlands",
                 "label": "The Lowlands",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-marches",
                 "label": "The Marches",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-northwood",
                 "label": "The Northwood",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -1360,17 +1372,20 @@
               {
                 "value": "tactical",
                 "label": "tactical \u2014 untimed, and loses none of the reading",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "reflex",
                 "label": "reflex \u2014 a real timing window",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "auto",
                 "label": "auto \u2014 the engine plays both sides",
-                "note": ""
+                "note": "",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -1412,22 +1427,26 @@
               {
                 "value": "exposure",
                 "label": "exposure \u2014 the weather takes something out of you",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "rest",
                 "label": "rest \u2014 you have to stop, and stopping costs time",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "hunger",
                 "label": "hunger",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "thirst",
                 "label": "thirst",
-                "note": ""
+                "note": "",
+                "scope": ""
               }
             ],
             "allowCreate": null,
@@ -1454,12 +1473,14 @@
               {
                 "value": "simple",
                 "label": "simple \u2014 a price is an item's value, and shops are scenes",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "market",
                 "label": "market \u2014 shelves, scarcity, and trade along the roads",
-                "note": ""
+                "note": "",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -1484,57 +1505,68 @@
               {
                 "value": "kings-token",
                 "label": "The King's Token",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "reaping-hook",
                 "label": "Reaping Hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bread",
                 "label": "Bread",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:dagger",
                 "label": "Dagger",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:gold",
                 "label": "Gold",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:grain",
                 "label": "Grain",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:healing-draught",
                 "label": "Healing Draught",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:iron-ingot",
                 "label": "Iron Ingot",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:rope",
                 "label": "Rope",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:salt",
                 "label": "Salt",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:wool",
                 "label": "Wool",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "entities"
@@ -1559,22 +1591,26 @@
               {
                 "value": "gentle",
                 "label": "gentle",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "standard",
                 "label": "standard",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "hard",
                 "label": "hard",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "brutal",
                 "label": "brutal",
-                "note": ""
+                "note": "",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -1601,7 +1637,8 @@
               {
                 "value": "the-kings-summons",
                 "label": "The King's Summons",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               }
             ],
             "allowCreate": "quests",
@@ -1695,187 +1732,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes"
@@ -1900,187 +1974,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes"
@@ -2191,7 +2302,7 @@
           "summary": "2 encounter tables",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "encounterTables",
           "collections": [
             "encounterTables"
           ]
@@ -2291,17 +2402,20 @@
               {
                 "value": "the-lowlands",
                 "label": "The Lowlands",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-marches",
                 "label": "The Marches",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-northwood",
                 "label": "The Northwood",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               }
             ],
             "allowCreate": "regions"
@@ -2363,122 +2477,146 @@
               {
                 "value": "captain-orin",
                 "label": "Captain Orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm",
                 "label": "Gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "kings-token",
                 "label": "The King's Token",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "letholin",
                 "label": "Letholin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mereth-the-reeve",
                 "label": "Mereth the Reeve",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "old-hallam",
                 "label": "Old Hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "peddler",
                 "label": "The Peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "quartermaster-bel",
                 "label": "Quartermaster Bel",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "reaping-hook",
                 "label": "Reaping Hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bread",
                 "label": "Bread",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bridge-troll",
                 "label": "Bridge Troll",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:dagger",
                 "label": "Dagger",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:gold",
                 "label": "Gold",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:grain",
                 "label": "Grain",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:healing-draught",
                 "label": "Healing Draught",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:iron-ingot",
                 "label": "Iron Ingot",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:rope",
                 "label": "Rope",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:salt",
                 "label": "Salt",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:salt-carrier",
                 "label": "A Salt Carrier",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:soldier",
                 "label": "Soldier",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:travelling-merchant",
                 "label": "Travelling Merchant",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:villager",
                 "label": "Villager",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:wolf",
                 "label": "Wolf",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:wool",
                 "label": "Wool",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "entities",
@@ -2505,187 +2643,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes",
@@ -2712,187 +2887,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes"
@@ -2917,17 +3129,20 @@
               {
                 "value": "forest-road",
                 "label": "The North Road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-quiet-track",
                 "label": "The Trader's Track",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:quiet-road",
                 "label": "A quiet road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -2975,22 +3190,26 @@
                     {
                       "value": "fenmoor",
                       "label": "Fenmoor",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "hagans-castle",
                       "label": "Hagan's Castle",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "traders-post",
                       "label": "Trader's Post",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "troll-bridge",
                       "label": "The Old Bridge",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     }
                   ],
                   "allowCreate": "locations"
@@ -3011,12 +3230,14 @@
                     {
                       "value": "north-road",
                       "label": "The North Road",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "south-track",
                       "label": "The Trader's Track",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     }
                   ],
                   "allowCreate": "routes"
@@ -3058,7 +3279,10 @@
                 "to": "traders-post",
                 "route": "south-track"
               },
-              "summary": "to: traders-post \u00b7 route: south-track"
+              "summary": "to: traders-post \u00b7 route: south-track",
+              "pieces": {
+                "when": []
+              }
             },
             {
               "values": {
@@ -3066,7 +3290,10 @@
                 "route": "north-road",
                 "label": "Take the north road"
               },
-              "summary": "to: hagans-castle \u00b7 route: north-road \u00b7 label: Take the north road"
+              "summary": "to: hagans-castle \u00b7 route: north-road \u00b7 label: Take the north road",
+              "pieces": {
+                "when": []
+              }
             }
           ]
         },
@@ -3194,7 +3421,7 @@
           "summary": "2 encounter tables",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "encounterTables",
           "collections": [
             "encounterTables"
           ]
@@ -3480,187 +3707,224 @@
                     {
                       "value": "a-traveller-with-news",
                       "label": "a traveller with news",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "beaten-by-gorm",
                       "label": "beaten by gorm",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "buy-bread",
                       "label": "buy bread",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "buy-rope",
                       "label": "buy rope",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "cannot-afford",
                       "label": "cannot afford",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "castle-arrival",
                       "label": "castle arrival",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "defeat",
                       "label": "defeat",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "fenmoor-arrival",
                       "label": "fenmoor arrival",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "fight-gorm",
                       "label": "fight gorm",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "fled-from-gorm",
                       "label": "fled from gorm",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "gorm-beaten",
                       "label": "gorm beaten",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "gorm-has-been-paid",
                       "label": "gorm has been paid",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "gorm-on-the-road",
                       "label": "gorm on the road",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "gorm-refuses-to-haggle",
                       "label": "gorm refuses to haggle",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "haggle-with-gorm",
                       "label": "haggle with gorm",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "nothing-to-sell",
                       "label": "nothing to sell",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "pay-in-bread",
                       "label": "pay in bread",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "pay-the-toll",
                       "label": "pay the toll",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "report-to-orin",
                       "label": "report to orin",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "riders-going-north",
                       "label": "riders going north",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "say-goodbye-to-hallam",
                       "label": "say goodbye to hallam",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "sell-reaping-hook",
                       "label": "sell reaping hook",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "sell-rope",
                       "label": "sell rope",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "talk-to-gorm",
                       "label": "talk to gorm",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "talk-to-peddler",
                       "label": "talk to peddler",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "the-wolves-decide-otherwise",
                       "label": "the wolves decide otherwise",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "victory",
                       "label": "victory",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "wolves-on-the-road",
                       "label": "wolves on the road",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "mace.core:nothing-happens",
                       "label": "nothing happens",
-                      "note": "mace.core"
+                      "note": "mace.core",
+                      "scope": ""
                     },
                     {
                       "value": "mace.core:rest-a-while",
                       "label": "rest a while",
-                      "note": "mace.core"
+                      "note": "mace.core",
+                      "scope": ""
                     },
                     {
                       "value": "mace.core:sleep-until-morning",
                       "label": "sleep until morning",
-                      "note": "mace.core"
+                      "note": "mace.core",
+                      "scope": ""
                     },
                     {
                       "value": "mace.core:wait-here",
                       "label": "wait here",
-                      "note": "mace.core"
+                      "note": "mace.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:a-caravan-on-the-road",
                       "label": "a caravan on the road",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:nothing-much-happens",
                       "label": "nothing much happens",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:someone-on-the-road",
                       "label": "someone on the road",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:something-in-the-grass",
                       "label": "something in the grass",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:the-road-notices-you",
                       "label": "the road notices you",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     }
                   ],
                   "allowCreate": "scenes"
@@ -3698,14 +3962,33 @@
                 "unavailableHint": "You don't have ten gold.",
                 "goto": "pay-the-toll"
               },
-              "summary": "prompt: Pay the toll (10 gold) \u00b7 when: [{'hasItem': {'actor': 'player', 'item': 'fantasy.core:gold', 'qty': 10}}] \u00b7 showWhenUnavailable: True \u00b7 unavailableHint: You don't have ten gold. \u00b7 goto: pay-the-toll"
+              "summary": "prompt: Pay the toll (10 gold) \u00b7 when: [{'hasItem': {'actor': 'player', 'item': 'fantasy.core:gold', 'qty': 10}}] \u00b7 showWhenUnavailable: True \u00b7 unavailableHint: You don't have ten gold. \u00b7 goto: pay-the-toll",
+              "pieces": {
+                "when": [
+                  {
+                    "authored": {
+                      "hasItem": {
+                        "actor": "player",
+                        "item": "fantasy.core:gold",
+                        "qty": 10
+                      }
+                    },
+                    "said": "the player is carrying at least 10 Gold"
+                  }
+                ],
+                "effects": []
+              }
             },
             {
               "values": {
                 "prompt": "Try to talk it down",
                 "goto": "haggle-with-gorm"
               },
-              "summary": "prompt: Try to talk it down \u00b7 goto: haggle-with-gorm"
+              "summary": "prompt: Try to talk it down \u00b7 goto: haggle-with-gorm",
+              "pieces": {
+                "when": [],
+                "effects": []
+              }
             },
             {
               "values": {
@@ -3723,21 +4006,44 @@
                 "unavailableHint": "You have nothing like four loaves.",
                 "goto": "pay-in-bread"
               },
-              "summary": "prompt: Offer it your bread (4 loaves) \u00b7 when: [{'hasItem': {'actor': 'player', 'item': 'fantasy.core:bread', 'qty': 4}}] \u00b7 showWhenUnavailable: True \u00b7 unavailableHint: You have nothing like four loaves. \u00b7 goto: pay-in-bread"
+              "summary": "prompt: Offer it your bread (4 loaves) \u00b7 when: [{'hasItem': {'actor': 'player', 'item': 'fantasy.core:bread', 'qty': 4}}] \u00b7 showWhenUnavailable: True \u00b7 unavailableHint: You have nothing like four loaves. \u00b7 goto: pay-in-bread",
+              "pieces": {
+                "when": [
+                  {
+                    "authored": {
+                      "hasItem": {
+                        "actor": "player",
+                        "item": "fantasy.core:bread",
+                        "qty": 4
+                      }
+                    },
+                    "said": "the player is carrying at least 4 Bread"
+                  }
+                ],
+                "effects": []
+              }
             },
             {
               "values": {
                 "prompt": "Ask about the road north",
                 "goto": "gorm-on-the-road"
               },
-              "summary": "prompt: Ask about the road north \u00b7 goto: gorm-on-the-road"
+              "summary": "prompt: Ask about the road north \u00b7 goto: gorm-on-the-road",
+              "pieces": {
+                "when": [],
+                "effects": []
+              }
             },
             {
               "values": {
                 "prompt": "Refuse, and put a hand on your hook",
                 "goto": "fight-gorm"
               },
-              "summary": "prompt: Refuse, and put a hand on your hook \u00b7 goto: fight-gorm"
+              "summary": "prompt: Refuse, and put a hand on your hook \u00b7 goto: fight-gorm",
+              "pieces": {
+                "when": [],
+                "effects": []
+              }
             }
           ]
         },
@@ -3759,187 +4065,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes"
@@ -3981,187 +4324,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes"
@@ -4272,7 +4652,7 @@
           "summary": "2 encounter tables",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "encounterTables",
           "collections": [
             "encounterTables"
           ]
@@ -4351,27 +4731,32 @@
               {
                 "value": "actor",
                 "label": "actor \u2014 a person, a monster, anything that acts",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "item",
                 "label": "item \u2014 something to carry, wear, or spend",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "fixture",
                 "label": "fixture \u2014 scenery you can interact with",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "container",
                 "label": "container \u2014 a chest, a sack, a corpse",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "portal",
                 "label": "portal \u2014 a door or a gate between places",
-                "note": ""
+                "note": "",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -4415,122 +4800,146 @@
               {
                 "value": "captain-orin",
                 "label": "Captain Orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm",
                 "label": "Gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "kings-token",
                 "label": "The King's Token",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "letholin",
                 "label": "Letholin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mereth-the-reeve",
                 "label": "Mereth the Reeve",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "old-hallam",
                 "label": "Old Hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "peddler",
                 "label": "The Peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "quartermaster-bel",
                 "label": "Quartermaster Bel",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "reaping-hook",
                 "label": "Reaping Hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bread",
                 "label": "Bread",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bridge-troll",
                 "label": "Bridge Troll",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:dagger",
                 "label": "Dagger",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:gold",
                 "label": "Gold",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:grain",
                 "label": "Grain",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:healing-draught",
                 "label": "Healing Draught",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:iron-ingot",
                 "label": "Iron Ingot",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:rope",
                 "label": "Rope",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:salt",
                 "label": "Salt",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:salt-carrier",
                 "label": "A Salt Carrier",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:soldier",
                 "label": "Soldier",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:travelling-merchant",
                 "label": "Travelling Merchant",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:villager",
                 "label": "Villager",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:wolf",
                 "label": "Wolf",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:wool",
                 "label": "Wool",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -4558,117 +4967,140 @@
               {
                 "value": "$append",
                 "label": "$append",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "beast",
                 "label": "beast",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "caravan",
                 "label": "caravan",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "cloth",
                 "label": "cloth",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "currency",
                 "label": "currency",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "food",
                 "label": "food",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "human",
                 "label": "human",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "improvised",
                 "label": "improvised",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "large",
                 "label": "large",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "merchant",
                 "label": "merchant",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "metal",
                 "label": "metal",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "monster",
                 "label": "monster",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "named",
                 "label": "named",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "peasant",
                 "label": "peasant",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "potion",
                 "label": "potion",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "quest",
                 "label": "quest",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "soldier",
                 "label": "soldier",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "tool",
                 "label": "tool",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "trade",
                 "label": "trade",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "troll",
                 "label": "troll",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "villager",
                 "label": "villager",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "weapon",
                 "label": "weapon",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "wolf",
                 "label": "wolf",
-                "note": ""
+                "note": "",
+                "scope": ""
               }
             ],
             "allowCreate": null,
@@ -4724,17 +5156,20 @@
               {
                 "value": "friendly",
                 "label": "friendly",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "neutral",
                 "label": "neutral",
-                "note": ""
+                "note": "",
+                "scope": ""
               },
               {
                 "value": "hostile",
                 "label": "hostile",
-                "note": ""
+                "note": "",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -4759,32 +5194,38 @@
               {
                 "value": "fantasy.core:adventurer",
                 "label": "Adventurer",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:brawler",
                 "label": "Brawler",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bridge-troll-profile",
                 "label": "Bridge troll",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:pack-hunter",
                 "label": "Pack hunter",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:quick-duelist",
                 "label": "Quick duelist",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:shield-line",
                 "label": "Shield line",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -4827,57 +5268,68 @@
                     {
                       "value": "kings-token",
                       "label": "The King's Token",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "reaping-hook",
                       "label": "Reaping Hook",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:bread",
                       "label": "Bread",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:dagger",
                       "label": "Dagger",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:gold",
                       "label": "Gold",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:grain",
                       "label": "Grain",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:healing-draught",
                       "label": "Healing Draught",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:iron-ingot",
                       "label": "Iron Ingot",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:rope",
                       "label": "Rope",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:salt",
                       "label": "Salt",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     },
                     {
                       "value": "fantasy.core:wool",
                       "label": "Wool",
-                      "note": "fantasy.core"
+                      "note": "fantasy.core",
+                      "scope": ""
                     }
                   ],
                   "allowCreate": "entities"
@@ -4907,7 +5359,8 @@
                 "item": "fantasy.core:gold",
                 "qty": 120
               },
-              "summary": "item: fantasy.core:gold \u00b7 qty: 120"
+              "summary": "item: fantasy.core:gold \u00b7 qty: 120",
+              "pieces": {}
             }
           ]
         },
@@ -4931,187 +5384,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes",
@@ -5243,7 +5733,7 @@
           "summary": "2 encounter tables",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "encounterTables",
           "collections": [
             "encounterTables"
           ]
@@ -5400,7 +5890,7 @@
           "summary": "2 encounter tables",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "encounterTables",
           "collections": [
             "encounterTables"
           ]
@@ -5498,17 +5988,20 @@
               {
                 "value": "the-lowlands",
                 "label": "The Lowlands",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-marches",
                 "label": "The Marches",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-northwood",
                 "label": "The Northwood",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               }
             ],
             "allowCreate": "regions"
@@ -5567,122 +6060,146 @@
               {
                 "value": "captain-orin",
                 "label": "Captain Orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm",
                 "label": "Gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "kings-token",
                 "label": "The King's Token",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "letholin",
                 "label": "Letholin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mereth-the-reeve",
                 "label": "Mereth the Reeve",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "old-hallam",
                 "label": "Old Hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "peddler",
                 "label": "The Peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "quartermaster-bel",
                 "label": "Quartermaster Bel",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "reaping-hook",
                 "label": "Reaping Hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bread",
                 "label": "Bread",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:bridge-troll",
                 "label": "Bridge Troll",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:dagger",
                 "label": "Dagger",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:gold",
                 "label": "Gold",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:grain",
                 "label": "Grain",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:healing-draught",
                 "label": "Healing Draught",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:iron-ingot",
                 "label": "Iron Ingot",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:rope",
                 "label": "Rope",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:salt",
                 "label": "Salt",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:salt-carrier",
                 "label": "A Salt Carrier",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:soldier",
                 "label": "Soldier",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:travelling-merchant",
                 "label": "Travelling Merchant",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:villager",
                 "label": "Villager",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:wolf",
                 "label": "Wolf",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:wool",
                 "label": "Wool",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "entities",
@@ -5709,187 +6226,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes",
@@ -5916,187 +6470,224 @@
               {
                 "value": "a-traveller-with-news",
                 "label": "a traveller with news",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "beaten-by-gorm",
                 "label": "beaten by gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-bread",
                 "label": "buy bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "buy-rope",
                 "label": "buy rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "cannot-afford",
                 "label": "cannot afford",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "castle-arrival",
                 "label": "castle arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "defeat",
                 "label": "defeat",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fenmoor-arrival",
                 "label": "fenmoor arrival",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fight-gorm",
                 "label": "fight gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fled-from-gorm",
                 "label": "fled from gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-beaten",
                 "label": "gorm beaten",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-has-been-paid",
                 "label": "gorm has been paid",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-on-the-road",
                 "label": "gorm on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "gorm-refuses-to-haggle",
                 "label": "gorm refuses to haggle",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "haggle-with-gorm",
                 "label": "haggle with gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "nothing-to-sell",
                 "label": "nothing to sell",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-in-bread",
                 "label": "pay in bread",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "pay-the-toll",
                 "label": "pay the toll",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "report-to-orin",
                 "label": "report to orin",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "riders-going-north",
                 "label": "riders going north",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "say-goodbye-to-hallam",
                 "label": "say goodbye to hallam",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-reaping-hook",
                 "label": "sell reaping hook",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "sell-rope",
                 "label": "sell rope",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-gorm",
                 "label": "talk to gorm",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "talk-to-peddler",
                 "label": "talk to peddler",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-wolves-decide-otherwise",
                 "label": "the wolves decide otherwise",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "victory",
                 "label": "victory",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "wolves-on-the-road",
                 "label": "wolves on the road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "mace.core:nothing-happens",
                 "label": "nothing happens",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:rest-a-while",
                 "label": "rest a while",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:sleep-until-morning",
                 "label": "sleep until morning",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "mace.core:wait-here",
                 "label": "wait here",
-                "note": "mace.core"
+                "note": "mace.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:a-caravan-on-the-road",
                 "label": "a caravan on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:nothing-much-happens",
                 "label": "nothing much happens",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:someone-on-the-road",
                 "label": "someone on the road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:something-in-the-grass",
                 "label": "something in the grass",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:the-road-notices-you",
                 "label": "the road notices you",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": "scenes"
@@ -6121,17 +6712,20 @@
               {
                 "value": "forest-road",
                 "label": "The North Road",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "the-quiet-track",
                 "label": "The Trader's Track",
-                "note": "this pack"
+                "note": "this pack",
+                "scope": ""
               },
               {
                 "value": "fantasy.core:quiet-road",
                 "label": "A quiet road",
-                "note": "fantasy.core"
+                "note": "fantasy.core",
+                "scope": ""
               }
             ],
             "allowCreate": null
@@ -6169,27 +6763,32 @@
                     {
                       "value": "fenmoor",
                       "label": "Fenmoor",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "hagans-castle",
                       "label": "Hagan's Castle",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "the-long-moor",
                       "label": "The Long Moor",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "traders-post",
                       "label": "Trader's Post",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "troll-bridge",
                       "label": "The Old Bridge",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     }
                   ],
                   "allowCreate": "locations"
@@ -6210,12 +6809,14 @@
                     {
                       "value": "north-road",
                       "label": "The North Road",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     },
                     {
                       "value": "south-track",
                       "label": "The Trader's Track",
-                      "note": "this pack"
+                      "note": "this pack",
+                      "scope": ""
                     }
                   ],
                   "allowCreate": "routes"
@@ -6621,131 +7222,156 @@
       {
         "value": "fenmoor",
         "label": "Fenmoor",
-        "note": "this pack"
+        "note": "this pack",
+        "scope": ""
       },
       {
         "value": "hagans-castle",
         "label": "Hagan's Castle",
-        "note": "this pack"
+        "note": "this pack",
+        "scope": ""
       },
       {
         "value": "the-long-moor",
         "label": "The Long Moor",
-        "note": "this pack"
+        "note": "this pack",
+        "scope": ""
       },
       {
         "value": "traders-post",
         "label": "Trader's Post",
-        "note": "this pack"
+        "note": "this pack",
+        "scope": ""
       },
       {
         "value": "troll-bridge",
         "label": "The Old Bridge",
-        "note": "this pack"
+        "note": "this pack",
+        "scope": ""
       }
     ],
     "weather": [
       {
         "value": "fantasy.core:blizzard",
         "label": "blizzard",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:clear",
         "label": "clear",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:drizzle",
         "label": "drizzle",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:fog",
         "label": "fog",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:light-snow",
         "label": "light snow",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:overcast",
         "label": "overcast",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:rain",
         "label": "rain",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:sleet",
         "label": "sleet",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:storm",
         "label": "storm",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       }
     ],
     "items": [
       {
         "value": "kings-token",
         "label": "The King's Token",
-        "note": "this pack"
+        "note": "this pack",
+        "scope": ""
       },
       {
         "value": "reaping-hook",
         "label": "Reaping Hook",
-        "note": "this pack"
+        "note": "this pack",
+        "scope": ""
       },
       {
         "value": "fantasy.core:bread",
         "label": "Bread",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:dagger",
         "label": "Dagger",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:gold",
         "label": "Gold",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:grain",
         "label": "Grain",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:healing-draught",
         "label": "Healing Draught",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:iron-ingot",
         "label": "Iron Ingot",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:rope",
         "label": "Rope",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:salt",
         "label": "Salt",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       },
       {
         "value": "fantasy.core:wool",
         "label": "Wool",
-        "note": "fantasy.core"
+        "note": "fantasy.core",
+        "scope": ""
       }
     ]
   },
@@ -6843,6 +7469,7 @@
             "title": "Which item?",
             "help": "",
             "default": null,
+            "dependsOn": "",
             "field": {
               "kind": "select",
               "optional": false,
@@ -6852,57 +7479,68 @@
                 {
                   "value": "kings-token",
                   "label": "The King's Token",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "reaping-hook",
                   "label": "Reaping Hook",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:bread",
                   "label": "Bread",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:dagger",
                   "label": "Dagger",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:gold",
                   "label": "Gold",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:grain",
                   "label": "Grain",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:healing-draught",
                   "label": "Healing Draught",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:iron-ingot",
                   "label": "Iron Ingot",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:rope",
                   "label": "Rope",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:salt",
                   "label": "Salt",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:wool",
                   "label": "Wool",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 }
               ],
               "allowCreate": null
@@ -6913,6 +7551,7 @@
             "title": "How many, at least?",
             "help": "",
             "default": 1,
+            "dependsOn": "",
             "field": {
               "kind": "number",
               "optional": true,
@@ -6928,6 +7567,7 @@
             "title": "Who is carrying it?",
             "help": "",
             "default": "player",
+            "dependsOn": "",
             "field": {
               "kind": "select",
               "optional": false,
@@ -6937,127 +7577,152 @@
                 {
                   "value": "player",
                   "label": "the player",
-                  "note": "built in"
+                  "note": "built in",
+                  "scope": ""
                 },
                 {
                   "value": "captain-orin",
                   "label": "Captain Orin",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "gorm",
                   "label": "Gorm",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "kings-token",
                   "label": "The King's Token",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "letholin",
                   "label": "Letholin",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "mereth-the-reeve",
                   "label": "Mereth the Reeve",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "old-hallam",
                   "label": "Old Hallam",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "peddler",
                   "label": "The Peddler",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "quartermaster-bel",
                   "label": "Quartermaster Bel",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "reaping-hook",
                   "label": "Reaping Hook",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:bread",
                   "label": "Bread",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:bridge-troll",
                   "label": "Bridge Troll",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:dagger",
                   "label": "Dagger",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:gold",
                   "label": "Gold",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:grain",
                   "label": "Grain",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:healing-draught",
                   "label": "Healing Draught",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:iron-ingot",
                   "label": "Iron Ingot",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:rope",
                   "label": "Rope",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:salt",
                   "label": "Salt",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:salt-carrier",
                   "label": "A Salt Carrier",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:soldier",
                   "label": "Soldier",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:travelling-merchant",
                   "label": "Travelling Merchant",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:villager",
                   "label": "Villager",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:wolf",
                   "label": "Wolf",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:wool",
                   "label": "Wool",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 }
               ],
               "allowCreate": null
@@ -7079,6 +7744,7 @@
             "title": "Which item?",
             "help": "",
             "default": null,
+            "dependsOn": "",
             "field": {
               "kind": "select",
               "optional": false,
@@ -7088,57 +7754,68 @@
                 {
                   "value": "kings-token",
                   "label": "The King's Token",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "reaping-hook",
                   "label": "Reaping Hook",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:bread",
                   "label": "Bread",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:dagger",
                   "label": "Dagger",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:gold",
                   "label": "Gold",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:grain",
                   "label": "Grain",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:healing-draught",
                   "label": "Healing Draught",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:iron-ingot",
                   "label": "Iron Ingot",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:rope",
                   "label": "Rope",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:salt",
                   "label": "Salt",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:wool",
                   "label": "Wool",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 }
               ],
               "allowCreate": null
@@ -7149,6 +7826,7 @@
             "title": "How many?",
             "help": "",
             "default": 1,
+            "dependsOn": "",
             "field": {
               "kind": "number",
               "optional": true,
@@ -7164,6 +7842,7 @@
             "title": "To whom?",
             "help": "",
             "default": "player",
+            "dependsOn": "",
             "field": {
               "kind": "select",
               "optional": false,
@@ -7173,127 +7852,152 @@
                 {
                   "value": "player",
                   "label": "the player",
-                  "note": "built in"
+                  "note": "built in",
+                  "scope": ""
                 },
                 {
                   "value": "captain-orin",
                   "label": "Captain Orin",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "gorm",
                   "label": "Gorm",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "kings-token",
                   "label": "The King's Token",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "letholin",
                   "label": "Letholin",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "mereth-the-reeve",
                   "label": "Mereth the Reeve",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "old-hallam",
                   "label": "Old Hallam",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "peddler",
                   "label": "The Peddler",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "quartermaster-bel",
                   "label": "Quartermaster Bel",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "reaping-hook",
                   "label": "Reaping Hook",
-                  "note": "this pack"
+                  "note": "this pack",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:bread",
                   "label": "Bread",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:bridge-troll",
                   "label": "Bridge Troll",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:dagger",
                   "label": "Dagger",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:gold",
                   "label": "Gold",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:grain",
                   "label": "Grain",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:healing-draught",
                   "label": "Healing Draught",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:iron-ingot",
                   "label": "Iron Ingot",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:rope",
                   "label": "Rope",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:salt",
                   "label": "Salt",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:salt-carrier",
                   "label": "A Salt Carrier",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:soldier",
                   "label": "Soldier",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:travelling-merchant",
                   "label": "Travelling Merchant",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:villager",
                   "label": "Villager",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:wolf",
                   "label": "Wolf",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 },
                 {
                   "value": "fantasy.core:wool",
                   "label": "Wool",
-                  "note": "fantasy.core"
+                  "note": "fantasy.core",
+                  "scope": ""
                 }
               ],
               "allowCreate": null

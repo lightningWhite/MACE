@@ -1155,6 +1155,7 @@ button:disabled {
 }
 
 .piece-add,
+.piece-edit,
 .piece-drop,
 .cascade-actions button,
 .cascade-menu button,
@@ -1169,10 +1170,16 @@ button:disabled {
   cursor: pointer;
 }
 
+.piece-edit,
 .piece-drop {
   color: var(--ink-dim);
   border-color: transparent;
   background: none;
+}
+
+.piece-edit:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--edge);
 }
 
 .piece-drop:hover:not(:disabled) {

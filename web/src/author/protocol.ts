@@ -54,6 +54,11 @@ export interface Option {
   label: string;
   /** Where it came from: `this pack`, or a library's id. */
   note: string;
+  /**
+   * What a dependent ask's answer must equal for this option to apply — the
+   * quest a stage belongs to, say. Empty for an option offered regardless.
+   */
+  scope: string;
 }
 
 /**
@@ -107,6 +112,13 @@ export interface Piece {
 export interface Entry {
   values: Record<string, unknown>;
   summary: string;
+  /**
+   * Said in English, per condition/effect sub-field — keyed the same way
+   * `EntryForm` keys its own local state, so reopening an entry to edit it
+   * can seed `PiecesEditor` without losing whichever condition or effect
+   * is already there.
+   */
+  pieces: Record<string, Piece[]>;
 }
 
 /** One stat of a statblock. */
@@ -283,6 +295,10 @@ export interface Recipe {
     title: string;
     help: string;
     default: unknown;
+    /** Another ask's key in this recipe, when this one's options should be
+     * narrowed to whatever was answered there. Empty for a question that
+     * stands on its own. */
+    dependsOn: string;
     field: FieldSpec;
   }>;
 }

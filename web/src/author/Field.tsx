@@ -185,20 +185,28 @@ function PiecesEditor({
 
 /** A list of sub-objects — exits, choices, stages — each with its own flow. */
 function Entries({ step, onAnswer, busy }: Props) {
-  const [adding, setAdding] = useState(false);
+  const [composing, setComposing] = useState<"add" | number | null>(null);
   const held = (step.entries ?? []) as Entry[];
   const noun = step.field.of ?? "entry";
   const steps = step.field.steps ?? [];
 
   const add = (values: Record<string, unknown>) => {
-    setAdding(false);
+    setComposing(null);
     onAnswer([...held.map((one) => one.values), values]);
   };
 
+  const save = (index: number, values: Record<string, unknown>) => {
+    setComposing(null);
+    onAnswer(held.map((one, at) => (at === index ? values : one.values)));
+  };
+
   const drop = (index: number) => {
+    setComposing(null);
     const next = held.filter((_one, at) => at !== index).map((one) => one.values);
     onAnswer(next.length === 0 ? null : next);
   };
+
+  const editing = typeof composing === "number" ? held[composing] : undefined;
 
   return (
     <div className="pieces">
@@ -209,6 +217,15 @@ function Entries({ step, onAnswer, busy }: Props) {
           {held.map((one, index) => (
             <li key={`${one.summary}-${index}`}>
               <span>{one.summary}</span>
+              <button
+                type="button"
+                className="piece-edit"
+                disabled={busy}
+                onClick={() => setComposing(index)}
+                aria-label={`Edit ${noun} ${index + 1}`}
+              >
+                edit
+              </button>
               <button
                 type="button"
                 className="piece-drop"
@@ -223,20 +240,23 @@ function Entries({ step, onAnswer, busy }: Props) {
         </ul>
       )}
 
-      {adding ? (
+      {composing !== null ? (
         <EntryForm
           noun={noun}
           steps={steps}
           busy={busy}
-          onDone={add}
-          onCancel={() => setAdding(false)}
+          initial={editing}
+          onDone={
+            typeof composing === "number" ? (values) => save(composing, values) : add
+          }
+          onCancel={() => setComposing(null)}
         />
       ) : (
         <button
           type="button"
           className="piece-add"
           disabled={busy || steps.length === 0}
-          onClick={() => setAdding(true)}
+          onClick={() => setComposing("add")}
         >
           Add {noun === "entry" ? "an entry" : `a ${noun}`}
         </button>
@@ -251,28 +271,39 @@ function Entries({ step, onAnswer, busy }: Props) {
  * The entry is keyed by each sub-step's binding leaf, which is what the
  * terminal writes too — the sub-steps bind into the entry, not into the
  * object, so `locations[{id}].exits` gets `{to: castle, route: road}`.
+ *
+ * `initial` reopens this on an entry that already exists, rather than
+ * building a fresh one — the same form either way, seeded from what is
+ * already there instead of from nothing.
  */
 function EntryForm({
   noun,
   steps,
   busy,
+  initial,
   onDone,
   onCancel,
 }: {
   noun: string;
   steps: StepSpec[];
   busy: boolean;
+  initial?: Entry | undefined;
   onDone: (values: Record<string, unknown>) => void;
   onCancel: () => void;
 }) {
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<Record<string, unknown>>(() =>
+    initial ? flatten(steps, initial.values) : {},
+  );
   // Conditions and effects need their English kept alongside the raw answer
   // while an entry is still being composed — there is no server-held `Step`
   // for a sub-field to read `.entries` off, because the entry it belongs to
-  // has not been added yet.
-  const [pieces, setPieces] = useState<Record<string, Piece[]>>({});
+  // has not been added yet (or, reopened on an existing entry, the wizard
+  // sent it already said, keyed the same way this state is).
+  const [pieces, setPieces] = useState<Record<string, Piece[]>>(
+    () => initial?.pieces ?? {},
+  );
   const missing = steps.filter(
-    (one) => !one.optional && !answered(values[leafOf(one.binds)]),
+    (one) => !one.optional && !answered(values[keyOf(one.binds)]),
   );
 
   const setValue = (key: string, value: unknown) =>
@@ -280,9 +311,9 @@ function EntryForm({
 
   return (
     <div className="cascade">
-      <p className="cascade-question">A new {noun}</p>
+      <p className="cascade-question">{initial ? `This ${noun}` : `A new ${noun}`}</p>
       {steps.map((one) => {
-        const key = leafOf(one.binds);
+        const key = keyOf(one.binds);
         const isPieces = one.field.kind === "conditions" || one.field.kind === "effects";
         return (
           <div className="field" key={one.id}>
@@ -326,9 +357,9 @@ function EntryForm({
         <button
           type="button"
           disabled={busy || missing.length > 0}
-          onClick={() => onDone(strip(values))}
+          onClick={() => onDone(assemble(steps, values))}
         >
-          Add it
+          {initial ? "Save it" : "Add it"}
         </button>
         <button type="button" className="cascade-cancel" onClick={onCancel}>
           never mind
@@ -506,10 +537,14 @@ function StatRow({
   );
 }
 
-/** The field name a sub-step binds to — the last segment of its binding. */
-function leafOf(binds: string): string {
-  const parts = binds.split(".");
-  return parts[parts.length - 1] ?? binds;
+/**
+ * Where a sub-step's answer lives inside its entry — everything past the
+ * repeat's own name in its binding, joined back into one key for the local
+ * `values` state. `entries.combat.against` keys as `combat.against`;
+ * `stages.journal` keys as `journal`, same as it always has.
+ */
+function keyOf(binds: string): string {
+  return binds.split(".").slice(1).join(".");
 }
 
 function answered(value: unknown): boolean {
@@ -518,9 +553,68 @@ function answered(value: unknown): boolean {
   return true;
 }
 
-/** Drop the questions the author left blank, so the file holds only answers. */
-function strip(values: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(values).filter(([, value]) => answered(value)),
-  );
+/**
+ * Set a dotted path in a plain object, creating the way as it goes — the
+ * same rule `mace.wizard.flow.plant` applies on the Python side, so
+ * `entries.combat.against` lands at `{combat: {against: [...]}}` here too.
+ */
+function plant(holder: Record<string, unknown>, path: string[], value: unknown): void {
+  let current = holder;
+  for (const key of path.slice(0, -1)) {
+    const nested = current[key];
+    if (typeof nested !== "object" || nested === null || Array.isArray(nested)) {
+      current[key] = {};
+    }
+    current = current[key] as Record<string, unknown>;
+  }
+  const leaf = path[path.length - 1];
+  if (leaf !== undefined) current[leaf] = value;
+}
+
+/**
+ * Drop the questions the author left blank, and nest each answer at the path
+ * its own step binds to, so the entry reads the way an ordinary object's
+ * bindings would.
+ */
+function assemble(
+  steps: StepSpec[],
+  values: Record<string, unknown>,
+): Record<string, unknown> {
+  const entry: Record<string, unknown> = {};
+  for (const step of steps) {
+    const key = keyOf(step.binds);
+    const value = values[key];
+    if (answered(value)) plant(entry, key.split("."), value);
+  }
+  return entry;
+}
+
+/** Follow a dotted path into a plain object — the read half of `plant`. */
+function dig(holder: Record<string, unknown>, path: string[]): unknown {
+  let current: unknown = holder;
+  for (const key of path) {
+    if (typeof current !== "object" || current === null || Array.isArray(current)) {
+      return undefined;
+    }
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+/**
+ * The inverse of `assemble`: an existing entry, read back into the flat,
+ * per-step `values` an `EntryForm` keeps while it is open — what reopening
+ * one for editing seeds its local state from.
+ */
+function flatten(
+  steps: StepSpec[],
+  entryValues: Record<string, unknown>,
+): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
+  for (const step of steps) {
+    const key = keyOf(step.binds);
+    const value = dig(entryValues, key.split("."));
+    if (value !== undefined) values[key] = value;
+  }
+  return values;
 }

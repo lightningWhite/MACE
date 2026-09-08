@@ -32,7 +32,7 @@ from mace.model.base import RESERVED_ACTORS
 if TYPE_CHECKING:  # pragma: no cover — import cycle, types only
     from mace.wizard.project import Project
 
-__all__ = ["Catalog", "Distinct", "Option", "Query", "Scope"]
+__all__ = ["Catalog", "Distinct", "Option", "Query", "QuestStages", "Scope", "Scoped"]
 
 Scope = Literal["project", "libraries", "project+libraries"]
 
@@ -55,11 +55,16 @@ class Option:
         What the author sees. The definition's `name` where it has one.
     note : str
         Where it came from: `this pack`, or the library's id.
+    scope : str
+        What a dependent ask's answer must equal for this option to apply —
+        the quest a stage belongs to, say. Empty for an option that is not
+        scoped to anything, which is offered regardless.
     """
 
     value: str
     label: str
     note: str = ""
+    scope: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,6 +159,73 @@ class Distinct:
 
 
 @dataclass(frozen=True, slots=True)
+class QuestStages:
+    """Every stage of every quest, each scoped to the quest it belongs to.
+
+    Stages are not their own collection — they live nested inside a quest — so
+    there is nothing for an ordinary `Query` to point at. This offers all of
+    them at once, tagged with which quest each came from, and pairs with
+    `Scoped` so a `stage` ask can be narrowed to the quest a `quest` ask
+    already answered.
+    """
+
+    def options(self, catalog: Catalog) -> tuple[Option, ...]:
+        """Every stage, project quests first.
+
+        Parameters
+        ----------
+        catalog : Catalog
+            What exists.
+
+        Returns
+        -------
+        tuple of Option
+            One per stage, each `scope` matching the value a `Query("quests")`
+            option would offer for the quest it belongs to.
+        """
+        return catalog.quest_stages()
+
+
+@dataclass(frozen=True, slots=True)
+class Scoped:
+    """One source, narrowed to the options that match a chosen scope.
+
+    What a dependent ask's options become once the ask it depends on has been
+    answered. Options with no scope of their own are offered regardless, so a
+    source that mixes scoped and unscoped options is not accidentally hidden.
+
+    Attributes
+    ----------
+    source : Source
+        The options to narrow.
+    scope : str
+        What `Option.scope` must equal.
+    """
+
+    source: Any
+    scope: str
+
+    def options(self, catalog: Catalog) -> tuple[Option, ...]:
+        """The source's options, filtered to this scope.
+
+        Parameters
+        ----------
+        catalog : Catalog
+            What exists.
+
+        Returns
+        -------
+        tuple of Option
+            Only the options that apply to this scope.
+        """
+        return tuple(
+            option
+            for option in self.source.options(catalog)
+            if option.scope in ("", self.scope)
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class Catalog:
     """Everything the open project and its libraries have to offer.
 
@@ -231,6 +303,53 @@ class Catalog:
                 seen.add(value)
                 ordered.append(value)
         return tuple(Option(value=v, label=v) for v in sorted(ordered))
+
+    def quest_stages(self) -> tuple[Option, ...]:
+        """Every stage of every quest, scoped to the quest it belongs to.
+
+        Returns
+        -------
+        tuple of Option
+            One per stage, project quests first. Each `scope` is exactly the
+            value `Query("quests")` would offer for that quest, so a `Scoped`
+            source can narrow this by whatever a `quest` ask was answered.
+        """
+        found: list[Option] = []
+        held = self.project.objects.get("quests", {})
+        for local_id in sorted(held):
+            authored = held[local_id].data
+            quest_label = _label_of(authored, local_id)
+            for stage in authored.get("stages") or ():
+                if not isinstance(stage, Mapping):
+                    continue
+                stage_id = stage.get("id")
+                if not stage_id:
+                    continue
+                found.append(
+                    Option(
+                        value=str(stage_id),
+                        label=_readable(str(stage_id)),
+                        note=quest_label,
+                        scope=local_id,
+                    )
+                )
+        for pack in self.project.dependencies.packs:
+            try:
+                collected = pack.collection("quests")
+            except KeyError:  # pragma: no cover — collections are checked upstream
+                continue
+            for local_id, quest in sorted(collected.items()):
+                quest_label = str(getattr(quest, "name", None) or _readable(local_id))
+                for stage in getattr(quest, "stages", ()):
+                    found.append(
+                        Option(
+                            value=stage.id,
+                            label=_readable(stage.id),
+                            note=quest_label,
+                            scope=f"{pack.id}:{local_id}",
+                        )
+                    )
+        return tuple(found)
 
     def label(self, reference: str, collection: str) -> str:
         """What an already-chosen reference should read as.
@@ -480,6 +599,25 @@ def _matches(where: Mapping[str, Any], read: Any) -> bool:
         elif value != wanted:
             return False
     return True
+
+
+def _label_of(authored: Mapping[str, Any], local_id: str) -> str:
+    """What a project object should read as: its `name`, or its id as words.
+
+    Parameters
+    ----------
+    authored : mapping
+        The object as written.
+    local_id : str
+        Its id, for when it has no `name`.
+
+    Returns
+    -------
+    str
+        The label.
+    """
+    name = authored.get("name")
+    return str(name) if name else _readable(local_id)
 
 
 def _readable(local_id: str) -> str:

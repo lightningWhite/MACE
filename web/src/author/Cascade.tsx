@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 import * as api from "./api";
 import { StudioError } from "./api";
 import { Control } from "./Control";
-import type { Built, Recipe, Vocabulary } from "./protocol";
+import type { Built, FieldSpec, Recipe, Vocabulary } from "./protocol";
 
 /** What is on the wire, once, for as long as the tab is open. */
 let held: Vocabulary | null = null;
@@ -145,6 +145,32 @@ function Menu({
   );
 }
 
+/**
+ * An ask's field, narrowed to whatever it `dependsOn` was answered.
+ *
+ * A stage picker starts out holding every stage of every quest — the wire
+ * resolves the whole cascade's options before any question is answered — so
+ * once the author has picked a quest, this is what turns that into "just
+ * this quest's stages" without a second request to the wizard.
+ */
+function scopedField(
+  field: FieldSpec,
+  dependsOn: string,
+  answers: Record<string, unknown>,
+): FieldSpec {
+  if (dependsOn === "" || field.options === undefined) return field;
+  const scope = answers[dependsOn];
+  if (typeof scope !== "string" || scope === "") {
+    return { ...field, options: [] };
+  }
+  return {
+    ...field,
+    options: field.options.filter(
+      (option) => option.scope === "" || option.scope === scope,
+    ),
+  };
+}
+
 /** The second screen: this recipe's own questions, then build it. */
 function Questions({
   kind,
@@ -194,7 +220,7 @@ function Questions({
           )}
           <Control
             id={`ask-${recipe.tag}-${ask.key}`}
-            field={ask.field}
+            field={scopedField(ask.field, ask.dependsOn, answers)}
             value={answers[ask.key] ?? null}
             busy={busy}
             onChange={(value) =>

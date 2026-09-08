@@ -61,7 +61,7 @@ from mace.wizard.fields import (
     Text,
     TextList,
 )
-from mace.wizard.flow import Flow, Step, answered, slug
+from mace.wizard.flow import Flow, Step, answered, dig, slug
 from mace.wizard.flows import FLOWS, GAME
 from mace.wizard.language import Names, say_conditions, say_effects
 from mace.wizard.notes import PlaytestSetup, ProjectNotes
@@ -1127,7 +1127,11 @@ class Studio:
 
         if isinstance(field, Repeat):
             return [
-                {"values": _plain(one), "summary": _summarise(one)}
+                {
+                    "values": _plain(one),
+                    "summary": _summarise(one),
+                    "pieces": self._entry_pieces(field, one),
+                }
                 for one in _sequence(value)
             ]
 
@@ -1143,6 +1147,49 @@ class Studio:
             ]
 
         return None
+
+    def _entry_pieces(
+        self, field: Repeat, entry: Any
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Said in English, per condition/effect sub-field of one entry.
+
+        An entry's `values` already carries the authored half of a
+        `choice.when` or `choice.effects` — this is the English half, keyed
+        the same way the client keys its own local form state, so reopening
+        an entry to edit it can seed `PiecesEditor` correctly instead of
+        showing an existing condition as if it were never there.
+
+        Parameters
+        ----------
+        field : Repeat
+            The field, whose `steps` describe one entry.
+        entry : object
+            One authored entry.
+
+        Returns
+        -------
+        dict
+            Sub-step key to its pieces, for the condition/effect sub-steps
+            only.
+        """
+        pieces: dict[str, list[dict[str, Any]]] = {}
+        for sub in field.steps:
+            if not isinstance(sub, Step) or not isinstance(
+                sub.field, ConditionBuilder | EffectBuilder
+            ):
+                continue
+            kind = (
+                "conditions" if isinstance(sub.field, ConditionBuilder) else "effects"
+            )
+            single = isinstance(sub.field, ConditionBuilder) and sub.field.single
+            found = dig(entry, sub.binding.path) if isinstance(entry, Mapping) else None
+            authored = [found] if single and found is not None else _sequence(found)
+            key = ".".join(sub.binding.path)
+            pieces[key] = [
+                {"authored": _plain(one), "said": self.say(kind, [one])}
+                for one in authored
+            ]
+        return pieces
 
 
 def frame(studio: Studio, screen: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -1251,6 +1298,7 @@ def _ask(ask: Ask, catalog: Catalog | None = None) -> dict[str, Any]:
         "title": ask.title,
         "help": ask.help,
         "default": _plain(ask.default),
+        "dependsOn": ask.depends_on,
         "field": _field(ask.field, catalog),
     }
 
@@ -1389,7 +1437,12 @@ def _option(option: Option) -> dict[str, str]:
     dict
         JSON-safe.
     """
-    return {"value": option.value, "label": option.label, "note": option.note}
+    return {
+        "value": option.value,
+        "label": option.label,
+        "note": option.note,
+        "scope": option.scope,
+    }
 
 
 def _problem(problem: Problem) -> dict[str, Any]:

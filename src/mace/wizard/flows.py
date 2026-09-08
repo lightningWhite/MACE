@@ -982,6 +982,156 @@ QUEST = Flow(
 )
 
 
+ENCOUNTER_TABLE = Flow(
+    id="encounterTable",
+    noun="encounter table",
+    title="What might happen on the road",
+    collection="encounterTables",
+    identity=("table.name",),
+    steps=(
+        Step(
+            id="table.name",
+            title="What is this table called?",
+            binds="encounterTables[{id}].name",
+            field=Text(placeholder="Forest Road"),
+        ),
+        Step(
+            id="table.extends",
+            title="Build on another table?",
+            binds="encounterTables[{id}].extends",
+            field=Select(options=Query("encounterTables"), optional=True),
+            help="A bandit-country road is a country road with worse entries.",
+            optional=True,
+        ),
+        Step(
+            id="table.chance",
+            title="How likely is something to happen, per leg?",
+            binds="encounterTables[{id}].chance",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help="The one dial. 0 for nothing here yet; 1 for every time.",
+            optional=True,
+        ),
+        Step(
+            id="table.minGapTicks",
+            title="Is there a floor between encounters?",
+            binds="encounterTables[{id}].minGapTicks",
+            field=Number(minimum=0, optional=True),
+            help=(
+                "Ticks. Pure independent rolls can produce three ambushes in "
+                "a row, and that feels broken even when it is fair."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="table.pressureStep",
+            title="Does an empty roll make the next one likelier?",
+            binds="encounterTables[{id}].pressureStep",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help=(
+                "Tightens the variance without changing the long-run rate. "
+                "0 turns it off."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="table.entries",
+            title="What can happen?",
+            binds="encounterTables[{id}].entries",
+            field=Repeat(
+                of="entry",
+                steps=(
+                    Step(
+                        id="entry.id",
+                        title="A short name for this entry",
+                        binds="entries.id",
+                        field=Text(placeholder="wolf-pack"),
+                        help="Lower case, hyphens. Tracks cooldowns and caps.",
+                    ),
+                    Step(
+                        id="entry.weight",
+                        title="How likely, relative to the rest?",
+                        binds="entries.weight",
+                        field=Number(minimum=0, integer=False, optional=True),
+                        help=(
+                            "Not a probability — 5 against a total of 100 is "
+                            "the five-percent troll."
+                        ),
+                        optional=True,
+                    ),
+                    Step(
+                        id="entry.when",
+                        title="When is it eligible?",
+                        binds="entries.when",
+                        field=ConditionBuilder(),
+                        optional=True,
+                    ),
+                    Step(
+                        id="entry.scene",
+                        title="Which scene plays?",
+                        binds="entries.scene",
+                        field=Select(
+                            options=Query("scenes"),
+                            allow_create="scenes",
+                            optional=True,
+                        ),
+                        help="Leave blank for a straight fight instead.",
+                        optional=True,
+                    ),
+                    Step(
+                        id="entry.combatAgainst",
+                        title="Who does the player fight?",
+                        binds="entries.combat.against",
+                        field=MultiSelect(
+                            options=Query("entities", where={"kind": "actor"}),
+                            allow_create="entities",
+                        ),
+                        help="Leave blank if a scene plays instead.",
+                        optional=True,
+                    ),
+                    Step(
+                        id="entry.combatFleeTo",
+                        title="Where does fleeing lead?",
+                        binds="entries.combat.fleeTo",
+                        field=Select(
+                            options=Query("entities", reserved=True), optional=True
+                        ),
+                        help="Left blank, fleeing sends them back the way they came.",
+                        optional=True,
+                    ),
+                    Step(
+                        id="entry.once",
+                        title="Does it ever repeat?",
+                        binds="entries.once",
+                        field=Bool(optional=True),
+                        help="On, it can only ever fire once in a playthrough.",
+                        optional=True,
+                    ),
+                    Step(
+                        id="entry.cooldownTicks",
+                        title="How long before it can recur?",
+                        binds="entries.cooldownTicks",
+                        field=Number(minimum=0, optional=True),
+                        optional=True,
+                    ),
+                    Step(
+                        id="entry.maxPerGame",
+                        title="A cap looser than 'never repeats'?",
+                        binds="entries.maxPerGame",
+                        field=Number(minimum=1, optional=True),
+                        optional=True,
+                    ),
+                ),
+            ),
+            help=(
+                "Most entries should not be fights — weather, strangers and "
+                "wildlife are what make a road feel alive rather than a grind."
+            ),
+            optional=True,
+        ),
+    ),
+)
+
+
 BACKGROUND = Flow(
     id="background",
     noun="background",
@@ -1072,6 +1222,7 @@ BACKGROUND = Flow(
 #: Every flow the wizard knows, by the collection it authors.
 FLOWS: dict[str, Flow] = {
     "backgrounds": BACKGROUND,
+    "encounterTables": ENCOUNTER_TABLE,
     "entities": ENTITY,
     "locations": LOCATION,
     "quests": QUEST,

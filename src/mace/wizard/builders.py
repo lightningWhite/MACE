@@ -44,7 +44,7 @@ from mace.wizard.fields import (
     Select,
     Text,
 )
-from mace.wizard.query import Query
+from mace.wizard.query import Query, QuestStages
 
 __all__ = [
     "CONDITIONS",
@@ -79,6 +79,10 @@ class Ask:
         the author said.
     help : str
         A sentence of context, where one is worth having.
+    depends_on : str
+        Another ask's key in the same recipe, when this one's options should
+        be narrowed to whatever was answered there — `stage` narrowed to
+        `quest`, say. Empty for a question that stands on its own.
     """
 
     key: str
@@ -86,6 +90,7 @@ class Ask:
     field: Field
     default: Any = None
     help: str = ""
+    depends_on: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -389,7 +394,12 @@ CONDITIONS: tuple[Recipe, ...] = (
         group="The story",
         asks=(
             Ask("quest", "Which quest?", Select(options=Query("quests"))),
-            Ask("stage", "Which stage?", Text(placeholder="on-the-road")),
+            Ask(
+                "stage",
+                "Which stage?",
+                Select(options=QuestStages()),
+                depends_on="quest",
+            ),
         ),
     ),
     Recipe(
