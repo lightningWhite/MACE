@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 import * as api from "./api";
 import { StudioError } from "./api";
 import { Control } from "./Control";
-import type { Recipe, Vocabulary } from "./protocol";
+import type { Built, Recipe, Vocabulary } from "./protocol";
 
 /** What is on the wire, once, for as long as the tab is open. */
 let held: Vocabulary | null = null;
@@ -62,8 +62,9 @@ function useVocabulary(kind: "conditions" | "effects") {
 
 interface Props {
   kind: "conditions" | "effects";
-  /** Called with the authored mapping once the wizard has built it. */
-  onBuilt: (authored: Record<string, unknown>) => void;
+  /** Called with the authored mapping and its English once the wizard has
+   * built it. */
+  onBuilt: (built: Built) => void;
   onCancel: () => void;
 }
 
@@ -153,7 +154,7 @@ function Questions({
 }: {
   kind: "conditions" | "effects";
   recipe: Recipe;
-  onBuilt: (authored: Record<string, unknown>) => void;
+  onBuilt: (built: Built) => void;
   onCancel: () => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
@@ -165,7 +166,7 @@ function Questions({
     setFailure(null);
     try {
       const built = await api.build(kind, recipe.tag, answers);
-      onBuilt(built.authored);
+      onBuilt(built);
     } catch (error) {
       setFailure(
         error instanceof StudioError

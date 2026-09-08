@@ -13,11 +13,11 @@
  * thing deciding what `{hasItem: {item: gold, qty: 10}}` says.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Cascade } from "./Cascade";
 import { Control } from "./Control";
-import type { Allocated, Entry, Piece, Step, StepSpec } from "./protocol";
+import type { Allocated, Built, Entry, Piece, Step, StepSpec } from "./protocol";
 
 interface Props {
   step: Step;
@@ -75,26 +75,67 @@ function Body({ step, onAnswer, busy }: Props) {
 /**
  * A list of built conditions or effects, and a way to add one.
  *
- * A `single` condition field holds one rather than a list — a description
- * line's `when` is one condition — so adding replaces rather than appends,
- * and the button says so.
+ * Bound to a top-level step, which is answered as it changes — the ordinary
+ * case, and the shape every other field on an object's own steps takes.
  */
 function Pieces({ step, onAnswer, busy }: Props) {
-  const [building, setBuilding] = useState(false);
   const kind = step.field.kind === "conditions" ? "conditions" : "effects";
   const single = step.field.single === true;
   const held = (step.entries ?? []) as Piece[];
 
-  const add = (authored: Record<string, unknown>) => {
+  return (
+    <PiecesEditor
+      kind={kind}
+      single={single}
+      busy={busy}
+      held={held}
+      onChange={(next) =>
+        onAnswer(
+          single
+            ? (next[0]?.authored ?? null)
+            : next.length === 0
+              ? null
+              : next.map((one) => one.authored),
+        )
+      }
+    />
+  );
+}
+
+/**
+ * The condition/effect list and its "add" button, held by whoever owns the
+ * pieces — a step, directly, or one field of an entry still being composed
+ * inside a `Repeat`'s own form, which has nothing to answer until the whole
+ * entry is added.
+ *
+ * A `single` condition field holds one rather than a list — a description
+ * line's `when` is one condition — so adding replaces rather than appends,
+ * and the button says so.
+ */
+function PiecesEditor({
+  kind,
+  single,
+  busy,
+  held,
+  onChange,
+}: {
+  kind: "conditions" | "effects";
+  single: boolean;
+  busy: boolean;
+  held: Piece[];
+  onChange: (next: Piece[]) => void;
+}) {
+  const [building, setBuilding] = useState(false);
+
+  const add = (built: Built) => {
     setBuilding(false);
-    const next = [...held.map((one) => one.authored), authored];
-    onAnswer(single ? authored : next);
+    const piece: Piece = { authored: built.authored, said: built.said };
+    onChange(single ? [piece] : [...held, piece]);
   };
 
   const drop = (index: number) => {
-    if (single) return onAnswer(null);
-    const next = held.filter((_one, at) => at !== index).map((one) => one.authored);
-    onAnswer(next.length === 0 ? null : next);
+    if (single) return onChange([]);
+    onChange(held.filter((_one, at) => at !== index));
   };
 
   return (
@@ -225,31 +266,62 @@ function EntryForm({
   onCancel: () => void;
 }) {
   const [values, setValues] = useState<Record<string, unknown>>({});
+  // Conditions and effects need their English kept alongside the raw answer
+  // while an entry is still being composed — there is no server-held `Step`
+  // for a sub-field to read `.entries` off, because the entry it belongs to
+  // has not been added yet.
+  const [pieces, setPieces] = useState<Record<string, Piece[]>>({});
   const missing = steps.filter(
     (one) => !one.optional && !answered(values[leafOf(one.binds)]),
   );
 
+  const setValue = (key: string, value: unknown) =>
+    setValues((current) => ({ ...current, [key]: value }));
+
   return (
     <div className="cascade">
       <p className="cascade-question">A new {noun}</p>
-      {steps.map((one) => (
-        <div className="field" key={one.id}>
-          <label className="field-title" htmlFor={`entry-${one.id}`}>
-            {one.title}
-            {one.optional ? <span className="dim"> — optional</span> : null}
-          </label>
-          {one.help === "" ? null : <p className="field-help">{one.help}</p>}
-          <Control
-            id={`entry-${one.id}`}
-            field={one.field}
-            value={values[leafOf(one.binds)] ?? null}
-            busy={busy}
-            onChange={(value) =>
-              setValues((current) => ({ ...current, [leafOf(one.binds)]: value }))
-            }
-          />
-        </div>
-      ))}
+      {steps.map((one) => {
+        const key = leafOf(one.binds);
+        const isPieces = one.field.kind === "conditions" || one.field.kind === "effects";
+        return (
+          <div className="field" key={one.id}>
+            <label className="field-title" htmlFor={`entry-${one.id}`}>
+              {one.title}
+              {one.optional ? <span className="dim"> — optional</span> : null}
+            </label>
+            {one.help === "" ? null : <p className="field-help">{one.help}</p>}
+            {isPieces ? (
+              <PiecesEditor
+                kind={one.field.kind === "conditions" ? "conditions" : "effects"}
+                single={one.field.single === true}
+                busy={busy}
+                held={pieces[key] ?? []}
+                onChange={(next) => {
+                  setPieces((current) => ({ ...current, [key]: next }));
+                  const single = one.field.single === true;
+                  setValue(
+                    key,
+                    single
+                      ? (next[0]?.authored ?? null)
+                      : next.length === 0
+                        ? null
+                        : next.map((piece) => piece.authored),
+                  );
+                }}
+              />
+            ) : (
+              <Control
+                id={`entry-${one.id}`}
+                field={one.field}
+                value={values[key] ?? null}
+                busy={busy}
+                onChange={(value) => setValue(key, value)}
+              />
+            )}
+          </div>
+        );
+      })}
       <div className="cascade-actions">
         <button
           type="button"
@@ -319,44 +391,13 @@ function Statblock({ step, onAnswer, busy }: Props) {
       {held.length === 0 ? <p className="dim">No stats yet.</p> : null}
       <ul className="statblock">
         {held.map((one) => (
-          <li key={one.stat}>
-            <span className="statblock-name">{one.stat}</span>
-            <input
-              className="field-input field-number"
-              type="number"
-              aria-label={`${one.stat} base`}
-              value={one.base}
-              disabled={busy}
-              onChange={(event) =>
-                change(one.stat, "base", Number(event.target.value))
-              }
-            />
-            <span className="dim">/</span>
-            <input
-              className="field-input field-number"
-              type="number"
-              aria-label={`${one.stat} cap`}
-              placeholder="cap"
-              value={one.max ?? ""}
-              disabled={busy}
-              onChange={(event) =>
-                change(
-                  one.stat,
-                  "max",
-                  event.target.value === "" ? null : Number(event.target.value),
-                )
-              }
-            />
-            <button
-              type="button"
-              className="piece-drop"
-              disabled={busy}
-              onClick={() => write(held.filter((had) => had.stat !== one.stat))}
-              aria-label={`Remove ${one.stat}`}
-            >
-              remove
-            </button>
-          </li>
+          <StatRow
+            key={one.stat}
+            allocated={one}
+            busy={busy}
+            onChange={(key, value) => change(one.stat, key, value)}
+            onRemove={() => write(held.filter((had) => had.stat !== one.stat))}
+          />
         ))}
       </ul>
 
@@ -389,6 +430,79 @@ function Statblock({ step, onAnswer, busy }: Props) {
         </button>
       </form>
     </div>
+  );
+}
+
+/**
+ * One stat's inputs, buffered locally like every other control.
+ *
+ * Writing straight through to `onChange` on every keystroke — the shape this
+ * replaced — round-trips to the wizard on every digit, and the value coming
+ * back on the next render fights whatever the input was about to show next,
+ * which is what made typing feel like it needed a re-click per digit.
+ */
+function StatRow({
+  allocated,
+  busy,
+  onChange,
+  onRemove,
+}: {
+  allocated: Allocated;
+  busy: boolean;
+  onChange: (key: "base" | "max", value: number | null) => void;
+  onRemove: () => void;
+}) {
+  const [base, setBase] = useState(String(allocated.base));
+  const [max, setMax] = useState(allocated.max === null ? "" : String(allocated.max));
+
+  useEffect(() => setBase(String(allocated.base)), [allocated.base]);
+  useEffect(
+    () => setMax(allocated.max === null ? "" : String(allocated.max)),
+    [allocated.max],
+  );
+
+  return (
+    <li>
+      <span className="statblock-name">{allocated.stat}</span>
+      <input
+        className="field-input field-number"
+        type="number"
+        aria-label={`${allocated.stat} base`}
+        value={base}
+        disabled={busy}
+        onChange={(event) => setBase(event.target.value)}
+        onBlur={() => {
+          const read = Number(base);
+          if (Number.isNaN(read)) setBase(String(allocated.base));
+          else onChange("base", read);
+        }}
+      />
+      <span className="dim">/</span>
+      <input
+        className="field-input field-number"
+        type="number"
+        aria-label={`${allocated.stat} cap`}
+        placeholder="cap"
+        value={max}
+        disabled={busy}
+        onChange={(event) => setMax(event.target.value)}
+        onBlur={() => {
+          if (max === "") return onChange("max", null);
+          const read = Number(max);
+          if (Number.isNaN(read)) setMax(allocated.max === null ? "" : String(allocated.max));
+          else onChange("max", read);
+        }}
+      />
+      <button
+        type="button"
+        className="piece-drop"
+        disabled={busy}
+        onClick={onRemove}
+        aria-label={`Remove ${allocated.stat}`}
+      >
+        remove
+      </button>
+    </li>
   );
 }
 

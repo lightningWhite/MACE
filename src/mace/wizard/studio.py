@@ -654,6 +654,11 @@ class Studio:
             match wins, which is the thing a file does not make obvious.
         """
         described = getattr(built, "description", None) or ()
+        if isinstance(described, str):
+            # A background's description is a plain pitch, not conditional
+            # text — the only collection where `description` is not the
+            # usual tuple of `DescriptionLine`.
+            return [{"text": described, "when": "always"}]
         return [
             {
                 "text": line.text,
@@ -1295,6 +1300,7 @@ def _field(one: Field, catalog: Catalog | None) -> dict[str, Any]:
         body["allowCreate"] = one.allow_create
         if isinstance(one, MultiSelect):
             body["minItems"] = one.min_items
+            body["freeText"] = one.free_text
     elif isinstance(one, StatAllocator):
         body["points"] = one.points
         body["stats"] = list(one.stats)

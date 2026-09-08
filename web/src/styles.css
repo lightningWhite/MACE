@@ -1005,18 +1005,25 @@ button:disabled {
 }
 
 .problems li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   padding: 0.35rem 0;
   font-size: 0.9rem;
   border-bottom: 1px solid var(--edge);
 }
 
 .problem-severity {
-  display: inline-block;
-  min-width: 4.5rem;
+  flex: 0 0 4.5rem;
   text-transform: uppercase;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   color: var(--ink-dim);
+}
+
+.problem-message {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .problem-error .problem-severity {

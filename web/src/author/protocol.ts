@@ -78,6 +78,8 @@ export interface FieldSpec {
   options?: Option[];
   /** A collection to offer "+ make a new one" for. */
   allowCreate?: string | null;
+  /** Whether typing something not on `options` is itself an answer. */
+  freeText?: boolean;
   points?: number;
   stats?: string[];
   single?: boolean;

@@ -501,8 +501,10 @@ function Problems({ problems }: { problems: Problem[] }) {
       {problems.map((one, index) => (
         <li key={`${one.severity}-${index}`} className={`problem-${one.severity}`}>
           <span className="problem-severity">{one.severity}</span>
-          <span>{one.message}</span>
-          {one.object === null ? null : <span className="dim"> — {one.object}</span>}
+          <span className="problem-message">
+            {one.message}
+            {one.object === null ? null : <span className="dim"> — {one.object}</span>}
+          </span>
         </li>
       ))}
     </ul>

@@ -216,13 +216,16 @@ export function MapEditor({
             >
               <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
               {/* A fat invisible line, so a road is something a pointer can
-                  actually hit. */}
+                  actually hit. Non-scaling so the hit area stays a constant
+                  screen size no matter how large the map is or how far the
+                  viewBox has to zoom out to fit it. */}
               <line
                 x1={from.x}
                 y1={from.y}
                 x2={to.x}
                 y2={to.y}
                 className="author-road-grab"
+                vectorEffect="non-scaling-stroke"
               />
               <text x={x} y={y - 5}>
                 {String(road.ticks ?? "?")}

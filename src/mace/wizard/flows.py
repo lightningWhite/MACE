@@ -29,7 +29,7 @@ from mace.wizard.fields import (
     TextList,
 )
 from mace.wizard.flow import Flow, Step
-from mace.wizard.query import Query
+from mace.wizard.query import Distinct, Query
 
 __all__ = ["FLOWS", "flow_for"]
 
@@ -550,7 +550,7 @@ ENTITY = Flow(
             id="entity.tags",
             title="How would you group it?",
             binds="entities[{id}].tags",
-            field=MultiSelect(options=Fixed(())),
+            field=MultiSelect(options=Distinct("entities", "tags"), free_text=True),
             help=(
                 "Free labels — `human`, `undead`, `peasant`. Encounter tables "
                 "and weather responses match on these."

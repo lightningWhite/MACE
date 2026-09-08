@@ -1183,7 +1183,8 @@
               }
             ],
             "allowCreate": "backgrounds",
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },
@@ -1430,7 +1431,8 @@
               }
             ],
             "allowCreate": null,
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },
@@ -1603,7 +1605,8 @@
               }
             ],
             "allowCreate": "quests",
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },
@@ -2479,7 +2482,8 @@
               }
             ],
             "allowCreate": "entities",
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },
@@ -2685,7 +2689,8 @@
               }
             ],
             "allowCreate": "scenes",
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },
@@ -4542,16 +4547,133 @@
             "$append",
             "named"
           ],
-          "described": "$append (?), named (?)",
+          "described": "$append, named",
           "answered": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
             "interactive": false,
-            "hint": "numbers separated by commas, or blank for none",
-            "options": [],
+            "hint": "names separated by commas \u2014 pick one shown, or type a new one",
+            "options": [
+              {
+                "value": "$append",
+                "label": "$append",
+                "note": ""
+              },
+              {
+                "value": "beast",
+                "label": "beast",
+                "note": ""
+              },
+              {
+                "value": "caravan",
+                "label": "caravan",
+                "note": ""
+              },
+              {
+                "value": "cloth",
+                "label": "cloth",
+                "note": ""
+              },
+              {
+                "value": "currency",
+                "label": "currency",
+                "note": ""
+              },
+              {
+                "value": "food",
+                "label": "food",
+                "note": ""
+              },
+              {
+                "value": "human",
+                "label": "human",
+                "note": ""
+              },
+              {
+                "value": "improvised",
+                "label": "improvised",
+                "note": ""
+              },
+              {
+                "value": "large",
+                "label": "large",
+                "note": ""
+              },
+              {
+                "value": "merchant",
+                "label": "merchant",
+                "note": ""
+              },
+              {
+                "value": "metal",
+                "label": "metal",
+                "note": ""
+              },
+              {
+                "value": "monster",
+                "label": "monster",
+                "note": ""
+              },
+              {
+                "value": "named",
+                "label": "named",
+                "note": ""
+              },
+              {
+                "value": "peasant",
+                "label": "peasant",
+                "note": ""
+              },
+              {
+                "value": "potion",
+                "label": "potion",
+                "note": ""
+              },
+              {
+                "value": "quest",
+                "label": "quest",
+                "note": ""
+              },
+              {
+                "value": "soldier",
+                "label": "soldier",
+                "note": ""
+              },
+              {
+                "value": "tool",
+                "label": "tool",
+                "note": ""
+              },
+              {
+                "value": "trade",
+                "label": "trade",
+                "note": ""
+              },
+              {
+                "value": "troll",
+                "label": "troll",
+                "note": ""
+              },
+              {
+                "value": "villager",
+                "label": "villager",
+                "note": ""
+              },
+              {
+                "value": "weapon",
+                "label": "weapon",
+                "note": ""
+              },
+              {
+                "value": "wolf",
+                "label": "wolf",
+                "note": ""
+              }
+            ],
             "allowCreate": null,
-            "minItems": 0
+            "minItems": 0,
+            "freeText": true
           },
           "entries": null
         },
@@ -4993,7 +5115,8 @@
               }
             ],
             "allowCreate": "scenes",
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },
@@ -5563,7 +5686,8 @@
               }
             ],
             "allowCreate": "entities",
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },
@@ -5769,7 +5893,8 @@
               }
             ],
             "allowCreate": "scenes",
-            "minItems": 0
+            "minItems": 0,
+            "freeText": false
           },
           "entries": null
         },

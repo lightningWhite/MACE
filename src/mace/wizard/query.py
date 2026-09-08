@@ -32,7 +32,7 @@ from mace.model.base import RESERVED_ACTORS
 if TYPE_CHECKING:  # pragma: no cover — import cycle, types only
     from mace.wizard.project import Project
 
-__all__ = ["Catalog", "Option", "Query", "Scope"]
+__all__ = ["Catalog", "Distinct", "Option", "Query", "Scope"]
 
 Scope = Literal["project", "libraries", "project+libraries"]
 
@@ -116,6 +116,44 @@ class Query:
 
 
 @dataclass(frozen=True, slots=True)
+class Distinct:
+    """Every value already used in one field, across a collection.
+
+    For a field of free labels rather than references — an entity's `tags`,
+    say — there is no collection to query, only whatever authors have already
+    typed. Offering those back turns "type it again" into "pick it again"
+    without inventing a fake collection for a bare string to live in, and
+    because it reads the libraries too, a pack that `requires` `fantasy.core`
+    sees its tags on offer before it has authored a single entity of its own.
+
+    Attributes
+    ----------
+    collection : str
+        Which collection to scan — `entities`.
+    field : str
+        The name of the list field to collect values from.
+    """
+
+    collection: str
+    field: str
+
+    def options(self, catalog: Catalog) -> tuple[Option, ...]:
+        """Everything already used, offered back as itself.
+
+        Parameters
+        ----------
+        catalog : Catalog
+            What exists.
+
+        Returns
+        -------
+        tuple of Option
+            One per distinct value found, sorted, each its own label.
+        """
+        return catalog.distinct(self.collection, self.field)
+
+
+@dataclass(frozen=True, slots=True)
 class Catalog:
     """Everything the open project and its libraries have to offer.
 
@@ -153,6 +191,46 @@ class Catalog:
         if query.scope in {"libraries", "project+libraries"}:
             found.extend(self._theirs(query))
         return tuple(found)
+
+    def distinct(self, collection: str, field: str) -> tuple[Option, ...]:
+        """Every distinct value already used in one field of a collection.
+
+        Reads the project's raw mappings and the libraries' compiled objects
+        the same way `_mine`/`_theirs` do, so a value used only in a library
+        the pack depends on is still offered.
+
+        Parameters
+        ----------
+        collection : str
+            Which collection to scan.
+        field : str
+            The list field to read off each object.
+
+        Returns
+        -------
+        tuple of Option
+            One per distinct value, sorted, labelled as written.
+        """
+        found: list[str] = []
+        held = self.project.objects.get(collection, {})
+        for local_id in sorted(held):
+            authored = held[local_id].data
+            found.extend(_as_strings(self._reader(collection, authored)(field)))
+        for pack in self.project.dependencies.packs:
+            try:
+                collected = pack.collection(collection)
+            except KeyError:  # pragma: no cover — collections are checked upstream
+                continue
+            for definition in collected.values():
+                found.extend(_as_strings(getattr(definition, field, None)))
+
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for value in found:
+            if value not in seen:
+                seen.add(value)
+                ordered.append(value)
+        return tuple(Option(value=v, label=v) for v in sorted(ordered))
 
     def label(self, reference: str, collection: str) -> str:
         """What an already-chosen reference should read as.
@@ -339,6 +417,24 @@ class Catalog:
                     )
                 )
         return offered
+
+
+def _as_strings(value: Any) -> list[str]:
+    """A raw field's value, as the list of strings it should be.
+
+    Parameters
+    ----------
+    value : object
+        Whatever was read off an object — a list, or absent.
+
+    Returns
+    -------
+    list of str
+        Empty for anything that is not a list.
+    """
+    if isinstance(value, list | tuple):
+        return [str(one) for one in value]
+    return []
 
 
 def _model_reader(definition: object) -> Any:

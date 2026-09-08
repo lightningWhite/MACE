@@ -717,6 +717,36 @@ def test_a_preview_puts_a_conditional_description_in_english(
     assert [one["when"] for one in seen["lines"]] == ["it is day", "always"]
 
 
+def test_a_backgrounds_description_is_a_plain_pitch_not_a_conditional_line(
+    tmp_path: Path,
+) -> None:
+    """A background's `description` is a bare string, unlike an entity's.
+
+    `_lines` used to assume every collection's description was the usual
+    tuple of conditional lines and iterated the string character by
+    character, which crashed the preview of any background at all.
+    """
+    open_studio = Studio.open(
+        world(
+            tmp_path,
+            folk={
+                "backgrounds": [
+                    {
+                        "id": "memory-wiped",
+                        "name": "Memory-Wiped",
+                        "description": "You remember nothing before the ditch.",
+                    }
+                ]
+            },
+        )
+    )
+    seen = open_studio.preview("backgrounds", "memory-wiped")
+    assert seen["built"] is True
+    assert seen["lines"] == [
+        {"text": "You remember nothing before the ditch.", "when": "always"}
+    ]
+
+
 def test_a_preview_of_something_that_will_not_build_says_why(
     tmp_path: Path,
 ) -> None:

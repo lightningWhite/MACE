@@ -394,6 +394,11 @@ class MultiSelect(Field):
         A collection to offer "+ create a new one" for.
     min_items : int
         How many are needed before the step counts as answered.
+    free_text : bool
+        Whether typing something not on offer is itself an answer, rather
+        than a mistake. True for a field of free labels — tags — where
+        `options` is only ever a list of *suggestions*: values other objects
+        already used, not a closed set to pick from.
     """
 
     kind: ClassVar[str] = "multi-select"
@@ -401,6 +406,7 @@ class MultiSelect(Field):
     options: Source = field(default_factory=lambda: Fixed(()))
     allow_create: str | None = None
     min_items: int = 0
+    free_text: bool = False
 
     def describe(self, value: Any, catalog: Catalog) -> str:
         chosen = _sequence(value)
@@ -415,12 +421,24 @@ class MultiSelect(Field):
             if self.min_items:
                 raise Invalid(f"pick at least {self.min_items}")
             return []
-        picked = [_one_of(part.strip(), offered) for part in typed.split(",")]
+        picked = [self._one(part.strip(), offered) for part in typed.split(",")]
         if len(picked) < self.min_items:
             raise Invalid(f"pick at least {self.min_items}")
         return list(dict.fromkeys(picked))
 
+    def _one(self, typed: str, offered: Sequence[Option]) -> str:
+        if not self.free_text:
+            return _one_of(typed, offered)
+        try:
+            return _one_of(typed, offered)
+        except Invalid:
+            if typed == "":
+                raise
+            return typed
+
     def hint(self, catalog: Catalog) -> str:
+        if self.free_text:
+            return "names separated by commas — pick one shown, or type a new one"
         return "numbers separated by commas, or blank for none"
 
 

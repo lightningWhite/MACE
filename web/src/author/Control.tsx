@@ -166,10 +166,23 @@ function PickOne({ id, field, value, busy, onChange }: ControlProps) {
 }
 
 function PickMany({ id, field, value, busy, onChange }: ControlProps) {
-  const options = field.options ?? [];
   const chosen = asList(value).filter(
     (one): one is string => typeof one === "string",
   );
+  // A free-text field's `options` are suggestions, not a closed list — an
+  // already-chosen value that nothing suggested (the first time anyone
+  // types it) still needs a checkbox of its own, or unchecking it would be
+  // the only way to see it was there at all.
+  const suggested = field.options ?? [];
+  const freeText = field.freeText === true;
+  const shown = freeText
+    ? [
+        ...suggested,
+        ...chosen
+          .filter((one) => !suggested.some((option) => option.value === one))
+          .map((one) => ({ value: one, label: one, note: "" })),
+      ]
+    : suggested;
 
   const toggle = (which: string) => {
     const next = chosen.includes(which)
@@ -178,24 +191,68 @@ function PickMany({ id, field, value, busy, onChange }: ControlProps) {
     onChange(next.length === 0 ? null : next);
   };
 
-  if (options.length === 0) return <p className="dim">Nothing to pick yet.</p>;
+  if (shown.length === 0 && !freeText) {
+    return <p className="dim">Nothing to pick yet.</p>;
+  }
   return (
-    <ul className="field-many" id={id}>
-      {options.map((one) => (
-        <li key={one.value}>
-          <label className="field-check">
-            <input
-              type="checkbox"
-              checked={chosen.includes(one.value)}
-              disabled={busy}
-              onChange={() => toggle(one.value)}
-            />
-            <span>{one.label}</span>
-            {one.note === "" ? null : <span className="dim"> · {one.note}</span>}
-          </label>
-        </li>
-      ))}
-    </ul>
+    <div>
+      {shown.length === 0 ? null : (
+        <ul className="field-many" id={id}>
+          {shown.map((one) => (
+            <li key={one.value}>
+              <label className="field-check">
+                <input
+                  type="checkbox"
+                  checked={chosen.includes(one.value)}
+                  disabled={busy}
+                  onChange={() => toggle(one.value)}
+                />
+                <span>{one.label}</span>
+                {one.note === "" ? null : <span className="dim"> · {one.note}</span>}
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+      {freeText ? <NewLabel busy={busy} taken={chosen} onAdd={toggle} /> : null}
+    </div>
+  );
+}
+
+/** A box to type a value that was not on offer, for a free-text `MultiSelect`. */
+function NewLabel({
+  busy,
+  taken,
+  onAdd,
+}: {
+  busy: boolean;
+  taken: string[];
+  onAdd: (value: string) => void;
+}) {
+  const [typed, setTyped] = useState("");
+  return (
+    <form
+      className="make"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const value = typed.trim();
+        if (value === "" || taken.includes(value)) return;
+        onAdd(value);
+        setTyped("");
+      }}
+    >
+      <input
+        className="field-input"
+        value={typed}
+        placeholder="a new label"
+        aria-label="A new label"
+        disabled={busy}
+        onChange={(event) => setTyped(event.target.value)}
+      />
+      <button type="submit" disabled={busy || typed.trim() === ""}>
+        Add
+      </button>
+    </form>
   );
 }
 
