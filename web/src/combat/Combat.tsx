@@ -21,7 +21,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { Action, CombatBegan, CombatTell, ResponsesOffered } from "../protocol";
+import type { Action, CombatBegan, CombatTell, Gauge, ResponsesOffered } from "../protocol";
 import { keysFor } from "./keys";
 import { TimingBar } from "./TimingBar";
 
@@ -31,6 +31,33 @@ export interface Fight {
   responses: ResponsesOffered;
   /** `performance.now()` when this tell arrived. */
   openedAt: number;
+  /**
+   * `game.rules.vitalPool`, running, for everyone in the fight — keyed by
+   * actor. Seeded from `began.combatants` and kept current by `stat.changed`
+   * events the caller folds in as they arrive.
+   */
+  vitals: Record<string, Gauge>;
+}
+
+/** One combatant's vital pool — a monster's hitpoints, or an ally's. */
+function VitalBar({ name, gauge }: { name: string; gauge: Gauge }) {
+  const cap = gauge.maximum ?? gauge.value;
+  const filled = cap > 0 ? Math.max(0, Math.min(1, gauge.value / cap)) : 0;
+  return (
+    <li className="combatant">
+      <span className="combatant-name">{name}</span>
+      <div
+        className="bar bar-foe"
+        role="meter"
+        aria-label={`${name} ${gauge.stat}`}
+        aria-valuenow={Math.round(gauge.value)}
+        aria-valuemin={0}
+        aria-valuemax={Math.round(cap)}
+      >
+        <div className="bar-fill" style={{ inlineSize: `${filled * 100}%` }} />
+      </div>
+    </li>
+  );
 }
 
 /**
@@ -142,10 +169,8 @@ export function Combat({
     return () => window.removeEventListener("keydown", pressed);
   }, [bound, answer, busy]);
 
-  const enemies = fight.began.combatants
-    .filter((one) => one.side === "enemy")
-    .map((one) => one.name)
-    .join(", ");
+  const foes = fight.began.combatants.filter((one) => one.side === "enemy");
+  const enemies = foes.map((one) => one.name).join(", ");
 
   return (
     <section className="fight" aria-labelledby="fight-heading">
@@ -155,6 +180,12 @@ export function Combat({
           <span className="streak"> · {fight.responses.streak} read in a row</span>
         )}
       </h2>
+
+      <ul className="combatants">
+        {foes.map((one) => (
+          <VitalBar key={one.actor} name={one.name} gauge={fight.vitals[one.actor] ?? one.vital} />
+        ))}
+      </ul>
 
       <p className="tell" aria-live="assertive">
         {fight.tell.text}

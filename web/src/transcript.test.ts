@@ -70,9 +70,19 @@ describe("transcribe", () => {
 });
 
 describe("an exchange", () => {
-  /** Every exchange the recorded reflex fight resolved, as lines. */
+  /**
+   * Every exchange the recorded reflex fight resolved, as lines.
+   *
+   * One `fighting` flag shared across every frame, the way the client's own
+   * ref is: the recording's fight spans several frames, and whether a frame
+   * is mid-fight is state carried forward, not something one frame says on
+   * its own.
+   */
   function lines() {
-    return fight.flatMap((step) => transcribe(step.frame.events)).map((one) => one.text);
+    const fighting = { current: false };
+    return fight
+      .flatMap((step) => transcribe(step.frame.events, fighting))
+      .map((one) => one.text);
   }
 
   it("names the result and the read, not the arithmetic", () => {
@@ -92,6 +102,30 @@ describe("an exchange", () => {
 
   it("names who the fight is with", () => {
     expect(lines()).toContain("Fighting: Gorm");
+  });
+
+  it("does not also print the bare pool number combat.resolve already named", () => {
+    // The recording's mid-fight frames carry a `stat.changed` for both
+    // fighters' vital pool alongside `combat.resolve` — the terminal drops
+    // the former on purpose, and so should this.
+    expect(lines().some((one) => /^[-+]\d/.test(one))).toBe(false);
+  });
+
+  it("stops swallowing pool changes once the fight is over", () => {
+    const fighting = { current: false };
+    transcribe(
+      [{ kind: "combat.begin", combat: "c", mode: "reflex", combatants: [], canFlee: true, matrix: [] }],
+      fighting,
+    );
+    transcribe(
+      [{ kind: "combat.end", combat: "c", outcome: "won", exchanges: 1, spoils: [] }],
+      fighting,
+    );
+    const after = transcribe(
+      [{ kind: "stat.changed", actor: "hero", stat: "stamina", delta: 4, value: 20, reason: null }],
+      fighting,
+    );
+    expect(after.map((one) => one.text)).toEqual(["+4 stamina"]);
   });
 
   it("uses the words the terminal uses", () => {

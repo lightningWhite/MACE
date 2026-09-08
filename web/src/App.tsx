@@ -33,11 +33,13 @@ import type {
   Action,
   CombatBegan,
   Frame,
+  Gauge,
   Made,
   Option,
   SaveRecord,
   WorldStatus,
 } from "./protocol";
+import { isKind } from "./protocol";
 import { forget, keep, kept } from "./storage";
 import {
   fightEnded,
@@ -47,8 +49,16 @@ import {
   statusOf,
   tellOf,
   transcribe,
+  type Fighting,
   type Line,
 } from "./transcript";
+
+/** Every combatant's opening pool, actor to gauge, as `combat.begin` states it. */
+function seedVitals(began: CombatBegan): Record<string, Gauge> {
+  const table: Record<string, Gauge> = {};
+  for (const combatant of began.combatants) table[combatant.actor] = combatant.vital;
+  return table;
+}
 
 /**
  * The client.
@@ -76,6 +86,7 @@ export function App({ playtest }: { playtest?: string } = {}) {
   const scroller = useRef<HTMLDivElement | null>(null);
   const pane = useRef<HTMLElement | null>(null);
   const acted = useRef(false);
+  const fighting = useRef<Fighting>({ current: false });
 
   /**
    * Take in a frame: append what happened, replace what stands.
@@ -86,7 +97,7 @@ export function App({ playtest }: { playtest?: string } = {}) {
    */
   const absorb = useCallback((next: Frame) => {
     setFrame(next);
-    setLines((current) => [...current, ...transcribe(next.events)]);
+    setLines((current) => [...current, ...transcribe(next.events, fighting.current)]);
     const standing = statusOf(next.events);
     if (standing !== null) setStatus(standing);
     const options = menuOf(next.events);
@@ -99,11 +110,23 @@ export function App({ playtest }: { playtest?: string } = {}) {
     const responses = responsesOf(next.events);
     if (tell !== null && responses !== null) {
       setFight((current) => {
-        const began: CombatBegan | null = fightOf(next.events) ?? current?.began ?? null;
+        const opened = fightOf(next.events);
+        const began: CombatBegan | null = opened ?? current?.began ?? null;
         if (began === null) return null;
+        // A fresh `combat.begin` seeds every combatant's opening pool;
+        // otherwise carry forward what the fight has taken so far and let
+        // this frame's own `stat.changed` events update it.
+        let vitals = opened !== null ? seedVitals(opened) : (current?.vitals ?? seedVitals(began));
+        for (const event of next.events) {
+          if (!isKind(event, "stat.changed")) continue;
+          const known = vitals[event.actor];
+          if (known !== undefined && event.stat === known.stat && event.value !== known.value) {
+            vitals = { ...vitals, [event.actor]: { ...known, value: event.value } };
+          }
+        }
         // The window opens when the tell reaches the player, not when the
         // engine wrote it: the time on the wire is theirs, not the network's.
-        return { began, tell, responses, openedAt: performance.now() };
+        return { began, tell, responses, vitals, openedAt: performance.now() };
       });
     } else if (fightEnded(next.events)) {
       setFight(null);

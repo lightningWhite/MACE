@@ -224,6 +224,28 @@ h2 {
   letter-spacing: 0;
 }
 
+.combatants {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+}
+
+.combatant {
+  min-inline-size: 9rem;
+  font-size: 0.85rem;
+}
+
+.combatant-name {
+  display: block;
+}
+
+.bar-foe .bar-fill {
+  background: var(--loss);
+}
+
 .tell {
   margin: 0;
   font-family: var(--font);

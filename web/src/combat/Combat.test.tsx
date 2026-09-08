@@ -47,7 +47,8 @@ function recorded(): Fight {
   if (began === undefined || tell === undefined || responses === undefined) {
     throw new Error("the recorded fight is missing its events");
   }
-  return { began, tell, responses, openedAt: 0 };
+  const vitals = Object.fromEntries(began.combatants.map((one) => [one.actor, one.vital]));
+  return { began, tell, responses, vitals, openedAt: 0 };
 }
 
 function show(fight: Fight, busy = false) {
@@ -87,7 +88,28 @@ describe("the tell", () => {
 
   it("names who is swinging", () => {
     show(recorded());
-    expect(screen.getByText(/Gorm/)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /Gorm/ })).toBeTruthy();
+  });
+});
+
+describe("a combatant's vital pool", () => {
+  it("draws a bar for the foe, seeded from combat.begin", () => {
+    const fight = recorded();
+    show(fight);
+    const foe = fight.began.combatants.find((one) => one.side === "enemy");
+    if (foe === undefined) throw new Error("the recorded fight has no foe");
+    const meter = screen.getByRole("meter", { name: new RegExp(foe.name) });
+    expect(meter.getAttribute("aria-valuenow")).toBe(String(Math.round(foe.vital.value)));
+  });
+
+  it("reads from the running vitals, not the opening one, once it changes", () => {
+    const fight = recorded();
+    const foe = fight.began.combatants.find((one) => one.side === "enemy");
+    if (foe === undefined) throw new Error("the recorded fight has no foe");
+    const wounded = { ...fight, vitals: { ...fight.vitals, [foe.actor]: { ...foe.vital, value: 1 } } };
+    show(wounded);
+    const meter = screen.getByRole("meter", { name: new RegExp(foe.name) });
+    expect(meter.getAttribute("aria-valuenow")).toBe("1");
   });
 });
 

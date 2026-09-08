@@ -1011,7 +1011,12 @@ class CombatBegan(Event):
     mode : str
         `reflex`, `tactical`, or `auto`.
     combatants : tuple of tuple
-        Instance id, name, side, and profile id for everyone in it.
+        Instance id, name, side, profile id, and the opening value and cap of
+        `game.rules.vitalPool` — the same pool the character sheet already
+        shows for the player, published here for everyone in the fight so a
+        front-end can draw a monster's hitpoints without inventing a name for
+        them. `stat.changed` carries every update after this; this is only
+        where the bar starts.
     can_flee : bool
         Whether running is allowed at all.
     matrix : tuple of tuple
@@ -1022,22 +1027,38 @@ class CombatBegan(Event):
         learns the matrix in five minutes and then spends the rest of the game
         learning enemies, which is where the depth is. What a tell withholds
         is which move is coming, not what would beat it.
+    vital_pool : str
+        Which stat `combatants`' opening values are of. Named once here
+        rather than per combatant, since it is one game-wide rule, not a
+        per-entity choice.
     """
 
     kind: ClassVar[str] = "combat.begin"
     combat: str
     mode: str = "tactical"
-    combatants: tuple[tuple[str, str, str, str], ...] = ()
+    combatants: tuple[tuple[str, str, str, str, float, float], ...] = ()
     can_flee: bool = True
     matrix: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    vital_pool: str = ""
 
     def payload(self) -> dict[str, Any]:
         return {
             "combat": self.combat,
             "mode": self.mode,
             "combatants": [
-                {"actor": actor, "name": name, "side": side, "profile": profile}
-                for actor, name, side, profile in self.combatants
+                {
+                    "actor": actor,
+                    "name": name,
+                    "side": side,
+                    "profile": profile,
+                    "vital": {
+                        "stat": self.vital_pool,
+                        "value": value,
+                        "maximum": maximum,
+                        "role": "vital",
+                    },
+                }
+                for actor, name, side, profile, value, maximum in self.combatants
             ],
             "canFlee": self.can_flee,
             "matrix": [

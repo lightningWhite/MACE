@@ -164,14 +164,41 @@ function describe(event: GameEvent): Line | null {
 }
 
 /**
+ * Whether a fight is on, carried across frames the same way `play.py`'s
+ * `Renderer.fighting` is: one flag, flipped by `combat.begin`/`combat.end`,
+ * that the caller holds onto between calls.
+ */
+export interface Fighting {
+  current: boolean;
+}
+
+/**
  * Everything in a frame worth reading, in order.
  *
+ * `stat.changed` and `world.status` are swallowed while a fight is on, the
+ * same as the terminal's `Renderer`: `combat.resolve` already says what an
+ * exchange cost and why, with the attacker named, so the bare pool number
+ * underneath it is not a second fact, it's the same fact twice with the
+ * attacker's name missing. `fighting` is mutated in place — a frame can both
+ * start and end a fight, or resolve an exchange mid-fight, so the flag has to
+ * flip event-by-event rather than once per frame.
+ *
  * @param events - the frame's events.
+ * @param fighting - whether a fight is already on, updated as events turn it
+ *   on or off. Pass the same object across frames to carry the fight forward;
+ *   omit it to always suppress nothing but a fight's own frames of prose.
  * @returns lines to append to the transcript.
  */
-export function transcribe(events: GameEvent[]): Line[] {
+export function transcribe(events: GameEvent[], fighting: Fighting = { current: false }): Line[] {
   const written: Line[] = [];
   for (const event of events) {
+    if (isKind(event, "combat.begin")) fighting.current = true;
+    else if (isKind(event, "combat.end")) fighting.current = false;
+
+    if (fighting.current && (event.kind === "stat.changed" || event.kind === "world.status")) {
+      continue;
+    }
+
     const rendered = describe(event);
     if (rendered !== null) written.push(rendered);
   }

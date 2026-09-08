@@ -236,6 +236,7 @@ def begin(
 
     state.combat = fight
     roster = _roster(fight, context)
+    vital = context.game.rules.vital_pool
     events.append(
         CombatBegan(
             combat=fight.id,
@@ -246,11 +247,14 @@ def begin(
                     fighter.name,
                     fighter.combatant.side,
                     fighter.combatant.profile or "",
+                    fighter.pool(vital),
+                    fighter.pool_max(vital),
                 )
                 for fighter in roster.values()
             ),
             can_flee=fight.can_flee,
             matrix=_matrix(roster),
+            vital_pool=vital,
         )
     )
 

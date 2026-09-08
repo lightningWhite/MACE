@@ -184,6 +184,13 @@ export interface Combatant {
   name: string;
   side: "player" | "enemy";
   profile: string | null;
+  /**
+   * The pool `game.rules.vitalPool` names, as it stood when the fight began.
+   * `stat.changed` events update it exchange by exchange — this is only the
+   * opening value, kept so a client that never learns the running total
+   * still has something to draw.
+   */
+  vital: Gauge;
 }
 
 /** One row of the counter matrix: what beats a move of this type. */

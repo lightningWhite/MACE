@@ -401,13 +401,25 @@
               "actor": "peasants-quest:letholin",
               "name": "Letholin",
               "side": "player",
-              "profile": "fantasy.core:adventurer"
+              "profile": "fantasy.core:adventurer",
+              "vital": {
+                "stat": "hitpoints",
+                "value": 50.0,
+                "maximum": 50.0,
+                "role": "vital"
+              }
             },
             {
               "actor": "peasants-quest:gorm",
               "name": "Gorm",
               "side": "enemy",
-              "profile": "fantasy.core:bridge-troll-profile"
+              "profile": "fantasy.core:bridge-troll-profile",
+              "vital": {
+                "stat": "hitpoints",
+                "value": 80.0,
+                "maximum": 80.0,
+                "role": "vital"
+              }
             }
           ],
           "canFlee": true,
