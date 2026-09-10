@@ -21,12 +21,52 @@ import { useEffect, useState } from "react";
 
 import * as api from "./api";
 import { StudioError } from "./api";
-import { isObject, type FieldSpec } from "./protocol";
+import { isObject, type FieldSpec, type Option } from "./protocol";
 
 /** A `select`'s value when the author picked "+ create a new one" instead of
  * an option — never a real id, since no reference is ever written with a
  * leading `+`. */
 const CREATE_NEW = "+new";
+
+/**
+ * Whether an option names something from a library this pack depends on.
+ *
+ * `mace.wizard.query`'s own invariant: a local id is written bare, and
+ * anything from elsewhere is qualified `pack:id`. Reused here rather than
+ * `note` (`"this pack"` vs a pack id) because `note` means something else
+ * entirely for a scoped source like quest stages.
+ */
+function isElsewhere(value: string): boolean {
+  return value.includes(":");
+}
+
+/**
+ * Split a field's options into what shows by default and what a toggle
+ * reveals: this pack's own things, plus anything already picked, first.
+ *
+ * A game usually has far more of a dependency's objects on offer than its
+ * own, and an author reaching for "the guard" should not have to read past
+ * every entity `fantasy.core` ships to find the one they wrote themselves.
+ * Collapsing only pays for itself once there is something of the author's
+ * own to collapse *to* — a fresh pack with nothing yet still needs the
+ * library's objects on offer, not an empty list.
+ */
+function narrowed(
+  options: Option[],
+  kept: readonly string[],
+  showAll: boolean,
+): { visible: Option[]; collapsible: boolean; hiddenCount: number } {
+  const own = options.filter((one) => !isElsewhere(one.value));
+  const away = options.filter(
+    (one) => isElsewhere(one.value) && !kept.includes(one.value),
+  );
+  const collapsible = own.length > 0 && away.length > 0;
+  const visible =
+    showAll || !collapsible
+      ? options
+      : options.filter((one) => !isElsewhere(one.value) || kept.includes(one.value));
+  return { visible, collapsible, hiddenCount: away.length };
+}
 
 export interface ControlProps {
   id: string;
@@ -143,6 +183,7 @@ function PickOne({ id, field, value, busy, onChange }: ControlProps) {
   const now = typeof value === "string" ? value : "";
   const missing = now !== "" && !options.some((one) => one.value === now);
   const [creating, setCreating] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   if (creating && field.allowCreate) {
     return (
@@ -157,6 +198,12 @@ function PickOne({ id, field, value, busy, onChange }: ControlProps) {
       />
     );
   }
+
+  const { visible, collapsible, hiddenCount } = narrowed(
+    options,
+    now === "" ? [] : [now],
+    showAll,
+  );
 
   return (
     <div className="field-row">
@@ -178,7 +225,7 @@ function PickOne({ id, field, value, busy, onChange }: ControlProps) {
             than silently becoming "nothing", or opening this form would
             quietly delete the author's answer. */}
         {missing ? <option value={now}>{now} (not found)</option> : null}
-        {options.map((one) => (
+        {visible.map((one) => (
           <option key={one.value} value={one.value}>
             {one.label}
             {one.note === "" ? "" : ` · ${one.note}`}
@@ -190,6 +237,11 @@ function PickOne({ id, field, value, busy, onChange }: ControlProps) {
       </select>
       {options.length === 0 && !field.allowCreate ? (
         <span className="dim">nothing to pick yet</span>
+      ) : null}
+      {collapsible ? (
+        <button type="button" className="link-button" onClick={() => setShowAll((s) => !s)}>
+          {showAll ? "show only this pack's" : `+ ${hiddenCount} more from elsewhere`}
+        </button>
       ) : null}
     </div>
   );
@@ -205,14 +257,16 @@ function PickMany({ id, field, value, busy, onChange }: ControlProps) {
   // the only way to see it was there at all.
   const suggested = field.options ?? [];
   const freeText = field.freeText === true;
+  const [showAll, setShowAll] = useState(false);
+  const { visible, collapsible, hiddenCount } = narrowed(suggested, chosen, showAll);
   const shown = freeText
     ? [
-        ...suggested,
+        ...visible,
         ...chosen
           .filter((one) => !suggested.some((option) => option.value === one))
           .map((one) => ({ value: one, label: one, note: "", scope: "" })),
       ]
-    : suggested;
+    : visible;
 
   const [creating, setCreating] = useState(false);
 
@@ -264,6 +318,11 @@ function PickMany({ id, field, value, busy, onChange }: ControlProps) {
       {field.allowCreate ? (
         <button type="button" disabled={busy} onClick={() => setCreating(true)}>
           + create a new one…
+        </button>
+      ) : null}
+      {collapsible ? (
+        <button type="button" className="link-button" onClick={() => setShowAll((s) => !s)}>
+          {showAll ? "show only this pack's" : `+ ${hiddenCount} more from elsewhere`}
         </button>
       ) : null}
     </div>

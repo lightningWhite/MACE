@@ -292,6 +292,17 @@ describe("the cascade", () => {
     const which = await screen.findByLabelText(/Which item/);
     expect(which.tagName).toBe("SELECT");
     expect(
+      within(which as HTMLSelectElement).getByRole("option", { name: /King's Token/ }),
+    ).toBeTruthy();
+
+    // A library item is there too, once asked for — just not ahead of the
+    // pack's own things, which is the whole point of asking.
+    await user.click(
+      within(which.parentElement as HTMLElement).getByRole("button", {
+        name: /more from elsewhere/,
+      }),
+    );
+    expect(
       within(which as HTMLSelectElement).getByRole("option", { name: /Gold/ }),
     ).toBeTruthy();
   });
@@ -307,10 +318,13 @@ describe("the cascade", () => {
     await user.click(
       await screen.findByRole("button", { name: /Something somebody is carrying/ }),
     );
-    await user.selectOptions(
-      await screen.findByLabelText(/Which item/),
-      "fantasy.core:gold",
+    const which = await screen.findByLabelText(/Which item/);
+    await user.click(
+      within(which.parentElement as HTMLElement).getByRole("button", {
+        name: /more from elsewhere/,
+      }),
     );
+    await user.selectOptions(which, "fantasy.core:gold");
     await user.click(screen.getByRole("button", { name: "Add it" }));
 
     // The client never assembles content itself: it posts the answers and

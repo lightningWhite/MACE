@@ -66,6 +66,22 @@ h2 {
   color: var(--ink-dim);
 }
 
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.link-button:hover:not(:disabled) {
+  color: var(--ink);
+}
+
 .empty {
   color: var(--ink-dim);
   font-style: italic;

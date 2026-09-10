@@ -10,7 +10,7 @@
  * field that needed it.
  */
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -103,5 +103,67 @@ describe("a picker that can create what it is missing", () => {
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     expect(await screen.findByText("`fenmoor` is already there")).toBeTruthy();
+  });
+});
+
+const MIXED_STEP: Step = {
+  ...STEP,
+  field: {
+    ...STEP.field,
+    options: [
+      { value: "fenmoor", label: "Fenmoor", note: "this pack", scope: "" },
+      { value: "fantasy.core:the-lowlands", label: "The Lowlands", note: "fantasy.core", scope: "" },
+    ],
+  },
+};
+
+describe("a picker mixing the pack's own things with a library's", () => {
+  it("shows only this pack's by default", () => {
+    vi.stubGlobal("fetch", fakeStudio().fetcher);
+    render(<Field step={MIXED_STEP} onAnswer={vi.fn()} busy={false} />);
+
+    const select = screen.getByRole("combobox");
+    expect(within(select).getByRole("option", { name: /Fenmoor/ })).toBeTruthy();
+    expect(within(select).queryByRole("option", { name: /The Lowlands/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /1 more from elsewhere/ })).toBeTruthy();
+  });
+
+  it("reveals the rest on request", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", fakeStudio().fetcher);
+    render(<Field step={MIXED_STEP} onAnswer={vi.fn()} busy={false} />);
+
+    await user.click(screen.getByRole("button", { name: /more from elsewhere/ }));
+
+    expect(
+      within(screen.getByRole("combobox")).getByRole("option", { name: /The Lowlands/ }),
+    ).toBeTruthy();
+  });
+
+  it("keeps an already-chosen library thing visible even while collapsed", () => {
+    vi.stubGlobal("fetch", fakeStudio().fetcher);
+    const step: Step = { ...MIXED_STEP, value: "fantasy.core:the-lowlands" };
+    render(<Field step={step} onAnswer={vi.fn()} busy={false} />);
+
+    expect(
+      within(screen.getByRole("combobox")).getByRole("option", { name: /The Lowlands/ }),
+    ).toBeTruthy();
+  });
+
+  it("does not collapse when the pack has none of its own to reduce to", () => {
+    vi.stubGlobal("fetch", fakeStudio().fetcher);
+    const step: Step = {
+      ...MIXED_STEP,
+      field: {
+        ...MIXED_STEP.field,
+        options: [MIXED_STEP.field.options![1]!],
+      },
+    };
+    render(<Field step={step} onAnswer={vi.fn()} busy={false} />);
+
+    expect(
+      within(screen.getByRole("combobox")).getByRole("option", { name: /The Lowlands/ }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /more from elsewhere/ })).toBeNull();
   });
 });
