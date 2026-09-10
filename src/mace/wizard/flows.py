@@ -734,6 +734,77 @@ ROUTE = Flow(
 )
 
 
+REGION = Flow(
+    id="region",
+    noun="region",
+    title="A stretch of the map that shares its weather",
+    collection="regions",
+    identity=("region.name",),
+    steps=(
+        Step(
+            id="region.name",
+            title="What is this region called?",
+            binds="regions[{id}].name",
+            field=Text(placeholder="The Fenmoor Lowlands"),
+            help="What a front is named after when it rolls in from here.",
+        ),
+        Step(
+            id="region.description",
+            title="How does it read from a distance?",
+            binds="regions[{id}].description",
+            field=TextList(placeholder="A grey smear of cloud over the hills."),
+            help="Named at a distance — a front seen from the next valley over.",
+            optional=True,
+        ),
+        Step(
+            id="region.climate",
+            title="Which climate governs it?",
+            binds="regions[{id}].climate",
+            field=Select(options=Query("climates"), optional=True),
+            help=(
+                "Without one, this region has no weather — the right answer "
+                "for an undercity or a station interior. Climates are usually "
+                "a library's job: pick one a dependency already brought in, "
+                "or write a new one directly into the pack's YAML for now — "
+                "the wizard doesn't build those yet."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="region.neighbors",
+            title="Which regions border it?",
+            binds="regions[{id}].neighbors",
+            field=MultiSelect(options=Query("regions"), allow_create="regions"),
+            help=(
+                "The map weather fronts walk across. A front that crosses a "
+                "range one way and not the other is allowed — list the "
+                "border only from the side it is felt."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="region.elevation",
+            title="How high above the map's baseline?",
+            binds="regions[{id}].elevation",
+            field=Number(integer=False, optional=True),
+            help="Colder with altitude, which turns the same rain into snow.",
+            optional=True,
+        ),
+        Step(
+            id="region.encounters",
+            title="Does anything happen just from being here?",
+            binds="regions[{id}].encounters",
+            field=Select(options=Query("encounterTables"), optional=True),
+            help=(
+                "Rolled anywhere in the region, on top of the route's or the "
+                "location's. Region-wide flavor: you hear wolves."
+            ),
+            optional=True,
+        ),
+    ),
+)
+
+
 SCENE = Flow(
     id="scene",
     noun="scene",
@@ -1231,6 +1302,7 @@ FLOWS: dict[str, Flow] = {
     "entities": ENTITY,
     "locations": LOCATION,
     "quests": QUEST,
+    "regions": REGION,
     "routes": ROUTE,
     "scenes": SCENE,
 }

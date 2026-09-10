@@ -144,7 +144,7 @@ def test_a_section_lists_what_it_holds_across_its_collections(studio: Studio) ->
     """A section is a grouping of work, not of collections."""
     screen = studio.section("world")
     assert {one["id"] for one in screen["objects"]} == {"home", "castle"}
-    assert screen["creates"] == ["locations", "routes"]
+    assert screen["creates"] == ["locations", "routes", "regions"]
 
 
 def test_a_section_says_which_of_its_objects_are_unfinished(tmp_path: Path) -> None:
@@ -318,6 +318,30 @@ def test_creating_takes_only_what_the_object_needs_to_exist(studio: Studio) -> N
     made = studio.create("locations", "Moor")
     assert made == "moor"
     assert studio.object("locations", "moor")["label"] == "Moor"
+
+
+def test_a_region_created_from_a_location_picker_can_be_opened_and_finished(
+    studio: Studio,
+) -> None:
+    """`location.region`'s "+ create a new one" used to open onto nothing.
+
+    A region made that way is a bare `{id, name}` until the flow existed to
+    finish it — the same gap `allow_create="regions"` was silently promising
+    to fill.
+    """
+    made = studio.create("regions", "Fenmoor")
+    assert made == "fenmoor"
+
+    screen = studio.object("regions", "fenmoor")
+    assert screen["label"] == "Fenmoor"
+
+    studio.answer("regions", "region.elevation", 120, "fenmoor")
+    held = studio.project.get("regions", "fenmoor")
+    assert held is not None and held["elevation"] == 120
+
+    studio.answer("locations", "location.region", "fenmoor", "home")
+    home = studio.project.get("locations", "home")
+    assert home is not None and home["region"] == "fenmoor"
 
 
 def test_creating_carries_any_other_answers_it_was_given(studio: Studio) -> None:

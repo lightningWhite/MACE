@@ -284,7 +284,8 @@
         "manifest": false,
         "creates": [
           "locations",
-          "routes"
+          "routes",
+          "regions"
         ],
         "objects": [
           {
