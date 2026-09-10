@@ -37,6 +37,56 @@ describe("transcribe", () => {
     expect(text.some((one) => one.startsWith("The journey stops:"))).toBe(true);
   });
 
+  it("collapses a run of identical leg text into one line and a count", () => {
+    const leg = (n: number): GameEvent => ({
+      kind: "travel.leg",
+      route: "north-road",
+      leg: n,
+      of: 6,
+      waypoint: null,
+      text: "The barley gives out and the wood starts.",
+    });
+    const events: GameEvent[] = [leg(1), leg(2), leg(3), leg(4)];
+
+    const lines = transcribe(events);
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]?.text).toBe("The barley gives out and the wood starts. (×4)");
+    expect(lines[0]?.tone).toBe("journey");
+  });
+
+  it("does not collapse leg lines that actually differ", () => {
+    const events: GameEvent[] = [
+      { kind: "travel.leg", route: "r", leg: 1, of: 3, waypoint: null, text: "One." },
+      { kind: "travel.leg", route: "r", leg: 2, of: 3, waypoint: null, text: "Two." },
+      { kind: "travel.leg", route: "r", leg: 3, of: 3, waypoint: null, text: "One." },
+    ];
+
+    const text = transcribe(events).map((line) => line.text);
+    expect(text).toEqual(["One.", "Two.", "One."]);
+  });
+
+  it("does not let a repeated line elsewhere in the stream count toward a run", () => {
+    const events: GameEvent[] = [
+      { kind: "travel.leg", route: "r", leg: 1, of: 2, waypoint: null, text: "Same." },
+      { kind: "narrate", text: "Something happens.", pause: false },
+      { kind: "travel.leg", route: "r", leg: 2, of: 2, waypoint: null, text: "Same." },
+    ];
+
+    const text = transcribe(events).map((line) => line.text);
+    expect(text).toEqual(["Same.", "Something happens.", "Same."]);
+  });
+
+  it("never collapses repetition outside a journey — that is still two things said", () => {
+    const events: GameEvent[] = [
+      { kind: "narrate", text: "The elder nods.", pause: false },
+      { kind: "narrate", text: "The elder nods.", pause: false },
+    ];
+
+    const text = transcribe(events).map((line) => line.text);
+    expect(text).toEqual(["The elder nods.", "The elder nods."]);
+  });
+
   it("phrases a stat change the way a player reads one", () => {
     const events: GameEvent[] = [
       {

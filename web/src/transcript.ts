@@ -191,6 +191,15 @@ export interface Fighting {
  */
 export function transcribe(events: GameEvent[], fighting: Fighting = { current: false }): Line[] {
   const written: Line[] = [];
+  // A long, uneventful stretch of road repeats the same leg flavor tick
+  // after tick, which reads like the transcript glitched rather than like
+  // distance passing. Collapsing it to one line and a count is the same
+  // information without the noise — but only for journey lines: a repeated
+  // line anywhere else (an NPC saying something twice, an identical combat
+  // beat) is still two things that happened, not one thing said loudly.
+  let repeatOf: string | null = null;
+  let repeats = 1;
+
   for (const event of events) {
     if (isKind(event, "combat.begin")) fighting.current = true;
     else if (isKind(event, "combat.end")) fighting.current = false;
@@ -200,7 +209,23 @@ export function transcribe(events: GameEvent[], fighting: Fighting = { current: 
     }
 
     const rendered = describe(event);
-    if (rendered !== null) written.push(rendered);
+    if (rendered === null) continue;
+
+    const last = written[written.length - 1];
+    if (
+      rendered.tone === "journey" &&
+      last !== undefined &&
+      last.tone === "journey" &&
+      rendered.text === repeatOf
+    ) {
+      repeats += 1;
+      last.text = `${repeatOf} (×${repeats})`;
+      continue;
+    }
+
+    written.push(rendered);
+    repeatOf = rendered.tone === "journey" ? rendered.text : null;
+    repeats = 1;
   }
   return written;
 }
