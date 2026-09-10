@@ -21,11 +21,16 @@ Read in order if you're new:
 | 11 | [Content Library & Community](11-library-and-community.md) | Reuse, pack registry, contribution and review |
 | 12 | [Roadmap](12-roadmap.md) | Phased plan from here to a hosted community |
 | 13 | [Open Questions](13-open-questions.md) | Decisions deliberately still open |
+| 14 | [How-Tos](14-how-tos.md) | Task-oriented recipes: which field, and wizard or hand-YAML |
 
 Decision records live in [`decisions/`](decisions/) — one file per fork in the
 road, with the alternatives that were rejected and why.
 
-A complete worked example pack is in [`examples/peasants-quest/`](examples/peasants-quest/).
+[`examples/peasants-quest/`](examples/peasants-quest/) is a fragment written
+early on as a specification target — every concept, none of it playable. For
+a real, complete, playable game built the current way, open
+`packs/games/peasants-quest` — either read it, or run it in the wizard
+(docs/14 § "A complete example").
 
 ## Vocabulary
 

@@ -308,27 +308,39 @@ function Desk({
   onOpen: (task: Task) => void;
 }) {
   return (
-    <ul className="task-list">
-      {tasks.map((task) => (
-        <li key={task.section}>
-          <button
-            type="button"
-            className="task"
-            onClick={() => onOpen(task)}
-            aria-label={`${task.title} — ${task.state}`}
-          >
-            {/* The mark and the word both, because nothing is carried by a
-                glyph alone any more than by a colour. */}
-            <span className="task-mark" aria-hidden="true">
-              {MARKS[task.state] ?? "·"}
-            </span>
-            <span className="task-title">{task.title}</span>
-            <span className="task-summary dim">{task.summary}</span>
-            <span className="task-note">{task.note}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
+    <>
+      {/* A pointer, not a link: this page is served from a build with no
+          docs in it, and a hyperlink that only sometimes resolves is worse
+          than none. Whoever ran `mace author` has the repo beside them. */}
+      <p className="dim">
+        New to this? <code>docs/14-how-tos.md</code> walks through building a
+        conversation, having someone show up when the player makes noise,
+        gating a choice on the weather, and closing a road when a world event
+        fires — the parts the docs describe that aren't obvious from the task
+        list alone.
+      </p>
+      <ul className="task-list">
+        {tasks.map((task) => (
+          <li key={task.section}>
+            <button
+              type="button"
+              className="task"
+              onClick={() => onOpen(task)}
+              aria-label={`${task.title} — ${task.state}`}
+            >
+              {/* The mark and the word both, because nothing is carried by a
+                  glyph alone any more than by a colour. */}
+              <span className="task-mark" aria-hidden="true">
+                {MARKS[task.state] ?? "·"}
+              </span>
+              <span className="task-title">{task.title}</span>
+              <span className="task-summary dim">{task.summary}</span>
+              <span className="task-note">{task.note}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

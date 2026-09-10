@@ -48,6 +48,13 @@ describe("the task list", () => {
     expect(screen.getByRole("button", { name: /Game setup/ })).toBeTruthy();
   });
 
+  it("points a first-timer at the how-tos", async () => {
+    stub(fakeStudio());
+    await opened();
+
+    expect(screen.getByText("docs/14-how-tos.md")).toBeTruthy();
+  });
+
   it("marks a section's state in a word as well as a glyph", async () => {
     stub(fakeStudio());
     await opened();
