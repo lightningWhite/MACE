@@ -122,14 +122,22 @@ class Narrated(Event):
     pause : bool
         Whether the front-end waits before going on. Where the beats fall is
         the author's call; how to wait is the front-end's.
+    role : str
+        What kind of line this is, for a front-end that wants to read
+        differently from a place being named than from someone speaking:
+        `location` (a place's own name), `description` (what it looks
+        like), `introduction` (the game's opening), or `say` — everything
+        else, the majority case, and the default. Not a style hint; a front
+        end is free to render every role identically.
     """
 
     kind: ClassVar[str] = "narrate"
     text: str
     pause: bool = False
+    role: str = "say"
 
     def payload(self) -> dict[str, Any]:
-        return {"text": self.text, "pause": self.pause}
+        return {"text": self.text, "pause": self.pause, "role": self.role}
 
 
 @dataclass(frozen=True, slots=True)

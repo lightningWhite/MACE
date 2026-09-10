@@ -69,17 +69,20 @@
         {
           "kind": "narrate",
           "text": "You are a peasant. You have worked your old friend's farm for twenty-five years.",
-          "pause": false
+          "pause": false,
+          "role": "introduction"
         },
         {
           "kind": "narrate",
           "text": "One morning, as you cut barley in the low field, a host of the king's guard rides through the standing crop as though it were water.",
-          "pause": false
+          "pause": false,
+          "role": "introduction"
         },
         {
           "kind": "narrate",
           "text": "They tell you the king has called every man between twenty-two and thirty-five to the Dark Mountain. You have seven days to reach Hagan's Castle.",
-          "pause": true
+          "pause": true,
+          "role": "introduction"
         },
         {
           "kind": "moved",
@@ -104,12 +107,14 @@
         {
           "kind": "narrate",
           "text": "Fenmoor",
-          "pause": false
+          "pause": false,
+          "role": "location"
         },
         {
           "kind": "narrate",
           "text": "Six houses, a well, and more geese than people. The barley stands unfinished in the low field.",
-          "pause": false
+          "pause": false,
+          "role": "description"
         },
         {
           "kind": "scene.entered",
@@ -118,7 +123,8 @@
         {
           "kind": "narrate",
           "text": "The geese scatter. Nobody else looks up.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "choices",
@@ -183,12 +189,14 @@
         {
           "kind": "narrate",
           "text": "He doesn't say much. He gives you bread, and holds on a moment too long.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "\"The Trader's Post is south,\" he says. \"If you've coin, spend it before the road does.\"",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "inventory.changed",
@@ -288,12 +296,14 @@
         {
           "kind": "narrate",
           "text": "Trader's Post",
-          "pause": false
+          "pause": false,
+          "role": "location"
         },
         {
           "kind": "narrate",
           "text": "A crossroads with ambitions. Three stalls, a shuttered inn, and a peddler who has been here longer than the stalls.",
-          "pause": false
+          "pause": false,
+          "role": "description"
         },
         {
           "kind": "choices",
@@ -383,12 +393,14 @@
         {
           "kind": "narrate",
           "text": "\"Hello, traveller,\" he says, to a man standing in his own county.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "\"Bread, rope, and no questions. Everything else went north with the guard.\"",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "flag.changed",
@@ -484,12 +496,14 @@
         {
           "kind": "narrate",
           "text": "\"It's a hook,\" he says, and pays you as though it were not.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "You will want it back before the week is out. You take the coin anyway.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "inventory.changed",
@@ -600,7 +614,8 @@
         {
           "kind": "narrate",
           "text": "\"Forty feet,\" he says. \"You'll want it before you want the bread.\"",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "inventory.changed",
@@ -745,12 +760,14 @@
         {
           "kind": "narrate",
           "text": "Fenmoor",
-          "pause": false
+          "pause": false,
+          "role": "location"
         },
         {
           "kind": "narrate",
           "text": "Six houses, a well, and more geese than people. The barley stands unfinished in the low field.",
-          "pause": false
+          "pause": false,
+          "role": "description"
         },
         {
           "kind": "choices",
@@ -806,7 +823,8 @@
         {
           "kind": "narrate",
           "text": "You set out on the rutted track north, under oaks that drip on you for company.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "weather.changed",
@@ -849,7 +867,8 @@
         {
           "kind": "narrate",
           "text": "A long stretch of nothing. Somewhere out of sight, water.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "travel.leg",
@@ -862,12 +881,14 @@
         {
           "kind": "narrate",
           "text": "The Old Bridge",
-          "pause": false
+          "pause": false,
+          "role": "location"
         },
         {
           "kind": "narrate",
           "text": "A stone span over black water, older than the road it carries.",
-          "pause": false
+          "pause": false,
+          "role": "description"
         },
         {
           "kind": "travel.interrupted",
@@ -945,12 +966,14 @@
         {
           "kind": "narrate",
           "text": "The troll unfolds itself from beneath the bridge, and the bridge seems glad to be rid of the weight.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "\"Toll,\" it says. \"Ten gold, or swim.\"",
-          "pause": true
+          "pause": true,
+          "role": "say"
         },
         {
           "kind": "flag.changed",
@@ -1021,12 +1044,14 @@
         {
           "kind": "narrate",
           "text": "The troll looks at you the way you look at a goose.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "\"Ten,\" it says. \"Or swim.\"",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "choices",
@@ -1096,12 +1121,14 @@
         {
           "kind": "narrate",
           "text": "The troll unfolds itself from beneath the bridge, and the bridge seems glad to be rid of the weight.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "\"Toll,\" it says. \"Ten gold, or swim.\"",
-          "pause": true
+          "pause": true,
+          "role": "say"
         },
         {
           "kind": "flag.changed",
@@ -1172,12 +1199,14 @@
         {
           "kind": "narrate",
           "text": "You hold out the cloth bundle. The troll considers it for a long, geological moment.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "\"Bread,\" it says, as though naming a thing it had forgotten existed, and steps aside.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "inventory.changed",
@@ -1301,12 +1330,14 @@
         {
           "kind": "narrate",
           "text": "Hagan's Castle",
-          "pause": false
+          "pause": false,
+          "role": "location"
         },
         {
           "kind": "narrate",
           "text": "Grey walls on a grey hill, and a muster yard full of men who look as unwilling as you feel.",
-          "pause": false
+          "pause": false,
+          "role": "description"
         },
         {
           "kind": "scene.entered",
@@ -1315,7 +1346,8 @@
         {
           "kind": "narrate",
           "text": "The muster yard is full of men who look as unwilling as you feel. It is a small comfort, and it does not last.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "quest.updated",
@@ -1377,12 +1409,14 @@
         {
           "kind": "narrate",
           "text": "The captain looks at your hands, then at your face, and writes something down.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "\"Late,\" he says. \"But here.\"",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "inventory.changed",
@@ -1416,12 +1450,14 @@
         {
           "kind": "narrate",
           "text": "You answered the summons. Whatever that turns out to be worth.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         },
         {
           "kind": "narrate",
           "text": "The Dark Mountain is nine days north of here, and nobody has said what happens after that.",
-          "pause": false
+          "pause": false,
+          "role": "say"
         }
       ]
     }

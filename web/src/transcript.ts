@@ -17,6 +17,8 @@ import { isKind } from "./protocol";
 /** How a line reads, which is all a stylesheet needs to know about it. */
 export type Tone =
   | "prose"
+  | "location"
+  | "description"
   | "journey"
   | "weather"
   | "aside"
@@ -114,6 +116,12 @@ const FINISHED: Record<string, string> = {
  */
 function describe(event: GameEvent): Line | null {
   if (isKind(event, "narrate")) {
+    // `introduction` reads like any other narration once the game is under
+    // way — nothing else at that point could be confused with it — so it
+    // gets no tone of its own; `location` and `description` are the pair a
+    // reader actually needs to tell apart from what someone says.
+    if (event.role === "location") return line("location", event.text);
+    if (event.role === "description") return line("description", event.text);
     return line("prose", event.text);
   }
   if (isKind(event, "travel.leg")) {

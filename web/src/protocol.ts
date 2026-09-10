@@ -80,6 +80,9 @@ export interface Narrated {
   kind: "narrate";
   text: string;
   pause: boolean;
+  /** `location` (a place's own name), `description` (what it looks like),
+   * `introduction` (the game's opening), or `say` — everything else. */
+  role: "location" | "description" | "introduction" | "say";
 }
 
 export interface ChoicesOffered {

@@ -32,6 +32,25 @@ describe("transcribe", () => {
     expect(tones).toContain("journey");
   });
 
+  it("tells a place's name and its description apart from what is said", () => {
+    const lines = transcribe(opening.events);
+    // Arriving somewhere narrates the location's name, then its
+    // description, then whatever scene plays — three different roles, and
+    // a reader should be able to tell which is which without reading the
+    // words.
+    expect(lines.map((line) => line.tone)).toEqual(
+      expect.arrayContaining(["location", "description", "prose"]),
+    );
+  });
+
+  it("reads the opening's own introduction as plain prose", () => {
+    // Nothing else exists yet at that point in the transcript to confuse it
+    // with, so it gets no tone of its own.
+    const first = transcribe(opening.events)[0];
+    expect(first?.tone).toBe("prose");
+    expect(first?.text).toContain("You are a peasant");
+  });
+
   it("says why a journey stopped", () => {
     const text = transcribe(afterStep(0).events).map((line) => line.text);
     expect(text.some((one) => one.startsWith("The journey stops:"))).toBe(true);
@@ -69,7 +88,7 @@ describe("transcribe", () => {
   it("does not let a repeated line elsewhere in the stream count toward a run", () => {
     const events: GameEvent[] = [
       { kind: "travel.leg", route: "r", leg: 1, of: 2, waypoint: null, text: "Same." },
-      { kind: "narrate", text: "Something happens.", pause: false },
+      { kind: "narrate", text: "Something happens.", pause: false, role: "say" },
       { kind: "travel.leg", route: "r", leg: 2, of: 2, waypoint: null, text: "Same." },
     ];
 
@@ -79,8 +98,8 @@ describe("transcribe", () => {
 
   it("never collapses repetition outside a journey — that is still two things said", () => {
     const events: GameEvent[] = [
-      { kind: "narrate", text: "The elder nods.", pause: false },
-      { kind: "narrate", text: "The elder nods.", pause: false },
+      { kind: "narrate", text: "The elder nods.", pause: false, role: "say" },
+      { kind: "narrate", text: "The elder nods.", pause: false, role: "say" },
     ];
 
     const text = transcribe(events).map((line) => line.text);
@@ -246,7 +265,7 @@ describe("statusOf", () => {
   });
 
   it("is null for a frame that carried none", () => {
-    expect(statusOf([{ kind: "narrate", text: "x", pause: false }])).toBeNull();
+    expect(statusOf([{ kind: "narrate", text: "x", pause: false, role: "say" }])).toBeNull();
   });
 });
 

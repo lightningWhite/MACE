@@ -136,6 +136,23 @@ h2 {
   margin: 0 0 0.75rem;
 }
 
+/* A place's own name, read the same way a panel heading is — the app's own
+   established way of saying "this is a label," not prose. */
+.line-location {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  margin-block-end: 0.3rem;
+}
+
+.line-description {
+  font-style: italic;
+  color: var(--ink-dim);
+}
+
 .line-journey {
   color: var(--ink-dim);
 }

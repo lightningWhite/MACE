@@ -232,7 +232,7 @@ def begin(
         )
 
     for line in pack.game.introduction:
-        events.append(Narrated(line.text, line.pause))
+        events.append(Narrated(line.text, line.pause, role="introduction"))
 
     where = state.location
     assert where is not None
@@ -1887,10 +1887,10 @@ def _describe_here(context: RuleContext, events: list[Event]) -> None:
     here = _location(context.state.location, context)
     if here is None:
         return
-    events.append(Narrated(here.name))
+    events.append(Narrated(here.name, role="location"))
     line = _first_matching(here.description, context)
     if line is not None:
-        events.append(Narrated(line.text))
+        events.append(Narrated(line.text, role="description"))
 
 
 # ── Running a scene ───────────────────────────────────────────────────────────
