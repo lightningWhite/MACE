@@ -2002,6 +2002,18 @@
         {
           "type": "object",
           "properties": {
+            "say": {
+              "$ref": "#/$defs/SayEffect"
+            }
+          },
+          "required": [
+            "say"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "setDisposition": {
               "$ref": "#/$defs/SetDisposition"
             }
@@ -5412,6 +5424,20 @@
       ],
       "title": "Route",
       "type": "object"
+    },
+    "SayEffect": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SayLine"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/SayLine"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "Speak a line, without a scene of its own.\n\nAttributes\n----------\nlines : Say\n    The line or lines spoken. Reuses `Scene.say`'s shape, so a line may\n    carry its own `when` and `pause`."
     },
     "SayLine": {
       "description": "One line of scene narration.\n\nAttributes\n----------\ntext : str\n    What the player reads.\nwhen : tuple of Condition or None\n    Conditions that must hold for this line to be spoken at all.\npause : bool\n    Whether the front-end waits for the player before going on. Pacing is a\n    presentation concern, but where the beats fall is the author's call.",

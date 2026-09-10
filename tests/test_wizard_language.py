@@ -70,6 +70,7 @@ EFFECTS: dict[str, Any] = {
     "rest": {"rest": {"ticks": 8}},
     "restart": {"restart": {}},
     "reveal": {"reveal": {"location": "fenmoor"}},
+    "say": {"say": "The troll grunts."},
     "setDisposition": {"setDisposition": {"actor": "gorm", "to": "friendly"}},
     "setFlag": {"setFlag": {"entity": "gorm", "flag": "has-spoken"}},
     "setLight": {"setLight": 0.2},

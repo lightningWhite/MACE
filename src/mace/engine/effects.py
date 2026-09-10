@@ -19,7 +19,7 @@ from typing import Any
 
 from mace.content import ContentError
 from mace.engine import economy
-from mace.engine.conditions import RuleError
+from mace.engine.conditions import RuleError, all_hold
 from mace.engine.context import RuleContext
 from mace.engine.events import (
     Event,
@@ -66,6 +66,7 @@ from mace.model.effects import (
     PlayScene,
     Rest,
     Reveal,
+    SayEffect,
     SetDisposition,
     SetFlag,
     SetLight,
@@ -267,6 +268,12 @@ def apply(
         if location not in state.revealed:
             state.revealed.add(location)
             outcome.events.append(LocationRevealed(location))
+        return
+
+    if isinstance(payload, SayEffect):
+        for line in payload.lines:
+            if all_hold(line.when, context):
+                outcome.events.append(Narrated(line.text, line.pause))
         return
 
     if isinstance(payload, AdvanceQuest):

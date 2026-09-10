@@ -226,6 +226,21 @@ def test_flags_variables_and_dispositions_are_set(tmp_path: Path) -> None:
     assert state.protagonist.disposition == "hostile"
 
 
+def test_say_speaks_lines_without_a_scene_of_their_own(tmp_path: Path) -> None:
+    """A choice can answer a question inline, the same way `Scene.say` does."""
+    context, _state, _library = playthrough(tmp_path)
+    outcome = do(
+        context,
+        {
+            "say": [
+                {"text": "Always heard."},
+                {"text": "Never heard.", "when": [{"expr": "1 > 2"}]},
+            ]
+        },
+    )
+    assert [event.payload()["text"] for event in outcome.events] == ["Always heard."]
+
+
 def test_moving_puts_the_player_somewhere_else(tmp_path: Path) -> None:
     context, state, _library = playthrough(tmp_path)
     do(context, {"move": {"to": "castle"}})

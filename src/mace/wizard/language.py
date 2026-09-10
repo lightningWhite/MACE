@@ -369,6 +369,13 @@ def say_effect(effect: Effect, names: Names) -> str:
         return f"`{get('name')}` becomes {_value(get('value'))}"
     if tag == "reveal":
         return f"{names.of(get('location'), 'locations')} appears on the map"
+    if tag == "say":
+        lines = get("lines")
+        return (
+            f'it says "{lines[0].text}"'
+            if len(lines) == 1
+            else f"{len(lines)} lines are spoken"
+        )
     if tag == "advanceQuest":
         quest = names.of(get("quest"), "quests")
         stage = get("stage")

@@ -310,6 +310,27 @@ Because scenes have ids, the wizard and the future web editor can draw the
 interaction graph, detect unreachable scenes, and let authors reuse a "shopkeeper
 haggling" scene across twelve merchants.
 
+**A conversation hub.** A choice that answers a question does not need a scene
+of its own — the `say` effect speaks a line inline, and `goto` can point right
+back at the scene that offered the choice:
+
+```yaml
+- id: talk-to-the-elder
+  prompt: "Talk to the elder"
+  choices:
+    - prompt: "Ask about the bridge"
+      effects: [{say: "It washed out last spring, lad."}]
+      goto: talk-to-the-elder
+    - prompt: "Ask about the weather"
+      effects: [{say: "Storms roll through mid-summer."}]
+      goto: talk-to-the-elder
+    - prompt: "Leave"
+      goto: village-square
+```
+
+Each question re-offers the same hub, so a hand-full of questions costs one
+scene and one `say` effect apiece, not a scene per answer.
+
 ## Conditions and effects
 
 The replacement for v0's magic strings. Both have a **structured canonical form**
@@ -361,6 +382,7 @@ effects:
   - {setDisposition: {actor: troll, to: hostile}}
   - {setVar: {name: kingWarned, value: true}}
   - {reveal: {location: secret-cave}}
+  - {say: "The troll grunts and steps aside."}
   - {advanceQuest: {quest: reach-the-castle, stage: deliver}}
   - {startCombat: {against: [troll], canFlee: true, onFlee: you-ran}}
   - {transferContents: {from: treasure-chest, to: player}}

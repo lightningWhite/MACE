@@ -41,6 +41,7 @@ from mace.model.base import (
     unwrap_tagged,
 )
 from mace.model.conditions import Condition
+from mace.model.text import Say
 
 __all__ = [
     "Effect",
@@ -67,6 +68,7 @@ EffectTag = Literal[
     "rest",
     "restart",
     "reveal",
+    "say",
     "setDisposition",
     "setFlag",
     "setLight",
@@ -502,6 +504,22 @@ class PlayScene(EffectPayload):
     scene: SceneRef
 
 
+class SayEffect(EffectPayload):
+    """Speak a line, without a scene of its own.
+
+    Attributes
+    ----------
+    lines : Say
+        The line or lines spoken. Reuses `Scene.say`'s shape, so a line may
+        carry its own `when` and `pause`.
+    """
+
+    shorthand_field: ClassVar[str] = "lines"
+    shorthand_wraps_mapping: ClassVar[bool] = True
+
+    lines: Say
+
+
 class NoArguments(EffectPayload):
     """An effect that takes nothing: `{restart: {}}`, `{endGame: {}}`."""
 
@@ -532,6 +550,7 @@ EFFECT_PAYLOADS: dict[EffectTag, type[EffectPayload]] = {
     "rest": Rest,
     "restart": NoArguments,
     "reveal": Reveal,
+    "say": SayEffect,
     "setDisposition": SetDisposition,
     "setFlag": SetFlag,
     "setLight": SetLight,

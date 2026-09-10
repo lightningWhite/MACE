@@ -769,6 +769,13 @@ EFFECTS: tuple[Recipe, ...] = (
         ),
     ),
     Recipe(
+        label="Say something",
+        tag="say",
+        group="The story",
+        help="A line of dialogue, without a scene of its own.",
+        asks=(Ask("", "What do they say?", Text()),),
+    ),
+    Recipe(
         label="Play another scene",
         tag="playScene",
         group="The story",

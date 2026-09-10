@@ -74,6 +74,7 @@ EFFECT_ANSWERS: dict[str, dict[str, Any]] = {
     "advanceQuest": {"quest": "the-summons"},
     "setFlag": {"entity": "gorm", "flag": "has-spoken"},
     "setVar": {"name": "kingWarned", "value": "yes"},
+    "say": {"": "The troll grunts."},
     "playScene": {"": "victory"},
     "fireEvent": {"": "the-storm"},
     "setPressure": {"event": "the-storm", "value": 0.8},
