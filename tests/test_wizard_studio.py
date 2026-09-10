@@ -27,7 +27,7 @@ import pytest
 
 from conftest import write_pack
 from mace.content import ContentError
-from mace.wizard.studio import Studio, Unknown, frame, vocabulary
+from mace.wizard.studio import Desk, Studio, Unknown, frame, vocabulary
 
 
 def world(root: Path, **files: Any) -> Path:
@@ -836,3 +836,99 @@ def test_a_preview_is_of_unsaved_work(tmp_path: Path) -> None:
     open_studio.answer("entities", "entity.name", "Gorm the Patient", "gorm")
     assert open_studio.preview("entities", "gorm")["name"] == "Gorm the Patient"
     assert open_studio.project.dirty
+
+
+# ── Desk: a pack open for authoring, or none yet ───────────────────────────
+
+
+def two_games(tmp_path: Path) -> Path:
+    """A directory holding two authorable game packs and one library.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Pytest's temporary directory.
+
+    Returns
+    -------
+    Path
+        The directory holding them.
+    """
+    root = tmp_path / "games"
+    write_pack(root, "castle-quest", kind="game")
+    write_pack(root, "moor-quest", kind="game")
+    write_pack(root, "shared", kind="library")
+    return root
+
+
+def test_a_desk_lists_only_the_games(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    held = Desk(studio=None, root=root)
+    assert [one["id"] for one in held.games()] == ["castle-quest", "moor-quest"]
+
+
+def test_a_desk_lists_the_libraries_a_new_game_could_depend_on(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    held = Desk(studio=None, root=root, search=root)
+    assert [one["id"] for one in held.libraries()] == ["shared"]
+
+
+def test_a_desk_with_no_search_cannot_list_libraries(tmp_path: Path) -> None:
+    held = Desk(studio=None, root=two_games(tmp_path))
+    with pytest.raises(ContentError, match="no dependency directory"):
+        held.libraries()
+
+
+def test_a_desk_with_no_root_cannot_list_or_create(tmp_path: Path) -> None:
+    held = Desk(studio=Studio.open(two_games(tmp_path) / "castle-quest"))
+    with pytest.raises(ContentError, match="no games directory"):
+        held.games()
+    with pytest.raises(ContentError, match="no games directory"):
+        held.create("Another One")
+
+
+def test_opening_a_game_switches_the_desk(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    held = Desk(studio=None, root=root)
+    held.open("castle-quest")
+    assert held.studio is not None
+    assert held.studio.project.manifest.id == "castle-quest"
+
+    held.open("moor-quest")
+    assert held.studio.project.manifest.id == "moor-quest"
+
+
+def test_opening_something_that_is_not_a_game_here_fails(tmp_path: Path) -> None:
+    held = Desk(studio=None, root=two_games(tmp_path))
+    with pytest.raises(ContentError, match="no game `shared`"):
+        held.open("shared")
+
+
+def test_a_desk_refuses_to_switch_away_from_unsaved_work(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    open_studio = Studio.open(root / "castle-quest")
+    held = Desk(studio=open_studio, root=root)
+    open_studio.create("locations", "Somewhere")
+
+    with pytest.raises(ContentError, match="unsaved"):
+        held.open("moor-quest")
+    with pytest.raises(ContentError, match="unsaved"):
+        held.create("A Third Game")
+    assert held.studio is open_studio
+
+
+def test_creating_a_game_derives_its_id_from_the_name(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    held = Desk(studio=None, root=root)
+    held.create("A Brand New Quest", requires={"shared": "^0.1"})
+
+    assert held.studio is not None
+    assert held.studio.project.manifest.id == "a-brand-new-quest"
+    assert (root / "a-brand-new-quest" / "pack.yml").is_file()
+    assert any(one["id"] == "a-brand-new-quest" for one in held.games())
+
+
+def test_creating_a_game_that_already_exists_fails(tmp_path: Path) -> None:
+    held = Desk(studio=None, root=two_games(tmp_path))
+    with pytest.raises(ContentError, match="already a pack"):
+        held.create("Castle Quest")

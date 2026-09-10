@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any
 
 from mace.content import ContentError
+from mace.content.discovery import MANIFEST_NAME, find_packs, read_yaml
 from mace.content.validation import Problem, Severity
 from mace.wizard.builders import (
     CONDITIONS,
@@ -69,7 +70,7 @@ from mace.wizard.project import Project
 from mace.wizard.query import Catalog, Option, Query
 from mace.wizard.tasks import SECTIONS, Section, TaskList, review
 
-__all__ = ["Studio", "Unknown", "frame", "vocabulary"]
+__all__ = ["Desk", "Studio", "Unknown", "frame", "vocabulary"]
 
 #: The binding target that stands for the game manifest rather than an object.
 GAME_COLLECTION = "game"
@@ -1190,6 +1191,186 @@ class Studio:
                 for one in authored
             ]
         return pieces
+
+
+@dataclass(slots=True)
+class Desk:
+    """The one pack open for authoring right now, or none yet.
+
+    `Studio` has no notion of "no pack" — a project is a directory on disk,
+    and there is always exactly one. `Desk` is the thing that can be empty:
+    it is what lets a process offer authoring before anyone has picked what
+    to author, and switch what it holds without restarting — one pack open
+    at a time, same as `mace author` always meant, just not fixed at
+    process-start any more.
+
+    Attributes
+    ----------
+    studio : Studio or None
+        The open pack, or None before one is chosen.
+    root : Path or None
+        Where authorable game packs live — `games()` looks here. None means
+        there is nothing to list or create, which is what a `Desk` wrapping
+        the old one-pack-per-process shape means.
+    search : Path or None
+        Where those packs' dependencies live.
+    """
+
+    studio: Studio | None
+    root: Path | None = None
+    search: Path | None = None
+
+    def games(self) -> list[dict[str, str]]:
+        """Every authorable game pack under `root`.
+
+        Reads each `pack.yml` raw rather than loading a `Library`, so a pack
+        that does not validate yet is still listed and still openable — the
+        same tolerance `Project` gives half-written content everywhere else.
+
+        Returns
+        -------
+        list of dict
+            `{id, name, path}` per game pack, sorted by id.
+
+        Raises
+        ------
+        ContentError
+            If no games directory is configured, or it cannot be read.
+        """
+        if self.root is None:
+            raise ContentError("no games directory is configured")
+        return self._packs_of_kind(self.root, "game")
+
+    def libraries(self) -> list[dict[str, str]]:
+        """Every library pack under `search`, for a new game to depend on.
+
+        Returns
+        -------
+        list of dict
+            `{id, name, path}` per library pack, sorted by id.
+
+        Raises
+        ------
+        ContentError
+            If no dependency directory is configured, or it cannot be read.
+        """
+        if self.search is None:
+            raise ContentError("no dependency directory is configured")
+        return self._packs_of_kind(self.search, "library")
+
+    def _packs_of_kind(self, root: Path, kind: str) -> list[dict[str, str]]:
+        """Every pack of one kind under a directory, tolerant of bad content.
+
+        Reads each `pack.yml` raw rather than loading a `Library`, so a pack
+        that does not validate yet is still listed and still openable — the
+        same tolerance `Project` gives half-written content everywhere else.
+
+        Parameters
+        ----------
+        root : Path
+            Where to look.
+        kind : str
+            `game` or `library`.
+
+        Returns
+        -------
+        list of dict
+            `{id, name, path}` per matching pack, sorted by id.
+        """
+        found: list[dict[str, str]] = []
+        for pack_root in find_packs(root):
+            try:
+                manifest = read_yaml(pack_root / MANIFEST_NAME)
+            except (ContentError, OSError):
+                continue
+            if not isinstance(manifest, Mapping) or manifest.get("kind") != kind:
+                continue
+            pack_id = str(manifest.get("id") or pack_root.name)
+            found.append(
+                {
+                    "id": pack_id,
+                    "name": str(manifest.get("name") or pack_id),
+                    "path": str(pack_root),
+                }
+            )
+        return sorted(found, key=lambda one: one["id"])
+
+    def open(self, pack_id: str) -> Studio:
+        """Switch to an existing game pack.
+
+        Parameters
+        ----------
+        pack_id : str
+            The pack's id, as `games()` lists it.
+
+        Returns
+        -------
+        Studio
+            The newly open pack.
+
+        Raises
+        ------
+        ContentError
+            If the current pack has unsaved edits, or there is no such game.
+        """
+        self._refuse_if_dirty()
+        match = next((one for one in self.games() if one["id"] == pack_id), None)
+        if match is None:
+            raise ContentError(f"no game `{pack_id}` here")
+        search = () if self.search is None else (self.search,)
+        self.studio = Studio.open(Path(match["path"]), *search)
+        return self.studio
+
+    def create(self, name: str, requires: Mapping[str, str] | None = None) -> Studio:
+        """Start a new game pack and open it.
+
+        Parameters
+        ----------
+        name : str
+            Its title. The id and directory are derived from it, the same
+            way `Studio.create` derives an object's id from its name.
+        requires : mapping or None
+            Pack id to version range.
+
+        Returns
+        -------
+        Studio
+            The newly created, open pack.
+
+        Raises
+        ------
+        ContentError
+            If no games directory is configured, the current pack has
+            unsaved edits, or a pack already exists at the derived path.
+        """
+        if self.root is None:
+            raise ContentError("no games directory is configured")
+        self._refuse_if_dirty()
+        local_id = slug(name)
+        search = () if self.search is None else (self.search,)
+        project = Project.create(
+            self.root / local_id,
+            *search,
+            pack_id=local_id,
+            name=name,
+            kind="game",
+            requires=requires,
+        )
+        self.studio = Studio(project)
+        return self.studio
+
+    def _refuse_if_dirty(self) -> None:
+        """Stop a switch that would lose unsaved edits silently.
+
+        Raises
+        ------
+        ContentError
+            If the currently open pack has unsaved changes.
+        """
+        if self.studio is not None and self.studio.project.dirty:
+            raise ContentError(
+                "this pack has unsaved changes — save them first, or they will be lost"
+            )
 
 
 def frame(studio: Studio, screen: Mapping[str, Any] | None = None) -> dict[str, Any]:

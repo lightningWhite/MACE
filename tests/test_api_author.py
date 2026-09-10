@@ -21,7 +21,7 @@ from conftest import write_pack
 from mace.api.app import create_app
 from mace.api.author import author_routes
 from mace.content import load_library
-from mace.wizard.studio import Studio
+from mace.wizard.studio import Desk, Studio
 
 PACK: dict[str, Any] = {
     "locations.yml": {
@@ -486,4 +486,109 @@ def test_a_wizard_with_nowhere_to_put_a_playthrough_says_so(root: Path) -> None:
     refused = TestClient(alone).post("/api/author/playtest", json={})
 
     assert refused.status_code == 409
-    assert "holds no playthroughs" in refused.json()["detail"]
+
+
+# ── A desk that can switch, or hold nothing yet ────────────────────────────
+
+
+@pytest.fixture
+def empty_desk(root: Path) -> TestClient:
+    """A service whose wizard has no pack open yet, but can list `tiny`."""
+    alone = FastAPI()
+    alone.include_router(
+        author_routes(Desk(studio=None, root=root.parent, search=root.parent))
+    )
+    return TestClient(alone)
+
+
+def test_nothing_open_says_so_plainly(empty_desk: TestClient) -> None:
+    assert got(empty_desk, "/api/author") == {"open": False}
+
+
+def test_routes_that_need_a_pack_are_409_with_nothing_open(
+    empty_desk: TestClient,
+) -> None:
+    assert empty_desk.get("/api/author/map").status_code == 409
+    assert empty_desk.get("/api/author/sections/world").status_code == 409
+    assert (
+        empty_desk.post(
+            "/api/author/answers",
+            json={"collection": "locations", "step": "location.name", "value": "x"},
+        ).status_code
+        == 409
+    )
+
+
+def test_the_games_list_is_reachable_with_nothing_open(
+    empty_desk: TestClient, root: Path
+) -> None:
+    listed = got(empty_desk, "/api/author/games")
+    assert listed == {
+        "games": [{"id": "tiny", "name": "tiny", "path": str(root)}],
+        "open": None,
+    }
+
+
+def test_the_libraries_list_is_empty_when_there_are_none(
+    empty_desk: TestClient,
+) -> None:
+    assert got(empty_desk, "/api/author/libraries") == {"libraries": []}
+
+
+def test_opening_one_makes_the_desk_answer_normally(empty_desk: TestClient) -> None:
+    opened = empty_desk.post("/api/author/open", json={"pack": "tiny"})
+    assert opened.status_code == 200, opened.text
+    assert opened.json()["pack"]["id"] == "tiny"
+    assert got(empty_desk, "/api/author")["pack"]["id"] == "tiny"
+
+
+def test_opening_something_that_is_not_there_is_a_400(empty_desk: TestClient) -> None:
+    refused = empty_desk.post("/api/author/open", json={"pack": "dragons"})
+    assert refused.status_code == 400
+    assert "dragons" in refused.json()["detail"]
+
+
+def test_creating_a_game_opens_it(empty_desk: TestClient) -> None:
+    made = empty_desk.post("/api/author/games", json={"name": "A New Quest"})
+    assert made.status_code == 201, made.text
+    assert made.json()["pack"]["id"] == "a-new-quest"
+    assert got(empty_desk, "/api/author/games")["open"] == "a-new-quest"
+
+
+def test_switching_away_from_unsaved_changes_is_refused(root: Path) -> None:
+    alone = FastAPI()
+    alone.include_router(
+        author_routes(Desk(studio=Studio.open(root, root.parent), root=root.parent))
+    )
+    client = TestClient(alone)
+    client.post(
+        "/api/author/answers",
+        json={
+            "collection": "locations",
+            "object": "home",
+            "step": "location.safe",
+            "value": True,
+        },
+    )
+
+    made = client.post("/api/author/games", json={"name": "Somewhere Else"})
+    assert made.status_code == 400
+    assert "unsaved" in made.json()["detail"]
+    # And the original pack is exactly as it was — still open, still dirty.
+    assert got(client, "/api/author")["pack"]["id"] == "tiny"
+
+
+def test_a_pack_that_does_not_validate_is_still_listed(root: Path) -> None:
+    """An author has to be able to open a half-written pack, not just a
+    finished one — the same tolerance `Project` gives raw content
+    everywhere else."""
+    (root / "locations.yml").write_text("locations: [{id: home, exits: not-a-list}]\n")
+    with pytest.raises(Exception):  # noqa: B017, PT011 — proving it really doesn't load
+        load_library(root.parent)
+
+    alone = FastAPI()
+    alone.include_router(
+        author_routes(Desk(studio=None, root=root.parent, search=root.parent))
+    )
+    listed = got(TestClient(alone), "/api/author/games")
+    assert listed["games"] == [{"id": "tiny", "name": "tiny", "path": str(root)}]

@@ -20,19 +20,31 @@ import { useCallback, useEffect, useState } from "react";
 import * as api from "./api";
 import { StudioError } from "./api";
 import { Field } from "./Field";
+import { GamePicker } from "./GamePicker";
 import { MapEditor } from "./MapEditor";
 import { Playtest } from "./Playtest";
 import { Preview } from "./Preview";
 import { SceneGraph } from "./SceneGraph";
 import {
   isObject,
+  isOpen,
   isSection,
   type Frame,
+  type NothingOpen,
   type ObjectScreen,
   type Problem,
   type SectionScreen,
   type Task,
 } from "./protocol";
+
+/** `api.desk()`'s reply, narrowed to a real frame — or a clear refusal when
+ * there somehow still isn't one, which `run`'s callers never expect. */
+function opened(reply: Frame | NothingOpen): Frame {
+  if (!isOpen(reply)) {
+    throw new StudioError("no pack open — pick one first", 409);
+  }
+  return reply;
+}
 
 /** Which screen the client is showing, and what it takes to fetch it again. */
 type Where =
@@ -51,6 +63,10 @@ export function Studio() {
   const [where, setWhere] = useState<Where>({ at: "desk" });
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // True either at first load, before anything is open, or because the
+  // author asked to switch games. `frame` is what tells the two apart —
+  // there is something to cancel back to only once one has ever opened.
+  const [picking, setPicking] = useState(false);
   const [saved, setSaved] = useState<string[] | null>(null);
   const [trying, setTrying] = useState(false);
   const [handed, setHanded] = useState<string | null>(null);
@@ -86,8 +102,35 @@ export function Studio() {
   );
 
   useEffect(() => {
-    void run(api.desk);
-  }, [run]);
+    setBusy(true);
+    setFailure(null);
+    api
+      .desk()
+      .then((reply) => {
+        if (isOpen(reply)) {
+          setFrame(reply);
+        } else {
+          setPicking(true);
+        }
+      })
+      .catch((error: unknown) =>
+        setFailure(error instanceof StudioError ? error.message : "something went wrong"),
+      )
+      .finally(() => setBusy(false));
+  }, []);
+
+  if (picking) {
+    return (
+      <GamePicker
+        onOpened={(next) => {
+          setFrame(next);
+          setWhere({ at: "desk" });
+          setPicking(false);
+        }}
+        {...(frame === null ? {} : { onCancel: () => setPicking(false) })}
+      />
+    );
+  }
 
   if (frame === null) {
     return (
@@ -114,6 +157,7 @@ export function Studio() {
           })
         }
         onPlaytest={() => setTrying((open) => !open)}
+        onSwitch={() => setPicking(true)}
         onExport={() => {
           setBusy(true);
           setFailure(null);
@@ -169,7 +213,7 @@ export function Studio() {
                   at: "section",
                   section: where.section as string,
                 })
-              : run(api.desk, { at: "desk" }))
+              : run(() => api.desk().then(opened), { at: "desk" }))
           }
         >
           ← back
@@ -250,12 +294,14 @@ function Header({
   busy,
   onSave,
   onPlaytest,
+  onSwitch,
   onExport,
 }: {
   frame: Frame;
   busy: boolean;
   onSave: () => void;
   onPlaytest: () => void;
+  onSwitch: () => void;
   onExport: () => void;
 }) {
   const { desk, dirty } = frame;
@@ -273,6 +319,19 @@ function Header({
         </p>
       </div>
       <div className="studio-actions">
+        <button
+          type="button"
+          className="quiet"
+          disabled={busy}
+          title={
+            dirty.length === 0
+              ? "Open a different game"
+              : "Save first — switching loses unsaved changes"
+          }
+          onClick={onSwitch}
+        >
+          Switch game
+        </button>
         <button type="button" disabled={busy} onClick={onPlaytest}>
           Playtest
         </button>
@@ -295,6 +354,17 @@ function Header({
         >
           Export
         </button>
+        <a
+          className="quiet"
+          href="#"
+          onClick={(event) => {
+            event.preventDefault();
+            window.location.hash = "";
+            window.location.reload();
+          }}
+        >
+          Play instead
+        </a>
       </div>
     </header>
   );

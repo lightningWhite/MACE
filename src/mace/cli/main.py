@@ -1,6 +1,7 @@
 """Entry point for the `mace` console script."""
 
 import argparse
+import subprocess
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -187,6 +188,56 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     server.set_defaults(run=run_serve)
+
+    developer = commands.add_parser(
+        "dev",
+        help="one process for playing or authoring, picked in the browser",
+        description=(
+            "Serves every game under --packs to play, and a wizard that can "
+            "open, switch between, or create any game under --games to "
+            "author — one process, one port, no picking a mode on the "
+            "command line. Rebuilds the web client first if it looks stale."
+        ),
+    )
+    developer.add_argument(
+        "--packs",
+        type=Path,
+        default=Path("packs"),
+        help="where games and their dependencies live (default: packs/)",
+    )
+    developer.add_argument(
+        "--games",
+        type=Path,
+        default=None,
+        help=(
+            "where authorable game packs live (default: --packs/games if "
+            "that exists, otherwise --packs itself)"
+        ),
+    )
+    developer.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help=(
+            "address to bind (default: 127.0.0.1). Both halves write to "
+            "disk or hold sessions with no authentication, so binding this "
+            "to a network hands that network your filesystem."
+        ),
+    )
+    developer.add_argument(
+        "--port", type=int, default=8000, help="port (default: 8000)"
+    )
+    developer.add_argument(
+        "--web",
+        type=Path,
+        default=Path("web"),
+        help="the web client's project directory (default: web/)",
+    )
+    developer.add_argument(
+        "--no-build",
+        action="store_true",
+        help="serve --web/dist as it is, even if it looks older than its own source",
+    )
+    developer.set_defaults(run=run_dev)
 
     packer = commands.add_parser(
         "bundle",
@@ -546,6 +597,119 @@ def run_serve(options: argparse.Namespace) -> int:
         return 1
 
     print(f"MACE on http://{options.host}:{options.port} — ctrl-c to stop")
+    uvicorn.run(app, host=options.host, port=options.port, log_level="warning")
+    return 0
+
+
+#: What a stale web build is compared against — everything that goes into
+#: it, not just `src/`, or a changed build script would silently not count.
+_WEB_SOURCES = ("src", "scripts", "package.json", "index.html", "vite.config.ts")
+
+
+def _newest_mtime(path: Path) -> float:
+    """The newest modification time a file or directory tree holds.
+
+    Parameters
+    ----------
+    path : Path
+        A file, a directory, or nothing at all.
+
+    Returns
+    -------
+    float
+        The newest `st_mtime` underneath it, or `-inf` if there is nothing
+        there to have one.
+    """
+    if path.is_file():
+        return path.stat().st_mtime
+    if not path.is_dir():
+        return float("-inf")
+    return max(
+        (
+            candidate.stat().st_mtime
+            for candidate in path.rglob("*")
+            if candidate.is_file()
+        ),
+        default=float("-inf"),
+    )
+
+
+def _web_client_is_stale(web: Path) -> bool:
+    """Whether `web`'s build is missing or older than its own source.
+
+    A plain mtime comparison rather than a hash or a marker file — it is the
+    same check a person would make by eye, and it costs one directory walk
+    each side rather than a new bookkeeping mechanism to keep in sync.
+
+    Parameters
+    ----------
+    web : Path
+        The web client's project directory.
+
+    Returns
+    -------
+    bool
+        Whether it needs rebuilding.
+    """
+    built = _newest_mtime(web / "dist")
+    if built == float("-inf"):
+        return True
+    newest_source = max(_newest_mtime(web / name) for name in _WEB_SOURCES)
+    return newest_source > built
+
+
+def run_dev(options: argparse.Namespace) -> int:
+    """Run `mace dev`.
+
+    Parameters
+    ----------
+    options : argparse.Namespace
+        Parsed arguments.
+
+    Returns
+    -------
+    int
+        The process exit code.
+    """
+    if not options.no_build and _web_client_is_stale(options.web):
+        print(f"web client looks stale — running `npm run build` in {options.web}")
+        built = subprocess.run(["npm", "run", "build"], cwd=options.web)
+        if built.returncode != 0:
+            return built.returncode
+
+    try:
+        import uvicorn  # noqa: PLC0415
+
+        from mace.api.app import DEV_ORIGINS, create_app  # noqa: PLC0415
+    except ImportError:
+        print(
+            "error   mace dev needs the server extras: pip install 'mace[api]'",
+            file=sys.stderr,
+        )
+        return 1
+
+    from mace.wizard.studio import Desk  # noqa: PLC0415
+
+    games = options.games
+    if games is None:
+        under_packs = options.packs / "games"
+        games = under_packs if under_packs.is_dir() else options.packs
+
+    try:
+        app = create_app(
+            [options.packs],
+            origins=list(DEV_ORIGINS),
+            client=options.web / "dist",
+            authoring=Desk(studio=None, root=games, search=options.packs),
+        )
+    except ContentError as error:
+        print(f"error   {error}", file=sys.stderr)
+        return 1
+
+    print(
+        f"MACE on http://{options.host}:{options.port} — play or author, "
+        "pick one in the browser — ctrl-c to stop"
+    )
     uvicorn.run(app, host=options.host, port=options.port, log_level="warning")
     return 0
 

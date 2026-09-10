@@ -16,7 +16,16 @@ do, and a router is a dependency for one decision.
 
 ## Running it
 
-Two processes in development, because Vite wants to own the reload:
+The easy way — one process, rebuilds the client first if it looks stale, and
+serves every game under `packs/` to play or author, picked in the browser:
+
+```bash
+mace dev
+# then open http://127.0.0.1:8000/
+```
+
+What that's actually doing, for when you want the pieces apart — two
+processes in development, because Vite wants to own the reload:
 
 ```bash
 mace serve packs/          # the session service on :8000
@@ -32,7 +41,8 @@ mace serve packs/ --client web/dist   # one origin, nothing to configure
 ```
 
 The wizard is a different process, because it writes to your disk and the
-session service never does:
+session service never does — and this form of it opens exactly one pack,
+chosen when the process starts, rather than picked in the browser:
 
 ```bash
 mace author packs/games/peasants-quest --web --client web/dist

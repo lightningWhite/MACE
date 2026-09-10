@@ -267,6 +267,23 @@ export function Opening({
             : "Playing against a MACE server."}
         </p>
       )}
+
+      {/* Nothing to author in a tab running purely offline — there is no
+          server behind it for `/api/author` to be a route on. */}
+      {service !== null && service.where !== "here" && (
+        <p className="dim aside">
+          <a
+            href="#author"
+            onClick={(event) => {
+              event.preventDefault();
+              window.location.hash = "author";
+              window.location.reload();
+            }}
+          >
+            Author this pack
+          </a>
+        </p>
+      )}
     </main>
   );
 }

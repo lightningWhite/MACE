@@ -13,10 +13,13 @@
 
 import type {
   Atlas,
+  AuthorableGames,
+  AuthorableLibraries,
   Built,
   Exported,
   Frame,
   Graph,
+  NothingOpen,
   Preview,
   Problem,
   Rehearsal,
@@ -67,9 +70,35 @@ function sending(body: unknown): RequestInit {
   return { method: "POST", body: JSON.stringify(body) };
 }
 
-/** The task list, and nothing else. */
-export function desk(): Promise<Frame> {
-  return ask<Frame>("");
+/**
+ * The task list, and nothing else — or `{open: false}` before anyone has
+ * picked a game to author. Check with `isOpen` before reading it as a frame.
+ */
+export function desk(): Promise<Frame | NothingOpen> {
+  return ask<Frame | NothingOpen>("");
+}
+
+/** Every game a `mace dev` desk can open, switch to, or already has open. */
+export function games(): Promise<AuthorableGames> {
+  return ask<AuthorableGames>("/games");
+}
+
+/** Every library pack a new game could depend on. */
+export function libraries(): Promise<AuthorableLibraries> {
+  return ask<AuthorableLibraries>("/libraries");
+}
+
+/** Start a new game pack, from as little as its title, and open it. */
+export function newGame(
+  name: string,
+  requires: Record<string, string> = {},
+): Promise<Frame> {
+  return ask<Frame>("/games", sending({ name, requires }));
+}
+
+/** Switch to an existing game pack. Refused while the open one is unsaved. */
+export function openGame(pack: string): Promise<Frame> {
+  return ask<Frame>("/open", sending({ pack }));
 }
 
 /** One section's contents. */

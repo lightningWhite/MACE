@@ -12,10 +12,44 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Studio } from "./Studio";
-import { fakeStudio } from "../test/authorWire";
+import { desk as recordedDesk, fakeStudio } from "../test/authorWire";
 
 function stub(studio: ReturnType<typeof fakeStudio>) {
   vi.stubGlobal("fetch", studio.fetcher);
+}
+
+/** A desk with nothing open yet, one game on offer, and an `open` that
+ * hands back the recorded pack — everything else falls through to the
+ * ordinary fixture, since once something is open the rest of the app
+ * doesn't know or care how it got that way. */
+function stubUnopened() {
+  const base = fakeStudio();
+  const fetcher = async (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const path = String(input);
+    const method = init?.method ?? "GET";
+    const reply = (payload: unknown, status = 200) =>
+      new Response(JSON.stringify(payload), { status });
+    if (path.endsWith("/api/author") && method === "GET") {
+      return reply({ open: false });
+    }
+    if (path.endsWith("/api/author/games") && method === "GET") {
+      return reply({
+        games: [{ id: "peasants-quest", name: "A Peasant's Quest", path: "/x" }],
+        open: null,
+      });
+    }
+    if (path.endsWith("/api/author/libraries")) {
+      return reply({ libraries: [] });
+    }
+    if (path.endsWith("/api/author/open") && method === "POST") {
+      return reply(recordedDesk);
+    }
+    return base.fetcher(input, init);
+  };
+  vi.stubGlobal("fetch", fetcher);
 }
 
 /** Open the task list and wait for it. */
@@ -34,6 +68,54 @@ async function intoFenmoor(user: ReturnType<typeof userEvent.setup>) {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+// ── Choosing a game first ────────────────────────────────────────────────────
+
+describe("nothing open yet", () => {
+  it("offers a picker instead of a task list", async () => {
+    stubUnopened();
+    render(<Studio />);
+
+    expect(await screen.findByText("Which game?")).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: "A Peasant's Quest" }),
+    ).toBeTruthy();
+  });
+
+  it("shows the task list once a game is opened", async () => {
+    const user = userEvent.setup();
+    stubUnopened();
+    render(<Studio />);
+
+    await user.click(await screen.findByRole("button", { name: "A Peasant's Quest" }));
+
+    expect(await screen.findByText("A Peasant's Quest")).toBeTruthy();
+    expect(screen.queryByText("Which game?")).toBeNull();
+  });
+
+  it("has no way back on the very first pick — nothing is open to return to", async () => {
+    stubUnopened();
+    render(<Studio />);
+
+    await screen.findByText("Which game?");
+    expect(screen.queryByRole("button", { name: "Never mind" })).toBeNull();
+  });
+});
+
+describe("switching games", () => {
+  it("offers a picker again from an open pack's header, and back out of it", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+
+    await user.click(screen.getByRole("button", { name: "Switch game" }));
+    expect(await screen.findByText("Which game?")).toBeTruthy();
+    const cancel = await screen.findByRole("button", { name: "Never mind" });
+
+    await user.click(cancel);
+    expect(await screen.findByText("A Peasant's Quest")).toBeTruthy();
+  });
 });
 
 // ── The task list ─────────────────────────────────────────────────────────────

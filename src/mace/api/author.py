@@ -7,15 +7,18 @@ is added in `mace.wizard`, not here.
 
 **This one writes to the author's disk**, which the session service never
 does, and that is the whole reason it is a separate router mounted only when
-somebody asks for it. `mace author --web` binds it to localhost and opens one
-pack; there is no authentication, no second pack, and no path in the API that
-names a file. Serving it to a network would be handing that network a
-filesystem, so do not.
+somebody asks for it. `mace author --web` and `mace dev` both bind it to
+localhost; there is no authentication and no path in the API that names an
+arbitrary file — a game is opened or created by id, resolved against a
+`Desk`'s own configured directory, never by a client-supplied path. Serving
+it to a network would be handing that network a filesystem, so do not.
 
-One pack per process, the way `mace author` is one pack per terminal. That is
-not a limitation being worked around: a project holds unsaved edits in memory,
-and two of them behind one process would be two authors quietly overwriting
-each other.
+One pack open at a time, the way `mace author` is one pack per terminal. That
+is not a limitation being worked around: a project holds unsaved edits in
+memory, and two of them open for editing at once would be two authors
+quietly overwriting each other. `Desk` (`mace.wizard.studio`) is what makes
+"one at a time" and "switchable" both true together — it refuses to switch
+away from a pack with unsaved changes rather than losing them.
 
 See docs/09-authoring-and-wizard.md § CLI and web parity.
 """
@@ -34,9 +37,18 @@ from mace.session import frame as frame_of
 from mace.wizard.notes import PlaytestSetup
 from mace.wizard.playtest import start_from
 from mace.wizard.share import export_pack
-from mace.wizard.studio import Studio, Unknown, frame
+from mace.wizard.studio import Desk, Studio, Unknown, frame
 
-__all__ = ["Answer", "Built", "Made", "Road", "Trial", "author_routes"]
+__all__ = [
+    "Answer",
+    "Built",
+    "Made",
+    "NewGame",
+    "OpenGame",
+    "Road",
+    "Trial",
+    "author_routes",
+]
 
 
 class Answer(Wire):
@@ -137,6 +149,33 @@ class Trial(Wire):
     combat_mode: str | None = None
 
 
+class NewGame(Wire):
+    """A new game pack, asked for with as little as its title.
+
+    Attributes
+    ----------
+    name : str
+        Its title. The id and directory are derived from it.
+    requires : dict
+        Pack id to version range — which libraries it builds on.
+    """
+
+    name: str
+    requires: dict[str, str] = {}  # noqa: RUF012 — pydantic copies per instance
+
+
+class OpenGame(Wire):
+    """Which existing game pack to switch to.
+
+    Attributes
+    ----------
+    pack : str
+        Its id, as `GET /api/author/games` lists it.
+    """
+
+    pack: str
+
+
 class Built(Wire):
     """A cascade's answers, to be turned into content.
 
@@ -155,13 +194,15 @@ class Built(Wire):
     answers: dict[str, Any] = {}  # noqa: RUF012 — pydantic copies per instance
 
 
-def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter:
-    """Build the authoring routes over one open pack.
+def author_routes(studio: Studio | Desk, registry: Registry | None = None) -> APIRouter:
+    """Build the authoring routes over an open pack, or a switchable desk.
 
     Parameters
     ----------
-    studio : Studio
-        The pack being edited. Held for the life of the process.
+    studio : Studio or Desk
+        The pack being edited, held for the life of the process the way it
+        always was — or a `Desk`, which can hold none yet and can switch
+        which one it holds, for a process that lets an author pick.
     registry : Registry or None
         Where a playtest's session goes, so the game client can drive it
         through the ordinary `/api/sessions` routes. None leaves playtesting
@@ -172,7 +213,25 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
     APIRouter
         The routes, ready to include under `/api/author`.
     """
+    held = studio if isinstance(studio, Desk) else Desk(studio)
     router = APIRouter(prefix="/api/author", tags=["authoring"])
+
+    def current() -> Studio:
+        """The open pack, or a clear refusal when there is none.
+
+        Returns
+        -------
+        Studio
+            The open pack.
+
+        Raises
+        ------
+        HTTPException
+            409, when nothing is open yet.
+        """
+        if held.studio is None:
+            raise HTTPException(status_code=409, detail="no pack open — pick one first")
+        return held.studio
 
     def screened(screen: dict[str, Any] | None = None) -> dict[str, Any]:
         """Wrap a screen in the frame every reply carries.
@@ -187,7 +246,102 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         dict
             The frame.
         """
-        return frame(studio, screen)
+        return frame(current(), screen)
+
+    # ── Which pack ────────────────────────────────────────────────────────
+
+    @router.get("/games")
+    def games() -> dict[str, Any]:
+        """Every authorable game pack, for a picker to offer.
+
+        Returns
+        -------
+        dict
+            `games`, and which one (if any) is open right now.
+
+        Raises
+        ------
+        HTTPException
+            404 if this process has no games directory configured.
+        """
+        try:
+            listed = held.games()
+        except ContentError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        opened = None if held.studio is None else held.studio.project.manifest.id
+        return {"games": listed, "open": opened}
+
+    @router.get("/libraries")
+    def libraries() -> dict[str, Any]:
+        """Every library pack a new game could depend on.
+
+        Returns
+        -------
+        dict
+            `libraries`.
+
+        Raises
+        ------
+        HTTPException
+            404 if this process has no dependency directory configured.
+        """
+        try:
+            listed = held.libraries()
+        except ContentError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        return {"libraries": listed}
+
+    @router.post("/games", status_code=201)
+    def new_game(body: Annotated[NewGame, Body()]) -> dict[str, Any]:
+        """Start a new game pack and open it.
+
+        Parameters
+        ----------
+        body : NewGame
+            Its title, and what it depends on.
+
+        Returns
+        -------
+        dict
+            The frame, with the newly opened pack's task list.
+
+        Raises
+        ------
+        HTTPException
+            400 if it cannot be made — including unsaved edits in whatever
+            was open before.
+        """
+        try:
+            held.create(body.name, body.requires)
+        except ContentError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        return screened()
+
+    @router.post("/open")
+    def open_game(body: Annotated[OpenGame, Body()]) -> dict[str, Any]:
+        """Switch to an existing game pack.
+
+        Parameters
+        ----------
+        body : OpenGame
+            Which one.
+
+        Returns
+        -------
+        dict
+            The frame, with the newly opened pack's task list.
+
+        Raises
+        ------
+        HTTPException
+            400 if it cannot be opened — including unsaved edits in
+            whatever was open before, or no such game.
+        """
+        try:
+            held.open(body.pack)
+        except ContentError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        return screened()
 
     # ── Reading ───────────────────────────────────────────────────────────
 
@@ -198,8 +352,12 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         Returns
         -------
         dict
-            The frame, with no screen.
+            `{"open": False}` when nothing is open yet — the client's cue to
+            offer `GET /api/author/games` instead — or the frame, with no
+            screen.
         """
+        if held.studio is None:
+            return {"open": False}
         return screened()
 
     @router.get("/vocabulary")
@@ -211,7 +369,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         dict
             `conditions` and `effects`.
         """
-        return studio.vocabulary()
+        return current().vocabulary()
 
     @router.get("/map")
     def atlas() -> dict[str, Any]:
@@ -222,7 +380,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         dict
             Places and roads.
         """
-        return studio.atlas()
+        return current().atlas()
 
     @router.get("/preview/{collection}/{object_id}")
     def preview(collection: str, object_id: str) -> dict[str, Any]:
@@ -245,7 +403,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         HTTPException
             404 if it is not there.
         """
-        return _found(lambda: studio.preview(collection, object_id))
+        return _found(lambda: current().preview(collection, object_id))
 
     @router.get("/graph")
     def graph() -> dict[str, Any]:
@@ -257,7 +415,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
             The graph, with reachability already worked out — the same answer
             `mace validate` gives, because it is the same code.
         """
-        return studio.graph()
+        return current().graph()
 
     @router.post("/roads", status_code=201)
     def link(body: Annotated[Road, Body()]) -> dict[str, Any]:
@@ -282,10 +440,10 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
             400 if it cannot be drawn.
         """
         try:
-            studio.link(body.origin, body.destination, body.ticks, name=body.name)
+            current().link(body.origin, body.destination, body.ticks, name=body.name)
         except ContentError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
-        return screened(studio.atlas())
+        return screened(current().atlas())
 
     @router.delete("/roads/{route_id}")
     def unlink(route_id: str) -> dict[str, Any]:
@@ -306,11 +464,11 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         HTTPException
             404 if there was nothing to rub out.
         """
-        if not studio.unlink(route_id):
+        if not current().unlink(route_id):
             raise HTTPException(
                 status_code=404, detail=f"there is no `{route_id}` to rub out"
             )
-        return screened(studio.atlas())
+        return screened(current().atlas())
 
     @router.get("/problems")
     def problems() -> dict[str, Any]:
@@ -321,7 +479,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         dict
             The problem list.
         """
-        return {"problems": studio.report()}
+        return {"problems": current().report()}
 
     @router.get("/sections/{section_id}")
     def section(section_id: str) -> dict[str, Any]:
@@ -342,7 +500,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         HTTPException
             404 if there is no such section.
         """
-        return screened(_found(lambda: studio.section(section_id)))
+        return screened(_found(lambda: current().section(section_id)))
 
     @router.get("/objects/{collection}")
     def manifest(collection: str) -> dict[str, Any]:
@@ -363,7 +521,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         HTTPException
             404 if nothing authors it, or it needs an object id.
         """
-        return screened(_found(lambda: studio.object(collection)))
+        return screened(_found(lambda: current().object(collection)))
 
     @router.get("/objects/{collection}/{object_id}")
     def one(collection: str, object_id: str) -> dict[str, Any]:
@@ -386,7 +544,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         HTTPException
             404 if it is not there.
         """
-        return screened(_found(lambda: studio.object(collection, object_id)))
+        return screened(_found(lambda: current().object(collection, object_id)))
 
     # ── Changing things ───────────────────────────────────────────────────
 
@@ -411,7 +569,9 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
             404 for a step nobody has, 400 for an answer that will not land.
         """
         try:
-            changed = studio.answer(body.collection, body.step, body.value, body.object)
+            changed = current().answer(
+                body.collection, body.step, body.value, body.object
+            )
         except Unknown as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ContentError as error:
@@ -440,14 +600,14 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
             404 if nothing authors that collection, 400 if it cannot be made.
         """
         try:
-            made = studio.create(
+            made = current().create(
                 collection, body.name, section=body.section, answers=body.answers
             )
         except Unknown as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ContentError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
-        return screened(studio.object(collection, made))
+        return screened(current().object(collection, made))
 
     @router.delete("/objects/{collection}/{object_id}")
     def remove(collection: str, object_id: str) -> dict[str, Any]:
@@ -475,7 +635,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         HTTPException
             404 if there was nothing to remove.
         """
-        if not studio.delete(collection, object_id):
+        if not current().delete(collection, object_id):
             raise HTTPException(
                 status_code=404, detail=f"there is no `{object_id}` to delete"
             )
@@ -504,7 +664,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
             404 if nothing builds that tag, 400 if the answers are not enough.
         """
         try:
-            return studio.build(body.kind, body.tag, body.answers)
+            return current().build(body.kind, body.tag, body.answers)
         except Unknown as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
@@ -523,7 +683,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
         dict
             The remembered setup, and the options for each of its pickers.
         """
-        return studio.rehearsal()
+        return current().rehearsal()
 
     @router.post("/playtest", status_code=201)
     def playtest(body: Annotated[Trial, Body()]) -> dict[str, Any]:
@@ -573,12 +733,12 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
                     "combatMode": body.combat_mode,
                 }
             )
-            session = start_from(studio.project, setup)
+            session = start_from(current().project, setup)
         except (ContentError, ValueError) as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         # Remembered only once it has opened, so a setup that will not start
         # is not the one waiting in the form next time.
-        studio.rehearse(setup)
+        current().rehearse(setup)
         return frame_of(registry.add(session), session)
 
     @router.post("/export")
@@ -608,7 +768,9 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
             400 with the errors, when there are any.
         """
         try:
-            written = export_pack(studio.project, None if into is None else Path(into))
+            written = export_pack(
+                current().project, None if into is None else Path(into)
+            )
         except ContentError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         return {"path": str(written), "bytes": written.stat().st_size}
@@ -628,7 +790,7 @@ def author_routes(studio: Studio, registry: Registry | None = None) -> APIRouter
             400 if a file could not be written.
         """
         try:
-            written = studio.save()
+            written = current().save()
         except (ContentError, OSError) as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         return screened({"saved": written})

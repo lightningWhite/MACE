@@ -345,6 +345,34 @@ export interface Built {
   said: string;
 }
 
+/** One authorable game pack, as `GET /api/author/games` lists it. */
+export interface AuthorableGame {
+  id: string;
+  name: string;
+  path: string;
+}
+
+/** Every game a `Desk` can open or switch to, and which one (if any) is. */
+export interface AuthorableGames {
+  games: AuthorableGame[];
+  open: string | null;
+}
+
+/** Every library pack a new game could depend on. */
+export interface AuthorableLibraries {
+  libraries: AuthorableGame[];
+}
+
+/** What `GET /api/author` says when nothing is open yet. */
+export interface NothingOpen {
+  open: false;
+}
+
+/** Whether a reply from `GET /api/author` is a real frame. */
+export function isOpen(reply: Frame | NothingOpen): reply is Frame {
+  return "pack" in reply;
+}
+
 export function isSection(screen: Screen): screen is SectionScreen {
   return screen !== null && "objects" in screen;
 }
