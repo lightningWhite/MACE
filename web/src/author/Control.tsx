@@ -19,7 +19,14 @@
 
 import { useEffect, useState } from "react";
 
-import type { FieldSpec } from "./protocol";
+import * as api from "./api";
+import { StudioError } from "./api";
+import { isObject, type FieldSpec } from "./protocol";
+
+/** A `select`'s value when the author picked "+ create a new one" instead of
+ * an option — never a real id, since no reference is ever written with a
+ * leading `+`. */
+const CREATE_NEW = "+new";
 
 export interface ControlProps {
   id: string;
@@ -135,16 +142,36 @@ function PickOne({ id, field, value, busy, onChange }: ControlProps) {
   const options = field.options ?? [];
   const now = typeof value === "string" ? value : "";
   const missing = now !== "" && !options.some((one) => one.value === now);
+  const [creating, setCreating] = useState(false);
+
+  if (creating && field.allowCreate) {
+    return (
+      <CreateInline
+        collection={field.allowCreate}
+        busy={busy}
+        onCreated={(made) => {
+          setCreating(false);
+          onChange(made);
+        }}
+        onCancel={() => setCreating(false)}
+      />
+    );
+  }
+
   return (
     <div className="field-row">
       <select
         id={id}
         className="field-input"
         value={now}
-        disabled={busy || options.length === 0}
-        onChange={(event) =>
-          onChange(event.target.value === "" ? null : event.target.value)
-        }
+        disabled={busy || (options.length === 0 && !field.allowCreate)}
+        onChange={(event) => {
+          if (event.target.value === CREATE_NEW) {
+            setCreating(true);
+            return;
+          }
+          onChange(event.target.value === "" ? null : event.target.value);
+        }}
       >
         <option value="">— nothing —</option>
         {/* A reference to something that has gone is shown as itself rather
@@ -157,8 +184,11 @@ function PickOne({ id, field, value, busy, onChange }: ControlProps) {
             {one.note === "" ? "" : ` · ${one.note}`}
           </option>
         ))}
+        {field.allowCreate ? (
+          <option value={CREATE_NEW}>+ create a new one…</option>
+        ) : null}
       </select>
-      {options.length === 0 ? (
+      {options.length === 0 && !field.allowCreate ? (
         <span className="dim">nothing to pick yet</span>
       ) : null}
     </div>
@@ -184,6 +214,8 @@ function PickMany({ id, field, value, busy, onChange }: ControlProps) {
       ]
     : suggested;
 
+  const [creating, setCreating] = useState(false);
+
   const toggle = (which: string) => {
     const next = chosen.includes(which)
       ? chosen.filter((one) => one !== which)
@@ -191,7 +223,21 @@ function PickMany({ id, field, value, busy, onChange }: ControlProps) {
     onChange(next.length === 0 ? null : next);
   };
 
-  if (shown.length === 0 && !freeText) {
+  if (creating && field.allowCreate) {
+    return (
+      <CreateInline
+        collection={field.allowCreate}
+        busy={busy}
+        onCreated={(made) => {
+          setCreating(false);
+          toggle(made);
+        }}
+        onCancel={() => setCreating(false)}
+      />
+    );
+  }
+
+  if (shown.length === 0 && !freeText && !field.allowCreate) {
     return <p className="dim">Nothing to pick yet.</p>;
   }
   return (
@@ -215,7 +261,77 @@ function PickMany({ id, field, value, busy, onChange }: ControlProps) {
         </ul>
       )}
       {freeText ? <NewLabel busy={busy} taken={chosen} onAdd={toggle} /> : null}
+      {field.allowCreate ? (
+        <button type="button" disabled={busy} onClick={() => setCreating(true)}>
+          + create a new one…
+        </button>
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Ask for a name and make the thing, without leaving the question that
+ * needed it — the web half of what the terminal wizard already does.
+ */
+function CreateInline({
+  collection,
+  busy,
+  onCreated,
+  onCancel,
+}: {
+  collection: string;
+  busy: boolean;
+  onCreated: (id: string) => void;
+  onCancel: () => void;
+}) {
+  const [typed, setTyped] = useState("");
+  const [working, setWorking] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+
+  return (
+    <form
+      className="make"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const name = typed.trim();
+        if (name === "") return;
+        setWorking(true);
+        setFailure(null);
+        void api
+          .create(collection, name)
+          .then((frame) => {
+            const screen = frame.screen;
+            if (isObject(screen) && screen.id !== null) {
+              onCreated(screen.id);
+            } else {
+              onCancel();
+            }
+          })
+          .catch((error: unknown) => {
+            setWorking(false);
+            setFailure(
+              error instanceof StudioError ? error.message : "could not make that",
+            );
+          });
+      }}
+    >
+      <input
+        className="field-input"
+        value={typed}
+        placeholder="its name"
+        aria-label="The new one's name"
+        disabled={busy || working}
+        onChange={(event) => setTyped(event.target.value)}
+      />
+      <button type="submit" disabled={busy || working || typed.trim() === ""}>
+        Create
+      </button>
+      <button type="button" disabled={busy || working} onClick={onCancel}>
+        Never mind
+      </button>
+      {failure === null ? null : <p className="studio-failure">{failure}</p>}
+    </form>
   );
 }
 
