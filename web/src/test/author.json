@@ -3467,7 +3467,7 @@
         {
           "id": "scene.prompt",
           "title": "What does the option say?",
-          "help": "How this scene is offered in a menu. A scene with no prompt is one that only gets reached by `goto`.",
+          "help": "How this scene is offered in a menu. A scene with no prompt is one that another scene or choice jumps straight to, rather than one a player picks from a list.",
           "optional": true,
           "binds": "scenes[{id}].prompt",
           "value": "Speak to the troll",
@@ -3933,7 +3933,7 @@
               {
                 "id": "choice.effects",
                 "title": "Or does it just do something?",
-                "help": "A choice needs a `goto`, effects, or both.",
+                "help": "A choice needs to lead somewhere or change something: pick a scene above, add an effect here, or both.",
                 "binds": "choices.effects",
                 "optional": true,
                 "field": {

@@ -748,7 +748,8 @@ SCENE = Flow(
             field=Text(placeholder="Speak to the troll", optional=True),
             help=(
                 "How this scene is offered in a menu. A scene with no prompt "
-                "is one that only gets reached by `goto`."
+                "is one that another scene or choice jumps straight to, "
+                "rather than one a player picks from a list."
             ),
             optional=True,
         ),
@@ -839,7 +840,11 @@ SCENE = Flow(
                         title="Or does it just do something?",
                         binds="choices.effects",
                         field=EffectBuilder(),
-                        help="A choice needs a `goto`, effects, or both.",
+                        help=(
+                            "A choice needs to lead somewhere or change "
+                            "something: pick a scene above, add an effect "
+                            "here, or both."
+                        ),
                         optional=True,
                     ),
                 ),
