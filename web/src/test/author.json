@@ -5180,13 +5180,24 @@
               "strength": "Scales the damage a hit lands.",
               "speed": "Widens or narrows your timing window in a fight.",
               "charisma": "Sets the odds when haggling over a price."
-            }
+            },
+            "playerStats": [
+              "charisma",
+              "endurance",
+              "hitpoints",
+              "speed",
+              "stamina",
+              "stealth",
+              "strength"
+            ]
           },
           "entries": [
             {
               "stat": "strength",
               "base": 85.0,
-              "max": null
+              "max": null,
+              "relativeBase": null,
+              "relativeMax": null
             }
           ]
         },

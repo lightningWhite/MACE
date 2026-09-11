@@ -393,6 +393,30 @@ def test_a_statblock_takes_a_cap_and_keeps_whole_numbers_whole(
     }
 
 
+def test_a_statblock_entry_may_be_relative_to_the_player(project: Project) -> None:
+    """`3xhitpoints` means 3x whatever the player's own hitpoints turn out to be."""
+    drive(
+        project,
+        "3",  # characters
+        "n",
+        "Gorm",
+        "6",  # what is it made of
+        "hitpoints 3xhitpoints/40",
+        "",
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    assert dict(project.get("entities", "gorm") or {})["stats"] == {
+        "hitpoints": {
+            "base": {"relativeToPlayer": {"stat": "hitpoints", "factor": 3.0}},
+            "max": 40,
+        },
+    }
+
+
 def test_exporting_writes_a_pack_somebody_else_can_open(
     quest: Project, tmp_path: Path
 ) -> None:

@@ -1468,6 +1468,18 @@ button:disabled {
   cursor: help;
 }
 
+.statblock-fixed,
+.statblock-relative {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.field-number-narrow {
+  flex: 0 0 4rem;
+}
+
 /*
  * The price overlay.
  *

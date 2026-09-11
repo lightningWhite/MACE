@@ -17,6 +17,7 @@ mid-thought (docs/09-authoring-and-wizard.md).
 
 from __future__ import annotations
 
+import re
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -835,8 +836,10 @@ class Wizard:
             self.say(f"    {one.points} points to spread.")
         self.say(
             "    A name and a number — `strength 32`. A pool wants a cap too, "
-            "written `hitpoints 20/20`, or it has nothing to refill to. A "
-            "blank line ends it."
+            "written `hitpoints 20/20`, or it has nothing to refill to. Either "
+            "half may be relative to the player's own stat instead of a flat "
+            "number — `hitpoints 3xhitpoints` is 3x whatever the player's own "
+            "hitpoints turn out to be. A blank line ends it."
         )
         while True:
             typed = self.ask("  + ")
@@ -845,11 +848,14 @@ class Wizard:
             name, _, number = typed.partition(" ")
             base, _, cap = number.partition("/")
             try:
-                stat: dict[str, Any] = {"base": _whole(base)}
+                stat: dict[str, Any] = {"base": _relative_or_number(base)}
                 if cap.strip():
-                    stat["max"] = _whole(cap)
+                    stat["max"] = _relative_or_number(cap)
             except ValueError:
-                self.say("    A name and a number, like `strength 32`.")
+                self.say(
+                    "    A name and a number, like `strength 32` or "
+                    "`hitpoints 3xhitpoints`."
+                )
                 continue
             existing = kept.get(name)
             kept[name] = {**existing, **stat} if isinstance(existing, Mapping) else stat
@@ -1431,6 +1437,34 @@ def _whole(typed: str) -> float | int:
     """
     value = float(typed)
     return int(value) if value.is_integer() else value
+
+
+_RELATIVE = re.compile(r"([0-9]*\.?[0-9]+)x([a-zA-Z][\w-]*)")
+
+
+def _relative_or_number(typed: str) -> Any:
+    """A stat entry's `base`/`max`: a flat number, or relative to the player's.
+
+    Parameters
+    ----------
+    typed : str
+        `32`, or `3xhitpoints` for "3x the player's own hitpoints".
+
+    Returns
+    -------
+    float, int, or dict
+        The number, or a `{relativeToPlayer: {stat, factor}}` mapping.
+
+    Raises
+    ------
+    ValueError
+        If `typed` is neither shape.
+    """
+    match = _RELATIVE.fullmatch(typed.strip())
+    if match is None:
+        return _whole(typed)
+    factor, stat = match.groups()
+    return {"relativeToPlayer": {"stat": stat, "factor": float(factor)}}
 
 
 def _askable(ask: Ask, answers: Mapping[str, Any]) -> Field:

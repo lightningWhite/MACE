@@ -94,6 +94,12 @@ export interface FieldSpec {
    * `speed`, and `charisma`, which are the same name in every game.
    */
   core?: Record<string, string>;
+  /**
+   * Every stat the player entity declares, for a relative-value picker to
+   * offer as "the player's own stat" to reference — the full list, not just
+   * `core`'s two pool roles.
+   */
+  playerStats?: string[];
   single?: boolean;
   of?: string;
   steps?: StepSpec[];
@@ -128,11 +134,27 @@ export interface Entry {
   pieces: Record<string, Piece[]>;
 }
 
-/** One stat of a statblock. */
+/** A number expressed as a multiple of the player's own stat. */
+export interface RelativeStat {
+  stat: string;
+  factor: number;
+}
+
+/**
+ * One stat of a statblock.
+ *
+ * `base`/`max` carry a literal number; `relativeBase`/`relativeMax` carry a
+ * reference instead. The two are mutually exclusive per field — a number and
+ * its relative counterpart are never both set — but kept as separate optional
+ * fields rather than a union, so a form can hold an empty draft of either
+ * shape while the author is still choosing between them.
+ */
 export interface Allocated {
   stat: string;
-  base: number;
+  base: number | null;
   max: number | null;
+  relativeBase?: RelativeStat | null;
+  relativeMax?: RelativeStat | null;
 }
 
 /** One question, its answer, and everything a form needs to draw it. */

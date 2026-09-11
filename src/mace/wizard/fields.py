@@ -472,9 +472,12 @@ class StatAllocator(Field):
         spread = value if isinstance(value, Mapping) else {}
         if not spread:
             return "—"
-        return " · ".join(
-            f"{name} {_number(_base(spread[name]))}" for name in sorted(spread)
-        )
+
+        def one(name: str) -> str:
+            base = _base(spread[name])
+            return _relative_text(base) or _number(base)
+
+        return " · ".join(f"{name} {one(name)}" for name in sorted(spread))
 
     def parse(self, typed: str, catalog: Catalog) -> Any:
         raise NotOneLine("a statblock is filled in one stat at a time")
@@ -622,6 +625,27 @@ def _base(stat: Any) -> Any:
         The base value.
     """
     return stat.get("base", 0) if isinstance(stat, Mapping) else stat
+
+
+def _relative_text(value: Any) -> str | None:
+    """A `{relativeToPlayer: {...}}` value, in English.
+
+    Parameters
+    ----------
+    value : object
+        A stat entry's `base`/`max`, which may be this wrapper.
+
+    Returns
+    -------
+    str or None
+        `"3x player's hitpoints"`, or None if `value` is not this shape.
+    """
+    if not isinstance(value, Mapping):
+        return None
+    relative = value.get("relativeToPlayer")
+    if not isinstance(relative, Mapping):
+        return None
+    return f"{_number(relative.get('factor', 1))}x player's {relative.get('stat', '?')}"
 
 
 def _unparsed(count: int, noun: str) -> str:

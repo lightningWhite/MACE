@@ -456,6 +456,74 @@ def test_an_item_gets_no_starter_stats(studio: Studio) -> None:
     assert "stats" not in held
 
 
+def test_the_stats_field_offers_the_players_own_stat_names(studio: Studio) -> None:
+    """The relative-value picker needs a name to offer, not just the two pools."""
+    studio.create("entities", "Bandit", section="characters")
+    field = step_of(studio.object("entities", "bandit"), "entity.stats")["field"]
+    assert set(field["playerStats"]) == {"hitpoints", "stamina"}
+
+
+def test_a_relative_valued_stat_round_trips_through_entries(studio: Studio) -> None:
+    studio.create(
+        "entities",
+        "Troll",
+        section="characters",
+        answers={
+            "entity.stats": {
+                "hitpoints": {
+                    "base": {"relativeToPlayer": {"stat": "hitpoints", "factor": 3}},
+                    "max": 40,
+                }
+            }
+        },
+    )
+    entries = step_of(studio.object("entities", "troll"), "entity.stats")["entries"]
+    assert entries is not None
+    entry = next(one for one in entries if one["stat"] == "hitpoints")
+    assert entry["base"] is None
+    assert entry["max"] == 40.0
+    assert entry["relativeBase"] == {"stat": "hitpoints", "factor": 3}
+    assert entry["relativeMax"] is None
+
+
+def test_a_relative_valued_stat_describes_in_english(studio: Studio) -> None:
+    studio.create(
+        "entities",
+        "Troll",
+        section="characters",
+        answers={
+            "entity.stats": {
+                "hitpoints": {
+                    "base": {"relativeToPlayer": {"stat": "hitpoints", "factor": 3}},
+                }
+            }
+        },
+    )
+    described = step_of(studio.object("entities", "troll"), "entity.stats")["described"]
+    assert "3x player's hitpoints" in described
+
+
+def test_a_relative_valued_stat_does_not_break_the_preview(studio: Studio) -> None:
+    studio.create(
+        "entities",
+        "Troll",
+        section="characters",
+        answers={
+            "entity.stats": {
+                "hitpoints": {
+                    "base": {"relativeToPlayer": {"stat": "hitpoints", "factor": 3}},
+                    "max": 40,
+                }
+            }
+        },
+    )
+    preview = studio.preview("entities", "troll")
+    assert preview["built"] is True
+    stat = next(one for one in preview["stats"] if one["stat"] == "hitpoints")
+    assert stat["base"] == {"relativeToPlayer": {"stat": "hitpoints", "factor": 3.0}}
+    assert stat["max"] == 40.0
+
+
 def test_a_caller_supplied_stats_answer_is_not_overridden(studio: Studio) -> None:
     studio.create(
         "entities",

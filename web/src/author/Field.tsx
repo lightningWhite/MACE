@@ -17,7 +17,15 @@ import { useEffect, useState } from "react";
 
 import { Cascade } from "./Cascade";
 import { Control } from "./Control";
-import type { Allocated, Built, Entry, Piece, Step, StepSpec } from "./protocol";
+import type {
+  Allocated,
+  Built,
+  Entry,
+  Piece,
+  RelativeStat,
+  Step,
+  StepSpec,
+} from "./protocol";
 
 interface Props {
   step: Step;
@@ -391,8 +399,9 @@ function Statblock({ step, onAnswer, busy }: Props) {
   const held = (step.entries ?? []) as Allocated[];
   const [naming, setNaming] = useState("");
   const points = step.field.points ?? 0;
-  const spent = held.reduce((total, one) => total + one.base, 0);
+  const spent = held.reduce((total, one) => total + (one.base ?? 0), 0);
   const core = step.field.core ?? {};
+  const playerStats = step.field.playerStats ?? [];
   const suggested = (step.field.stats ?? []).filter(
     (one) => !held.some((had) => had.stat === one),
   );
@@ -403,18 +412,41 @@ function Statblock({ step, onAnswer, busy }: Props) {
       Object.fromEntries(
         next.map((one) => [
           one.stat,
-          one.max === null ? { base: one.base } : { base: one.base, max: one.max },
+          {
+            base: one.relativeBase
+              ? { relativeToPlayer: one.relativeBase }
+              : (one.base ?? 0),
+            ...(one.relativeMax
+              ? { max: { relativeToPlayer: one.relativeMax } }
+              : one.max !== null
+                ? { max: one.max }
+                : {}),
+          },
         ]),
       ),
     );
   };
 
-  const change = (stat: string, key: "base" | "max", value: number | null) => {
+  const changeBase = (stat: string, next: number | RelativeStat | null) => {
     write(
       held.map((one) =>
-        one.stat === stat
-          ? { ...one, [key]: key === "base" ? (value ?? 0) : value }
-          : one,
+        one.stat !== stat
+          ? one
+          : typeof next === "number" || next === null
+            ? { ...one, base: next ?? 0, relativeBase: null }
+            : { ...one, relativeBase: next },
+      ),
+    );
+  };
+
+  const changeMax = (stat: string, next: number | RelativeStat | null) => {
+    write(
+      held.map((one) =>
+        one.stat !== stat
+          ? one
+          : typeof next === "number" || next === null
+            ? { ...one, max: next, relativeMax: null }
+            : { ...one, relativeMax: next },
       ),
     );
   };
@@ -434,7 +466,9 @@ function Statblock({ step, onAnswer, busy }: Props) {
             allocated={one}
             busy={busy}
             core={core[one.stat]}
-            onChange={(key, value) => change(one.stat, key, value)}
+            playerStats={playerStats}
+            onChangeBase={(value) => changeBase(one.stat, value)}
+            onChangeMax={(value) => changeMax(one.stat, value)}
             onRemove={() => write(held.filter((had) => had.stat !== one.stat))}
           />
         ))}
@@ -473,18 +507,16 @@ function Statblock({ step, onAnswer, busy }: Props) {
 }
 
 /**
- * One stat's inputs, buffered locally like every other control.
- *
- * Writing straight through to `onChange` on every keystroke — the shape this
- * replaced — round-trips to the wizard on every digit, and the value coming
- * back on the next render fights whatever the input was about to show next,
- * which is what made typing feel like it needed a re-click per digit.
+ * One stat's two values (base and cap), each independently either a fixed
+ * number or a multiple of the player's own stat.
  */
 function StatRow({
   allocated,
   busy,
   core,
-  onChange,
+  playerStats,
+  onChangeBase,
+  onChangeMax,
   onRemove,
 }: {
   allocated: Allocated;
@@ -492,18 +524,12 @@ function StatRow({
   /** What this stat does, if the project marks it as one the engine reads
    * by name — undefined for an ordinary free-form stat. */
   core: string | undefined;
-  onChange: (key: "base" | "max", value: number | null) => void;
+  /** The player's own declared stats, to reference in a relative value. */
+  playerStats: string[];
+  onChangeBase: (value: number | RelativeStat | null) => void;
+  onChangeMax: (value: number | RelativeStat | null) => void;
   onRemove: () => void;
 }) {
-  const [base, setBase] = useState(String(allocated.base));
-  const [max, setMax] = useState(allocated.max === null ? "" : String(allocated.max));
-
-  useEffect(() => setBase(String(allocated.base)), [allocated.base]);
-  useEffect(
-    () => setMax(allocated.max === null ? "" : String(allocated.max)),
-    [allocated.max],
-  );
-
   return (
     <li>
       <span className="statblock-name">{allocated.stat}</span>
@@ -512,34 +538,24 @@ function StatRow({
           core
         </span>
       )}
-      <input
-        className="field-input field-number"
-        type="number"
-        aria-label={`${allocated.stat} base`}
-        value={base}
-        disabled={busy}
-        onChange={(event) => setBase(event.target.value)}
-        onBlur={() => {
-          const read = Number(base);
-          if (Number.isNaN(read)) setBase(String(allocated.base));
-          else onChange("base", read);
-        }}
+      <ValueControl
+        label={`${allocated.stat} base`}
+        busy={busy}
+        value={allocated.base}
+        relative={allocated.relativeBase ?? null}
+        playerStats={playerStats}
+        onChange={onChangeBase}
       />
       <span className="dim">/</span>
-      <input
-        className="field-input field-number"
-        type="number"
-        aria-label={`${allocated.stat} cap`}
+      <ValueControl
+        label={`${allocated.stat} cap`}
         placeholder="cap"
-        value={max}
-        disabled={busy}
-        onChange={(event) => setMax(event.target.value)}
-        onBlur={() => {
-          if (max === "") return onChange("max", null);
-          const read = Number(max);
-          if (Number.isNaN(read)) setMax(allocated.max === null ? "" : String(allocated.max));
-          else onChange("max", read);
-        }}
+        busy={busy}
+        value={allocated.max}
+        relative={allocated.relativeMax ?? null}
+        playerStats={playerStats}
+        onChange={onChangeMax}
+        allowEmpty
       />
       <button
         type="button"
@@ -551,6 +567,116 @@ function StatRow({
         remove
       </button>
     </li>
+  );
+}
+
+/**
+ * A number, or a multiple of one of the player's own stats — switched with a
+ * plain link so the common case (typing a number) stays a single click away.
+ *
+ * Buffered locally like every other control here: writing straight through
+ * on every keystroke round-trips to the wizard on every digit, and the value
+ * coming back on the next render fights whatever the input was about to show
+ * next.
+ */
+function ValueControl({
+  label,
+  placeholder,
+  busy,
+  value,
+  relative,
+  playerStats,
+  onChange,
+  allowEmpty = false,
+}: {
+  label: string;
+  placeholder?: string;
+  busy: boolean;
+  value: number | null;
+  relative: RelativeStat | null;
+  playerStats: string[];
+  onChange: (next: number | RelativeStat | null) => void;
+  allowEmpty?: boolean;
+}) {
+  const [typed, setTyped] = useState(value === null ? "" : String(value));
+  const [factor, setFactor] = useState(String(relative?.factor ?? 1));
+
+  useEffect(() => setTyped(value === null ? "" : String(value)), [value]);
+  useEffect(() => setFactor(String(relative?.factor ?? 1)), [relative?.factor]);
+
+  if (relative !== null) {
+    return (
+      <span className="statblock-relative">
+        <input
+          className="field-input field-number field-number-narrow"
+          type="number"
+          aria-label={`${label} factor`}
+          value={factor}
+          disabled={busy}
+          onChange={(event) => setFactor(event.target.value)}
+          onBlur={() => {
+            const read = Number(factor);
+            if (Number.isNaN(read)) setFactor(String(relative.factor));
+            else onChange({ stat: relative.stat, factor: read });
+          }}
+        />
+        <span className="dim">x player's</span>
+        <select
+          className="field-input"
+          aria-label={`${label} stat`}
+          value={relative.stat}
+          disabled={busy}
+          onChange={(event) => onChange({ stat: event.target.value, factor: relative.factor })}
+        >
+          {playerStats.includes(relative.stat) ? null : (
+            <option value={relative.stat}>{relative.stat}</option>
+          )}
+          {playerStats.map((one) => (
+            <option key={one} value={one}>
+              {one}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="link-button"
+          disabled={busy}
+          onClick={() => onChange(allowEmpty ? null : 0)}
+        >
+          fixed
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <span className="statblock-fixed">
+      <input
+        className="field-input field-number"
+        type="number"
+        aria-label={label}
+        placeholder={placeholder}
+        value={typed}
+        disabled={busy}
+        onChange={(event) => setTyped(event.target.value)}
+        onBlur={() => {
+          if (typed === "" && allowEmpty) return onChange(null);
+          const read = Number(typed);
+          if (Number.isNaN(read)) setTyped(value === null ? "" : String(value));
+          else onChange(read);
+        }}
+      />
+      {playerStats.length > 0 && (
+        <button
+          type="button"
+          className="link-button"
+          disabled={busy}
+          onClick={() => onChange({ stat: playerStats[0] ?? "", factor: 1 })}
+        >
+          relative
+        </button>
+      )}
+    </span>
   );
 }
 

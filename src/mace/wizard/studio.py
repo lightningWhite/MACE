@@ -944,6 +944,28 @@ class Studio:
             "charisma": "Sets the odds when haggling over a price.",
         }
 
+    def _player_stat_names(self) -> tuple[str, ...]:
+        """Every stat this game's player entity declares.
+
+        Offered to a relative-value picker as "the player's own stat" to
+        reference — the full list, not just the two pool roles
+        `_core_stats` names, since a relative value can point at any of the
+        player's own stats.
+
+        Returns
+        -------
+        tuple of str
+            Names, sorted. Empty if the game names no player entity yet, or
+            that entity declares no stats.
+        """
+        manifest = self.project.game or {}
+        player = manifest.get("player")
+        entity = player.get("entity") if isinstance(player, Mapping) else None
+        if not entity:
+            return ()
+        stats = self.project.effective("entities", str(entity), "stats")
+        return tuple(sorted(stats)) if isinstance(stats, Mapping) else ()
+
     def delete(self, collection: str, object_id: str) -> bool:
         """Remove an object.
 
@@ -1163,7 +1185,9 @@ class Studio:
             "value": _plain(value),
             "described": one.field.describe(value, catalog),
             "answered": answered(value),
-            "field": _field(one.field, catalog, self._core_stats()),
+            "field": _field(
+                one.field, catalog, self._core_stats(), self._player_stat_names()
+            ),
             "entries": self._entries(one.field, value),
         }
 
@@ -1214,6 +1238,8 @@ class Studio:
                     "stat": name,
                     "base": _number_of(spread[name], "base"),
                     "max": _number_of(spread[name], "max"),
+                    "relativeBase": _relative_of(spread[name], "base"),
+                    "relativeMax": _relative_of(spread[name], "max"),
                 }
                 for name in sorted(spread)
             ]
@@ -1573,7 +1599,10 @@ def _ask(ask: Ask, catalog: Catalog | None = None) -> dict[str, Any]:
 
 
 def _field(
-    one: Field, catalog: Catalog | None, core: Mapping[str, str] | None = None
+    one: Field,
+    catalog: Catalog | None,
+    core: Mapping[str, str] | None = None,
+    player_stats: Sequence[str] = (),
 ) -> dict[str, Any]:
     """A field type, with its options already resolved.
 
@@ -1592,6 +1621,11 @@ def _field(
         Stat name to what it does, for a `StatAllocator` — resolved by the
         caller against *this* game's own `vitalPool`/`effortPool`, since a
         recipe's ask has no project to ask and never carries one.
+    player_stats : sequence of str
+        Every stat the player entity declares, for a `StatAllocator`'s
+        relative-value picker to offer — "3x the player's own `strength`"
+        needs a name to pick from that isn't limited to `core`'s two pool
+        roles.
 
     Returns
     -------
@@ -1628,6 +1662,7 @@ def _field(
         body["points"] = one.points
         body["stats"] = list(one.stats)
         body["core"] = dict(core or {})
+        body["playerStats"] = list(player_stats)
     elif isinstance(one, ConditionBuilder):
         body["single"] = one.single
     elif isinstance(one, Repeat):
@@ -1639,7 +1674,7 @@ def _field(
                 "help": step.help,
                 "binds": step.binds,
                 "optional": step.optional,
-                "field": _field(step.field, catalog, core),
+                "field": _field(step.field, catalog, core, player_stats),
             }
             for step in one.steps
             if isinstance(step, Step)
@@ -1806,14 +1841,24 @@ def _stats(built: Any) -> list[dict[str, Any]]:
     Returns
     -------
     list of dict
-        Stat, base, and cap, in name order.
+        Stat, base, and cap, in name order. JSON-safe — a `base`/`max`
+        authored `relativeToPlayer` comes back compiled into a `RelativeStat`
+        model, not a plain number, so it is rendered back to the same
+        wrapper shape an author would write.
     """
+    from mace.model.entity import RelativeStat
+
+    def value(raw: Any) -> Any:
+        if isinstance(raw, RelativeStat):
+            return {"relativeToPlayer": raw.authored()}
+        return raw
+
     declared = getattr(built, "stats", None) or {}
     return [
         {
             "stat": name,
-            "base": declared[name].base,
-            "max": declared[name].max,
+            "base": value(declared[name].base),
+            "max": value(declared[name].max),
             "customizable": declared[name].customizable,
         }
         for name in sorted(declared)
@@ -2020,12 +2065,44 @@ def _number_of(stat: Any, key: str) -> float | None:
     Returns
     -------
     float or None
-        The number, or None where the author set none.
+        The number, or None where the author set none — including where
+        they set a `{relativeToPlayer: {...}}` reference instead of a
+        literal; `_relative_of` is what reads that half.
     """
     if isinstance(stat, Mapping):
         found = stat.get(key)
-        return None if found is None else float(found)
+        if found is None or isinstance(found, Mapping):
+            return None
+        return float(found)
     return float(stat) if key == "base" else None
+
+
+def _relative_of(stat: Any, key: str) -> dict[str, Any] | None:
+    """A stat entry's `base`/`max`, as a relative-to-player reference.
+
+    Parameters
+    ----------
+    stat : object
+        `{base: {relativeToPlayer: {stat, factor}}, max: 40}`, or a bare
+        value.
+    key : str
+        `base` or `max`.
+
+    Returns
+    -------
+    dict or None
+        `{stat, factor}`, or None where the author set a plain number (or
+        nothing at all) instead.
+    """
+    if not isinstance(stat, Mapping):
+        return None
+    found = stat.get(key)
+    if not isinstance(found, Mapping):
+        return None
+    relative = found.get("relativeToPlayer")
+    if not isinstance(relative, Mapping):
+        return None
+    return {"stat": relative.get("stat"), "factor": relative.get("factor", 1.0)}
 
 
 def _plain(value: Any) -> Any:

@@ -125,3 +125,86 @@ describe("editing an existing entry", () => {
     ]);
   });
 });
+
+// ── A statblock's relative-value picker ─────────────────────────────────────
+
+describe("a statblock with a value relative to the player", () => {
+  const STAT_STEP: Step = {
+    id: "entity.stats",
+    title: "What is it made of?",
+    help: "",
+    binds: "entities[{id}].stats",
+    optional: true,
+    field: {
+      kind: "stat-allocator",
+      optional: true,
+      interactive: true,
+      hint: "",
+      points: 0,
+      stats: ["hitpoints"],
+      core: {},
+      playerStats: ["hitpoints", "strength"],
+    },
+    value: {
+      hitpoints: {
+        base: { relativeToPlayer: { stat: "hitpoints", factor: 3 } },
+        max: 40,
+      },
+    },
+    described: "hitpoints 3x player's hitpoints",
+    answered: true,
+    entries: [
+      {
+        stat: "hitpoints",
+        base: null,
+        max: 40,
+        relativeBase: { stat: "hitpoints", factor: 3 },
+        relativeMax: null,
+      },
+    ],
+  };
+
+  afterEach(cleanup);
+
+  it("shows a factor and a stat picker instead of a plain number", () => {
+    render(<Field step={STAT_STEP} onAnswer={vi.fn()} busy={false} />);
+
+    expect(
+      (screen.getByLabelText("hitpoints base factor") as HTMLInputElement).value,
+    ).toBe("3");
+    expect(
+      (screen.getByLabelText("hitpoints base stat") as HTMLSelectElement).value,
+    ).toBe("hitpoints");
+    // The cap was authored as a plain number, so it keeps its own number box.
+    expect(
+      (screen.getByLabelText("hitpoints cap") as HTMLInputElement).value,
+    ).toBe("40");
+  });
+
+  it("switches a relative base back to a fixed number", async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(<Field step={STAT_STEP} onAnswer={onAnswer} busy={false} />);
+
+    await user.click(screen.getByRole("button", { name: "fixed" }));
+
+    expect(onAnswer).toHaveBeenCalledWith({
+      hitpoints: { base: 0, max: 40 },
+    });
+  });
+
+  it("switches a fixed cap to relative, offering the player's own stats", async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(<Field step={STAT_STEP} onAnswer={onAnswer} busy={false} />);
+
+    await user.click(screen.getByRole("button", { name: "relative" }));
+
+    expect(onAnswer).toHaveBeenCalledWith({
+      hitpoints: {
+        base: { relativeToPlayer: { stat: "hitpoints", factor: 3 } },
+        max: { relativeToPlayer: { stat: "hitpoints", factor: 1 } },
+      },
+    });
+  });
+});
