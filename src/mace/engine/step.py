@@ -2121,7 +2121,7 @@ def _recover(rest: Rest, context: RuleContext, events: list[Event]) -> None:
 
     wanted = rest.pools or tuple(definition.stats or {})
     for name in wanted:
-        low, high = pool_bounds(definition, name)
+        low, high = pool_bounds(definition, player, name)
         if high is None:
             continue
         current = player.pools.get(name)
@@ -2712,7 +2712,7 @@ def _create_character(
     for name, points in character.spend.items():
         if name not in declared:
             continue
-        _low, high = pool_bounds(definition, name)
+        _low, high = pool_bounds(definition, player, name)
         player.pools[name] = min(player.pools.get(name, 0.0) + points, high)
 
     return opening

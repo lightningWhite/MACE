@@ -65,6 +65,7 @@ EffectTag = Literal[
     "move",
     "openRoute",
     "playScene",
+    "raiseMax",
     "rest",
     "restart",
     "reveal",
@@ -104,6 +105,21 @@ class SetStat(EffectPayload):
     actor: EntityRef = "player"
     stat: Name
     value: AuthoredValue
+
+
+class RaiseMax(EffectPayload):
+    """Permanently raise a stat's ceiling, on top of whatever it started at.
+
+    Session state, not content — the troll this happened to grew; the next
+    one spawned from the same definition hasn't. What "more fights," "more
+    travel," or "chopping wood twenty times" all reduce to: some content
+    decided a threshold was crossed and fired this. The engine doesn't know
+    or care which activity earned it.
+    """
+
+    actor: EntityRef = "player"
+    stat: Name
+    amount: AuthoredValue
 
 
 class SetDisposition(EffectPayload):
@@ -547,6 +563,7 @@ EFFECT_PAYLOADS: dict[EffectTag, type[EffectPayload]] = {
     "move": MoveActor,
     "openRoute": OpenRoute,
     "playScene": PlayScene,
+    "raiseMax": RaiseMax,
     "rest": Rest,
     "restart": NoArguments,
     "reveal": Reveal,

@@ -26,6 +26,7 @@ from mace.engine.events import (
     FlagChanged,
     InventoryChanged,
     LocationRevealed,
+    MaxRaised,
     Moved,
     Narrated,
     NewsHeard,
@@ -64,6 +65,7 @@ from mace.model.effects import (
     NoArguments,
     OpenRoute,
     PlayScene,
+    RaiseMax,
     Rest,
     Reveal,
     SayEffect,
@@ -198,6 +200,17 @@ def apply(
         target = _number(payload.value, context, "setStat.value")
         current = actor.pools.get(payload.stat, 0.0)
         _write_stat(actor, payload.stat, target - current, context, outcome, None)
+        return
+
+    if isinstance(payload, RaiseMax):
+        actor = _actor(payload.actor, context)
+        definition = context.definition(actor)
+        if payload.stat not in (definition.stats or {}):
+            raise RuleError(f"`{definition.id}` has no stat `{payload.stat}`")
+        amount = _number(payload.amount, context, "raiseMax.amount")
+        actor.stat_caps[payload.stat] = actor.stat_caps.get(payload.stat, 0.0) + amount
+        _low, high = pool_bounds(definition, actor, payload.stat)
+        outcome.events.append(MaxRaised(actor.instance_id, payload.stat, amount, high))
         return
 
     if isinstance(payload, ApplyModifier):
@@ -474,7 +487,7 @@ def _write_stat(
     if stat not in (definition.stats or {}):
         raise RuleError(f"`{definition.id}` has no stat `{stat}`")
 
-    low, high = pool_bounds(definition, stat)
+    low, high = pool_bounds(definition, actor, stat)
     before = actor.pools.get(stat, 0.0)
     after = min(max(before + delta, low), high)
     actor.pools[stat] = after

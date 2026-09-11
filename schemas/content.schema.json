@@ -1975,6 +1975,18 @@
         {
           "type": "object",
           "properties": {
+            "raiseMax": {
+              "$ref": "#/$defs/RaiseMax"
+            }
+          },
+          "required": [
+            "raiseMax"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "rest": {
               "$ref": "#/$defs/Rest"
             }
@@ -5114,6 +5126,54 @@
         "complete"
       ],
       "title": "QuestStage",
+      "type": "object"
+    },
+    "RaiseMax": {
+      "additionalProperties": false,
+      "description": "Permanently raise a stat's ceiling, on top of whatever it started at.\n\nSession state, not content \u2014 the troll this happened to grew; the next\none spawned from the same definition hasn't. What \"more fights,\" \"more\ntravel,\" or \"chopping wood twenty times\" all reduce to: some content\ndecided a threshold was crossed and fired this. The engine doesn't know\nor care which activity earned it.",
+      "properties": {
+        "actor": {
+          "default": "player",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "stat": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Stat",
+          "type": "string"
+        },
+        "amount": {
+          "oneOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "expr": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expr"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Amount"
+        }
+      },
+      "required": [
+        "stat",
+        "amount"
+      ],
+      "title": "RaiseMax",
       "type": "object"
     },
     "Region": {

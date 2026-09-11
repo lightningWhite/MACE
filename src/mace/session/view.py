@@ -33,7 +33,7 @@ from mace.content import ContentError, Library
 from mace.content.ids import split
 from mace.engine.context import RuleContext
 from mace.engine.economy.trade import Stall, look
-from mace.engine.state import GameState, QuestStatus
+from mace.engine.state import EntityState, GameState, QuestStatus
 from mace.engine.stats import effective, pool_bounds
 from mace.engine.step import context_for
 from mace.engine.world import climate_of, observe
@@ -588,7 +588,7 @@ def _sheet(context: RuleContext) -> Sheet:
         Gauge(
             stat=name,
             value=effective(definition, player, name),
-            maximum=_cap(definition, name),
+            maximum=_cap(definition, player, name),
             role=roles.get(name, "ability"),
         )
         for name in (definition.stats or {})
@@ -605,29 +605,35 @@ def _sheet(context: RuleContext) -> Sheet:
     )
 
 
-def _cap(definition: Entity, stat: str) -> float | None:
-    """The ceiling an author set on a stat, if they set one.
+def _cap(definition: Entity, state: EntityState, stat: str) -> float | None:
+    """The ceiling worth showing for a stat, if there is one.
 
     A stat with no authored `max` still has a bound — abilities default to
     100 — but a front-end drawing `26/100` beside a stat nobody capped is
-    inventing a scale. So the default is reported as no cap at all.
+    inventing a scale. So the default is reported as no cap at all, *unless*
+    play has actually grown it (`state.stat_caps`): once a session has earned
+    a real number, showing it is reporting a fact rather than inventing one.
 
     Parameters
     ----------
     definition : Entity
         The content definition.
+    state : EntityState
+        The entity's session state.
     stat : str
         Which stat.
 
     Returns
     -------
     float or None
-        The cap, or None where the author left it open.
+        The cap, or None where there is nothing authored or earned to show.
     """
     declared = (definition.stats or {}).get(stat)
-    if declared is None or declared.max is None:
+    if declared is None:
         return None
-    return pool_bounds(definition, stat)[1]
+    if declared.max is None and state.stat_caps.get(stat, 0.0) == 0.0:
+        return None
+    return pool_bounds(definition, state, stat)[1]
 
 
 # ── The pack ──────────────────────────────────────────────────────────────────

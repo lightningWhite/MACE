@@ -62,8 +62,13 @@ export function Character({ sheet }: { sheet: Sheet }) {
       <dl className="abilities">
         {abilities.map((gauge) => (
           <div key={gauge.stat} className="ability">
-            <dt>{gauge.stat.slice(0, 3)}</dt>
-            <dd>{Math.round(gauge.value)}</dd>
+            <dt>{gauge.stat}</dt>
+            <dd>
+              {Math.round(gauge.value)}
+              {gauge.maximum !== null && (
+                <span className="dim">/{Math.round(gauge.maximum)}</span>
+              )}
+            </dd>
           </div>
         ))}
       </dl>

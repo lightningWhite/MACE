@@ -323,6 +323,42 @@ def resolved(result: StepResult) -> dict[str, Any]:
     return next(e.payload() for e in result.events if e.kind == "combat.resolve")
 
 
+def began(result: StepResult) -> dict[str, Any]:
+    """The payload of a step's `combat.begin` event.
+
+    Parameters
+    ----------
+    result : StepResult
+        The step.
+
+    Returns
+    -------
+    dict
+        The payload.
+    """
+    return next(e.payload() for e in result.events if e.kind == "combat.begin")
+
+
+def reads_for(result: StepResult, actor: str) -> list[str]:
+    """One combatant's `reads` lines out of a step's `combat.begin` event.
+
+    Parameters
+    ----------
+    result : StepResult
+        The step.
+    actor : str
+        Qualified instance id.
+
+    Returns
+    -------
+    list of str
+        Its reads, empty if there are none.
+    """
+    combatant = next(c for c in began(result)["combatants"] if c["actor"] == actor)
+    reads: list[str] = combatant["reads"]
+    return reads
+
+
 def test_a_fight_telegraphs_before_it_asks(tmp_path: Path) -> None:
     library = brawl_pack(tmp_path)
     result = start(library)
@@ -515,6 +551,69 @@ def test_a_correct_read_teaches_the_weapon_and_the_enemy(tmp_path: Path) -> None
     player = result.state.protagonist
     assert player.skills["brawl:club"] > 0.0
     assert player.familiarity["brawl:thug-style"] == 1
+
+
+# ── What a fight tells you about the other side ─────────────────────────────
+
+
+def test_a_stranger_gets_no_read(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    assert reads_for(result, "brawl:thug") == []
+
+
+def test_full_familiarity_gives_exact_numbers(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    opened = begin(library, "brawl", seed="brawl")
+    opened.state.protagonist.familiarity["brawl:thug-style"] = 40
+    result = step(opened.state, Choose(0), library)
+    assert reads_for(result, "brawl:thug") == ["Strength 50.", "Speed 50."]
+
+
+def test_partial_familiarity_gives_a_qualitative_read(tmp_path: Path) -> None:
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 80},
+                    "speed": {"base": 20},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Club",
+                "item": {"equipSlot": "mainHand", "damage": {"min": 4, "max": 4}},
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    opened = begin(library, "brawl", seed="brawl")
+    opened.state.protagonist.familiarity["brawl:thug-style"] = 1
+    result = step(opened.state, Choose(0), library)
+    assert reads_for(result, "brawl:thug") == ["Hits hard.", "Slow."]
 
 
 def test_fleeing_costs_effort_whether_or_not_it_works(tmp_path: Path) -> None:

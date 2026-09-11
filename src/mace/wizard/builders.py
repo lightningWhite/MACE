@@ -516,6 +516,18 @@ EFFECTS: tuple[Recipe, ...] = (
         ),
     ),
     Recipe(
+        label="Raise a stat's cap",
+        tag="raiseMax",
+        group="Bodies and stats",
+        help="Permanent growth — more fights, more travel, a season of "
+        "training. The current value doesn't move; the ceiling does.",
+        asks=(
+            Ask("stat", "Which stat?", Text(placeholder="stamina")),
+            Ask("amount", "By how much?", Number(integer=False)),
+            Ask("actor", "Whose?", _ACTOR, default="player"),
+        ),
+    ),
+    Recipe(
         label="Apply a temporary modifier",
         tag="applyModifier",
         group="Bodies and stats",

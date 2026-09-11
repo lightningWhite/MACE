@@ -113,6 +113,27 @@ describe("a combatant's vital pool", () => {
   });
 });
 
+describe("what you know about the other side", () => {
+  it("shows a read once there is one", () => {
+    const base = recorded();
+    const foe = base.began.combatants.find((one) => one.side === "enemy");
+    if (foe === undefined) throw new Error("the recorded fight has no foe");
+    const began = {
+      ...base.began,
+      combatants: base.began.combatants.map((one) =>
+        one.actor === foe.actor ? { ...one, reads: ["Hits hard.", "Quick."] } : one,
+      ),
+    };
+    show({ ...base, began });
+    expect(screen.getByText("Hits hard. Quick.")).toBeTruthy();
+  });
+
+  it("says nothing about a stranger", () => {
+    show(recorded());
+    expect(screen.queryByText(/Hits|Quick|Slow|Strength|Speed/)).toBeNull();
+  });
+});
+
 // ── The window ────────────────────────────────────────────────────────────────
 
 describe("the window", () => {

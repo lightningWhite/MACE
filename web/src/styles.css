@@ -395,6 +395,13 @@ h2 {
   display: block;
 }
 
+.combatant-read {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--ink-dim);
+}
+
 .bar-foe .bar-fill {
   background: var(--loss);
 }
@@ -1447,6 +1454,18 @@ button:disabled {
 .statblock-name {
   flex: 0 0 9rem;
   font-family: var(--font);
+}
+
+.statblock-core {
+  flex: 0 0 auto;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  border: 1px solid var(--edge);
+  border-radius: 0.2rem;
+  padding: 0.05rem 0.3rem;
+  cursor: help;
 }
 
 /*

@@ -39,8 +39,19 @@ export interface Fight {
   vitals: Record<string, Gauge>;
 }
 
-/** One combatant's vital pool — a monster's hitpoints, or an ally's. */
-function VitalBar({ name, gauge }: { name: string; gauge: Gauge }) {
+/**
+ * One combatant's vital pool — a monster's hitpoints, or an ally's — and
+ * what the player's own familiarity with it has earned them, if anything.
+ */
+function VitalBar({
+  name,
+  gauge,
+  reads = [],
+}: {
+  name: string;
+  gauge: Gauge;
+  reads?: string[];
+}) {
   const cap = gauge.maximum ?? gauge.value;
   const filled = cap > 0 ? Math.max(0, Math.min(1, gauge.value / cap)) : 0;
   return (
@@ -56,6 +67,9 @@ function VitalBar({ name, gauge }: { name: string; gauge: Gauge }) {
       >
         <div className="bar-fill" style={{ inlineSize: `${filled * 100}%` }} />
       </div>
+      {reads.length > 0 && (
+        <p className="combatant-read">{reads.join(" ")}</p>
+      )}
     </li>
   );
 }
@@ -183,7 +197,12 @@ export function Combat({
 
       <ul className="combatants">
         {foes.map((one) => (
-          <VitalBar key={one.actor} name={one.name} gauge={fight.vitals[one.actor] ?? one.vital} />
+          <VitalBar
+            key={one.actor}
+            name={one.name}
+            gauge={fight.vitals[one.actor] ?? one.vital}
+            reads={one.reads}
+          />
         ))}
       </ul>
 

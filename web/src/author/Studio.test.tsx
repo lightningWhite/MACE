@@ -470,6 +470,15 @@ describe("a statblock", () => {
     );
   });
 
+  it("marks a stat the engine reads by name as core", async () => {
+    const user = userEvent.setup();
+    stub(fakeStudio());
+    await opened();
+    await intoGorm(user);
+
+    expect(screen.getByTitle("Scales the damage a hit lands.")).toBeTruthy();
+  });
+
   it("adds a stat nobody has invented yet", async () => {
     const user = userEvent.setup();
     const studio = fakeStudio();

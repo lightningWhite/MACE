@@ -379,13 +379,20 @@ function EntryForm({
  *
  * Genre-neutral, like the field: `stats` is a list of suggestions drawn from
  * what the pack already uses, and an author is free to invent
- * `hull-integrity` beside them.
+ * `hull-integrity` beside them. `step.field.core` marks the ones the engine
+ * reads by name in *this* project specifically — resolved server-side
+ * against its own `game.rules.vitalPool`/`effortPool`, so a sci-fi pack that
+ * renamed its vital pool sees that name marked, not a `hitpoints` it never
+ * declared. Marked, not enforced: nothing stops renaming or removing one,
+ * but the badge is there so nobody mistakes "the engine reads this by name"
+ * for "this is flavor, waiting on a condition to give it meaning."
  */
 function Statblock({ step, onAnswer, busy }: Props) {
   const held = (step.entries ?? []) as Allocated[];
   const [naming, setNaming] = useState("");
   const points = step.field.points ?? 0;
   const spent = held.reduce((total, one) => total + one.base, 0);
+  const core = step.field.core ?? {};
   const suggested = (step.field.stats ?? []).filter(
     (one) => !held.some((had) => had.stat === one),
   );
@@ -426,6 +433,7 @@ function Statblock({ step, onAnswer, busy }: Props) {
             key={one.stat}
             allocated={one}
             busy={busy}
+            core={core[one.stat]}
             onChange={(key, value) => change(one.stat, key, value)}
             onRemove={() => write(held.filter((had) => had.stat !== one.stat))}
           />
@@ -475,11 +483,15 @@ function Statblock({ step, onAnswer, busy }: Props) {
 function StatRow({
   allocated,
   busy,
+  core,
   onChange,
   onRemove,
 }: {
   allocated: Allocated;
   busy: boolean;
+  /** What this stat does, if the project marks it as one the engine reads
+   * by name — undefined for an ordinary free-form stat. */
+  core: string | undefined;
   onChange: (key: "base" | "max", value: number | null) => void;
   onRemove: () => void;
 }) {
@@ -495,6 +507,11 @@ function StatRow({
   return (
     <li>
       <span className="statblock-name">{allocated.stat}</span>
+      {core !== undefined && (
+        <span className="statblock-core" title={core}>
+          core
+        </span>
+      )}
       <input
         className="field-input field-number"
         type="number"

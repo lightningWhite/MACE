@@ -197,7 +197,10 @@ stats:
 
 - `base` — the value with nothing acting on it.
 - `max` — optional cap; defaults to 100 for ability stats.
-- `growth` — optional, how the stat improves with use (see below).
+- `growth` — optional, how the *current* value improves toward its existing
+  cap with use (see below). Raising the cap itself is a different thing —
+  the `raiseMax` effect, session-only growth that never touches content —
+  see [How-Tos § "Grow a stat's cap"](14-how-tos.md#grow-a-stats-cap).
 - `customizable: true` — the player may spend creation points here at game start.
 
 At runtime, the **effective value** of a stat is computed through a fixed
@@ -220,11 +223,44 @@ stealth): pools have a current value that persists and depletes; abilities are
 recomputed from the pipeline every time they're read. The engine tracks pools in
 state and abilities as derived values.
 
-Stat names are **not hard-coded**. `mace.core` defines the seven above as a
-convention, but a sci-fi pack can define `hacking`, `oxygen`, and `hull-integrity`
-and the engine treats them identically. Only two roles are structural: the pool
-used for death (`vitalPool`, default `hitpoints`) and the pool used for combat
-action costs (`effortPool`, default `stamina`), both declared in `game.yml`.
+Stat names are **mostly** not hard-coded. `mace.core` defines the seven above
+as a convention, and a sci-fi pack can define `hacking`, `oxygen`, and
+`hull-integrity` and the engine treats them identically — except three names
+the engine reads directly, whatever pack wrote them:
+
+| Name | What it does | Where |
+|---|---|---|
+| `strength` | Scales rolled weapon damage | `power()`, `src/mace/engine/combat/resolution.py` |
+| `speed` | Widens/narrows the combat timing window, sets the action-meter fill rate, shifts flee odds | `window_ms()` and nearby, `src/mace/engine/combat/fight.py` |
+| `charisma` | Sets haggling's odds and how fast a merchant sours | `src/mace/engine/economy/haggle.py` |
+
+An entity that never declares `strength`/`speed` still fights on equal
+footing — those two default to `50`, the engine's own neutral value, rather
+than the `0` every other undeclared stat reads as (a real trap: `0` isn't a
+no-op for either of them, it's roughly half damage or a badly skewed clock).
+The wizard pre-fills both the moment a new character exists, for exactly
+this reason — alongside whatever this game actually calls its `vitalPool`
+and `effortPool` (`hitpoints`/`stamina` by default, but resolved against
+this project's own `game.rules` rather than hard-coded, the same way the
+engine itself treats those two names as configurable). The statblock editor
+marks all five names the engine ever reads — those two plus `strength`,
+`speed`, and `charisma` — with a "core" badge, so an author can tell them
+apart from an ordinary free-form stat at a glance.
+
+Every stat besides these three is genuinely inert until content gives it
+meaning — nothing automatic happens just because it's declared. A
+`{statAtLeast: ...}` condition gating a choice, an `{adjustStat: ...}` or
+`{applyModifier: ...}` effect changing it, or an `env`/`modify` weather
+response reacting to it are the only three ways a stat ever does anything.
+Declaring `stealth: {base: 18}` and never referencing it anywhere is a number
+that sits on the sheet, moved by nothing, read by nothing. See
+[How-Tos § "Make a stat do something"](14-how-tos.md#make-a-stat-do-something)
+for the recipe.
+
+Only two roles are structural in the sense of being *declared per game*
+rather than baked into the engine: the pool used for death (`vitalPool`,
+default `hitpoints`) and the pool used for combat action costs
+(`effortPool`, default `stamina`), both set in `game.yml`.
 
 ## Entities
 

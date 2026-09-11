@@ -213,6 +213,25 @@ def test_a_stat_nobody_declared_is_an_error(tmp_path: Path) -> None:
         do(context, {"adjustStat": {"stat": "courage", "delta": 1}})
 
 
+def test_raising_a_stats_max_grows_the_ceiling_not_the_current_value(
+    tmp_path: Path,
+) -> None:
+    context, state, _library = playthrough(tmp_path)
+    outcome = do(context, {"raiseMax": {"stat": "hitpoints", "amount": 5}})
+    assert state.protagonist.pools["hitpoints"] == 20
+    assert outcome.events[0].payload()["max"] == 25
+
+    # The new ceiling actually holds — a heal can now land above the old cap.
+    do(context, {"adjustStat": {"stat": "hitpoints", "delta": 10}})
+    assert state.protagonist.pools["hitpoints"] == 25
+
+
+def test_raising_an_undeclared_stats_max_is_an_error(tmp_path: Path) -> None:
+    context, _state, _library = playthrough(tmp_path)
+    with pytest.raises(RuleError, match="no stat `courage`"):
+        do(context, {"raiseMax": {"stat": "courage", "amount": 1}})
+
+
 def test_flags_variables_and_dispositions_are_set(tmp_path: Path) -> None:
     context, state, _library = playthrough(tmp_path)
     do(

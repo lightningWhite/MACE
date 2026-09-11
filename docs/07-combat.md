@@ -114,6 +114,16 @@ irrelevant** — and it's why stats can never be enough on their own.
 profile forty times gets a window 20% wider, which is the character learning
 trolls alongside the player.
 
+The same familiarity gates what `combat.begin` says about an opponent's
+stats, so a player learns an enemy's numbers the same way they learn its
+patterns. A stranger's `strength`/`speed` are never shown, the same as
+today; once the reader's own fighter has faced this profile before, a
+qualitative read appears ("Hits hard.", "Quick."), sharpening to the exact
+numbers once the profile is fully known. Showing every opponent's exact
+stats immediately was considered and rejected — it would hand away the
+numbers this document spends its whole first half arguing should be earned,
+not given.
+
 Committing *after* the window is not a slow answer, it is no answer:
 `precision` is zero and the outcome is whatever a wrong read timed badly gets.
 Late is late.

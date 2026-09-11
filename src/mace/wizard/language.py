@@ -333,6 +333,9 @@ def say_effect(effect: Effect, names: Names) -> str:
     if tag == "setStat":
         whose = names.possessive(get("actor"))
         return f"{whose} {get('stat')} becomes {_value(get('value'))}"
+    if tag == "raiseMax":
+        whose = names.possessive(get("actor"))
+        return _moved(get("amount"), whose, f"{get('stat')} cap")
     if tag == "applyModifier":
         whose = names.possessive(get("actor"))
         parts = []

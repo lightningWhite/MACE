@@ -75,6 +75,13 @@ __all__ = ["Desk", "Studio", "Unknown", "frame", "vocabulary"]
 #: The binding target that stands for the game manifest rather than an object.
 GAME_COLLECTION = "game"
 
+#: The shape a newly-seeded pool or ability starts at. `50` for an ability is
+#: the engine's own neutral value — the same one an undeclared `strength`/
+#: `speed` now falls back to (`Fighter.stat`) — so picking it here is a
+#: no-op until the author changes it.
+_STARTER_POOL: dict[str, float] = {"base": 10, "max": 10}
+_STARTER_ABILITY: dict[str, float] = {"base": 50}
+
 #: What a preview says about each kind of object, in the order it says it.
 #: Deliberately short: a preview that listed every field would be the file
 #: again, and the file is the thing an author already has.
@@ -877,10 +884,65 @@ class Studio:
             body.update(_section(section).where or {})
         self.project.put(flow.collection, body)
 
-        for step_id, value in (answers or {}).items():
+        seeded = dict(answers or {})
+        if body.get("kind") == "actor" and "entity.stats" not in seeded:
+            vital, effort = self._pool_names()
+            seeded["entity.stats"] = {
+                vital: dict(_STARTER_POOL),
+                effort: dict(_STARTER_POOL),
+                "strength": dict(_STARTER_ABILITY),
+                "speed": dict(_STARTER_ABILITY),
+            }
+        for step_id, value in seeded.items():
             if answered(value):
                 flow.step(step_id).write(self.project, value, local_id)
         return local_id
+
+    def _pool_names(self) -> tuple[str, str]:
+        """This game's vital and effort pool names, in this project right now.
+
+        Defaults the same way `GameRules` itself does, so a pack with no
+        manifest yet — or one that hasn't touched `rules` — reads the same
+        `hitpoints`/`stamina` the engine would fall back to.
+
+        Returns
+        -------
+        tuple of str
+            `(vitalPool, effortPool)`.
+        """
+        manifest = self.project.game or {}
+        rules = manifest.get("rules")
+        rules = rules if isinstance(rules, Mapping) else {}
+        vital = rules.get("vitalPool")
+        effort = rules.get("effortPool")
+        return (
+            str(vital) if vital else "hitpoints",
+            str(effort) if effort else "stamina",
+        )
+
+    def _core_stats(self) -> dict[str, str]:
+        """Stats the engine reads by name in this game, and what each does.
+
+        Named dynamically against this project's own `vitalPool`/`effortPool`
+        rather than hard-coding `hitpoints`/`stamina` — a sci-fi pack that
+        renamed its vital pool to `hull-integrity` should see *that* marked,
+        not a `hitpoints` it never declared. `strength`, `speed`, and
+        `charisma` are the same name in every game, since the engine reads
+        those three literally regardless of what a pack calls anything else.
+
+        Returns
+        -------
+        dict
+            Stat name to a one-line explanation of what it does.
+        """
+        vital, effort = self._pool_names()
+        return {
+            vital: "The pool that ends the game when it runs out.",
+            effort: "Spent making moves in a fight.",
+            "strength": "Scales the damage a hit lands.",
+            "speed": "Widens or narrows your timing window in a fight.",
+            "charisma": "Sets the odds when haggling over a price.",
+        }
 
     def delete(self, collection: str, object_id: str) -> bool:
         """Remove an object.
@@ -1101,7 +1163,7 @@ class Studio:
             "value": _plain(value),
             "described": one.field.describe(value, catalog),
             "answered": answered(value),
-            "field": _field(one.field, catalog),
+            "field": _field(one.field, catalog, self._core_stats()),
             "entries": self._entries(one.field, value),
         }
 
@@ -1510,7 +1572,9 @@ def _ask(ask: Ask, catalog: Catalog | None = None) -> dict[str, Any]:
     }
 
 
-def _field(one: Field, catalog: Catalog | None) -> dict[str, Any]:
+def _field(
+    one: Field, catalog: Catalog | None, core: Mapping[str, str] | None = None
+) -> dict[str, Any]:
     """A field type, with its options already resolved.
 
     Resolving here is the whole reason this module exists: a browser cannot
@@ -1524,6 +1588,10 @@ def _field(one: Field, catalog: Catalog | None) -> dict[str, Any]:
     catalog : Catalog or None
         What exists. None leaves option lists out, for a recipe's asks, which
         are described before any project is chosen.
+    core : mapping or None
+        Stat name to what it does, for a `StatAllocator` — resolved by the
+        caller against *this* game's own `vitalPool`/`effortPool`, since a
+        recipe's ask has no project to ask and never carries one.
 
     Returns
     -------
@@ -1559,6 +1627,7 @@ def _field(one: Field, catalog: Catalog | None) -> dict[str, Any]:
     elif isinstance(one, StatAllocator):
         body["points"] = one.points
         body["stats"] = list(one.stats)
+        body["core"] = dict(core or {})
     elif isinstance(one, ConditionBuilder):
         body["single"] = one.single
     elif isinstance(one, Repeat):
@@ -1570,7 +1639,7 @@ def _field(one: Field, catalog: Catalog | None) -> dict[str, Any]:
                 "help": step.help,
                 "binds": step.binds,
                 "optional": step.optional,
-                "field": _field(step.field, catalog),
+                "field": _field(step.field, catalog, core),
             }
             for step in one.steps
             if isinstance(step, Step)

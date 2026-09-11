@@ -291,7 +291,7 @@ class RuleContext:
 
         pools: dict[str, Mapping[str, float]] = {}
         for name in declared:
-            low, high = pool_bounds(definition, name)
+            low, high = pool_bounds(definition, entity, name)
             pools[name] = {
                 "current": entity.pools.get(name, 0.0),
                 "min": low,

@@ -67,6 +67,7 @@ EFFECTS: dict[str, Any] = {
     "move": {"move": {"to": "fenmoor"}},
     "openRoute": {"openRoute": "north-road"},
     "playScene": {"playScene": "victory"},
+    "raiseMax": {"raiseMax": {"stat": "stamina", "amount": 5}},
     "rest": {"rest": {"ticks": 8}},
     "restart": {"restart": {}},
     "reveal": {"reveal": {"location": "fenmoor"}},

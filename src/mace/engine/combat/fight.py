@@ -89,6 +89,11 @@ MIN_TIME_PRESSURE = 0.05
 #: How much of the way to a legible tell full familiarity carries a vague one.
 FAMILIARITY_CLARITY = 0.5
 
+#: How far above/below NEUTRAL_STAT a stat has to sit before a qualitative
+#: read says anything about it at all — an opponent within this band of
+#: neutral is unremarkable, and unremarkable is worth saying nothing about.
+READ_MARGIN = 15.0
+
 #: How much less legible a tell is when there is no clock running. Tactical
 #: mode gives up the execution half of skill, so it keeps the reading half
 #: harder — otherwise it would be the easy mode rather than the other one.
@@ -237,6 +242,7 @@ def begin(
     state.combat = fight
     roster = _roster(fight, context)
     vital = context.game.rules.vital_pool
+    reader = roster.get(state.player)
     events.append(
         CombatBegan(
             combat=fight.id,
@@ -249,6 +255,7 @@ def begin(
                     fighter.combatant.profile or "",
                     fighter.pool(vital),
                     fighter.pool_max(vital),
+                    _reads(fighter, reader),
                 )
                 for fighter in roster.values()
             ),
@@ -285,6 +292,54 @@ def _matrix(roster: dict[str, Fighter]) -> tuple[tuple[str, tuple[str, ...]], ..
             answers = beaten.setdefault(move.type, [])
             answers.extend(name for name in move.counters if name not in answers)
     return tuple((move, tuple(answers)) for move, answers in sorted(beaten.items()))
+
+
+def _reads(fighter: Fighter, reader: Fighter | None) -> tuple[str, ...]:
+    """What the player's own familiarity has earned them about one opponent.
+
+    Nothing for a stranger — the same as combat shows today. A fuzzy read
+    once the reader's fighter has faced this profile before, using only
+    `strength`/`speed` since those are the only two names with universal
+    meaning. The real numbers once the profile is fully known — the same
+    threshold `FAMILIARITY_CLARITY` already treats as "knows it." Computed
+    once, at the fight's start: this is what the player already knows
+    walking in, not something that should shift mid-fight.
+
+    Parameters
+    ----------
+    fighter : Fighter
+        The opponent being read.
+    reader : Fighter or None
+        The player's own fighter, whose familiarity this is. None for the
+        player's own entry, and for a fight with no player in it.
+
+    Returns
+    -------
+    tuple of str
+        Lines to show under the opponent's name. Empty for a stranger, an
+        ally, or the player's own entry.
+    """
+    if reader is None or fighter is reader or fighter.combatant.side != "enemy":
+        return ()
+    familiarity = reader.familiarity_with(fighter.combatant.profile)
+    if familiarity <= 0.0:
+        return ()
+
+    strength = fighter.stat("strength")
+    speed = fighter.stat("speed")
+    if familiarity >= 1.0:
+        return (f"Strength {round(strength)}.", f"Speed {round(speed)}.")
+
+    lines: list[str] = []
+    if strength >= resolution.NEUTRAL_STAT + READ_MARGIN:
+        lines.append("Hits hard.")
+    elif strength <= resolution.NEUTRAL_STAT - READ_MARGIN:
+        lines.append("Hits soft.")
+    if speed >= resolution.NEUTRAL_STAT + READ_MARGIN:
+        lines.append("Quick.")
+    elif speed <= resolution.NEUTRAL_STAT - READ_MARGIN:
+        lines.append("Slow.")
+    return tuple(lines)
 
 
 def _end(context: RuleContext, outcome: str, events: list[Event]) -> None:
@@ -706,7 +761,7 @@ def _move_pool(
     events : list of Event
         Accumulator.
     """
-    low, high = pool_bounds(fighter.definition, pool)
+    low, high = pool_bounds(fighter.definition, fighter.state, pool)
     current = fighter.pool(pool)
     landed = round(min(max(current + delta, low), high), 3)
     if landed == current:

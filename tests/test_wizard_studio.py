@@ -370,6 +370,104 @@ def test_creating_in_a_section_takes_the_fields_that_section_fixes(
     assert held is not None and held["kind"] == "item"
 
 
+def test_a_new_character_arrives_with_its_starter_stats(studio: Studio) -> None:
+    """`strength`/`speed` are read directly by combat — an author should see
+    them from the first click, not discover them by never declaring them."""
+    studio.create("entities", "Bandit", section="characters")
+    held = studio.project.get("entities", "bandit")
+    assert held is not None
+    assert held["stats"] == {
+        "hitpoints": {"base": 10, "max": 10},
+        "stamina": {"base": 10, "max": 10},
+        "strength": {"base": 50},
+        "speed": {"base": 50},
+    }
+
+
+def test_the_starter_stats_use_this_games_own_pool_names(tmp_path: Path) -> None:
+    """A sci-fi pack that renamed its vital pool shouldn't get `hitpoints`."""
+    renamed = Studio.open(
+        world(
+            tmp_path,
+            game={
+                "game": {
+                    "name": "Tiny",
+                    "player": {"entity": "hero", "startLocation": "home"},
+                    "winConditions": [{"atLocation": {"location": "castle"}}],
+                    "rules": {"vitalPool": "hull-integrity", "effortPool": "charge"},
+                }
+            },
+        )
+    )
+    renamed.create("entities", "Drone", section="characters")
+    held = renamed.project.get("entities", "drone")
+    assert held is not None
+    assert held["stats"] == {
+        "hull-integrity": {"base": 10, "max": 10},
+        "charge": {"base": 10, "max": 10},
+        "strength": {"base": 50},
+        "speed": {"base": 50},
+    }
+
+
+def test_the_stats_field_marks_which_names_are_core(studio: Studio) -> None:
+    studio.create("entities", "Bandit", section="characters")
+    field = step_of(studio.object("entities", "bandit"), "entity.stats")["field"]
+    assert set(field["core"]) == {
+        "hitpoints",
+        "stamina",
+        "strength",
+        "speed",
+        "charisma",
+    }
+
+
+def test_the_stats_field_marks_the_games_own_pool_names_as_core(
+    tmp_path: Path,
+) -> None:
+    renamed = Studio.open(
+        world(
+            tmp_path,
+            game={
+                "game": {
+                    "name": "Tiny",
+                    "player": {"entity": "hero", "startLocation": "home"},
+                    "winConditions": [{"atLocation": {"location": "castle"}}],
+                    "rules": {"vitalPool": "hull-integrity", "effortPool": "charge"},
+                }
+            },
+        )
+    )
+    renamed.create("entities", "Drone", section="characters")
+    field = step_of(renamed.object("entities", "drone"), "entity.stats")["field"]
+    assert set(field["core"]) == {
+        "hull-integrity",
+        "charge",
+        "strength",
+        "speed",
+        "charisma",
+    }
+
+
+def test_an_item_gets_no_starter_stats(studio: Studio) -> None:
+    studio.create("entities", "Lantern", section="items")
+    held = studio.project.get("entities", "lantern")
+    assert held is not None
+    assert "stats" not in held
+
+
+def test_a_caller_supplied_stats_answer_is_not_overridden(studio: Studio) -> None:
+    studio.create(
+        "entities",
+        "Ghost",
+        section="characters",
+        answers={"entity.stats": {"hitpoints": {"base": 1, "max": 1}}},
+    )
+    held = studio.project.get("entities", "ghost")
+    assert held is not None
+    assert held["stats"] == {"hitpoints": {"base": 1, "max": 1}}
+
+
 def test_creating_something_that_is_already_there_is_refused(studio: Studio) -> None:
     with pytest.raises(ContentError, match="already there"):
         studio.create("locations", "Home")

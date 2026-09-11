@@ -46,6 +46,7 @@ __all__ = [
     "TravelInterrupted",
     "TravelLeg",
     "StatChanged",
+    "MaxRaised",
     "TimePassed",
     "Unsupported",
     "VariableChanged",
@@ -603,6 +604,41 @@ class StatChanged(Event):
 
 
 @dataclass(frozen=True, slots=True)
+class MaxRaised(Event):
+    """A stat's ceiling grew, permanently, for this playthrough.
+
+    Distinct from `StatChanged`, which is about the current value moving —
+    this is about how far it can move. Content decides what earns it; the
+    engine only reports that it happened.
+
+    Attributes
+    ----------
+    actor : str
+        The entity's instance id.
+    stat : str
+        Which stat.
+    amount : float
+        How much the ceiling grew by.
+    max : float
+        Where the ceiling stands now.
+    """
+
+    kind: ClassVar[str] = "stat.max-raised"
+    actor: str
+    stat: str
+    amount: float
+    max: float
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "actor": self.actor,
+            "stat": self.stat,
+            "amount": self.amount,
+            "max": self.max,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class InventoryChanged(Event):
     """Something was gained or lost.
 
@@ -1029,12 +1065,13 @@ class CombatBegan(Event):
     mode : str
         `reflex`, `tactical`, or `auto`.
     combatants : tuple of tuple
-        Instance id, name, side, profile id, and the opening value and cap of
+        Instance id, name, side, profile id, the opening value and cap of
         `game.rules.vitalPool` — the same pool the character sheet already
         shows for the player, published here for everyone in the fight so a
         front-end can draw a monster's hitpoints without inventing a name for
-        them. `stat.changed` carries every update after this; this is only
-        where the bar starts.
+        them — and `reads`: what the player's own familiarity with this
+        opponent's profile has earned them, empty for a stranger. `stat.changed`
+        carries every update after this; this is only where the bar starts.
     can_flee : bool
         Whether running is allowed at all.
     matrix : tuple of tuple
@@ -1054,7 +1091,9 @@ class CombatBegan(Event):
     kind: ClassVar[str] = "combat.begin"
     combat: str
     mode: str = "tactical"
-    combatants: tuple[tuple[str, str, str, str, float, float], ...] = ()
+    combatants: tuple[
+        tuple[str, str, str, str, float, float, tuple[str, ...]], ...
+    ] = ()
     can_flee: bool = True
     matrix: tuple[tuple[str, tuple[str, ...]], ...] = ()
     vital_pool: str = ""
@@ -1075,8 +1114,9 @@ class CombatBegan(Event):
                         "maximum": maximum,
                         "role": "vital",
                     },
+                    "reads": list(reads),
                 }
-                for actor, name, side, profile, value, maximum in self.combatants
+                for actor, name, side, profile, value, maximum, reads in self.combatants
             ],
             "canFlee": self.can_flee,
             "matrix": [

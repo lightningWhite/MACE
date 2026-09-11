@@ -5173,7 +5173,14 @@
             "interactive": true,
             "hint": "a name and a number at a time; blank ends it",
             "points": 0,
-            "stats": []
+            "stats": [],
+            "core": {
+              "hitpoints": "The pool that ends the game when it runs out.",
+              "stamina": "Spent making moves in a fight.",
+              "strength": "Scales the damage a hit lands.",
+              "speed": "Widens or narrows your timing window in a fight.",
+              "charisma": "Sets the odds when haggling over a price."
+            }
           },
           "entries": [
             {

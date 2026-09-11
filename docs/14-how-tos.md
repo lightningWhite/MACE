@@ -192,6 +192,87 @@ The atlas the front-end draws from tracks three states per location, not two:
 visited) — so a revealed-but-unvisited ruin can be drawn differently from one
 the player has actually walked into, without any extra authoring.
 
+### Make a stat do something
+
+**Fully wizard-built today**, in the sense that nothing here needs new
+machinery — the gap is knowing which three tools to reach for. Declaring a
+stat (`stats: {stealth: {base: 18}}`) does nothing by itself. `strength`,
+`speed`, and `charisma` are the only names the engine reads on its own
+(docs/03 § Stats); every other name — `stealth` included — only ever matters
+because content says so, through exactly one of three mechanisms:
+
+- **A condition gates something on it.** `{statAtLeast: {stat: stealth,
+  value: 50}}` on a choice's `when` — the option to slip past the guard only
+  appears once the stat clears the bar.
+- **An effect changes it.** `{adjustStat: {stat: stealth, delta: -10}}` after
+  a botched attempt, or `{setStat: ...}` to pin it outright.
+- **Weather reacts to it**, the same `env`/`modify` mechanism any other stat
+  uses — `{when: {weatherTag: [dark]}, modify: [{stat: stealth, add: 20}]}`
+  on the entity, if darkness should help.
+
+A minimal worked example — a guard who can be slipped past if the player is
+stealthy enough, and who gets harder to fool once already noticed:
+
+```yaml
+- id: slip-past-the-guard
+  prompt: "Slip past while he's distracted"
+  when: [{statAtLeast: {actor: player, stat: stealth, value: 50}}]
+  effects:
+    - {move: {to: courtyard}}
+
+- id: caught-trying
+  prompt: "Try anyway"
+  effects:
+    - {adjustStat: {stat: stealth, delta: -10, reason: "he's watching for it now"}}
+  say: "He clocks the movement. Twice as sharp-eyed the next time."
+```
+
+If a pack never writes any of those three around a stat, that stat is inert
+— present on the sheet, changed by nothing, read by nothing. That's not a
+bug to route around; it's the whole reason a sci-fi pack can invent
+`hull-integrity` next to a fantasy pack's `hitpoints` and neither engine nor
+author has to reconcile the two.
+
+### Grow a stat's cap
+
+**Fully wizard-built today.** `growth` (on the stat itself) already raises a
+stat's *current* value toward its *existing* ceiling through combat use —
+what makes a well-worn strength stat sharper without becoming a different
+number outright. Raising the ceiling itself is a separate effect,
+`raiseMax`, for real progression: more fights, more travel, a season of
+chopping wood — whatever a game wants to reward:
+
+```yaml
+effects:
+  - {raiseMax: {actor: player, stat: stamina, amount: 5}}
+```
+
+The engine doesn't know or reward any particular activity — it only knows
+how to raise a cap when told to. The simplest way to reward something
+repeated is a small `raiseMax` every time, so the cap creeps up as a side
+effect of play rather than a level-up screen:
+
+```yaml
+- id: fell-a-tree
+  prompt: "Fell a tree"
+  effects:
+    - {raiseMax: {actor: player, stat: stamina, amount: 0.5}}
+  say: "The axe bites clean. Your arms ache in a way that feels earned."
+```
+
+Forty trees in, that's twenty more stamina capacity than the player started
+with, with no counter to maintain. A distinct milestone instead of a steady
+creep — "the fortieth troll, specifically, toughens you" — is an ordinary
+`when`-gated choice built the way [Travel & Encounters](06-travel-and-encounters.md)
+already gates anything else on a tally kept in `vars`: increment a variable
+with `setVar`, and offer a second choice whose `when` only clears once that
+tally reaches the threshold, with `raiseMax` in *that* choice's own effects.
+
+Either way, the player's current stamina doesn't move — only the cap does,
+reported by a `stat.max-raised` event a front-end can turn into "Your
+stamina capacity has grown!" the same way `stat.changed` becomes an
+ordinary heal or hit.
+
 ## A complete example
 
 `packs/games/peasants-quest` is a real, playable, fully wizard-editable game —

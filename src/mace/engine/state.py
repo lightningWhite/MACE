@@ -197,6 +197,12 @@ class EntityState:
         authored `Condition` rather than re-derived, because the effect that
         attached them is long gone by the time it comes true — "as far as the
         castle" has to outlive the scene that said it.
+    stat_caps : dict
+        Permanent additions to a stat's ceiling, on top of whatever `max` the
+        content declared — a heart found, a season of training, `chopped
+        wood twenty times`. Session state, never content: the same troll
+        definition stays `max: 40` for every other playthrough: this one's
+        troll just happens to have outgrown it.
     """
 
     instance_id: str
@@ -214,6 +220,7 @@ class EntityState:
     ally: bool = False
     transient: bool = False
     ally_until: Any = None
+    stat_caps: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(slots=True)

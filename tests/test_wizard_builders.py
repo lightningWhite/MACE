@@ -55,6 +55,7 @@ EFFECT_ANSWERS: dict[str, dict[str, Any]] = {
     "setDisposition": {"actor": "gorm", "to": "friendly"},
     "adjustStat": {"stat": "hitpoints", "delta": -8},
     "setStat": {"stat": "hitpoints", "value": 20},
+    "raiseMax": {"stat": "stamina", "amount": 5},
     "applyModifier": {"stat": "speed", "add": 5, "ticks": 12},
     "damage": {"amount": 8},
     "rest": {},

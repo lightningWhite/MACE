@@ -336,3 +336,89 @@ Not yet worth deciding, listed so they aren't forgotten:
   probably deserves its own [decision record](decisions/) rather than being
   settled in this list, given how central [ADR-0006](decisions/0006-tempo-combat.md)'s
   tempo model already is to combat's shape.
+- **Damage and hitpoints as absolute numbers, not portable across games with
+  different scales.** `Damage` (`src/mace/model/entity.py`) is `min`/`max`
+  floats, plain and absolute, and so is every stat pool's `base`/`max` — a
+  weapon authored to deal `8-12` and a monster authored with `400` hitpoints
+  are both magic numbers meaningful only next to whatever scale that
+  particular game picked. Raised by the user (2026-09-11): store a weapon's
+  or monster's power *relative to the player's own numbers* instead — "this
+  is a strong monster" or "this is a strong weapon," true in every game
+  regardless of whether hitpoints run 0–10 or 0–10,000 — so content imported
+  from one game's library reads sensibly in another's. Distinct from the
+  existing "should a monster's pools have to match the player's" bullet
+  above: that one is about pool *identity* (does `hull-integrity` need to be
+  `hitpoints`), this one is about pool *magnitude* (does `50` need to mean
+  the same thing everywhere). Genuinely unexplored — no mention of relative
+  or percentage-based damage anywhere in `docs/03-content-model.md` or
+  `docs/07-combat.md` today. Real questions before this is buildable: relative
+  to the player's *current* numbers or their *authored baseline* (the player
+  changes over a playthrough; a monster shouldn't rescale as they level);
+  whether `power()`'s existing `NEUTRAL_STAT = 50` normalization
+  (`src/mace/engine/combat/resolution.py`) is the right hook to extend or a
+  separate mechanism; and whether this replaces absolute `Damage` or sits
+  beside it as an authoring convenience that compiles down to the same
+  absolute numbers the engine already resolves against.
+- **The play map has no pan or zoom.** `web/src/map/Map.tsx` fits everything
+  into a static `viewBox` once per render (`fit()`, `web/src/map/layout.ts`)
+  and never touches it again — no wheel, drag-to-pan, or reset control.
+  Both authoring canvases already solved this: `web/src/author/MapEditor.tsx`
+  and `web/src/author/SceneGraph.tsx` both layer `useSvgPanZoom`
+  (`web/src/author/panzoom.ts`) over the same fit-once baseline. Wiring the
+  same hook into the play map looks like a small, low-risk lift rather than
+  new design — nothing about the play map's fog-of-war or click-to-travel
+  logic should need to change, only how the viewBox is computed and touched.
+  (A related ask — "and scenes too" — doesn't correspond to anything on the
+  player's side: `SceneGraph.tsx` is an author-only tool for visualizing the
+  branching structure while building a game; nothing shows a player a graph
+  of scenes, nor should it — they read prose and choices, not a diagram of
+  the story.)
+- **Stats that mean something — RESOLVED (2026-09-11).** Raised by the user
+  wondering whether `strength`/`speed`/etc. do anything besides look nice on
+  a sheet, and whether growth beyond the current fight was possible. Four
+  things landed together:
+  - **The authoring trap is closed.** An entity that never declared
+    `strength`/`speed` used to read as `0.0` to combat — not neutral, a real
+    penalty (`power() = 1.0 + (0-50)/100 = 0.5`, half damage, for a stat
+    nobody knew was special). `Fighter.stat()`
+    (`src/mace/engine/combat/roster.py`) now falls back to `NEUTRAL_STAT`
+    for exactly those two undeclared names. Belt-and-suspenders: the wizard
+    now pre-seeds every new character with all four starter stats
+    (`Studio.create`, `src/mace/wizard/studio.py`) the moment it exists, so
+    an author sees them rather than discovering the trap. `hitpoints`/
+    `stamina` there are resolved dynamically against this project's own
+    `game.rules.vitalPool`/`effortPool` (`Studio._pool_names`) rather than
+    hard-coded, the same way the engine itself treats those two names as
+    configurable — a sci-fi pack that renamed its vital pool to
+    `hull-integrity` gets *that* pre-seeded, not an orphan `hitpoints`. The
+    statblock editor marks all five names the engine ever reads (those two
+    plus `strength`/`speed`/`charisma`) with a "core" badge and an
+    explanation (`Studio._core_stats`, `web/src/author/Field.tsx`), so an
+    author can tell "the engine reads this by name" from an ordinary
+    free-form stat at a glance.
+  - **Documented where an author would actually find it.**
+    `docs/03-content-model.md`'s Stats section now names all three
+    engine-wired stats (`strength`, `speed`, and `charisma` — haggling odds,
+    `src/mace/engine/economy/haggle.py`, found while answering this) and
+    points at the real formulas; `docs/14-how-tos.md` gained "Make a stat do
+    something," the three real mechanisms (a `statAtLeast` condition, an
+    `adjustStat`/`applyModifier` effect, an `env`/`modify` response) with a
+    worked example.
+  - **Growth beyond the current fight is real now.** `growth` only ever
+    raised a stat's *current* value toward its *existing* ceiling; nothing
+    could raise the ceiling itself. `EntityState.stat_caps` (session state,
+    never written into content) plus a new `raiseMax` effect
+    (`src/mace/model/effects.py`, handled in `src/mace/engine/effects.py`)
+    do that generically — content decides what earns it (more fights, more
+    travel, chopping wood twenty times), the engine only knows how to raise
+    a cap when told to. `docs/14-how-tos.md` § "Grow a stat's cap" has the
+    pattern.
+  - **Enemy stats are shown, gated by the familiarity that already exists.**
+    Asked the user directly, since flat exact numbers for every enemy would
+    have cut against `docs/07-combat.md`'s whole "read the enemy" design
+    (stats ~a third of outcome, skill the other two-thirds). Landed on
+    reusing `familiarity_with()` (`src/mace/engine/combat/roster.py`,
+    already there for widening timing windows and clearing tells): a
+    stranger shows nothing new, a partly-known profile gets a qualitative
+    read ("Hits hard.", "Quick."), a fully-known one gets exact numbers.
+    Computed once at `CombatBegan` and rendered in `web/src/combat/Combat.tsx`.

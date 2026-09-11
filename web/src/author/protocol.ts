@@ -87,6 +87,13 @@ export interface FieldSpec {
   freeText?: boolean;
   points?: number;
   stats?: string[];
+  /**
+   * Stat name to a one-line explanation, for the ones this project's own
+   * `game.rules` and the engine itself read by name — `vitalPool`/
+   * `effortPool` as this game actually named them, plus `strength`,
+   * `speed`, and `charisma`, which are the same name in every game.
+   */
+  core?: Record<string, string>;
   single?: boolean;
   of?: string;
   steps?: StepSpec[];

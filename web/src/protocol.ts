@@ -225,6 +225,13 @@ export interface Combatant {
    * still has something to draw.
    */
   vital: Gauge;
+  /**
+   * What the player's own familiarity with this opponent's profile has
+   * earned them — empty for a stranger, a qualitative line or two once
+   * they've faced this profile before, exact stat numbers once it's fully
+   * known. Never populated for the player's own entry.
+   */
+  reads: string[];
 }
 
 /** One row of the counter matrix: what beats a move of this type. */

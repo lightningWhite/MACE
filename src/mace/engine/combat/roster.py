@@ -18,6 +18,7 @@ from dataclasses import dataclass
 
 from mace.content import ContentError, Library
 from mace.content.ids import split
+from mace.engine.combat.resolution import NEUTRAL_STAT
 from mace.engine.context import RuleContext
 from mace.engine.state import Combatant, EntityState
 from mace.engine.stats import effective, pool_bounds
@@ -42,6 +43,12 @@ FOCUS = "focus"
 USE = "use"
 
 RESERVED_RESPONSES = frozenset({FLEE, RECOVER, FOCUS})
+
+#: The stats combat reads directly, by name, regardless of what a pack calls
+#: everything else. Left undeclared, these fall back to `NEUTRAL_STAT` rather
+#: than the ordinary "no such stat" zero (`Fighter.stat`) — zero is not a
+#: no-op for either of them.
+_NEUTRAL_DEFAULTS = frozenset({"strength", "speed"})
 
 #: What a fighter hits with when it is holding nothing. Bare hands are worse
 #: than a billhook and better than nothing, which is the only thing this needs
@@ -154,8 +161,15 @@ class Fighter:
         Returns
         -------
         float
-            Its value, 0 when the entity has no such stat.
+            Its value, 0 when the entity has no such stat — except
+            `strength` and `speed`, which combat reads directly (`power()`,
+            `window_ms()`, flee odds). Those two default to `NEUTRAL_STAT`
+            instead: an entity that never declared one shouldn't fight at
+            half power or on a badly skewed clock just because an author
+            didn't know the name was special.
         """
+        if name in _NEUTRAL_DEFAULTS and name not in (self.definition.stats or {}):
+            return NEUTRAL_STAT
         return effective(self.definition, self.state, name)
 
     def pool(self, name: str) -> float:
@@ -186,7 +200,7 @@ class Fighter:
         float
             Its maximum.
         """
-        return pool_bounds(self.definition, name)[1]
+        return pool_bounds(self.definition, self.state, name)[1]
 
     def skill_with(self, item_id: str | None) -> float:
         """How practised this fighter is with what it is holding.
