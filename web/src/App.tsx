@@ -84,7 +84,7 @@ export function App({ playtest }: { playtest?: string } = {}) {
 
   const connection = useRef<Link | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
-  const pane = useRef<HTMLElement | null>(null);
+  const pane = useRef<HTMLDivElement | null>(null);
   const acted = useRef(false);
   const fighting = useRef<Fighting>({ current: false });
 
@@ -303,16 +303,33 @@ export function App({ playtest }: { playtest?: string } = {}) {
   }
 
   return (
-    <div className="game">
-      <main className="narrative" ref={pane} aria-busy={busy}>
-        <div className="transcript" role="log" aria-live="polite" ref={scroller}>
-          {lines.map((entry) => (
-            <p key={entry.id} className={`line line-${entry.tone}`}>
-              {entry.text}
-            </p>
-          ))}
-        </div>
+    <div className="shell">
+      <main className="narrative">
+        <details className="memory" open>
+          <summary>Memory</summary>
+          <div className="transcript" role="log" aria-live="polite" ref={scroller}>
+            {lines.map((entry) => (
+              <p key={entry.id} className={`line line-${entry.tone}`}>
+                {entry.text}
+              </p>
+            ))}
+          </div>
+        </details>
+      </main>
 
+      <aside className="map-quadrant">
+        <MapView
+          atlas={frame.view.atlas}
+          carried={frame.view.carried}
+          onTravel={choose}
+          busy={busy}
+        />
+      </aside>
+
+      {/* Not a landmark element (article/aside/main/nav/section): the footer
+          nested at its foot must stay reachable as `contentinfo`, which the
+          HTML spec strips the moment a footer sits inside one of those. */}
+      <div className="action" ref={pane} aria-busy={busy}>
         {refusal !== null && <p className="trouble">{refusal}</p>}
 
         {frame.playing && fight !== null ? (
@@ -340,18 +357,23 @@ export function App({ playtest }: { playtest?: string } = {}) {
             </button>
           </div>
         )}
-      </main>
 
-      <aside className="sidebar">
-        <MapView
-          atlas={frame.view.atlas}
-          carried={frame.view.carried}
-          onTravel={choose}
-          busy={busy}
-        />
-        <Character sheet={frame.view.sheet} />
-        <Pack carried={frame.view.carried} />
-        <Journal journal={frame.view.journal} />
+        <StatusLine status={status} />
+      </div>
+
+      <aside className="info">
+        <details className="accordion" open>
+          <summary>Stats</summary>
+          <Character sheet={frame.view.sheet} />
+        </details>
+        <details className="accordion" open>
+          <summary>Pack</summary>
+          <Pack carried={frame.view.carried} />
+        </details>
+        <details className="accordion" open>
+          <summary>Journal</summary>
+          <Journal journal={frame.view.journal} />
+        </details>
         <p className={`transport transport-${transport}`}>
           {transport === "local"
             ? "running in this tab"
@@ -362,8 +384,6 @@ export function App({ playtest }: { playtest?: string } = {}) {
                 : "connecting…"}
         </p>
       </aside>
-
-      <StatusLine status={status} />
     </div>
   );
 }

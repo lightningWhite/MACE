@@ -267,7 +267,7 @@ describe("keyboard play", () => {
 
     await waitFor(() => {
       expect(document.activeElement?.tagName).toBe("BUTTON");
-      expect(document.activeElement?.closest(".narrative")).toBeTruthy();
+      expect(document.activeElement?.closest(".action")).toBeTruthy();
     });
   });
 
@@ -287,7 +287,7 @@ describe("keyboard play", () => {
     render(<App />);
     await play(user);
 
-    const pane = document.querySelector(".narrative");
+    const pane = document.querySelector(".action");
     expect(pane?.getAttribute("aria-busy")).toBe("false");
     await user.click(screen.getByRole("button", { name: /Take the north road/ }));
     await screen.findByText(/The journey stops:/);

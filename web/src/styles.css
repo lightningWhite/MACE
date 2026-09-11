@@ -90,23 +90,27 @@ h2 {
 
 /* ── The whole screen ────────────────────────────────────────────────────── */
 
-.game {
+/* Named "shell", not "game": a game-picker card (Opening.tsx, GamePicker.tsx)
+   already owns the class `.game`, and this element and those cards are never
+   the same thing even though both exist in this file. */
+.shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 20rem;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    "narrative sidebar"
-    "status    status";
+    "narrative map"
+    "action    info";
   block-size: 100dvh;
 }
 
 @media (max-width: 52rem) {
-  .game {
+  .shell {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "narrative"
-      "sidebar"
-      "status";
+      "action"
+      "map"
+      "info";
     block-size: auto;
   }
 }
@@ -120,6 +124,44 @@ h2 {
   min-block-size: 0;
   padding: 1.5rem clamp(1rem, 4vw, 3rem);
   gap: 1rem;
+}
+
+/* The whole transcript is "memory" — a collapsible view of the same history,
+   not a second copy of it. Open by default so nothing is lost by default;
+   collapsing it is something a player opts into. */
+.memory[open] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.memory summary,
+.accordion summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  padding-block-end: 0.4rem;
+  list-style: none;
+}
+
+.memory summary::-webkit-details-marker,
+.accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.memory summary::before,
+.accordion summary::before {
+  content: "▸ ";
+}
+
+.memory[open] > summary::before,
+.accordion[open] > summary::before {
+  content: "▾ ";
 }
 
 .transcript {
@@ -415,11 +457,43 @@ h2 {
   color: var(--cold);
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+/* ── The map quadrant ────────────────────────────────────────────────────── */
 
-.sidebar {
-  grid-area: sidebar;
+.map-quadrant {
+  grid-area: map;
   border-inline-start: 1px solid var(--edge);
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 52rem) {
+  .map-quadrant {
+    border-inline-start: none;
+    border-block-start: 1px solid var(--edge);
+  }
+}
+
+/* ── What you may do, and where and when you're doing it ────────────────── */
+
+.action {
+  grid-area: action;
+  border-block-start: 1px solid var(--edge);
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: 1.5rem clamp(1rem, 4vw, 3rem) 0;
+  gap: 1rem;
+}
+
+/* ── Inventory, stats, and other standing information ────────────────────── */
+
+.info {
+  grid-area: info;
+  border-inline-start: 1px solid var(--edge);
+  border-block-start: 1px solid var(--edge);
   padding: 1.25rem;
   overflow-y: auto;
   display: flex;
@@ -428,9 +502,8 @@ h2 {
 }
 
 @media (max-width: 52rem) {
-  .sidebar {
+  .info {
     border-inline-start: none;
-    border-block-start: 1px solid var(--edge);
   }
 }
 
@@ -644,9 +717,9 @@ h2 {
 /* ── The standing line ───────────────────────────────────────────────────── */
 
 .status {
-  grid-area: status;
+  margin-block-start: auto;
   border-block-start: 1px solid var(--edge);
-  padding: 0.5rem clamp(1rem, 4vw, 3rem);
+  padding: 0.5rem 0;
   font-size: 0.85rem;
   color: var(--ink-dim);
   min-block-size: 2.1rem;
