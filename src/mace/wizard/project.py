@@ -39,7 +39,12 @@ from typing import Any
 import yaml
 
 from mace.content import ContentError, Library, load_pack_manifest
-from mace.content.discovery import MANIFEST_NAME, content_files, find_packs
+from mace.content.discovery import (
+    MANIFEST_NAME,
+    TOOLING_DIR,
+    content_files,
+    find_packs,
+)
 from mace.content.library import COLLECTION_MODELS
 from mace.content.loader import Loaded, compile_pack, load_library
 from mace.content.tolerance import collecting
@@ -52,7 +57,7 @@ from mace.wizard.notes import ProjectNotes
 __all__ = ["NOTES_PATH", "Project"]
 
 #: Where the authoring sidecar lives, relative to the pack root.
-NOTES_PATH = Path(".mace") / "project.yml"
+NOTES_PATH = Path(TOOLING_DIR) / "project.yml"
 
 #: The key the sidecar's body sits under, matching how `game:` works.
 NOTES_KEY = "project"
@@ -227,8 +232,6 @@ class Project:
     def _read(self) -> None:
         """Load every content file into raw held objects."""
         for path in content_files(self.root):
-            if path.is_relative_to(self.root / NOTES_PATH.parent):
-                continue
             try:
                 body = load_document(path)
             except ContentError as error:

@@ -17,7 +17,7 @@ from typing import Any, TextIO
 from mace.cli.create import ask
 from mace.cli.map import draw
 from mace.cli.timing import Keypress, raw_terminal_available, read_key
-from mace.content import ContentError, load_library
+from mace.content import ContentError, load_best_effort
 from mace.engine.actions import Action, Choose, Respond
 from mace.engine.creation import Character
 from mace.engine.creation import offer as creation_offer
@@ -753,7 +753,13 @@ def play(
     renderer = Renderer(stream, interactive=interactive, units=units)
 
     try:
-        library = load_library(*paths)
+        loaded = load_best_effort(*paths)
+        for problem in loaded.problems:
+            # A pack or object elsewhere that will not build should not stop
+            # playing this one — same reasoning as `mace dev`. `mace validate`
+            # is the strict gate.
+            print(f"warning {problem}", file=sys.stderr)
+        library = loaded.library
         if resume is not None:
             session, drift = load_save(resume, library)
             for line in drift:

@@ -13,7 +13,7 @@ from mace.cli.author import author
 from mace.cli.bundle import bundle
 from mace.cli.create import parse_spend
 from mace.cli.play import play
-from mace.content import ContentError, Severity, validate_paths
+from mace.content import ContentError, Severity, load_best_effort, validate_paths
 from mace.engine.creation import Character
 from mace.wizard.project import Project
 from mace.wizard.share import import_pack
@@ -707,15 +707,23 @@ def run_dev(options: argparse.Namespace) -> int:
         games = under_packs if under_packs.is_dir() else options.packs
 
     try:
-        app = create_app(
-            [options.packs],
-            origins=list(DEV_ORIGINS),
-            client=options.web / "dist",
-            authoring=Desk(studio=None, root=games, search=options.packs),
-        )
+        loaded = load_best_effort(options.packs)
     except ContentError as error:
         print(f"error   {error}", file=sys.stderr)
         return 1
+    for problem in loaded.problems:
+        # A pack or object that would not build is dropped rather than fatal
+        # here — one game mid-edit should not stop every other game from
+        # playing, or the wizard from opening. `mace validate` is the strict
+        # gate; this is the dev loop.
+        print(f"warning {problem}", file=sys.stderr)
+
+    app = create_app(
+        library=loaded.library,
+        origins=list(DEV_ORIGINS),
+        client=options.web / "dist",
+        authoring=Desk(studio=None, root=games, search=options.packs),
+    )
 
     print(
         f"MACE on http://{options.host}:{options.port} — play or author, "

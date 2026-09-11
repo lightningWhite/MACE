@@ -141,9 +141,11 @@ against a protocol that has moved.
 
 **The same build is also the wizard**, at `#author`, and it is held to exactly
 the same bar: it renders screens `mace.wizard.studio` projects and contains no
-questions. `mace author --web` serves those routes, and only that command
-does — authoring writes to the author's disk and the session service never
-does, so a hosted game has no way to reach a filesystem. See
+questions. `/api/author` only exists when a process opts into it — `mace
+author --web`, which opens exactly one pack chosen on the command line, or
+`mace dev`, which opens every pack under `--games` and lets the browser pick
+one — because authoring writes to the author's disk and a bare `mace serve`
+never does, so a hosted game has no way to reach a filesystem. See
 [Authoring](09-authoring-and-wizard.md#the-authoring-session).
 
 **Where the engine runs:** the engine is Python and stays Python.
@@ -233,6 +235,24 @@ only durability. That is [ADR-0009](decisions/0009-the-save-is-the-durability.md
 and it is why the 404 for a missing session tells the client to post the save
 it was given. There is no authentication: a session id is a bearer token, so
 `mace serve` binds to localhost by default.
+
+**`mace dev`** is the shorter path for playing or authoring locally: one
+process, one port, serving every game under `--packs` to play and every game
+under `--games` to author, picked in the browser rather than on the command
+line. It rebuilds the web client first if it looks stale. `mace serve` and
+`mace author --web` are what it is built from, kept separate for a hosted
+deployment and for frontend development against Vite's own reload — see
+[web/README.md](../web/README.md#running-it) for that split.
+
+Unlike `mace serve`, `mace dev` (and `mace play`) load `--packs` **best-effort**
+rather than strict: a pack or object elsewhere that will not build is dropped
+with a warning on the terminal rather than refusing to start, the same
+tolerance the wizard already gives one bad object in the pack it has open —
+extended here to one bad *pack* among many. A game mid-edit should not stop a
+finished one from playing, or the wizard from opening to author it. `mace
+serve` stays strict on purpose: a hosted deployment should refuse to start on
+broken content rather than silently serve a subset of it. `mace validate` is
+the strict gate either way, and what CI runs.
 
 ## Saves
 

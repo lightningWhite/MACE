@@ -149,6 +149,17 @@ mace play packs/ --pack peasants-quest --seed autumn   # replays identically
 mace play packs/ --background poacher --spend stealth=10 speed=5
 ```
 
+**Playing or authoring in a browser.** One process, picked in the browser:
+
+```bash
+mace dev
+# then open http://127.0.0.1:8000/
+```
+
+See [Clients & Interface](docs/10-clients-and-interface.md#the-session-service)
+for what that's built from, and [`web/README.md`](web/README.md) for running
+the pieces apart.
+
 **Checking content.**  It loads every pack under a
 directory, resolves inheritance and references, and reports what's wrong at
 three severities — errors break the game, warnings are almost certainly

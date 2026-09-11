@@ -22,6 +22,11 @@ MANIFEST_NAME = "pack.yml"
 #: Extensions the loader reads.
 CONTENT_SUFFIXES = (".yml", ".yaml")
 
+#: Where authoring tooling keeps its own bookkeeping inside a pack — not
+#: content, so the loader never globs it. `mace.wizard.project.NOTES_PATH`
+#: lives under here.
+TOOLING_DIR = ".mace"
+
 
 def find_packs(root: Path) -> list[Path]:
     """Find every pack directory under a root.
@@ -54,7 +59,7 @@ def find_packs(root: Path) -> list[Path]:
 
 
 def content_files(pack_root: Path) -> list[Path]:
-    """List a pack's content files, manifest excluded.
+    """List a pack's content files, manifest and tooling bookkeeping excluded.
 
     Parameters
     ----------
@@ -73,6 +78,7 @@ def content_files(pack_root: Path) -> list[Path]:
         if path.is_file()
         and path.suffix in CONTENT_SUFFIXES
         and path.name != MANIFEST_NAME
+        and not path.is_relative_to(pack_root / TOOLING_DIR)
     )
 
 
