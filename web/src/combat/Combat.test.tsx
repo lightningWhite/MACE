@@ -8,7 +8,7 @@
  * never get wrong.
  */
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -130,6 +130,33 @@ describe("the window", () => {
     expect(ideal?.style.insetInlineStart).toBe("75%");
     const sweet = container.querySelector<HTMLElement>(".timing-sweet");
     expect(sweet?.style.insetInlineStart).toBe("25%");
+  });
+
+  it("drains as the window passes, not just once it has run out", () => {
+    vi.useFakeTimers();
+    const f = { ...recorded(), openedAt: performance.now() };
+    const { container } = render(
+      <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    const drain = () => container.querySelector<HTMLElement>(".timing-drain");
+    expect(drain()?.style.inlineSize).toBe("100%");
+
+    act(() => vi.advanceTimersByTime(Math.round(f.tell.windowMs / 2)));
+    expect(drain()?.style.inlineSize).toBe("50%");
+  });
+
+  it("draws the drain under the sweet band and the ideal mark, not over them", () => {
+    // Both are landmarks a player is watching *for* — a drain painted on top
+    // of its own target would hide the one thing it exists to point at for
+    // most of the window, which is worse than not drawing a target at all.
+    const { container } = render(
+      <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    const order = [...container.querySelectorAll(".timing > *")].map(
+      (node) => node.className,
+    );
+    expect(order.indexOf("timing-drain")).toBeLessThan(order.indexOf("timing-sweet"));
+    expect(order.indexOf("timing-drain")).toBeLessThan(order.indexOf("timing-ideal"));
   });
 
   it("is absent in tactical mode, and nothing else changes", () => {

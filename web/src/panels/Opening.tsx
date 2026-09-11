@@ -19,7 +19,7 @@ import type { Service } from "../api";
 import type { Progress } from "../local/engine";
 import { useOffline } from "../offline";
 import type { CreationOffer, GameSummary, Made, SaveRecord } from "../protocol";
-import { PRESSURES } from "../protocol";
+import { COMBAT_MODES, PRESSURES } from "../protocol";
 
 export function Opening({
   service,
@@ -39,6 +39,7 @@ export function Opening({
     pack: string,
     character: Made | null,
     timePressure: number,
+    combatMode: string | null,
   ) => void;
   onResume: (save: SaveRecord) => void;
   onForget: () => void;
@@ -50,6 +51,7 @@ export function Opening({
   const [background, setBackground] = useState<string | null>(null);
   const [spend, setSpend] = useState<Record<string, number>>({});
   const [pressure, setPressure] = useState(1);
+  const [combatMode, setCombatMode] = useState<string | null>(null);
   const [trouble, setTrouble] = useState<string | null>(null);
   const offline = useOffline();
 
@@ -87,7 +89,7 @@ export function Opening({
   function begin(): void {
     if (pack === null) return;
     const asked = offer?.asksAnything ?? false;
-    onBegin(pack, asked ? { background, spend } : null, pressure);
+    onBegin(pack, asked ? { background, spend } : null, pressure, combatMode);
   }
 
   const chooser = games !== null && games.length > 1;
@@ -235,26 +237,51 @@ export function Opening({
       )}
 
       <section>
-        <h2>The clock</h2>
+        <h2>Combat</h2>
         <p className="dim aside">
-          Fights telegraph, and you answer inside a window. This sets how long
-          that window is — it changes nothing else about the fight.
+          Left as the game sets it unless you say otherwise here.
         </p>
         <ul className="pressures">
-          {PRESSURES.map((option) => (
-            <li key={option.value}>
+          {COMBAT_MODES.map((option) => (
+            <li key={option.label}>
               <button
                 type="button"
-                className={option.value === pressure ? "game chosen" : "game"}
-                aria-pressed={option.value === pressure}
-                onClick={() => setPressure(option.value)}
+                className={option.value === combatMode ? "game chosen" : "game"}
+                aria-pressed={option.value === combatMode}
+                onClick={() => setCombatMode(option.value)}
               >
                 <span className="game-name">{option.label}</span>
+                {option.help !== "" && <span className="game-blurb">{option.help}</span>}
               </button>
             </li>
           ))}
         </ul>
       </section>
+
+      {combatMode !== "tactical" && combatMode !== "auto" && (
+        <section>
+          <h2>The clock</h2>
+          <p className="dim aside">
+            Fights telegraph, and you answer inside a window. This sets how
+            long that window is — it changes nothing else about the fight,
+            and nothing at all if combat above turns out untimed.
+          </p>
+          <ul className="pressures">
+            {PRESSURES.map((option) => (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  className={option.value === pressure ? "game chosen" : "game"}
+                  aria-pressed={option.value === pressure}
+                  onClick={() => setPressure(option.value)}
+                >
+                  <span className="game-name">{option.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <button type="button" className="primary begin" disabled={!ready} onClick={begin}>
         Begin

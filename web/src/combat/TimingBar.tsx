@@ -81,6 +81,12 @@ export function TimingBar({
       role="timer"
       aria-label={`${Math.round(windowMs)} millisecond window`}
     >
+      {/* The drain first, so it sits *under* the sweet band and the ideal
+          mark rather than covering them — an opaque bar drawn on top of its
+          own target would hide the one thing a player is watching it for
+          until the drain had shrunk past that point, which for three
+          quarters of every window is the whole bar. */}
+      <div className="timing-drain" style={{ inlineSize: `${(1 - through) * 100}%` }} />
       <div
         className="timing-sweet"
         style={{
@@ -89,7 +95,6 @@ export function TimingBar({
         }}
       />
       <div className="timing-ideal" style={{ insetInlineStart: `${IDEAL * 100}%` }} />
-      <div className="timing-drain" style={{ inlineSize: `${(1 - through) * 100}%` }} />
     </div>
   );
 }

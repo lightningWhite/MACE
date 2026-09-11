@@ -127,6 +127,41 @@ describe("the opening", () => {
     expect(opened?.body).toMatchObject({ timePressure: 1 });
   });
 
+  it("leaves combat mode to the game unless told otherwise", async () => {
+    const user = userEvent.setup();
+    const service = fakeService();
+    stub(service);
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Farmhand/ }));
+    await user.click(screen.getByRole("button", { name: "Begin" }));
+    await screen.findByText(/You are a peasant/);
+
+    const opened = service.calls.find(
+      (call) => call.path === "/api/sessions" && call.method === "POST",
+    );
+    expect(opened?.body).not.toHaveProperty("combatMode");
+  });
+
+  it("sends the combat mode a player picked, overriding the game's own", async () => {
+    const user = userEvent.setup();
+    const service = fakeService();
+    stub(service);
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Farmhand/ }));
+    await user.click(screen.getByRole("button", { name: /Untimed/ }));
+    // Choosing untimed hides the now-irrelevant clock section.
+    expect(screen.queryByRole("heading", { name: "The clock" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Begin" }));
+    await screen.findByText(/You are a peasant/);
+
+    const opened = service.calls.find(
+      (call) => call.path === "/api/sessions" && call.method === "POST",
+    );
+    expect(opened?.body).toMatchObject({ combatMode: "tactical" });
+  });
+
   it("says so when the service will not open a session", async () => {
     const user = userEvent.setup();
     stub(fakeService({ failOpen: "no game packs found" }));
@@ -190,6 +225,60 @@ describe("the game", () => {
     const toll = await screen.findByRole("button", { name: /Pay the toll/ });
     expect(toll).toHaveProperty("disabled", true);
     expect(toll.textContent).toContain("gold");
+  });
+
+  it("can be left for the picker without ending the session", async () => {
+    const user = userEvent.setup();
+    const service = fakeService();
+    stub(service);
+    render(<App />);
+    await play(user);
+
+    await user.click(screen.getByRole("button", { name: /Choose a different game/ }));
+
+    // Back at the picker — nothing was sent to close or discard the session.
+    expect(await screen.findByRole("button", { name: "Begin" })).toBeTruthy();
+    expect(service.calls.some((call) => call.path.includes("/actions"))).toBe(false);
+  });
+});
+
+// ── Memory, and what stays on show whether it is open or not ─────────────────
+
+describe("memory", () => {
+  it("keeps the latest tick on show once memory is collapsed", async () => {
+    const user = userEvent.setup();
+    stub(fakeService());
+    render(<App />);
+    await play(user);
+
+    // A second tick, so the opening is no longer the latest thing that
+    // happened and has somewhere to fall back into.
+    await user.click(screen.getByRole("button", { name: /Take the north road/ }));
+    await screen.findByText(/The journey stops:/);
+
+    await user.click(screen.getByRole("button", { name: "Memory" }));
+
+    // The opening was folded into history the moment it stopped being the
+    // latest thing that happened, so collapsing memory hides it —
+    expect(screen.queryByText(/You are a peasant/)).toBeNull();
+    // — but this tick's own prose survives, because collapsing memory is not
+    // the same as leaving the room.
+    expect(screen.getByText(/The journey stops:/)).toBeTruthy();
+  });
+
+  it("shows history again once memory is reopened", async () => {
+    const user = userEvent.setup();
+    stub(fakeService());
+    render(<App />);
+    await play(user);
+    await user.click(screen.getByRole("button", { name: /Take the north road/ }));
+    await screen.findByText(/The journey stops:/);
+
+    const toggle = screen.getByRole("button", { name: "Memory" });
+    await user.click(toggle);
+    await user.click(toggle);
+
+    expect(screen.getByText(/You are a peasant/)).toBeTruthy();
   });
 });
 

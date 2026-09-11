@@ -60,6 +60,33 @@ export const PRESSURES: Array<{ value: number; label: string }> = [
   { value: 1.5, label: "Harder" },
 ];
 
+/**
+ * How combat is played, overriding what the game itself defaults to.
+ *
+ * `null` sends nothing and lets `game.rules.combatMode` decide, the same as
+ * leaving the CLI's own `--combat` unset. Mirrors `--combat`'s three choices
+ * exactly, because a player should not have to learn a second vocabulary for
+ * the same setting depending on which front-end they opened.
+ */
+export const COMBAT_MODES: Array<{ value: string | null; label: string; help: string }> = [
+  { value: null, label: "As the game sets it", help: "" },
+  {
+    value: "reflex",
+    label: "Timed",
+    help: "Answer inside a window — the clock below sets how wide it is.",
+  },
+  {
+    value: "tactical",
+    label: "Untimed",
+    help: "The same fight, the same reads, with no clock at all.",
+  },
+  {
+    value: "auto",
+    label: "Watch it play out",
+    help: "The game answers both sides — nothing to press.",
+  },
+];
+
 /** What the player answered at creation. */
 export interface Made {
   background: string | null;

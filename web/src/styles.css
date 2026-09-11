@@ -95,12 +95,20 @@ h2 {
    the same thing even though both exist in this file. */
 .shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 20rem;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(15rem, var(--col-split, 72%)) minmax(14rem, 1fr);
+  grid-template-rows: minmax(0, var(--row-split, 55%)) minmax(0, 1fr);
   grid-template-areas:
     "narrative map"
     "action    info";
   block-size: 100dvh;
+  position: relative;
+  /* The hard backstop for the whole layout: every quadrant scrolls its own
+     overflow internally (see each quadrant's own `overflow-y: auto` below),
+     so nothing here should ever need the page itself to scroll. If a
+     quadrant's content still outgrew its box, this clips it there rather
+     than letting the whole shell — and the ones after it — get pushed below
+     the fold. */
+  overflow: hidden;
 }
 
 @media (max-width: 52rem) {
@@ -112,7 +120,51 @@ h2 {
       "map"
       "info";
     block-size: auto;
+    overflow: visible;
   }
+
+  .col-resizer,
+  .row-resizer {
+    display: none;
+  }
+}
+
+/* One shared divider per axis — see the note beside where these are
+   rendered, in `App.tsx`. */
+.col-resizer,
+.row-resizer {
+  position: absolute;
+  z-index: 5;
+  /* Fully transparent until touched: a resize handle that always shows as a
+     visible line would read as a border that happens to also drag, which is
+     a worse first impression than a plain grid until a reader's pointer
+     finds it. */
+  background: transparent;
+}
+
+.col-resizer:hover,
+.col-resizer:active,
+.col-resizer:focus-visible,
+.row-resizer:hover,
+.row-resizer:active,
+.row-resizer:focus-visible {
+  background: color-mix(in srgb, var(--warm) 40%, transparent);
+}
+
+.col-resizer {
+  inset-block: 0;
+  inset-inline-start: var(--col-split, 72%);
+  inline-size: 9px;
+  transform: translateX(-50%);
+  cursor: col-resize;
+}
+
+.row-resizer {
+  inset-inline: 0;
+  inset-block-start: var(--row-split, 55%);
+  block-size: 9px;
+  transform: translateY(-50%);
+  cursor: row-resize;
 }
 
 /* ── Narrative ───────────────────────────────────────────────────────────── */
@@ -123,20 +175,27 @@ h2 {
   flex-direction: column;
   min-block-size: 0;
   padding: 1.5rem clamp(1rem, 4vw, 3rem);
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-/* The whole transcript is "memory" — a collapsible view of the same history,
-   not a second copy of it. Open by default so nothing is lost by default;
-   collapsing it is something a player opts into. */
-.memory[open] {
-  flex: 1;
+/* Memory is a collapsible log of everything before this tick, not a second
+   copy of what is on screen right now — that stays in `.current-tick` below
+   it, open or closed. Open by default so nothing is lost by default;
+   collapsing it is something a player opts into. A plain button rather than
+   `<details>`: this needs a sibling outside it to stay visible regardless of
+   whether it is expanded, which `<details>`'s own content cannot do. */
+.memory {
   display: flex;
   flex-direction: column;
   min-block-size: 0;
+  flex: 0 0 auto;
 }
 
-.memory summary,
+.memory-open {
+  flex: 1 1 0;
+}
+
+.memory-toggle,
 .accordion summary {
   cursor: pointer;
   font-family: var(--font-ui);
@@ -149,19 +208,38 @@ h2 {
   list-style: none;
 }
 
-.memory summary::-webkit-details-marker,
+.memory-toggle {
+  display: block;
+  inline-size: 100%;
+  text-align: start;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding-inline: 0;
+  flex: 0 0 auto;
+}
+
 .accordion summary::-webkit-details-marker {
   display: none;
 }
 
-.memory summary::before,
+.memory-toggle::before,
 .accordion summary::before {
   content: "▸ ";
 }
 
-.memory[open] > summary::before,
+.memory-open > .memory-toggle::before,
 .accordion[open] > summary::before {
   content: "▾ ";
+}
+
+/* Whatever tick just happened, always visible below memory whether it is
+   open or closed — styled as `.transcript` (below) is, since it is the same
+   kind of content relocated rather than a second kind of thing. Capped
+   rather than left to grow so an open memory still gets most of the
+   quadrant; a closed one leaves this the rest of it. */
+.memory-open + .current-tick {
+  flex: 0 1 45%;
 }
 
 .transcript {
@@ -1100,7 +1178,16 @@ button:disabled {
 }
 
 .object {
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
+}
+
+.object-kind {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--edge);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
 }
 
 .task-mark {
@@ -1422,6 +1509,26 @@ button:disabled {
   border-radius: 0.35rem;
   background: var(--ground-raised);
   touch-action: none;
+  cursor: grab;
+}
+
+.author-map:active {
+  cursor: grabbing;
+}
+
+.author-region ellipse {
+  fill: var(--cold);
+  fill-opacity: 0.08;
+  stroke: var(--cold);
+  stroke-opacity: 0.4;
+  stroke-dasharray: 4 3;
+}
+
+.author-region text {
+  font-size: 8px;
+  fill: var(--cold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .author-road line {
@@ -1518,6 +1625,16 @@ button:disabled {
   border: 1px solid var(--edge);
   border-radius: 0.35rem;
   background: var(--ground-raised);
+  cursor: grab;
+}
+
+.graph:active {
+  cursor: grabbing;
+}
+
+.graph-reset {
+  display: block;
+  margin-block-end: 0.4rem;
 }
 
 .graph-edge {

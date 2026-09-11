@@ -41,6 +41,7 @@ import type {
 } from "./protocol";
 import { isKind } from "./protocol";
 import { forget, keep, kept } from "./storage";
+import { useSplitGrid } from "./useSplitGrid";
 import {
   fightEnded,
   fightOf,
@@ -68,9 +69,19 @@ function seedVitals(began: CombatBegan): Record<string, Gauge> {
  *   one; everything after that is an ordinary playthrough, because that is
  *   all a playtest is.
  */
+/** The transcript, split at "now": everything before this tick, and this
+ * tick's own lines. */
+interface Thread {
+  history: Line[];
+  latest: Line[];
+}
+
+const EMPTY_THREAD: Thread = { history: [], latest: [] };
+
 export function App({ playtest }: { playtest?: string } = {}) {
   const [frame, setFrame] = useState<Frame | null>(null);
-  const [lines, setLines] = useState<Line[]>([]);
+  const [thread, setThread] = useState<Thread>(EMPTY_THREAD);
+  const [memoryOpen, setMemoryOpen] = useState(true);
   const [status, setStatus] = useState<WorldStatus | null>(null);
   const [menu, setMenu] = useState<Option[]>([]);
   const [transport, setTransport] = useState<Transport>("connecting");
@@ -85,8 +96,10 @@ export function App({ playtest }: { playtest?: string } = {}) {
   const connection = useRef<Link | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
   const pane = useRef<HTMLDivElement | null>(null);
+  const shell = useRef<HTMLDivElement | null>(null);
   const acted = useRef(false);
   const fighting = useRef<Fighting>({ current: false });
+  const split = useSplitGrid(shell);
 
   /**
    * Take in a frame: append what happened, replace what stands.
@@ -97,7 +110,12 @@ export function App({ playtest }: { playtest?: string } = {}) {
    */
   const absorb = useCallback((next: Frame) => {
     setFrame(next);
-    setLines((current) => [...current, ...transcribe(next.events, fighting.current)]);
+    // Last tick's "latest" is now history — it happened before this one —
+    // and this tick's own lines take its place as what is always on show.
+    setThread((current) => ({
+      history: [...current.history, ...current.latest],
+      latest: transcribe(next.events, fighting.current),
+    }));
     const standing = statusOf(next.events);
     if (standing !== null) setStatus(standing);
     const options = menuOf(next.events);
@@ -202,14 +220,15 @@ export function App({ playtest }: { playtest?: string } = {}) {
       .catch(() => undefined);
   }, [frame, service]);
 
-  // Stay at the foot of the transcript as it grows. Setting `scrollTop`
-  // rather than calling `scrollIntoView` because the smoothness is the
-  // stylesheet's business, and it already knows to drop it for a reader who
-  // has asked for less motion.
+  // Stay at the foot of memory as it grows, so the tick just folded into
+  // history is the one already in view rather than one a reader has to
+  // scroll to find. Setting `scrollTop` rather than calling `scrollIntoView`
+  // because the smoothness is the stylesheet's business, and it already
+  // knows to drop it for a reader who has asked for less motion.
   useEffect(() => {
     const box = scroller.current;
     if (box !== null) box.scrollTop = box.scrollHeight;
-  }, [lines]);
+  }, [thread.history]);
 
   // The button a player pressed is gone by the time the frame lands, so
   // without this focus falls back to the document and the next Tab starts
@@ -231,6 +250,7 @@ export function App({ playtest }: { playtest?: string } = {}) {
     pack: string,
     character: Made | null,
     timePressure: number,
+    combatMode: string | null,
   ): void {
     if (service === null) return;
     setFailure(null);
@@ -239,6 +259,7 @@ export function App({ playtest }: { playtest?: string } = {}) {
         pack,
         timePressure,
         ...(character === null ? {} : { character }),
+        ...(combatMode === null ? {} : { combatMode }),
       })
       .then((opened) => attach(opened, service))
       .catch((error: Error) => setFailure(error.message));
@@ -278,6 +299,30 @@ export function App({ playtest }: { playtest?: string } = {}) {
     void connection.current?.send(action);
   }
 
+  /**
+   * Step back to the picker without losing the playthrough.
+   *
+   * The session itself is untouched — it is on the server, or in this tab's
+   * own worker, either way outliving this — so leaving is nothing more than
+   * this component forgetting it was looking at one. `saved` is still what
+   * it was, so the picker offers "carry on" for exactly this game if there
+   * is nowhere else to go, and starting a different one is the ordinary
+   * `begin` a fresh player would use.
+   */
+  function leave(): void {
+    connection.current?.close();
+    connection.current = null;
+    setFrame(null);
+    setThread(EMPTY_THREAD);
+    setMemoryOpen(true);
+    setStatus(null);
+    setMenu([]);
+    setFight(null);
+    setRefusal(null);
+    setBusy(false);
+    setTransport("connecting");
+  }
+
   if (frame === null && playtest !== undefined) {
     // Nothing to offer and nothing to choose: this playthrough already
     // exists. Either it arrives, or the wizard that opened it is gone.
@@ -303,18 +348,47 @@ export function App({ playtest }: { playtest?: string } = {}) {
   }
 
   return (
-    <div className="shell">
+    <div
+      className="shell"
+      ref={shell}
+      style={
+        {
+          "--col-split": `${split.colPercent}%`,
+          "--row-split": `${split.rowPercent}%`,
+        } as React.CSSProperties
+      }
+    >
       <main className="narrative">
-        <details className="memory" open>
-          <summary>Memory</summary>
-          <div className="transcript" role="log" aria-live="polite" ref={scroller}>
-            {lines.map((entry) => (
-              <p key={entry.id} className={`line line-${entry.tone}`}>
-                {entry.text}
-              </p>
-            ))}
-          </div>
-        </details>
+        <section className={memoryOpen ? "memory memory-open" : "memory"}>
+          <button
+            type="button"
+            className="memory-toggle"
+            aria-expanded={memoryOpen}
+            onClick={() => setMemoryOpen((open) => !open)}
+          >
+            Memory
+          </button>
+          {memoryOpen && (
+            <div className="transcript" role="log" aria-live="polite" ref={scroller}>
+              {thread.history.map((entry) => (
+                <p key={entry.id} className={`line line-${entry.tone}`}>
+                  {entry.text}
+                </p>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* What just happened, always in view whether memory is open or
+            closed — the collapsed state has to still be a game, not just a
+            toggle. */}
+        <div className="current-tick transcript" role="log" aria-live="polite">
+          {thread.latest.map((entry) => (
+            <p key={entry.id} className={`line line-${entry.tone}`}>
+              {entry.text}
+            </p>
+          ))}
+        </div>
       </main>
 
       <aside className="map-quadrant">
@@ -362,6 +436,11 @@ export function App({ playtest }: { playtest?: string } = {}) {
       </div>
 
       <aside className="info">
+        {playtest === undefined && (
+          <button type="button" className="link-button leave-game" onClick={leave}>
+            ‹ Choose a different game
+          </button>
+        )}
         <details className="accordion" open>
           <summary>Stats</summary>
           <Character sheet={frame.view.sheet} />
@@ -384,6 +463,28 @@ export function App({ playtest }: { playtest?: string } = {}) {
                 : "connecting…"}
         </p>
       </aside>
+
+      {/* The four quadrants share one column split and one row split, so one
+          divider each reshapes all four rather than needing eight handles for
+          four independently resizable panes. Hidden on the narrow layout,
+          where the quadrants stack into one column and there is nothing left
+          to divide. */}
+      <div
+        className="col-resizer"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize the story and action panels against the map and stats"
+        tabIndex={0}
+        {...split.columnHandle}
+      />
+      <div
+        className="row-resizer"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize the top panels against the bottom panels"
+        tabIndex={0}
+        {...split.rowHandle}
+      />
     </div>
   );
 }
