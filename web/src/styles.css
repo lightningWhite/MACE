@@ -704,6 +704,17 @@ h2 {
   max-block-size: 16rem;
   display: block;
   overflow: visible;
+  touch-action: none;
+  cursor: grab;
+}
+
+.map:active {
+  cursor: grabbing;
+}
+
+.map-reset {
+  display: block;
+  margin-block-end: 0.4rem;
 }
 
 .region circle {

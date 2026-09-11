@@ -1,12 +1,12 @@
 /**
  * Pan and zoom for an SVG laid out in its own fixed coordinate space.
  *
- * The map editor and the scene graph both fit their content to a `viewBox`
- * computed from the data, then never touch it again — which is fine for a
- * handful of places, and useless once a pack has enough of them that reading
- * a label means leaning into the screen. This layers wheel-to-zoom and
- * drag-the-background-to-pan on top of that fitted box without either caller
- * changing how it computes one.
+ * The map editor, the scene graph, and the play map all fit their content to
+ * a `viewBox` computed from the data, then never touch it again — which is
+ * fine for a handful of places, and useless once a pack (or a playthrough's
+ * discovered world) has enough of them that reading a label means leaning
+ * into the screen. This layers wheel-to-zoom and drag-the-background-to-pan
+ * on top of that fitted box without any caller changing how it computes one.
  *
  * Reading the pointer's position back out of the SVG goes through
  * `getScreenCTM()` rather than dividing by the element's bounding rect: the

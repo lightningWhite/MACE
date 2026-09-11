@@ -395,20 +395,21 @@ Not yet worth deciding, listed so they aren't forgotten:
     besides `StatAllocator`'s bespoke one); `Pattern.sequence` scoped to
     the owning profile's own `moves` rather than the whole collection
     (the model doesn't enforce that subset relationship either).
-- **The play map has no pan or zoom.** `web/src/map/Map.tsx` fits everything
-  into a static `viewBox` once per render (`fit()`, `web/src/map/layout.ts`)
-  and never touches it again — no wheel, drag-to-pan, or reset control.
-  Both authoring canvases already solved this: `web/src/author/MapEditor.tsx`
-  and `web/src/author/SceneGraph.tsx` both layer `useSvgPanZoom`
-  (`web/src/author/panzoom.ts`) over the same fit-once baseline. Wiring the
-  same hook into the play map looks like a small, low-risk lift rather than
-  new design — nothing about the play map's fog-of-war or click-to-travel
-  logic should need to change, only how the viewBox is computed and touched.
-  (A related ask — "and scenes too" — doesn't correspond to anything on the
-  player's side: `SceneGraph.tsx` is an author-only tool for visualizing the
-  branching structure while building a game; nothing shows a player a graph
-  of scenes, nor should it — they read prose and choices, not a diagram of
-  the story.)
+- **The play map has no pan or zoom — RESOLVED (2026-09-11).** It was exactly
+  the small, low-risk lift this bullet predicted: `useSvgPanZoom` — moved
+  from `web/src/author/panzoom.ts` to the shared `web/src/panzoom.ts`, since
+  it now has a caller outside `author/` — is layered onto `web/src/map/Map.tsx`
+  the same way `MapEditor.tsx` and `SceneGraph.tsx` already used it. Nothing
+  about fog-of-war or click-to-travel changed; only how the `viewBox` is
+  computed and touched, plus a "reset view" link that appears once the
+  reader has moved away from the fitted view. Applies to both the world map
+  and a hub's own small map (`heading="Close by"` in `App.tsx`) — each
+  `MapView` instance gets independent pan/zoom state, since the hook is
+  called once per component instance. (The related ask — "and scenes too" —
+  still doesn't correspond to anything on the player's side: `SceneGraph.tsx`
+  is an author-only tool for visualizing the branching structure while
+  building a game; nothing shows a player a graph of scenes, nor should it —
+  they read prose and choices, not a diagram of the story.)
 - **Stats that mean something — RESOLVED (2026-09-11).** Raised by the user
   wondering whether `strength`/`speed`/etc. do anything besides look nice on
   a sheet, and whether growth beyond the current fight was possible. Four

@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from "react";
 
 import * as api from "./api";
 import { StudioError } from "./api";
-import { useSvgPanZoom } from "./panzoom";
+import { useSvgPanZoom } from "../panzoom";
 import type { Graph, Node } from "./protocol";
 
 /** Space between columns and between rows. */

@@ -78,6 +78,13 @@ describe("what is on it", () => {
   });
 });
 
+describe("panning and zooming it", () => {
+  it("offers no reset control until the reader has moved away from the fit view", () => {
+    draw(REAL);
+    expect(screen.queryByRole("button", { name: "reset view" })).toBeNull();
+  });
+});
+
 describe("travelling by it", () => {
   it("sends the option the engine said goes there", async () => {
     const user = userEvent.setup();

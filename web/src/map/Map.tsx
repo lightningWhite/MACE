@@ -34,9 +34,10 @@
  * prices are.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { Atlas, Carried, Place } from "../protocol";
+import { useSvgPanZoom } from "../panzoom";
 import { fit, isAuthored, layout, type Positions } from "./layout";
 
 /** Room around the outermost node, for its label. */
@@ -111,6 +112,21 @@ export function MapView({
 }) {
   const [shading, setShading] = useState<string | null>(null);
   const headingId = `map-heading-${heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const surface = useRef<SVGSVGElement | null>(null);
+
+  // Computed unconditionally, empty atlas or not, because the pan/zoom hook
+  // below has to be called on every render regardless of what this returns —
+  // `layout`/`fit` are both already safe on an empty atlas (MapEditor and
+  // SceneGraph share this same shape for the same reason).
+  const positions = layout(atlas);
+  const box = fit(positions, PAD);
+  const pan = useSvgPanZoom(surface, {
+    x: box.minX,
+    y: box.minY,
+    w: box.width,
+    h: box.height,
+  });
+
   if (atlas.places.length === 0) {
     return (
       <section className="panel" aria-labelledby={headingId}>
@@ -136,9 +152,6 @@ export function MapView({
   );
   const lowest = elevations.length > 0 ? Math.min(...elevations) : 0;
   const highest = elevations.length > 0 ? Math.max(...elevations) : 0;
-
-  const positions = layout(atlas);
-  const box = fit(positions, PAD);
   const authored = isAuthored(atlas.places);
 
   const byRegion = new Map<string, Place[]>();
@@ -157,11 +170,18 @@ export function MapView({
   return (
     <section className="panel map-panel" aria-labelledby={headingId}>
       <h2 id={headingId}>{heading}</h2>
+      {pan.zoomed ? (
+        <button type="button" className="link-button map-reset" onClick={pan.reset}>
+          reset view
+        </button>
+      ) : null}
       <svg
+        ref={surface}
         className="map"
-        viewBox={`${box.minX} ${box.minY} ${box.width} ${box.height}`}
+        viewBox={pan.viewBox}
         role="img"
         aria-label={label}
+        {...pan.background}
       >
         {/* Weather, per region, named rather than merely tinted. Elevation
             rides the same blob, as a tint plus a printed number — it's a

@@ -53,6 +53,10 @@ building at all.
   current weather and the waypoints you'd pass.
 - Layout from authored `mapPosition` when present, force-directed otherwise, so
   authors get a decent map for free and a beautiful one if they care.
+- Scroll to zoom, drag the empty map to pan, with a "reset view" link once
+  you've moved away from the fitted view (`useSvgPanZoom`, `web/src/panzoom.ts`) —
+  the same mechanism the map editor and scene graph use for the same reason:
+  a handful of places fits fine in a static box, a sprawling world doesn't.
 
 Click-to-travel works because the projection says so. `Place.choice` is the
 index of the option currently on offer that goes there — only the engine knows

@@ -35,7 +35,7 @@ import { useEffect, useRef, useState } from "react";
 
 import * as api from "./api";
 import { StudioError } from "./api";
-import { svgPoint, useSvgPanZoom } from "./panzoom";
+import { svgPoint, useSvgPanZoom } from "../panzoom";
 import type { Atlas, Drawn } from "./protocol";
 
 /** Room around the outermost place, for its label. */
