@@ -17,7 +17,6 @@ mid-thought (docs/09-authoring-and-wizard.md).
 
 from __future__ import annotations
 
-import re
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -47,6 +46,7 @@ from mace.wizard.fields import (
     Select,
     StatAllocator,
     TextList,
+    parse_relative,
 )
 from mace.wizard.flow import Flow, Step, answered, dig, plant, slug
 from mace.wizard.flows import FLOWS, GAME
@@ -1441,9 +1441,6 @@ def _whole(typed: str) -> float | int:
     return int(value) if value.is_integer() else value
 
 
-_RELATIVE = re.compile(r"([0-9]*\.?[0-9]+)x([a-zA-Z][\w-]*)")
-
-
 def _relative_or_number(typed: str) -> Any:
     """A stat entry's `base`/`max`: a flat number, or relative to the player's.
 
@@ -1462,11 +1459,8 @@ def _relative_or_number(typed: str) -> Any:
     ValueError
         If `typed` is neither shape.
     """
-    match = _RELATIVE.fullmatch(typed.strip())
-    if match is None:
-        return _whole(typed)
-    factor, stat = match.groups()
-    return {"relativeToPlayer": {"stat": stat, "factor": float(factor)}}
+    relative = parse_relative(typed)
+    return _whole(typed) if relative is None else relative
 
 
 def _askable(ask: Ask, answers: Mapping[str, Any]) -> Field:

@@ -56,6 +56,7 @@ from mace.wizard.fields import (
     MapEditor,
     MultiSelect,
     Number,
+    RelativeNumber,
     Repeat,
     Select,
     StatAllocator,
@@ -1626,10 +1627,10 @@ def _field(
         caller against *this* game's own `vitalPool`/`effortPool`, since a
         recipe's ask has no project to ask and never carries one.
     player_stats : sequence of str
-        Every stat the player entity declares, for a `StatAllocator`'s
-        relative-value picker to offer — "3x the player's own `strength`"
-        needs a name to pick from that isn't limited to `core`'s two pool
-        roles.
+        Every stat the player entity declares, for a `StatAllocator`'s or a
+        `RelativeNumber`'s relative-value picker to offer — "3x the player's
+        own `strength`" needs a name to pick from that isn't limited to
+        `core`'s two pool roles.
 
     Returns
     -------
@@ -1652,6 +1653,9 @@ def _field(
         body["minimum"] = one.minimum
         body["maximum"] = one.maximum
         body["integer"] = one.integer
+    elif isinstance(one, RelativeNumber):
+        body["minimum"] = one.minimum
+        body["playerStats"] = list(player_stats)
     elif isinstance(one, Select | MultiSelect):
         body["options"] = (
             [_option(found) for found in one.options.options(catalog)]

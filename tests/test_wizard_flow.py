@@ -22,6 +22,7 @@ from mace.wizard.fields import (
     MultiSelect,
     NotOneLine,
     Number,
+    RelativeNumber,
     Select,
     Text,
     TextList,
@@ -189,6 +190,31 @@ def test_numbers_are_checked_against_their_bounds(catalog: Catalog) -> None:
         field.parse("11", catalog)
     with pytest.raises(Invalid, match="whole number"):
         field.parse("half", catalog)
+
+
+def test_a_relative_number_takes_a_plain_number(catalog: Catalog) -> None:
+    field = RelativeNumber(minimum=0)
+
+    assert field.parse("6", catalog) == 6
+    with pytest.raises(Invalid, match="no lower than 0"):
+        field.parse("-1", catalog)
+
+
+def test_a_relative_number_takes_a_reference_to_the_players_own_stat(
+    catalog: Catalog,
+) -> None:
+    field = RelativeNumber()
+
+    assert field.parse("3xhitpoints", catalog) == {
+        "relativeToPlayer": {"stat": "hitpoints", "factor": 3.0}
+    }
+    assert (
+        field.describe(
+            {"relativeToPlayer": {"stat": "hitpoints", "factor": 3}}, catalog
+        )
+        == "3x player's hitpoints"
+    )
+    assert field.describe(6, catalog) == "6"
 
 
 def test_yes_and_no_are_both_answers(catalog: Catalog) -> None:

@@ -20,6 +20,7 @@ a terminal, and the terminal form is a fallback rather than a refusal.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Protocol
@@ -37,13 +38,38 @@ __all__ = [
     "MultiSelect",
     "NotOneLine",
     "Number",
+    "RelativeNumber",
     "Repeat",
     "Select",
     "Source",
     "StatAllocator",
     "Text",
     "TextList",
+    "parse_relative",
 ]
+
+#: `3xhitpoints` — a factor and the player's stat it multiplies.
+_RELATIVE = re.compile(r"([0-9]*\.?[0-9]+)x([a-zA-Z][\w-]*)")
+
+
+def parse_relative(typed: str) -> dict[str, Any] | None:
+    """`3xhitpoints`, parsed into a `{relativeToPlayer: {...}}` mapping.
+
+    Parameters
+    ----------
+    typed : str
+        The typed text.
+
+    Returns
+    -------
+    dict or None
+        The mapping, or None if `typed` is not this shape.
+    """
+    match = _RELATIVE.fullmatch(typed.strip())
+    if match is None:
+        return None
+    factor, stat = match.groups()
+    return {"relativeToPlayer": {"stat": stat, "factor": float(factor)}}
 
 
 class Invalid(Exception):
@@ -319,6 +345,58 @@ class Number(Field):
         if self.maximum is not None:
             return f"{_number(self.maximum)} or less"
         return ""
+
+
+@dataclass(frozen=True, slots=True)
+class RelativeNumber(Field):
+    """A number, or a multiple of one of the player's own stats.
+
+    Backs content authored as `RelativeValue` — a weapon's damage bound,
+    most prominently — so "15% of the player's own hitpoints" is answerable
+    without ever hand-editing YAML: a plain number is still a plain number,
+    and `3xhitpoints` (or the browser's own picker) is the escape hatch into
+    a `{relativeToPlayer: {stat, factor}}` reference.
+
+    Attributes
+    ----------
+    minimum : float or None
+        Lower bound for a literal value. Not checked on a relative one —
+        whether `3x hitpoints` ends up too low depends on the player's own
+        numbers, not anything knowable while it is being authored.
+    """
+
+    kind: ClassVar[str] = "relative-number"
+
+    minimum: float | None = None
+
+    def describe(self, value: Any, catalog: Catalog) -> str:
+        if value is None:
+            return "—"
+        return _relative_text(value) or _number(value)
+
+    def parse(self, typed: str, catalog: Catalog) -> Any:
+        if not typed:
+            if self.optional:
+                return None
+            raise Invalid("a number, please")
+        relative = parse_relative(typed)
+        if relative is not None:
+            return relative
+        try:
+            value = float(typed)
+        except ValueError:
+            raise Invalid(
+                f"a number, or `3xhitpoints` for 3x the player's own "
+                f"hitpoints — `{typed}` is neither"
+            ) from None
+        if self.minimum is not None and value < self.minimum:
+            raise Invalid(f"no lower than {_number(self.minimum)}")
+        return int(value) if value.is_integer() else value
+
+    def hint(self, catalog: Catalog) -> str:
+        base = f"{_number(self.minimum)} or more" if self.minimum is not None else ""
+        relative = "or `3xhitpoints` for 3x the player's own hitpoints"
+        return f"{base}, {relative}" if base else relative
 
 
 @dataclass(frozen=True, slots=True)

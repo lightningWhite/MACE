@@ -210,3 +210,65 @@ describe("a statblock with a value relative to the player", () => {
     });
   });
 });
+
+// ── A standalone relative-number field (a weapon's damage bound) ───────────
+
+describe("a damage bound relative to the player", () => {
+  const DAMAGE_STEP: Step = {
+    id: "move.damage.min",
+    title: "Minimum damage?",
+    help: "",
+    binds: "moves[{id}].damage.min",
+    optional: true,
+    field: {
+      kind: "relative-number",
+      optional: true,
+      interactive: false,
+      hint: "",
+      minimum: 0,
+      playerStats: ["hitpoints", "strength"],
+    },
+    value: { relativeToPlayer: { stat: "hitpoints", factor: 0.15 } },
+    described: "0.15x player's hitpoints",
+    answered: true,
+    visible: true,
+    entries: null,
+  };
+
+  afterEach(cleanup);
+
+  it("shows a factor and a stat picker for an authored relative value", () => {
+    render(<Field step={DAMAGE_STEP} onAnswer={vi.fn()} busy={false} />);
+
+    expect(
+      (screen.getByLabelText("Minimum damage? factor") as HTMLInputElement).value,
+    ).toBe("0.15");
+    expect(
+      (screen.getByLabelText("Minimum damage? stat") as HTMLSelectElement).value,
+    ).toBe("hitpoints");
+  });
+
+  it("switches to a fixed number", async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(<Field step={DAMAGE_STEP} onAnswer={onAnswer} busy={false} />);
+
+    await user.click(screen.getByRole("button", { name: "fixed" }));
+
+    expect(onAnswer).toHaveBeenCalledWith(null);
+  });
+
+  it("answers a plain number as a plain number, not a wrapper", async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    const step: Step = { ...DAMAGE_STEP, value: 6, entries: null };
+    render(<Field step={step} onAnswer={onAnswer} busy={false} />);
+
+    const box = screen.getByLabelText("Minimum damage?");
+    await user.clear(box);
+    await user.type(box, "9");
+    await user.tab();
+
+    expect(onAnswer).toHaveBeenCalledWith(9);
+  });
+});

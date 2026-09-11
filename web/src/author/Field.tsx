@@ -65,6 +65,8 @@ function Body({ step, onAnswer, busy }: Props) {
       return <Entries step={step} onAnswer={onAnswer} busy={busy} />;
     case "stat-allocator":
       return <Statblock step={step} onAnswer={onAnswer} busy={busy} />;
+    case "relative-number":
+      return <RelativeNumberField step={step} onAnswer={onAnswer} busy={busy} />;
     default:
       return (
         <Control
@@ -76,6 +78,48 @@ function Body({ step, onAnswer, busy }: Props) {
         />
       );
   }
+}
+
+// ── A number relative to the player's own stat ──────────────────────────────
+
+/**
+ * A single `RelativeValue` field — a weapon or move's damage bound, most
+ * prominently. Reuses `ValueControl`, the same fixed/relative toggle a
+ * statblock's own base/cap use, since this is the same duality on a step of
+ * its own rather than one row of several.
+ */
+function RelativeNumberField({ step, onAnswer, busy }: Props) {
+  const { value, relative } = splitRelative(step.value);
+  const playerStats = step.field.playerStats ?? [];
+
+  return (
+    <ValueControl
+      label={step.title}
+      busy={busy}
+      value={value}
+      relative={relative}
+      playerStats={playerStats}
+      allowEmpty={step.optional}
+      onChange={(next) =>
+        onAnswer(
+          next === null || typeof next === "number" ? next : { relativeToPlayer: next },
+        )
+      }
+    />
+  );
+}
+
+/** Split a `RelativeValue`'s wire shape into a plain number and a reference. */
+function splitRelative(
+  value: unknown,
+): { value: number | null; relative: RelativeStat | null } {
+  if (typeof value === "object" && value !== null && "relativeToPlayer" in value) {
+    return {
+      value: null,
+      relative: (value as { relativeToPlayer: RelativeStat }).relativeToPlayer,
+    };
+  }
+  return { value: typeof value === "number" ? value : null, relative: null };
 }
 
 // ── Conditions and effects ───────────────────────────────────────────────────
