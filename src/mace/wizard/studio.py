@@ -304,6 +304,7 @@ class Studio:
                     if isinstance(one, Mapping) and one.get("to") is not None
                 ],
                 "region": _plain(self._read("locations", local_id, "region")),
+                "submapOf": _plain(self._read("locations", local_id, "submapOf")),
             }
             for local_id in self.project.ids("locations")
         ]

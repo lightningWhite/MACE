@@ -126,7 +126,8 @@ Files under `locations/`.
 | `encounters` | Ref? | Encounter table rolled while the player lingers here. |
 | `safe` | bool? | Suppresses encounters. Good for towns and inns. |
 | `exits` | [Exit] | Where you can go. |
-| `mapPosition` | {x, y}? | For the map view. Optional — the layout engine can infer it. |
+| `mapPosition` | {x, y}? | For the map view. Optional — the layout engine can infer it. When `submapOf` is set, this is a position on that hub's small map instead of the world one. |
+| `submapOf` | Ref? | Another location this one is inside of. Never gets a pin of its own on the world map — see [Travel & Encounters § "A hub's own small map"](06-travel-and-encounters.md#a-hubs-own-small-map). |
 | `flags` | [str]? | |
 
 ### Exit

@@ -150,10 +150,11 @@ export function create(
   collection: string,
   name: string,
   section?: string | null,
+  answers?: Record<string, unknown>,
 ): Promise<Frame> {
   return ask<Frame>(
     `/objects/${encodeURIComponent(collection)}`,
-    sending({ name, section: section ?? null, answers: {} }),
+    sending({ name, section: section ?? null, answers: answers ?? {} }),
   );
 }
 

@@ -2424,6 +2424,50 @@
           "entries": null
         },
         {
+          "id": "location.submapOf",
+          "title": "Is this actually inside somewhere else?",
+          "help": "A castle's dungeon naming the castle. A place with this set gets no pin of its own on the world map \u2014 it's drawn on its hub's own small map instead, alongside anything else that names the same hub.",
+          "optional": true,
+          "binds": "locations[{id}].submapOf",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "field": {
+            "kind": "select",
+            "optional": true,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "fenmoor",
+                "label": "Fenmoor",
+                "note": "this pack",
+                "scope": ""
+              },
+              {
+                "value": "hagans-castle",
+                "label": "Hagan's Castle",
+                "note": "this pack",
+                "scope": ""
+              },
+              {
+                "value": "traders-post",
+                "label": "Trader's Post",
+                "note": "this pack",
+                "scope": ""
+              },
+              {
+                "value": "troll-bridge",
+                "label": "The Old Bridge",
+                "note": "this pack",
+                "scope": ""
+              }
+            ],
+            "allowCreate": null
+          },
+          "entries": null
+        },
+        {
           "id": "location.indoors",
           "title": "Is it indoors?",
           "help": "Indoors means the weather cannot reach you. It still exists.",
@@ -6010,6 +6054,56 @@
           "entries": null
         },
         {
+          "id": "location.submapOf",
+          "title": "Is this actually inside somewhere else?",
+          "help": "A castle's dungeon naming the castle. A place with this set gets no pin of its own on the world map \u2014 it's drawn on its hub's own small map instead, alongside anything else that names the same hub.",
+          "optional": true,
+          "binds": "locations[{id}].submapOf",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "field": {
+            "kind": "select",
+            "optional": true,
+            "interactive": false,
+            "hint": "",
+            "options": [
+              {
+                "value": "fenmoor",
+                "label": "Fenmoor",
+                "note": "this pack",
+                "scope": ""
+              },
+              {
+                "value": "hagans-castle",
+                "label": "Hagan's Castle",
+                "note": "this pack",
+                "scope": ""
+              },
+              {
+                "value": "the-long-moor",
+                "label": "The Long Moor",
+                "note": "this pack",
+                "scope": ""
+              },
+              {
+                "value": "traders-post",
+                "label": "Trader's Post",
+                "note": "this pack",
+                "scope": ""
+              },
+              {
+                "value": "troll-bridge",
+                "label": "The Old Bridge",
+                "note": "this pack",
+                "scope": ""
+              }
+            ],
+            "allowCreate": null
+          },
+          "entries": null
+        },
+        {
           "id": "location.indoors",
           "title": "Is it indoors?",
           "help": "Indoors means the weather cannot reach you. It still exists.",
@@ -6886,7 +6980,8 @@
           "traders-post",
           "hagans-castle"
         ],
-        "region": "the-lowlands"
+        "region": "the-lowlands",
+        "submapOf": null
       },
       {
         "id": "hagans-castle",
@@ -6896,7 +6991,8 @@
         "exits": [
           "fenmoor"
         ],
-        "region": "the-marches"
+        "region": "the-marches",
+        "submapOf": null
       },
       {
         "id": "the-long-moor",
@@ -6904,7 +7000,8 @@
         "x": null,
         "y": null,
         "exits": [],
-        "region": null
+        "region": null,
+        "submapOf": null
       },
       {
         "id": "traders-post",
@@ -6914,7 +7011,8 @@
         "exits": [
           "fenmoor"
         ],
-        "region": "the-lowlands"
+        "region": "the-lowlands",
+        "submapOf": null
       },
       {
         "id": "troll-bridge",
@@ -6922,7 +7020,8 @@
         "x": 10.0,
         "y": 60.0,
         "exits": [],
-        "region": "the-northwood"
+        "region": "the-northwood",
+        "submapOf": null
       }
     ],
     "roads": [

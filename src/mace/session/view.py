@@ -26,7 +26,7 @@ See docs/10-clients-and-interface.md § The player interface.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from mace.content import ContentError, Library
@@ -465,6 +465,10 @@ class View:
         Quests the player knows about, active ones first.
     atlas : Atlas
         The map.
+    submap : Atlas or None
+        The small map of wherever the player is standing, when that place has
+        one — a hub's interior places, or the hub itself seen from inside one
+        of them. None everywhere else.
     stall : Stall or None
         The prices in front of the player, when they are dealing with a
         merchant. A standing fact for exactly as long as they are standing at
@@ -480,6 +484,7 @@ class View:
     carried: tuple[Carried, ...]
     journal: tuple[Entry, ...]
     atlas: Atlas
+    submap: Atlas | None = None
     stall: Stall | None = None
 
     def record(self) -> dict[str, Any]:
@@ -499,6 +504,7 @@ class View:
             "carried": [stack.record() for stack in self.carried],
             "journal": [entry.record() for entry in self.journal],
             "atlas": self.atlas.record(),
+            "submap": None if self.submap is None else self.submap.record(),
             "stall": None if self.stall is None else self.stall.record(),
         }
 
@@ -528,6 +534,7 @@ def view(library: Library, state: GameState) -> View:
         carried=_carried(context),
         journal=_journal(context),
         atlas=_atlas(context),
+        submap=_submap(context),
         stall=_stall(context),
     )
 
@@ -735,13 +742,124 @@ def _atlas(context: RuleContext) -> Atlas:
     known = {
         qualified: definition
         for qualified, definition in _locations(context).items()
-        if qualified in state.revealed
+        if qualified in state.revealed and definition.submap_of is None
     }
     ways = _ways_out(context)
     seen_prices = _prices_seen(context)
     places = tuple(
         _place(context, qualified, known[qualified], ways, seen_prices)
         for qualified in sorted(known)
+    )
+    roads = tuple(
+        road
+        for road in (
+            _road(context, qualified, definition)
+            for qualified, definition in sorted(_routes(context).items())
+        )
+        if road is not None and road.origin in known and road.destination in known
+    )
+    return Atlas(
+        here=state.location,
+        places=places,
+        roads=roads,
+        journey=_underway(context),
+    )
+
+
+def _submap_root(
+    context: RuleContext, qualified: str, definition: Location
+) -> str | None:
+    """Which hub a location's `submapOf` names, resolved to a qualified id.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    qualified : str
+        The location's own qualified id.
+    definition : Location
+        Its content.
+
+    Returns
+    -------
+    str or None
+        The hub's qualified id, or None where it names none or names
+        something that doesn't resolve.
+    """
+    if definition.submap_of is None:
+        return None
+    pack, _ = split(qualified)
+    within = pack or context.state.pack
+    try:
+        return context.library.resolve(definition.submap_of, "locations", within=within)
+    except ContentError:
+        return None
+
+
+def _submap(context: RuleContext) -> Atlas | None:
+    """The small map of wherever the player is standing, if it has one.
+
+    A location named by another location's `submapOf` never appears on the
+    world map (`_atlas` filters it out) — it belongs here instead. Standing
+    in a hub, or in one of its interior places, gets you that hub's small
+    map; anywhere else, there is none.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    Atlas or None
+        The interior map, or None where the player's current location has no
+        hub relationship at all.
+    """
+    state = context.state
+    here = state.location
+    if here is None:
+        return None
+    definitions = _locations(context)
+    here_definition = definitions.get(here)
+    if here_definition is None:
+        return None
+
+    root = _submap_root(context, here, here_definition)
+    if root is None:
+        has_children = any(
+            _submap_root(context, qualified, definition) == here
+            for qualified, definition in definitions.items()
+        )
+        root = here if has_children else None
+    if root is None or root not in definitions:
+        return None
+
+    members = {
+        qualified: definition
+        for qualified, definition in definitions.items()
+        if qualified == root or _submap_root(context, qualified, definition) == root
+    }
+    known = {
+        qualified: definition
+        for qualified, definition in members.items()
+        if qualified in state.revealed
+    }
+    if root not in known:
+        return None
+
+    ways = _ways_out(context)
+    seen_prices = _prices_seen(context)
+    places = tuple(
+        _place(context, qualified, known[qualified], ways, seen_prices)
+        for qualified in sorted(known)
+    )
+    # The hub anchors its own interior map at the origin, distinct from
+    # wherever `mapPosition` puts it on the world map — an author's interior
+    # coordinates read as offsets from the entrance without needing a second
+    # coordinate field.
+    places = tuple(
+        replace(place, x=0.0, y=0.0) if place.location == root else place
+        for place in places
     )
     roads = tuple(
         road

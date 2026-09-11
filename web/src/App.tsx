@@ -398,6 +398,15 @@ export function App({ playtest }: { playtest?: string } = {}) {
           onTravel={choose}
           busy={busy}
         />
+        {frame.view.submap != null && (
+          <MapView
+            atlas={frame.view.submap}
+            carried={frame.view.carried}
+            onTravel={choose}
+            busy={busy}
+            heading="Close by"
+          />
+        )}
       </aside>
 
       {/* Not a landmark element (article/aside/main/nav/section): the footer

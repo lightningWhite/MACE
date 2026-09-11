@@ -497,6 +497,12 @@ export interface View {
   carried: Carried[];
   journal: Entry[];
   atlas: Atlas;
+  /**
+   * The small map of wherever the player is standing, when that place has
+   * one — a hub's interior places, or the hub itself seen from inside one
+   * of them. Null everywhere else.
+   */
+  submap: Atlas | null;
   /** Prices, while the player is standing at a counter. */
   stall: Stall | null;
 }

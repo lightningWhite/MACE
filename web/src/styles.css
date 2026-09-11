@@ -1579,6 +1579,17 @@ button:disabled {
   fill: var(--cold);
 }
 
+.author-hub-badge {
+  fill: var(--cold);
+  stroke: var(--ground);
+  stroke-width: 1;
+  cursor: pointer;
+}
+
+.author-hub-badge:hover {
+  fill: var(--warm);
+}
+
 .map-tools {
   display: flex;
   align-items: center;

@@ -202,6 +202,12 @@ export interface Drawn {
   exits: string[];
   /** The region it belongs to, id as authored — `null` for none. */
   region: string | null;
+  /**
+   * Another place this one is inside of, id as authored — `null` for none.
+   * A place with this set gets no pin of its own on the world canvas; it
+   * belongs on its named hub's own small canvas instead.
+   */
+  submapOf: string | null;
 }
 
 /** One road on the author's map. */

@@ -52,13 +52,38 @@ WORLD: dict[str, Any] = {
             "mapPosition": {"x": -40, "y": 60},
             "exits": [{"to": "home", "route": "lane"}],
         },
-        {"id": "castle", "name": "The Castle", "mapPosition": {"x": 30, "y": 0}},
+        {
+            "id": "castle",
+            "name": "The Castle",
+            "mapPosition": {"x": 30, "y": 0},
+            "exits": [{"to": "castle-yard", "route": "yard-door"}],
+        },
         {"id": "cave", "name": "The Cave", "visible": False},
+        {
+            "id": "castle-yard",
+            "name": "Castle Yard",
+            "submapOf": "castle",
+            "mapPosition": {"x": 0, "y": 20},
+            "exits": [{"to": "castle-dungeon", "route": "dungeon-stairs"}],
+        },
+        {
+            "id": "castle-dungeon",
+            "name": "The Dungeon",
+            "submapOf": "castle",
+            "mapPosition": {"x": 40, "y": 20},
+        },
     ],
     "routes": [
         {"id": "lane", "from": "home", "to": "mill", "ticks": 2},
         {"id": "road", "from": "home", "to": "castle", "ticks": 6},
         {"id": "tunnel", "from": "mill", "to": "cave", "ticks": 9},
+        {"id": "yard-door", "from": "castle", "to": "castle-yard", "ticks": 1},
+        {
+            "id": "dungeon-stairs",
+            "from": "castle-yard",
+            "to": "castle-dungeon",
+            "ticks": 1,
+        },
     ],
     "quests": [
         {
@@ -309,6 +334,71 @@ def test_a_road_part_walked_shows_how_far(session: Session) -> None:
     assert journey is not None
     assert (journey.walked, journey.ticks) == (2.5, 6)
     assert journey.destination == "tiny:castle"
+
+
+# ── Submaps ──────────────────────────────────────────────────────────────────
+
+
+def test_an_interior_place_is_never_on_the_world_map(session: Session) -> None:
+    drawn = {place.location for place in session.view().atlas.places}
+    assert "tiny:castle-yard" not in drawn
+    assert "tiny:castle-dungeon" not in drawn
+
+
+def test_a_road_between_interior_places_is_not_on_the_world_map(
+    session: Session,
+) -> None:
+    drawn = {road.route for road in session.view().atlas.roads}
+    assert "tiny:yard-door" not in drawn
+    assert "tiny:dungeon-stairs" not in drawn
+
+
+def test_nowhere_special_has_no_submap(session: Session) -> None:
+    assert session.view().submap is None
+
+
+def test_standing_at_a_hub_shows_its_submap(session: Session) -> None:
+    session.state.protagonist.location = "tiny:castle"
+    submap = session.view().submap
+    assert submap is not None
+    assert submap.here == "tiny:castle"
+    drawn = {place.location for place in submap.places}
+    assert drawn == {"tiny:castle", "tiny:castle-yard", "tiny:castle-dungeon"}
+
+
+def test_the_hub_sits_at_the_origin_of_its_own_submap(session: Session) -> None:
+    session.state.protagonist.location = "tiny:castle"
+    submap = session.view().submap
+    assert submap is not None
+    placed = {place.location: (place.x, place.y) for place in submap.places}
+    assert placed["tiny:castle"] == (0.0, 0.0)
+    # The world map still shows the hub at its own authored position.
+    world_placed = {
+        place.location: (place.x, place.y) for place in session.view().atlas.places
+    }
+    assert world_placed["tiny:castle"] == (30.0, 0.0)
+    assert placed["tiny:castle-yard"] == (0.0, 20.0)
+
+
+def test_standing_in_an_interior_place_also_shows_the_submap(
+    session: Session,
+) -> None:
+    session.state.protagonist.location = "tiny:castle-yard"
+    submap = session.view().submap
+    assert submap is not None
+    assert submap.here == "tiny:castle-yard"
+    drawn = {place.location for place in submap.places}
+    assert drawn == {"tiny:castle", "tiny:castle-yard", "tiny:castle-dungeon"}
+
+
+def test_a_road_between_interior_places_is_drawn_in_the_submap(
+    session: Session,
+) -> None:
+    session.state.protagonist.location = "tiny:castle"
+    submap = session.view().submap
+    assert submap is not None
+    drawn = {road.route for road in submap.roads}
+    assert drawn == {"tiny:yard-door", "tiny:dungeon-stairs"}
 
 
 # ── What a projection may not do ──────────────────────────────────────────────

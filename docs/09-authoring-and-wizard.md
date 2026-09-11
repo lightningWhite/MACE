@@ -420,6 +420,23 @@ find two of them is not a tool being helpful. That is the rule the world
 starter has followed since phase 4; the map editor is the second thing to obey
 it, which is why it lives in `mace.wizard` rather than in the browser.
 
+**Drilling into a hub.** A place naming another via `submapOf` (docs/06 §
+"A hub's own small map") never draws on the world canvas — it would just be
+clutter for a room nobody can walk into from outside its castle. A hub
+(anywhere named by another place's `submapOf`) carries a small badge on its
+pin instead; clicking it swaps the canvas to that hub's own places, plus the
+hub itself pinned at a fixed origin to anchor around, with a "back to the
+world map" control to return. Positioning and drawing roads inside that
+scoped canvas are the exact same `location.mapPosition`/`/roads` calls as the
+world map — an interior place's position just means "on its hub's canvas"
+instead of "on the world's." A small form lets an author add a new room
+without leaving the scope, which posts the new location's `location.submapOf`
+answer in the same breath `Studio.create`'s `answers` parameter already
+supported for every other step, so it never needed a new endpoint. This is a
+convenience, not the only way in: `submapOf` is an ordinary wizard step,
+answerable — and readable by a screen reader — from a place's own form, same
+as any other field.
+
 ### The live preview
 
 Beside the form, the object **as the engine will see it**. The gap a form

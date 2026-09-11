@@ -19,6 +19,16 @@
  * laying something out is not the same as the author having chosen, and an
  * editor that quietly turned a guess into an authored position the first time
  * somebody opened it would be an editor that wrote content nobody asked for.
+ *
+ * **A hub's interior never clutters the world canvas.** A place with
+ * `submapOf` set is filtered out of the world view entirely and drawn only on
+ * its hub's own small canvas — the badge on a hub's pin is the door in.
+ * Dragging and linking inside that canvas write through the same
+ * `location.mapPosition`/`/roads` calls as the world map does; an interior
+ * place's position means "where on its hub's canvas" instead of "where on the
+ * world's." This is a convenience over the ordinary form, not the only way
+ * in: `submapOf` itself is an ordinary wizard step, reachable (and readable
+ * by a screen reader) through a place's own detail screen.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -172,6 +182,8 @@ export function MapEditor({
     null,
   );
   const [chosen, setChosen] = useState<string | null>(null);
+  const [scope, setScope] = useState<string | null>(null);
+  const [roomName, setRoomName] = useState("");
   const surface = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
@@ -186,7 +198,19 @@ export function MapEditor({
   // Computed unconditionally, atlas or no atlas, because the pan/zoom hook
   // below has to be called on every render regardless of what this one
   // returns — an empty map still has a box to fit and a gesture to track.
-  const placed = atlas === null ? [] : positioned(atlas.places);
+  //
+  // The world canvas (scope === null) only ever shows places nobody has put
+  // inside somewhere else. Scoped to a hub, it's the reverse: that hub's own
+  // interior places, plus the hub itself so there's something to anchor
+  // around — the same "hub sits at the origin of its own map" the play-side
+  // projection does.
+  const hubs = new Set(
+    (atlas?.places ?? []).flatMap((one) => (one.submapOf == null ? [] : [one.submapOf])),
+  );
+  const visible = (atlas?.places ?? []).filter((one) =>
+    scope === null ? one.submapOf == null : one.submapOf === scope || one.id === scope,
+  );
+  const placed = positioned(visible);
   const regions = atlas === null ? [] : regionShapes(placed, atlas);
   const fitted = withRegions(box(placed), regions);
   const pan = useSvgPanZoom(surface, {
@@ -243,13 +267,31 @@ export function MapEditor({
     void run(() => api.link(origin, destination, ticks));
   };
 
+  const hub = scope === null ? null : atlas.places.find((one) => one.id === scope);
+
+  const addRoom = () => {
+    const name = roomName.trim();
+    if (scope === null || name === "") return;
+    setRoomName("");
+    void run(() => api.create("locations", name, undefined, { "location.submapOf": scope }));
+  };
+
   return (
     <div className="map-editor">
-      <p className="dim">
-        Drag a place to put it somewhere. Click two places to draw a road
-        between them — {atlas.places.length < 2 ? "once there are two" : "in that order"}.
-        Scroll to zoom; drag the empty map to pan.
-      </p>
+      {scope === null ? (
+        <p className="dim">
+          Drag a place to put it somewhere. Click two places to draw a road
+          between them — {visible.length < 2 ? "once there are two" : "in that order"}.
+          Scroll to zoom; drag the empty map to pan.
+        </p>
+      ) : (
+        <p className="dim">
+          Inside {hub?.name ?? scope}.{" "}
+          <button type="button" className="link-button" onClick={() => setScope(null)}>
+            back to the world map
+          </button>
+        </p>
+      )}
 
       {failure === null ? null : (
         <p className="studio-failure" role="alert">
@@ -262,7 +304,11 @@ export function MapEditor({
         className="author-map"
         viewBox={pan.viewBox}
         role="img"
-        aria-label={`A map of ${atlas.places.length} places and ${atlas.roads.length} roads`}
+        aria-label={
+          scope === null
+            ? `A map of ${visible.length} places and ${atlas.roads.length} roads`
+            : `The small map inside ${hub?.name ?? scope}, with ${visible.length - 1} places`
+        }
         onPointerDown={pan.background.onPointerDown}
         onPointerMove={(event) => {
           if (dragging !== null) {
@@ -352,6 +398,21 @@ export function MapEditor({
                   not placed
                 </text>
               )}
+              {scope === null && hubs.has(one.place.id) && (
+                <rect
+                  x={held.x - 4}
+                  y={held.y - 16}
+                  width={9}
+                  height={9}
+                  className="author-hub-badge"
+                  role="button"
+                  aria-label={`Open the small map inside ${one.place.name}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setScope(one.place.id);
+                  }}
+                />
+              )}
             </g>
           );
         })}
@@ -380,6 +441,25 @@ export function MapEditor({
             drawing from {at.get(drawing)?.place.name ?? drawing} — click where it
             goes
           </span>
+        )}
+        {scope === null ? null : (
+          <label className="field-check">
+            <span className="dim">add a room here</span>
+            <input
+              className="field-input"
+              type="text"
+              value={roomName}
+              placeholder="The Dungeon"
+              aria-label="Name a new place inside this hub"
+              onChange={(event) => setRoomName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") addRoom();
+              }}
+            />
+            <button type="button" disabled={roomName.trim() === ""} onClick={addRoom}>
+              add
+            </button>
+          </label>
         )}
       </div>
 

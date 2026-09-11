@@ -99,6 +99,54 @@ not an undo.
     - {text: "The rain finds every gap in your cloak.", when: {weatherTag: [wet]}}
 ```
 
+### A hub's own small map
+
+A waypoint is the wrong tool for a castle's grounds, corridors, quarters, and
+dungeon. It isn't "a destination the player picks" — the section above is
+explicit that a waypoint is stopped at passively, mid-route, and the engine
+only offers **carry on** or **turn back** there, not ordinary exits, because
+"the middle of a bridge is not a place with roads leading off it." Rooms need
+the opposite: real, branching, player-chosen exits between them.
+
+The tool for that is `submapOf`. A location naming another location this way
+is inside it — narratively and spatially — rather than a sibling on the
+world map:
+
+```yaml
+locations:
+  - id: hagans-castle
+    name: "Hagan's Castle"
+    mapPosition: {x: 340, y: 60}
+    exits: [{to: castle-yard}]
+
+  - id: castle-yard
+    name: "The Yard"
+    submapOf: hagans-castle
+    mapPosition: {x: 0, y: 20}
+    exits: [{to: castle-dungeon}, {to: hagans-castle}]
+
+  - id: castle-dungeon
+    name: "The Dungeon"
+    submapOf: hagans-castle
+    mapPosition: {x: 40, y: 20}
+    exits: [{to: castle-yard}]
+```
+
+`the-yard` and `the-dungeon` never get a pin of their own on the world map —
+only `hagans-castle` does. Standing anywhere inside the castle (the castle
+itself, or one of the places naming it) gets the player a second, small map
+of just those places, with the castle anchored at its own entrance rather
+than wherever it happens to sit on the world map. Everything else about an
+interior location is ordinary: exits, scenes, entities, and encounters all
+work exactly as they would on any other place. `indoors: true` and a
+climate-less region are still how you make it weatherless — `submapOf` only
+changes where a place is *drawn*, not how it plays.
+
+One level of nesting is what's built and tested: a hub, and the places that
+name it. A place naming a hub that is itself inside something else isn't
+rejected, but its shape isn't designed for either — a room inside a room
+inside a room is not a shape this has been built to draw.
+
 ## Encounter tables
 
 Two-stage resolution, deliberately. It separates "how dangerous is this road"

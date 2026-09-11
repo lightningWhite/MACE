@@ -550,6 +550,17 @@ def test_a_place_nobody_has_positioned_says_so(studio: Studio) -> None:
     assert (place["x"], place["y"]) == (3.0, 4.0)
 
 
+def test_submap_of_is_drawn_on_the_atlas(studio: Studio) -> None:
+    """A hub's interior places carry the hub's id, the same shape `region` is."""
+    studio.create("locations", "Dungeon")
+    place = next(one for one in studio.atlas()["places"] if one["id"] == "dungeon")
+    assert place["submapOf"] is None
+
+    studio.answer("locations", "location.submapOf", "castle", "dungeon")
+    place = next(one for one in studio.atlas()["places"] if one["id"] == "dungeon")
+    assert place["submapOf"] == "castle"
+
+
 def test_drawing_a_road_writes_the_ways_onto_it_too(studio: Studio) -> None:
     """A route is a road; an exit is the option to walk down it."""
     studio.create("locations", "Moor")

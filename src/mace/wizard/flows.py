@@ -379,6 +379,19 @@ LOCATION = Flow(
             optional=True,
         ),
         Step(
+            id="location.submapOf",
+            title="Is this actually inside somewhere else?",
+            binds="locations[{id}].submapOf",
+            field=Select(options=Query("locations"), optional=True),
+            help=(
+                "A castle's dungeon naming the castle. A place with this set "
+                "gets no pin of its own on the world map — it's drawn on its "
+                "hub's own small map instead, alongside anything else that "
+                "names the same hub."
+            ),
+            optional=True,
+        ),
+        Step(
             id="location.indoors",
             title="Is it indoors?",
             binds="locations[{id}].indoors",

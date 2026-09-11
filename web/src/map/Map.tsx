@@ -99,18 +99,22 @@ export function MapView({
   carried = [],
   onTravel,
   busy,
+  heading = "Map",
 }: {
   atlas: Atlas;
   /** The player's pack, only so a good can be named rather than id'd. */
   carried?: Carried[];
   onTravel: (choice: number) => void;
   busy: boolean;
+  /** What to call this map — lets a second, smaller map sit beside it. */
+  heading?: string;
 }) {
   const [shading, setShading] = useState<string | null>(null);
+  const headingId = `map-heading-${heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   if (atlas.places.length === 0) {
     return (
-      <section className="panel" aria-labelledby="map-heading">
-        <h2 id="map-heading">Map</h2>
+      <section className="panel" aria-labelledby={headingId}>
+        <h2 id={headingId}>{heading}</h2>
         <p className="empty">You have no idea where you are.</p>
       </section>
     );
@@ -151,8 +155,8 @@ export function MapView({
     (known === 0 ? "" : `${known} you have only heard of.`);
 
   return (
-    <section className="panel map-panel" aria-labelledby="map-heading">
-      <h2 id="map-heading">Map</h2>
+    <section className="panel map-panel" aria-labelledby={headingId}>
+      <h2 id={headingId}>{heading}</h2>
       <svg
         className="map"
         viewBox={`${box.minX} ${box.minY} ${box.width} ${box.height}`}

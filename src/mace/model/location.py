@@ -117,6 +117,14 @@ class Location(ContentModel):
     map_position: MapPosition | None = None
     flags: tuple[Flag, ...] = ()
 
+    #: Another location this one is inside of — a castle's dungeon naming the
+    #: castle. Never gets its own pin on the world map; belongs on its named
+    #: hub's small map instead. `map_position` still applies, but as a
+    #: position within that small map rather than on the world one. Exits,
+    #: scenes, and entities are unaffected — this only changes where a place
+    #: is drawn.
+    submap_of: LocationRef | None = None
+
     @property
     def starts_discovered(self) -> bool:
         """Whether the player begins the game knowing this place exists.

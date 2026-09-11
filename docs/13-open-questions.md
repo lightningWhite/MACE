@@ -274,20 +274,24 @@ Not yet worth deciding, listed so they aren't forgotten:
   player play?'" without knowing the schema. Would need the problem list to
   carry (or look up) the step id a field belongs to, so the wizard could both
   say the human question and highlight its control.
-- **Submaps for a single location.** `Location` has no `parent`/`interior`/
-  `contains` field (see `src/mace/model/location.py`) — a castle is one
-  location, full stop. Raised by an author (2026-09-10): a castle's grounds,
-  corridors, quarters and dungeon want to be *places on their own small map*
-  without each becoming a pin on the world map and cluttering it. Whatever
-  this becomes has to answer: is a room a `Location` with a `parent` (reusing
-  `exits`/`scenes`/`entities` as-is, one more field) or a distinct nested-map
-  concept; does the world map keep showing "at the castle" as one pin while
-  the sub-map is open; and does travel time / encounter resolution treat a
-  move between rooms differently from a move between world locations (rooms
-  presumably don't roll world encounters or burn a full route leg). The
-  `region.py:39` docstring's aside about "an undercity or a station interior"
-  is the only prior thought on record, and it's about climate-less regions,
-  not nested maps — this is a different problem.
+- **Submaps for a single location — RESOLVED (2026-09-11).** `Location.submapOf`
+  (a plain `LocationRef`, nothing else new in the content model) names the hub
+  a room is inside. It never gets a pin of its own on the world map — engine,
+  travel, and encounters are all completely unaffected, because exits, scenes,
+  entities, and route resolution never cared whether a location had a map pin
+  in the first place. This was purely a *projection* change: `mace.session.view`
+  gained a second, small `Atlas` (`View.submap`) built by excluding
+  `submapOf` locations from the world atlas and including them in their hub's
+  instead, reusing `_place`/`_road`/`_underway` unchanged; the web client
+  draws it with the same `MapView` component the world map uses. Full detail
+  in [Travel & Encounters § "A hub's own small map"](06-travel-and-encounters.md#a-hubs-own-small-map).
+  Wizard authoring is in scope too, not deferred: `location.submapOf` is an
+  ordinary `Select`/`Query` wizard step (the same shape `entity.extends`
+  already was), and the map editor's canvas gained a drill-down — a badge on
+  a hub, a scoped small canvas, a way back — described in
+  [Authoring & the Wizard § "The map editor"](09-authoring-and-wizard.md#the-map-editor).
+  One level of nesting is what's built and tested; a room inside a room inside
+  a room is undesigned, not guarded against.
 - **Elevation on the map and in travel — RESOLVED (2026-09-11).** Turned out
   smaller than it looked. Rain
   converting to snow at altitude was **already built**: `WeatherCondition.freezes_to`
