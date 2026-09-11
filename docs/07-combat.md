@@ -319,3 +319,34 @@ enemy:
 Everything else — moves, tells, patterns, counters — comes from the library
 profile. An author who wants a signature enemy writes a custom profile; an author
 who wants a bandit gets a good fight for four lines.
+
+A stat or a move's damage may also be authored relative to the player's own
+numbers, instead of an absolute figure meaningful only next to whatever scale
+a particular game picked:
+
+```yaml
+- id: bridge-troll
+  kind: actor
+  name: "Bridge Troll"
+  stats:
+    hitpoints: {base: {relativeToPlayer: {stat: hitpoints, factor: 3}}, max: 200}
+combatProfiles:
+  - id: troll-style
+    moves: [club-overhead]
+moves:
+  - id: club-overhead
+    kind: attack
+    type: overhead
+    tell: "The troll hauls the club up over its head."
+    damage:
+      min: {relativeToPlayer: {stat: hitpoints, factor: 0.15}}
+      max: {relativeToPlayer: {stat: hitpoints, factor: 0.25}}
+```
+
+"3x the player's hitpoints" and "15–25% of the player's hitpoints per hit"
+read the same whether a game's hitpoints run 0–10 or 0–10,000, so a library
+troll built this way fights sensibly in every game that uses it rather than
+needing per-game retuning. Resolved against the player's stat *cap*, not
+their current pool — a monster's stats resolve once, at the moment it's
+spawned, and a hit's damage resolves fresh on every roll. See
+[Schema Reference § RelativeValue](04-schema-reference.md#relativevalue).

@@ -50,12 +50,21 @@ Step(
 )
 ```
 
-Field types (`mace.wizard.fields`): `Text`, `TextList`, `Number`, `Bool`,
-`Select`, `MultiSelect`, `StatAllocator`, `ConditionBuilder`, `EffectBuilder`,
-`MapEditor`, `Repeat`. Each one answers two questions — `describe`, what the
-current value is in English, and `parse`, how to read one typed line — which is
-what keeps the terminal renderer thin and the field types testable without a
-terminal. The ones a builder drives instead say so with `interactive`.
+Field types (`mace.wizard.fields`): `Text`, `TextList`, `Number`,
+`RelativeNumber`, `Bool`, `Select`, `MultiSelect`, `StatAllocator`,
+`ConditionBuilder`, `EffectBuilder`, `MapEditor`, `Repeat`. Each one answers
+two questions — `describe`, what the current value is in English, and
+`parse`, how to read one typed line — which is what keeps the terminal
+renderer thin and the field types testable without a terminal. The ones a
+builder drives instead say so with `interactive`.
+
+`RelativeNumber` is the odd one out: it holds either a plain number or a
+reference to the player's own stat (`{relativeToPlayer: {stat, factor}}`,
+[docs/04-schema-reference.md § RelativeValue](04-schema-reference.md#relativevalue)) —
+`3xhitpoints` typed in the CLI, or a factor plus a picker of the player's own
+stat names in the browser. `StatAllocator`'s own entries (a stat's `base`/
+`max`) carry the same duality, one fixed/relative toggle per number, since a
+statblock is several of these at once rather than one field on its own.
 
 `Query` is the piece that fixes the biggest v0 gap: it asks the loaded project
 and its libraries for valid options, so the author picks `Bridge Troll` from a
@@ -69,6 +78,16 @@ still offered as an actor.
 A step's **binding** says where the answer goes — `locations[{id}].entities`,
 `game.player.startLocation`. Bindings read through `extends` as well, so the
 wizard does not ask again about a field an object already has from its parent.
+
+A step may also carry `visible_when` — another step's id in the same flow,
+and the value it must currently hold: `("entity.kind", "item")` for a step
+that only makes sense on an item. Resolved server-side
+(`Flow.visible`) against whatever that sibling is currently answered, and
+sent to the browser as a plain `visible` boolean per step rather than making
+the client re-derive the lookup itself; the CLI calls `Flow.visible`
+directly. This is what keeps `entity.item.*` off an actor's screen (`Entity`'s
+own validator rejects an actor with an `item:` block at all) and a move's
+`tell` off a defense's.
 
 ## The condition and effect builders
 

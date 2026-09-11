@@ -202,6 +202,24 @@ stats:
   the `raiseMax` effect, session-only growth that never touches content —
   see [How-Tos § "Grow a stat's cap"](14-how-tos.md#grow-a-stats-cap).
 - `customizable: true` — the player may spend creation points here at game start.
+  Cannot be combined with a relative `base`/`max` (below) — a customizable
+  stat is the player's own, and relative-to-itself is nonsense.
+
+`base`/`max` may also be written relative to the player's own stat, instead
+of a literal number:
+
+```yaml
+stats:
+  hitpoints: {base: {relativeToPlayer: {stat: hitpoints, factor: 3}}, max: 200}
+```
+
+Resolved against the player's stat *cap*, once, at the moment this entity is
+instantiated — it does not rescale later if the player's own stats change.
+This is what makes a library monster's toughness read the same regardless of
+whether a game's hitpoints run 0–10 or 0–10,000. `Damage.min`/`max` (a
+weapon's or a move's damage bound) take the same shape, resolved fresh every
+roll instead. See
+[Schema Reference § RelativeValue](04-schema-reference.md#relativevalue).
 
 At runtime, the **effective value** of a stat is computed through a fixed
 pipeline. Order is fixed so results are reproducible and explainable to the

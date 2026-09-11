@@ -337,28 +337,43 @@ Not yet worth deciding, listed so they aren't forgotten:
   settled in this list, given how central [ADR-0006](decisions/0006-tempo-combat.md)'s
   tempo model already is to combat's shape.
 - **Damage and hitpoints as absolute numbers, not portable across games with
-  different scales.** `Damage` (`src/mace/model/entity.py`) is `min`/`max`
-  floats, plain and absolute, and so is every stat pool's `base`/`max` — a
-  weapon authored to deal `8-12` and a monster authored with `400` hitpoints
-  are both magic numbers meaningful only next to whatever scale that
-  particular game picked. Raised by the user (2026-09-11): store a weapon's
-  or monster's power *relative to the player's own numbers* instead — "this
-  is a strong monster" or "this is a strong weapon," true in every game
-  regardless of whether hitpoints run 0–10 or 0–10,000 — so content imported
-  from one game's library reads sensibly in another's. Distinct from the
-  existing "should a monster's pools have to match the player's" bullet
-  above: that one is about pool *identity* (does `hull-integrity` need to be
-  `hitpoints`), this one is about pool *magnitude* (does `50` need to mean
-  the same thing everywhere). Genuinely unexplored — no mention of relative
-  or percentage-based damage anywhere in `docs/03-content-model.md` or
-  `docs/07-combat.md` today. Real questions before this is buildable: relative
-  to the player's *current* numbers or their *authored baseline* (the player
-  changes over a playthrough; a monster shouldn't rescale as they level);
-  whether `power()`'s existing `NEUTRAL_STAT = 50` normalization
-  (`src/mace/engine/combat/resolution.py`) is the right hook to extend or a
-  separate mechanism; and whether this replaces absolute `Damage` or sits
-  beside it as an authoring convenience that compiles down to the same
-  absolute numbers the engine already resolves against.
+  different scales — RESOLVED (2026-09-11).** `Damage.min`/`max` and
+  `Stat.base`/`max` (`src/mace/model/entity.py`) now accept either a
+  literal number or `{relativeToPlayer: {stat, factor}}` — a new
+  `RelativeStat`/`RelativeValue` type, coerced the same way `AuthoredValue`
+  coerces `{expr: "..."}`, but as a dedicated structured type rather than a
+  reuse of the expression evaluator (a raw expression would have been
+  wizard-invisible, the same gap `AdjustStat.delta` already has — see
+  `docs/09-authoring-and-wizard.md`).
+  - Resolved against the player's stat *cap*, not their fluctuating current
+    value. A `Damage` bound resolves fresh on every roll
+    (`mace.engine.stats.resolve_relative`, called from
+    `mace.engine.combat.fight._incoming`/`_opening`); a `Stat.base`/`max`
+    resolves once, at instantiation (`EntityState.pools` /
+    `EntityState.resolved_stats`), so a monster does not quietly rescale
+    mid-playthrough if the player's own stats change afterward — the same
+    answer this bullet's "current vs. authored baseline" question was
+    asking.
+  - A `customizable` stat cannot be relative to the player (self-referential
+    — it *is* the player's own stat).
+  - Fully wizard-native, in both the CLI and the browser: a stat's
+    base/cap gets a fixed-or-relative toggle inside its `StatAllocator`
+    entry; a damage bound gets its own field type,
+    `mace.wizard.fields.RelativeNumber` (`3xhitpoints` in the CLI, a
+    factor + a picker of the player's own stat names in the browser).
+  - This closed a second, larger gap along the way: nothing in the wizard
+    touched `moves`, `combatProfiles`, or any `ItemProps` field before this
+    (independent of relative values — a pre-existing hole). New `MOVE`/
+    `COMBAT_PROFILE` flows and the `entity.item.*`/`entity.combat.moves`
+    steps close it, using a new `Step.visible_when` mechanism (resolved
+    server-side, sent to the browser as a plain boolean) so an item-only
+    field never shows — or gets answered — on an actor, and a move's
+    `tell` only shows for an attack.
+  - Left for later: `entity.equipment`/`entity.skills` (a
+    `Mapping[str, ref]` shape with no existing wizard field-type precedent
+    besides `StatAllocator`'s bespoke one); `Pattern.sequence` scoped to
+    the owning profile's own `moves` rather than the whole collection
+    (the model doesn't enforce that subset relationship either).
 - **The play map has no pan or zoom.** `web/src/map/Map.tsx` fits everything
   into a static `viewBox` once per render (`fit()`, `web/src/map/layout.ts`)
   and never touches it again — no wheel, drag-to-pan, or reset control.

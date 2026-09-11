@@ -63,11 +63,33 @@ The universal noun. Files under `entities/`.
 
 | Field | Type | Notes |
 |---|---|---|
-| `base` | number | Value before any modifier. |
-| `max` | number? | Cap. Defaults to 100 for abilities; required for pools. |
+| `base` | number \| RelativeValue | Value before any modifier. |
+| `max` | number \| RelativeValue? | Cap. Defaults to 100 for abilities; required for pools. |
 | `min` | number? | Default 0. |
-| `customizable` | bool? | Player may spend creation points here. |
+| `customizable` | bool? | Player may spend creation points here. Cannot be `RelativeValue` — a customizable stat is the player's own, and relative-to-itself is nonsense. |
 | `growth` | `none`\|`slow`\|`normal`\|`fast`? | How fast it improves through use. Default `none`. |
+
+### RelativeValue
+
+Anywhere a `Stat`'s `base`/`max` or a `Damage`'s `min`/`max` is a
+`RelativeValue`, an author may write a plain number, *or* a multiple of the
+player's own stat:
+
+```yaml
+stats:
+  hitpoints: {base: {relativeToPlayer: {stat: hitpoints, factor: 3}}, max: 200}
+```
+
+`factor` defaults to `1`. Resolved against the player's stat **cap**, not
+their fluctuating current value — a `Damage` bound resolves fresh on every
+roll; a `Stat.base`/`max` resolves once, at the moment the entity is
+instantiated, and does not rescale afterward even if the player's own stats
+later change. This is what makes "a strong monster" or "a strong weapon" a
+statement that reads the same whether a game's hitpoints run 0–10 or
+0–10,000, so content built for one game's scale still makes sense imported
+into another's. Fully wizard-native in both the CLI (`3xhitpoints`) and the
+browser (a fixed/relative toggle with a picker of the player's own stats) —
+see [`docs/09-authoring-and-wizard.md`](09-authoring-and-wizard.md).
 
 ### ItemProps
 
@@ -76,7 +98,7 @@ The universal noun. Files under `entities/`.
 | `weight` | number? | |
 | `stackable` | bool? | Default true for items with no state. |
 | `equipSlot` | str? | Which slot it occupies when equipped. |
-| `damage` | {min, max, type}? | For weapons. `type` is author-defined (`slash`, `pierce`, `plasma`). |
+| `damage` | {min, max, type}? | For weapons. `type` is author-defined (`slash`, `pierce`, `plasma`). `min`/`max` may each be a plain number or `RelativeValue` (see [Stat](#stat)). |
 | `armor` | number? | Damage reduction. |
 | `moves` | [Ref]? | Combat moves this weapon grants its wielder. |
 | `use` | {effects: [Effect], consumed?: bool}? | What happens when used from inventory. |
@@ -842,7 +864,7 @@ Collection: `moves`.
 | `vagueTell` | Description? | What a low `tellClarity` shows instead. Without one, an unclear tell is withheld. |
 | `windupMs` | int | How long the defender has, before their speed widens it. Default 1000. |
 | `counters` | [str] | Defense types that beat this attack. |
-| `damage` | {min, max, type?}? | What it does when it lands. A *defense* may carry damage too — that is what `strike` is. |
+| `damage` | {min, max, type?}? | What it does when it lands. A *defense* may carry damage too — that is what `strike` is. `min`/`max` may each be a plain number or `RelativeValue` (see [Stat](#stat)). |
 | `cost` | number | Effort-pool cost. |
 | `mitigation` | number | Defenses only, 0–1. The share of damage stopped when the read was right but the timing was not. |
 | `feint` | bool | A windup that means nothing. Its `counters` is the one right answer. |
