@@ -30,6 +30,7 @@ from mace.content import ContentError, Library
 from mace.engine.stats import DEFAULT_ABILITY_MAX
 from mace.model import Background, Entity, Game
 from mace.model.background import StatGrant
+from mace.model.entity import RelativeStat
 
 __all__ = [
     "BackgroundOffer",
@@ -265,9 +266,9 @@ def offer(library: Library, pack_id: str, *, background: str | None = None) -> C
         stats=tuple(
             StatOffer(
                 stat=name,
-                base=_granted(granted.get(name), float(stat.base)),
+                base=_granted(granted.get(name), _literal(stat.base)),
                 minimum=float(stat.min),
-                maximum=_cap(stat.max),
+                maximum=_cap(_literal(stat.max) if stat.max is not None else None),
             )
             for name, stat in (protagonist.stats or {}).items()
             if stat.customizable
@@ -291,6 +292,29 @@ def _granted(grant: object, base: float) -> float:
         What the player starts from.
     """
     return base if not isinstance(grant, StatGrant) else grant.apply(base)
+
+
+def _literal(value: float | RelativeStat) -> float:
+    """A customizable stat's own `base`/`max`, as a plain number.
+
+    Always literal for a `customizable` stat — `Stat`'s own validator
+    (`mace.model.entity`) rejects a customizable stat whose `base`/`max` is
+    relative to the player, since a customizable stat *is* the player's own
+    and relative-to-itself is nonsense. The assertion is what makes that
+    invariant visible here rather than just at the model boundary.
+
+    Parameters
+    ----------
+    value : float or RelativeStat
+        The declared value.
+
+    Returns
+    -------
+    float
+        The literal value.
+    """
+    assert isinstance(value, int | float), "a customizable stat must be literal"
+    return float(value)
 
 
 def check(creation: Creation, character: Character) -> tuple[str, ...]:
