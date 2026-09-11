@@ -1,0 +1,8 @@
+id: the-lost-heir
+name: The Lost Heir
+version: 0.1.0
+kind: game
+maceVersion: ^0.1
+requires:
+  - id: fantasy.core
+    version: ^0.1

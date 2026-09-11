@@ -1,0 +1,40 @@
+game:
+  name: The Lost Heir
+  tagline: The heir to the throne is lost. Find and restore him to his rightful place before the kingdom is overthrown.
+  introduction:
+    - Your head hurts... Your eyes flutter open as you gasp for breath. There's not much light - wherever you are.
+    - The air reeks of filth. As you slowly start to sit up, you hear the echo of strange words in your head - a spell? It fades fast as you slowly regain consciousness. "Where am I? How did I get here?", you wonder. As you strain your eyes in the darkness, you realize that you're in some sort of cave. Bones litter the ground.
+    - In the corner, you see what appears to be a filth pile of straw - obviously the sleeping place of whatever dwells in this foul place. You're dressed in ragged peasant clothing and have nothing else. As your mind clears, you feel an urgency that you must leave before whatever lives here returns.
+    - As you stand up, you wince realizing that whoever brought you here didn't do so softly. What did they do to me and why? An that spell... Was it used to wipe my memories? You feel a deep need to figure out who you are, who did this to you, and why. The questions have answers - you know that. But first - you know you need to get out of this place before it's too late...
+  player:
+    creationPoints: 0
+    startLocation: scorg-s-cave
+    entity: young-man
+    backgrounds:
+      - memory-wiped
+  world:
+    calendar: mace.core:standard-year
+    minutesPerTick: 60
+    startTick: 24
+    startSeason: autumn
+  rules:
+    vitalPool: hitpoints
+    effortPool: stamina
+    combatMode: reflex
+    survival:
+      - exposure
+      - rest
+      - hunger
+      - thirst
+    economy: market
+    currency: fantasy.core:gold
+  difficulty: hard
+  quests:
+    - get-to-safety-and-prepare-for-the-quest-of-finding-out-who-you-are
+  winConditions:
+    - atLocation:
+        location: fairvale
+  loseConditions:
+    - statAtMost:
+        stat: hitpoints
+        value: 0

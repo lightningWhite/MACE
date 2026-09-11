@@ -1,0 +1,60 @@
+locations:
+  - id: scorg-s-cave
+    name: Scorg's Cave
+    description:
+      - A foul dark cave with bones scattered across the ground. A filthy straw pile in the corner.
+    entities:
+      - fantasy.core:dagger
+      - fantasy.core:gold
+      - rock
+    onArrive: mace.core:nothing-happens
+    mapPosition:
+      x: 146
+      y: 36
+    exits:
+      - to: the-black-forest
+        route: scorg-s-trail
+        label: Exit the cave
+    scenes:
+      - mace.core:sleep-until-morning
+      - mace.core:wait-here
+      - mace.core:rest-a-while
+      - skorg-s-cave
+    indoors: true
+    safe: true
+  - id: fairvale
+    name: Fairvale
+    description:
+      - A small mountain village with kind people and helpful resources.
+    safe: true
+    entities:
+      - fantasy.core:villager
+    scenes:
+      - mace.core:rest-a-while
+      - mace.core:sleep-until-morning
+      - mace.core:wait-here
+    onArrive: mace.core:nothing-happens
+    exits:
+      - to: the-black-forest
+        route: the-trail-of-dread
+        label: Take the dangerous Trail of Dread to the Black Forest.
+    mapPosition:
+      x: -2
+      y: -16
+  - id: the-black-forest
+    name: The Black Forest
+    description:
+      - A forest full of evil. It's old with large, mossy trees. The forest floor hasn't seen sunlight in centuries.
+    safe: true
+    entities:
+      - fantasy.core:wolf
+    mapPosition:
+      x: 140
+      y: 0
+    exits:
+      - to: scorg-s-cave
+        route: scorg-s-trail
+        label: Take the winding trail into the rocks.
+      - to: fairvale
+        route: the-trail-of-dread
+        label: Take the treacherous trail through the deep, exposed crevasse.

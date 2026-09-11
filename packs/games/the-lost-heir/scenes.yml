@@ -1,0 +1,66 @@
+scenes:
+  - id: skorg-s-cave
+    prompt: Search the cave
+    when:
+      - atLocation:
+          location: scorg-s-cave
+    say:
+      - The cave is filthy, but maybe there's something worth looking for in here.
+    effects:
+      - giveItem:
+          item: rock
+      - giveItem:
+          item: fantasy.core:dagger
+      - giveItem:
+          item: fantasy.core:gold
+          qty: 15
+    once: true
+    else: mace.core:nothing-happens
+    goto: skorg-discovers-you
+
+  - id: skorg-discovers-you
+    say:
+      - You were too noisy while searching the cave! An ugly goblin has discovered you!
+    effects:
+      - spawnEntity:
+          entity: scorg
+          at: scorg-s-cave
+    once: true
+    when:
+      - atLocation:
+          actor: scorg
+          location: scorg-s-cave
+      - atLocation:
+          location: scorg-s-cave
+    choices:
+      - prompt: Talk to the goblin
+        goto: skorg-gives-info
+
+  - id: skorg-gives-info
+    say:
+      - Ah... dinner is finally stirring! I almost thought ye was dead after the wizard wiped yer memory heh heh. You wasn't thinking of leavin' ol' Skorg were ya?
+    choices:
+      - prompt: Fight the Skorg
+        effects:
+          - startCombat:
+              against:
+                - scorg
+      - prompt: Try to escape
+        when:
+          - chance: 0.2
+          - statAtLeast:
+              stat: stamina
+              value: 10
+        unavailableHint: Your stamina is too low!
+
+  - id: the-black-forest
+    prompt: Search the forest
+    when:
+      - atLocation:
+          location: the-black-forest
+    say:
+      - The forest is old and full of evil, but fortune seems to be on your side.
+    effects:
+      - giveItem:
+          item: fantasy.core:healing-draught
+    once: true

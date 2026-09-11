@@ -1,0 +1,44 @@
+quests:
+  - id: get-to-safety-and-prepare-for-the-quest-of-finding-out-who-you-are
+    name: Get to safety and prepare for the quest of finding out who you are
+    summary: Escape the cave, brave the Dark Forest, survive the Trail of Dread, make it to Fairvale alive, and obtain supplies and equipment for your next quest of figuring out who you are.
+    stages:
+      - id: in-the-cave
+        journal: In the cave. Don't know who or where I am. Get out alive.
+        complete:
+          - atLocation:
+              location: the-black-forest
+        fail:
+          - statAtMost:
+              stat: hitpoints
+              value: 0
+        onEnter:
+          - damage:
+              actor: player
+              amount: 10
+              reason: A memory wiping spell
+      - id: on-skorgs-trail
+        journal: Get away from the cave's vicinity safely.
+        fail:
+          - statAtMost:
+              stat: hitpoints
+              value: 0
+        onEnter:
+          - spawnEntity: scorg
+        complete:
+          - atLocation:
+              location: the-black-forest
+      - id: get-out-of-black-forest
+        journal: I need to find a village or somewhere to get my feet under me.
+        complete:
+          - atLocation:
+              location: fairvale
+        fail:
+          - statAtMost:
+              stat: hitpoints
+              value: 0
+        deadlineTicks: 10
+    onComplete:
+      - rest: {}
+    onFail:
+      - endGame: {}
