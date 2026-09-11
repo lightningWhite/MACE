@@ -417,6 +417,76 @@ def test_a_statblock_entry_may_be_relative_to_the_player(project: Project) -> No
     }
 
 
+def test_a_move_can_be_authored_from_the_wizard(project: Project) -> None:
+    drive(
+        project,
+        "10",  # moves
+        "n",
+        "Overhead smash",
+        "2",  # move.kind
+        "1",  # attack
+        "3",  # move.type
+        "overhead",
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    held = dict(project.get("moves", "overhead-smash") or {})
+    assert held["kind"] == "attack"
+    assert held["type"] == "overhead"
+
+
+def test_an_attack_moves_tell_question_appears_once_kind_is_set(
+    project: Project,
+) -> None:
+    """`visible_when` responds to the sibling answer, in the terminal too."""
+    shown = drive(
+        project,
+        "10",  # moves
+        "n",
+        "Swing",
+        "2",  # move.kind
+        "1",  # attack
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    assert "How is it telegraphed?" in shown
+
+
+def test_a_defense_moves_tell_question_stays_hidden(project: Project) -> None:
+    shown = drive(
+        project,
+        "10",  # moves
+        "n",
+        "Dodge",
+        "2",  # move.kind
+        "2",  # defense
+        "b",
+        "b",
+        "q",
+        "n",
+    )
+
+    assert "How is it telegraphed?" not in shown
+
+
+def test_an_actors_item_steps_are_absent_from_the_menu(project: Project) -> None:
+    shown = drive(project, "3", "n", "Bandit", "b", "b", "q", "n")
+
+    assert "Minimum damage, if it's a weapon?" not in shown
+
+
+def test_an_items_steps_include_weapon_damage(project: Project) -> None:
+    shown = drive(project, "4", "n", "Dagger", "b", "b", "q", "n")
+
+    assert "Minimum damage, if it's a weapon?" in shown
+
+
 def test_exporting_writes_a_pack_somebody_else_can_open(
     quest: Project, tmp_path: Path
 ) -> None:

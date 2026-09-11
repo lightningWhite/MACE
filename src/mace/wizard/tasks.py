@@ -169,6 +169,22 @@ SECTIONS: tuple[Section, ...] = (
         flow="backgrounds",
         help="Who the protagonist could have been, and what they get to choose.",
     ),
+    Section(
+        id="moves",
+        title="Moves",
+        collections=("moves",),
+        flow="moves",
+        noun=("move", "moves"),
+        help="What a fighter can do — a swing, a dodge, a roar that means nothing.",
+    ),
+    Section(
+        id="combatProfiles",
+        title="Combat profiles",
+        collections=("combatProfiles",),
+        flow="combatProfiles",
+        noun=("profile", "profiles"),
+        help="Which moves something knows, and how it favors using them.",
+    ),
 )
 
 

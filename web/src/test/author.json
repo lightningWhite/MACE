@@ -11,7 +11,7 @@
     "unreadable": [],
     "desk": {
       "name": "A Peasant's Quest",
-      "percent": 89,
+      "percent": 73,
       "problems": 0,
       "errors": 0,
       "tasks": [
@@ -134,6 +134,32 @@
           "collections": [
             "backgrounds"
           ]
+        },
+        {
+          "section": "moves",
+          "title": "Moves",
+          "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "moves",
+          "collections": [
+            "moves"
+          ]
+        },
+        {
+          "section": "combatProfiles",
+          "title": "Combat profiles",
+          "help": "Which moves something knows, and how it favors using them.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "combatProfiles",
+          "collections": [
+            "combatProfiles"
+          ]
         }
       ]
     },
@@ -151,7 +177,7 @@
       "unreadable": [],
       "desk": {
         "name": "A Peasant's Quest",
-        "percent": 89,
+        "percent": 73,
         "problems": 0,
         "errors": 0,
         "tasks": [
@@ -273,6 +299,32 @@
             "flow": "backgrounds",
             "collections": [
               "backgrounds"
+            ]
+          },
+          {
+            "section": "moves",
+            "title": "Moves",
+            "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+            "state": "empty",
+            "summary": "nothing yet",
+            "note": "",
+            "errors": 0,
+            "flow": "moves",
+            "collections": [
+              "moves"
+            ]
+          },
+          {
+            "section": "combatProfiles",
+            "title": "Combat profiles",
+            "help": "Which moves something knows, and how it favors using them.",
+            "state": "empty",
+            "summary": "nothing yet",
+            "note": "",
+            "errors": 0,
+            "flow": "combatProfiles",
+            "collections": [
+              "combatProfiles"
             ]
           }
         ]
@@ -357,7 +409,7 @@
       "unreadable": [],
       "desk": {
         "name": "A Peasant's Quest",
-        "percent": 89,
+        "percent": 73,
         "problems": 0,
         "errors": 0,
         "tasks": [
@@ -479,6 +531,32 @@
             "flow": "backgrounds",
             "collections": [
               "backgrounds"
+            ]
+          },
+          {
+            "section": "moves",
+            "title": "Moves",
+            "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+            "state": "empty",
+            "summary": "nothing yet",
+            "note": "",
+            "errors": 0,
+            "flow": "moves",
+            "collections": [
+              "moves"
+            ]
+          },
+          {
+            "section": "combatProfiles",
+            "title": "Combat profiles",
+            "help": "Which moves something knows, and how it favors using them.",
+            "state": "empty",
+            "summary": "nothing yet",
+            "note": "",
+            "errors": 0,
+            "flow": "combatProfiles",
+            "collections": [
+              "combatProfiles"
             ]
           }
         ]
@@ -675,7 +753,7 @@
       "unreadable": [],
       "desk": {
         "name": "A Peasant's Quest",
-        "percent": 89,
+        "percent": 73,
         "problems": 0,
         "errors": 0,
         "tasks": [
@@ -798,6 +876,32 @@
             "collections": [
               "backgrounds"
             ]
+          },
+          {
+            "section": "moves",
+            "title": "Moves",
+            "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+            "state": "empty",
+            "summary": "nothing yet",
+            "note": "",
+            "errors": 0,
+            "flow": "moves",
+            "collections": [
+              "moves"
+            ]
+          },
+          {
+            "section": "combatProfiles",
+            "title": "Combat profiles",
+            "help": "Which moves something knows, and how it favors using them.",
+            "state": "empty",
+            "summary": "nothing yet",
+            "note": "",
+            "errors": 0,
+            "flow": "combatProfiles",
+            "collections": [
+              "combatProfiles"
+            ]
           }
         ]
       },
@@ -868,7 +972,7 @@
     "unreadable": [],
     "desk": {
       "name": "A Peasant's Quest",
-      "percent": 89,
+      "percent": 73,
       "problems": 0,
       "errors": 0,
       "tasks": [
@@ -990,6 +1094,32 @@
           "flow": "backgrounds",
           "collections": [
             "backgrounds"
+          ]
+        },
+        {
+          "section": "moves",
+          "title": "Moves",
+          "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "moves",
+          "collections": [
+            "moves"
+          ]
+        },
+        {
+          "section": "combatProfiles",
+          "title": "Combat profiles",
+          "help": "Which moves something knows, and how it favors using them.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "combatProfiles",
+          "collections": [
+            "combatProfiles"
           ]
         }
       ]
@@ -2238,7 +2368,7 @@
     "unreadable": [],
     "desk": {
       "name": "A Peasant's Quest",
-      "percent": 89,
+      "percent": 73,
       "problems": 0,
       "errors": 0,
       "tasks": [
@@ -2360,6 +2490,32 @@
           "flow": "backgrounds",
           "collections": [
             "backgrounds"
+          ]
+        },
+        {
+          "section": "moves",
+          "title": "Moves",
+          "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "moves",
+          "collections": [
+            "moves"
+          ]
+        },
+        {
+          "section": "combatProfiles",
+          "title": "Combat profiles",
+          "help": "Which moves something knows, and how it favors using them.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "combatProfiles",
+          "collections": [
+            "combatProfiles"
           ]
         }
       ]
@@ -3413,7 +3569,7 @@
     "unreadable": [],
     "desk": {
       "name": "A Peasant's Quest",
-      "percent": 89,
+      "percent": 73,
       "problems": 0,
       "errors": 0,
       "tasks": [
@@ -3535,6 +3691,32 @@
           "flow": "backgrounds",
           "collections": [
             "backgrounds"
+          ]
+        },
+        {
+          "section": "moves",
+          "title": "Moves",
+          "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "moves",
+          "collections": [
+            "moves"
+          ]
+        },
+        {
+          "section": "combatProfiles",
+          "title": "Combat profiles",
+          "help": "Which moves something knows, and how it favors using them.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "combatProfiles",
+          "collections": [
+            "combatProfiles"
           ]
         }
       ]
@@ -4652,7 +4834,7 @@
     "unreadable": [],
     "desk": {
       "name": "A Peasant's Quest",
-      "percent": 89,
+      "percent": 73,
       "problems": 0,
       "errors": 0,
       "tasks": [
@@ -4774,6 +4956,32 @@
           "flow": "backgrounds",
           "collections": [
             "backgrounds"
+          ]
+        },
+        {
+          "section": "moves",
+          "title": "Moves",
+          "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "moves",
+          "collections": [
+            "moves"
+          ]
+        },
+        {
+          "section": "combatProfiles",
+          "title": "Combat profiles",
+          "help": "Which moves something knows, and how it favors using them.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "combatProfiles",
+          "collections": [
+            "combatProfiles"
           ]
         }
       ]
@@ -5349,6 +5557,455 @@
           "entries": null
         },
         {
+          "id": "entity.combat.moves",
+          "title": "Does it know any extra moves, beyond its profile?",
+          "help": "On top of whatever its combat profile already grants \u2014 a veteran with the same style as every other guard, but one move they alone have picked up.",
+          "optional": true,
+          "binds": "entities[{id}].combat.moves",
+          "value": "profile='bridge-troll-profile' moves=()",
+          "described": "profile='bridge-troll-profile' moves=() (?)",
+          "answered": true,
+          "visible": true,
+          "field": {
+            "kind": "multi-select",
+            "optional": false,
+            "interactive": false,
+            "hint": "numbers separated by commas, or blank for none",
+            "options": [
+              {
+                "value": "fantasy.core:bite",
+                "label": "Bite",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:block",
+                "label": "Block",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:club-overhead",
+                "label": "Overhead smash",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:club-sweep",
+                "label": "Low sweep",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:dodge",
+                "label": "Dodge",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:duelist-feint",
+                "label": "Feint",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:fists",
+                "label": "Swing",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:jump",
+                "label": "Jump",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:lunge",
+                "label": "Lunge",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:parry",
+                "label": "Parry",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:shield-shove",
+                "label": "Shield shove",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:strike",
+                "label": "Strike",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:sword-slash",
+                "label": "Slash",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:sword-thrust",
+                "label": "Thrust",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:troll-grab",
+                "label": "Grab",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:troll-roar",
+                "label": "Roar",
+                "note": "fantasy.core",
+                "scope": ""
+              }
+            ],
+            "allowCreate": "moves",
+            "minItems": 0,
+            "freeText": false
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.weight",
+          "title": "How much does it weigh?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.weight",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "number",
+            "optional": true,
+            "interactive": false,
+            "hint": "0 or more",
+            "minimum": 0,
+            "maximum": null,
+            "integer": false
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.stackable",
+          "title": "Do copies of it stack into one inventory entry?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.stackable",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "bool",
+            "optional": true,
+            "interactive": false,
+            "hint": "y / n"
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.equipSlot",
+          "title": "What slot does it go in, if it can be worn or wielded?",
+          "help": "Free-form \u2014 a name your own pack's equip slots agree on.",
+          "optional": true,
+          "binds": "entities[{id}].item.equipSlot",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "text",
+            "optional": true,
+            "interactive": false,
+            "hint": "e.g. mainHand",
+            "placeholder": "mainHand"
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.damage.min",
+          "title": "Minimum damage, if it's a weapon?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.damage.min",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "relative-number",
+            "optional": true,
+            "interactive": false,
+            "hint": "0 or more, or `3xhitpoints` for 3x the player's own hitpoints",
+            "minimum": 0,
+            "playerStats": [
+              "charisma",
+              "endurance",
+              "hitpoints",
+              "speed",
+              "stamina",
+              "stealth",
+              "strength"
+            ]
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.damage.max",
+          "title": "Maximum damage, if it's a weapon?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.damage.max",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "relative-number",
+            "optional": true,
+            "interactive": false,
+            "hint": "0 or more, or `3xhitpoints` for 3x the player's own hitpoints",
+            "minimum": 0,
+            "playerStats": [
+              "charisma",
+              "endurance",
+              "hitpoints",
+              "speed",
+              "stamina",
+              "stealth",
+              "strength"
+            ]
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.damage.type",
+          "title": "What kind of damage does it deal?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.damage.type",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "text",
+            "optional": true,
+            "interactive": false,
+            "hint": "e.g. slash",
+            "placeholder": "slash"
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.armor",
+          "title": "How much damage does it stop, if it's worn?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.armor",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "number",
+            "optional": true,
+            "interactive": false,
+            "hint": "0 or more",
+            "minimum": 0,
+            "maximum": null,
+            "integer": false
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.moves",
+          "title": "Does holding it grant any moves?",
+          "help": "A weapon is how a fighter gets a `thrust` to answer with; a shield is how they get a `block`.",
+          "optional": true,
+          "binds": "entities[{id}].item.moves",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "multi-select",
+            "optional": false,
+            "interactive": false,
+            "hint": "numbers separated by commas, or blank for none",
+            "options": [
+              {
+                "value": "fantasy.core:bite",
+                "label": "Bite",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:block",
+                "label": "Block",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:club-overhead",
+                "label": "Overhead smash",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:club-sweep",
+                "label": "Low sweep",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:dodge",
+                "label": "Dodge",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:duelist-feint",
+                "label": "Feint",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:fists",
+                "label": "Swing",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:jump",
+                "label": "Jump",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:lunge",
+                "label": "Lunge",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:parry",
+                "label": "Parry",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:shield-shove",
+                "label": "Shield shove",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:strike",
+                "label": "Strike",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:sword-slash",
+                "label": "Slash",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:sword-thrust",
+                "label": "Thrust",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:troll-grab",
+                "label": "Grab",
+                "note": "fantasy.core",
+                "scope": ""
+              },
+              {
+                "value": "fantasy.core:troll-roar",
+                "label": "Roar",
+                "note": "fantasy.core",
+                "scope": ""
+              }
+            ],
+            "allowCreate": "moves",
+            "minItems": 0,
+            "freeText": false
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.use.effects",
+          "title": "What happens when it's used from the inventory?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.use.effects",
+          "value": null,
+          "described": "nothing happens",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "effects",
+            "optional": false,
+            "interactive": true,
+            "hint": "built one question at a time"
+          },
+          "entries": []
+        },
+        {
+          "id": "entity.item.use.consumed",
+          "title": "Is it used up?",
+          "help": "",
+          "optional": true,
+          "binds": "entities[{id}].item.use.consumed",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "bool",
+            "optional": true,
+            "interactive": false,
+            "hint": "y / n"
+          },
+          "entries": null
+        },
+        {
+          "id": "entity.item.baseValue",
+          "title": "What's it worth?",
+          "help": "The price anchor a `simple` or `market` economy prices around.",
+          "optional": true,
+          "binds": "entities[{id}].item.baseValue",
+          "value": null,
+          "described": "\u2014",
+          "answered": false,
+          "visible": false,
+          "field": {
+            "kind": "number",
+            "optional": true,
+            "interactive": false,
+            "hint": "0 or more",
+            "minimum": 0,
+            "maximum": null,
+            "integer": false
+          },
+          "entries": null
+        },
+        {
           "id": "entity.inventory",
           "title": "What is it carrying?",
           "help": "",
@@ -5762,7 +6419,7 @@
     "unreadable": [],
     "desk": {
       "name": "A Peasant's Quest",
-      "percent": 89,
+      "percent": 73,
       "problems": 0,
       "errors": 0,
       "tasks": [
@@ -5885,6 +6542,32 @@
           "collections": [
             "backgrounds"
           ]
+        },
+        {
+          "section": "moves",
+          "title": "Moves",
+          "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "moves",
+          "collections": [
+            "moves"
+          ]
+        },
+        {
+          "section": "combatProfiles",
+          "title": "Combat profiles",
+          "help": "Which moves something knows, and how it favors using them.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "combatProfiles",
+          "collections": [
+            "combatProfiles"
+          ]
         }
       ]
     },
@@ -5920,7 +6603,7 @@
     "unreadable": [],
     "desk": {
       "name": "A Peasant's Quest",
-      "percent": 78,
+      "percent": 64,
       "problems": 1,
       "errors": 0,
       "tasks": [
@@ -6042,6 +6725,32 @@
           "flow": "backgrounds",
           "collections": [
             "backgrounds"
+          ]
+        },
+        {
+          "section": "moves",
+          "title": "Moves",
+          "help": "What a fighter can do \u2014 a swing, a dodge, a roar that means nothing.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "moves",
+          "collections": [
+            "moves"
+          ]
+        },
+        {
+          "section": "combatProfiles",
+          "title": "Combat profiles",
+          "help": "Which moves something knows, and how it favors using them.",
+          "state": "empty",
+          "summary": "nothing yet",
+          "note": "",
+          "errors": 0,
+          "flow": "combatProfiles",
+          "collections": [
+            "combatProfiles"
           ]
         }
       ]

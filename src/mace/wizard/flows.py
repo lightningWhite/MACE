@@ -22,6 +22,7 @@ from mace.wizard.fields import (
     MapEditor,
     MultiSelect,
     Number,
+    RelativeNumber,
     Repeat,
     Select,
     StatAllocator,
@@ -606,6 +607,112 @@ ENTITY = Flow(
             optional=True,
         ),
         Step(
+            id="entity.combat.moves",
+            title="Does it know any extra moves, beyond its profile?",
+            binds="entities[{id}].combat.moves",
+            field=MultiSelect(options=Query("moves"), allow_create="moves"),
+            help=(
+                "On top of whatever its combat profile already grants — a "
+                "veteran with the same style as every other guard, but one "
+                "move they alone have picked up."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="entity.item.weight",
+            title="How much does it weigh?",
+            binds="entities[{id}].item.weight",
+            field=Number(minimum=0, integer=False, optional=True),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.stackable",
+            title="Do copies of it stack into one inventory entry?",
+            binds="entities[{id}].item.stackable",
+            field=Bool(optional=True),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.equipSlot",
+            title="What slot does it go in, if it can be worn or wielded?",
+            binds="entities[{id}].item.equipSlot",
+            field=Text(placeholder="mainHand", optional=True),
+            help="Free-form — a name your own pack's equip slots agree on.",
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.damage.min",
+            title="Minimum damage, if it's a weapon?",
+            binds="entities[{id}].item.damage.min",
+            field=RelativeNumber(minimum=0, optional=True),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.damage.max",
+            title="Maximum damage, if it's a weapon?",
+            binds="entities[{id}].item.damage.max",
+            field=RelativeNumber(minimum=0, optional=True),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.damage.type",
+            title="What kind of damage does it deal?",
+            binds="entities[{id}].item.damage.type",
+            field=Text(placeholder="slash", optional=True),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.armor",
+            title="How much damage does it stop, if it's worn?",
+            binds="entities[{id}].item.armor",
+            field=Number(minimum=0, integer=False, optional=True),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.moves",
+            title="Does holding it grant any moves?",
+            binds="entities[{id}].item.moves",
+            field=MultiSelect(options=Query("moves"), allow_create="moves"),
+            help=(
+                "A weapon is how a fighter gets a `thrust` to answer with; a "
+                "shield is how they get a `block`."
+            ),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.use.effects",
+            title="What happens when it's used from the inventory?",
+            binds="entities[{id}].item.use.effects",
+            field=EffectBuilder(),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.use.consumed",
+            title="Is it used up?",
+            binds="entities[{id}].item.use.consumed",
+            field=Bool(optional=True),
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
+            id="entity.item.baseValue",
+            title="What's it worth?",
+            binds="entities[{id}].item.baseValue",
+            field=Number(minimum=0, integer=False, optional=True),
+            help="The price anchor a `simple` or `market` economy prices around.",
+            optional=True,
+            visible_when=("entity.kind", "item"),
+        ),
+        Step(
             id="entity.inventory",
             title="What is it carrying?",
             binds="entities[{id}].inventory",
@@ -1074,6 +1181,243 @@ QUEST = Flow(
 )
 
 
+MOVE_KINDS = Fixed.of(
+    ("attack", "attack — telegraphed, then the player answers"),
+    ("defense", "defense — one of the answers a player can pick"),
+)
+
+MOVE = Flow(
+    id="move",
+    noun="move",
+    title="A move a fighter can make",
+    collection="moves",
+    identity=("move.type",),
+    steps=(
+        Step(
+            id="move.name",
+            title="What should we call it?",
+            binds="moves[{id}].name",
+            field=Text(placeholder="Overhead smash", optional=True),
+            help="Falls back to its id if you leave this blank.",
+            optional=True,
+        ),
+        Step(
+            id="move.kind",
+            title="Attack or defense?",
+            binds="moves[{id}].kind",
+            field=Select(options=MOVE_KINDS),
+        ),
+        Step(
+            id="move.type",
+            title="What kind of move is it?",
+            binds="moves[{id}].type",
+            field=Text(placeholder="overhead"),
+            help=(
+                "Free-form — this is the vocabulary a defense's `counters` "
+                "names, not a fixed engine list."
+            ),
+        ),
+        Step(
+            id="move.tell",
+            title="How is it telegraphed?",
+            binds="moves[{id}].tell",
+            field=TextList(
+                placeholder="The troll hauls the club up over its head.",
+            ),
+            help="Shown plainly the first few times a player faces this move.",
+            optional=True,
+            visible_when=("move.kind", "attack"),
+        ),
+        Step(
+            id="move.vagueTell",
+            title="What if the tell isn't read clearly yet?",
+            binds="moves[{id}].vagueTell",
+            field=TextList(placeholder="The troll's shoulders bunch."),
+            help=(
+                "Shown instead of the plain tell under low familiarity — "
+                "vague on purpose, so learning the move means something."
+            ),
+            optional=True,
+            visible_when=("move.kind", "attack"),
+        ),
+        Step(
+            id="move.windupMs",
+            title="How long is the windup, in milliseconds?",
+            binds="moves[{id}].windupMs",
+            field=Number(minimum=1),
+            help="1000 is an ordinary swing; slower moves telegraph longer.",
+        ),
+        Step(
+            id="move.counters",
+            title="What beats it?",
+            binds="moves[{id}].counters",
+            field=MultiSelect(options=Distinct("moves", "type"), free_text=True),
+            help="The defense `type`s that answer this move correctly.",
+            optional=True,
+        ),
+        Step(
+            id="move.damage.min",
+            title="Minimum damage?",
+            binds="moves[{id}].damage.min",
+            field=RelativeNumber(minimum=0, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="move.damage.max",
+            title="Maximum damage?",
+            binds="moves[{id}].damage.max",
+            field=RelativeNumber(minimum=0, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="move.damage.type",
+            title="What kind of damage?",
+            binds="moves[{id}].damage.type",
+            field=Text(placeholder="bludgeon", optional=True),
+            optional=True,
+        ),
+        Step(
+            id="move.cost",
+            title="What does it cost in effort?",
+            binds="moves[{id}].cost",
+            field=Number(minimum=0, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="move.mitigation",
+            title="How much does a clean read stop?",
+            binds="moves[{id}].mitigation",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help="0 to 1 — a well-read defense stops this share of the damage.",
+            optional=True,
+            visible_when=("move.kind", "defense"),
+        ),
+        Step(
+            id="move.feint",
+            title="Is this the pack's feint — a windup that means nothing?",
+            binds="moves[{id}].feint",
+            field=Bool(optional=True),
+            optional=True,
+            visible_when=("move.kind", "defense"),
+        ),
+        Step(
+            id="move.effects",
+            title="What happens when it lands?",
+            binds="moves[{id}].effects",
+            field=EffectBuilder(),
+            optional=True,
+        ),
+        Step(
+            id="move.tags",
+            title="How would you group it?",
+            binds="moves[{id}].tags",
+            field=MultiSelect(options=Distinct("moves", "tags"), free_text=True),
+            optional=True,
+        ),
+    ),
+)
+
+COMBAT_PROFILE = Flow(
+    id="combatProfile",
+    noun="combat profile",
+    title="How something fights",
+    collection="combatProfiles",
+    identity=("combatProfile.name",),
+    steps=(
+        Step(
+            id="combatProfile.name",
+            title="What should we call this way of fighting?",
+            binds="combatProfiles[{id}].name",
+            field=Text(placeholder="Bridge troll", optional=True),
+            help="Falls back to its id if you leave this blank.",
+            optional=True,
+        ),
+        Step(
+            id="combatProfile.moves",
+            title="Which moves can it make?",
+            binds="combatProfiles[{id}].moves",
+            field=MultiSelect(options=Query("moves"), allow_create="moves"),
+            help="Every attack and defense this fighter has an answer with.",
+            optional=True,
+        ),
+        Step(
+            id="combatProfile.patterns",
+            title="Does it favor any sequences?",
+            binds="combatProfiles[{id}].patterns",
+            field=Repeat(
+                of="pattern",
+                steps=(
+                    Step(
+                        id="pattern.sequence",
+                        title="Which moves, in order?",
+                        binds="patterns.sequence",
+                        field=MultiSelect(options=Query("moves")),
+                    ),
+                    Step(
+                        id="pattern.weight",
+                        title="How much more likely than the others?",
+                        binds="patterns.weight",
+                        field=Number(minimum=0, integer=False, optional=True),
+                        optional=True,
+                    ),
+                    Step(
+                        id="pattern.when",
+                        title="Only under some condition?",
+                        binds="patterns.when",
+                        field=ConditionBuilder(),
+                        optional=True,
+                    ),
+                ),
+            ),
+            help=(
+                "Left empty, it picks a legal move at random each turn. A "
+                "pattern is a sequence it favors — weighted against the "
+                "others, or only under some condition."
+            ),
+            optional=True,
+        ),
+        Step(
+            id="combatProfile.aggression",
+            title="How readily does it press a bad attack?",
+            binds="combatProfiles[{id}].aggression",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="combatProfile.feintChance",
+            title="How often does a windup mean nothing?",
+            binds="combatProfiles[{id}].feintChance",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help="Needs at least one move marked as the feint to do anything.",
+            optional=True,
+        ),
+        Step(
+            id="combatProfile.tellClarity",
+            title="How legible is its telegraph?",
+            binds="combatProfiles[{id}].tellClarity",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="combatProfile.fleeThreshold",
+            title="At what share of its health does it flee?",
+            binds="combatProfiles[{id}].fleeThreshold",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="combatProfile.tags",
+            title="How would you group it?",
+            binds="combatProfiles[{id}].tags",
+            field=MultiSelect(
+                options=Distinct("combatProfiles", "tags"), free_text=True
+            ),
+            optional=True,
+        ),
+    ),
+)
+
+
 ENCOUNTER_TABLE = Flow(
     id="encounterTable",
     noun="encounter table",
@@ -1314,9 +1658,11 @@ BACKGROUND = Flow(
 #: Every flow the wizard knows, by the collection it authors.
 FLOWS: dict[str, Flow] = {
     "backgrounds": BACKGROUND,
+    "combatProfiles": COMBAT_PROFILE,
     "encounterTables": ENCOUNTER_TABLE,
     "entities": ENTITY,
     "locations": LOCATION,
+    "moves": MOVE,
     "quests": QUEST,
     "regions": REGION,
     "routes": ROUTE,

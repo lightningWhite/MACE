@@ -560,6 +560,177 @@ def test_deleting_something_things_point_at_is_allowed_and_reported(
     assert any("castle" in one["message"] for one in studio.report())
 
 
+# ── Moves and combat profiles ───────────────────────────────────────────────
+
+
+def test_a_move_can_be_authored_end_to_end(studio: Studio) -> None:
+    studio.create(
+        "moves",
+        "Overhead smash",
+        section="moves",
+        answers={
+            "move.kind": "attack",
+            "move.type": "overhead",
+            "move.tell": ["The troll hauls the club up over its head."],
+            "move.windupMs": 1400,
+            "move.counters": ["dodge"],
+            "move.damage.min": 9,
+            "move.damage.max": 15,
+            "move.damage.type": "bludgeon",
+            "move.cost": 10,
+        },
+    )
+    held = studio.project.get("moves", "overhead-smash")
+    assert held is not None
+    assert held == {
+        "id": "overhead-smash",
+        "name": "Overhead smash",
+        "kind": "attack",
+        "type": "overhead",
+        "tell": ["The troll hauls the club up over its head."],
+        "windupMs": 1400,
+        "counters": ["dodge"],
+        "damage": {"min": 9, "max": 15, "type": "bludgeon"},
+        "cost": 10,
+    }
+
+
+def test_a_moves_damage_may_be_relative_to_the_player(studio: Studio) -> None:
+    studio.create(
+        "moves",
+        "Overhead smash",
+        section="moves",
+        answers={
+            "move.kind": "attack",
+            "move.type": "overhead",
+            "move.tell": ["..."],
+            "move.damage.min": {
+                "relativeToPlayer": {"stat": "hitpoints", "factor": 0.5}
+            },
+            "move.damage.max": {
+                "relativeToPlayer": {"stat": "hitpoints", "factor": 0.5}
+            },
+        },
+    )
+    field = step_of(studio.object("moves", "overhead-smash"), "move.damage.min")
+    assert field["described"] == "0.5x player's hitpoints"
+
+
+def test_a_defenses_tell_step_is_hidden(studio: Studio) -> None:
+    studio.create("moves", "Dodge", section="moves", answers={"move.kind": "defense"})
+    tell = step_of(studio.object("moves", "dodge"), "move.tell")
+    assert tell["visible"] is False
+
+
+def test_an_attacks_tell_step_is_visible(studio: Studio) -> None:
+    studio.create("moves", "Swing", section="moves", answers={"move.kind": "attack"})
+    tell = step_of(studio.object("moves", "swing"), "move.tell")
+    assert tell["visible"] is True
+
+
+def test_a_combat_profile_can_be_authored_end_to_end(studio: Studio) -> None:
+    studio.create("moves", "Dodge", section="moves", answers={"move.kind": "defense"})
+    studio.create(
+        "moves",
+        "Overhead smash",
+        section="moves",
+        answers={"move.kind": "attack", "move.type": "overhead", "move.tell": ["..."]},
+    )
+    studio.create(
+        "combatProfiles",
+        "Bridge troll",
+        section="combatProfiles",
+        answers={
+            "combatProfile.moves": ["dodge", "overhead-smash"],
+            "combatProfile.aggression": 0.7,
+            "combatProfile.fleeThreshold": 0.15,
+        },
+    )
+    held = studio.project.get("combatProfiles", "bridge-troll")
+    assert held is not None
+    assert held["moves"] == ["dodge", "overhead-smash"]
+    assert held["aggression"] == 0.7
+    assert held["fleeThreshold"] == 0.15
+
+
+def test_a_combat_profile_can_hold_patterns(studio: Studio) -> None:
+    studio.create("moves", "Dodge", section="moves", answers={"move.kind": "defense"})
+    studio.create(
+        "combatProfiles",
+        "Bridge troll",
+        section="combatProfiles",
+        answers={
+            "combatProfile.moves": ["dodge"],
+            "combatProfile.patterns": [{"sequence": ["dodge"], "weight": 50}],
+        },
+    )
+    held = studio.project.get("combatProfiles", "bridge-troll")
+    assert held is not None
+    assert held["patterns"] == [{"sequence": ["dodge"], "weight": 50}]
+
+
+def test_flow_registration_covers_moves_and_combat_profiles() -> None:
+    from mace.wizard.flows import COMBAT_PROFILE, MOVE, flow_for
+
+    assert flow_for("moves") is MOVE
+    assert flow_for("combatProfiles") is COMBAT_PROFILE
+
+
+# ── Item authoring on the entity flow ───────────────────────────────────────
+
+
+def test_an_items_damage_steps_are_visible(studio: Studio) -> None:
+    studio.create("entities", "Dagger", section="items")
+    step = step_of(studio.object("entities", "dagger"), "entity.item.damage.min")
+    assert step["visible"] is True
+
+
+def test_an_actors_item_steps_are_hidden(studio: Studio) -> None:
+    studio.create("entities", "Bandit", section="characters")
+    step = step_of(studio.object("entities", "bandit"), "entity.item.damage.min")
+    assert step["visible"] is False
+
+
+def test_an_item_can_be_given_weapon_damage(studio: Studio) -> None:
+    studio.create(
+        "entities",
+        "Dagger",
+        section="items",
+        answers={
+            "entity.item.equipSlot": "mainHand",
+            "entity.item.damage.min": 2,
+            "entity.item.damage.max": 5,
+            "entity.item.damage.type": "pierce",
+            "entity.item.baseValue": 12,
+        },
+    )
+    held = studio.project.get("entities", "dagger")
+    assert held is not None
+    assert held["item"] == {
+        "equipSlot": "mainHand",
+        "damage": {"min": 2, "max": 5, "type": "pierce"},
+        "baseValue": 12,
+    }
+
+
+def test_an_items_weapon_damage_may_be_relative_to_the_player(studio: Studio) -> None:
+    studio.create(
+        "entities",
+        "Dagger",
+        section="items",
+        answers={
+            "entity.item.damage.min": {
+                "relativeToPlayer": {"stat": "hitpoints", "factor": 0.1}
+            },
+        },
+    )
+    held = studio.project.get("entities", "dagger")
+    assert held is not None
+    assert held["item"]["damage"]["min"] == {
+        "relativeToPlayer": {"stat": "hitpoints", "factor": 0.1}
+    }
+
+
 # ── The problem list ──────────────────────────────────────────────────────────
 
 
