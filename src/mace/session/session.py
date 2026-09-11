@@ -131,8 +131,13 @@ class Session:
             If there is no game to play, or more than one and none was named.
         """
         chosen = choose_game(library, pack_id)
+        # Narrowed here, once, so every step of this playthrough — and every
+        # loop in the engine that walks `library.packs` to build or advance
+        # the world — sees only `chosen` and what it requires, never a
+        # sibling game that happens to share the process.
+        scoped = library.reachable(chosen)
         opened = begin(
-            library,
+            scoped,
             chosen,
             seed=seed,
             combat_mode=combat_mode,
@@ -142,7 +147,7 @@ class Session:
             start_tick=start_tick,
         )
         return cls(
-            library=library,
+            library=scoped,
             pack=chosen,
             seed=seed,
             state=opened.state,

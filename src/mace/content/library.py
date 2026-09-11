@@ -225,6 +225,48 @@ class Library:
         """
         return tuple(pack for pack in self.packs if pack.manifest.is_game)
 
+    def reachable(self, pack_id: str) -> Library:
+        """Narrow this library to one game and what it depends on.
+
+        A process may hold every pack under `packs/` at once — the dev server
+        does, so an author can switch games without a restart — but a
+        playthrough must never see past its own dependency graph. Anything
+        that walks `library.packs` to build a session's starting state (which
+        locations start revealed, which entities populate them, which
+        climates the world simulates) would otherwise pull in a sibling
+        game's content too, however unrelated, just because it happened to be
+        loaded into the same process.
+
+        Parameters
+        ----------
+        pack_id : str
+            The game pack a session is about to play.
+
+        Returns
+        -------
+        Library
+            `pack_id` and everything it requires, transitively, in the same
+            dependency order this library already holds them in.
+
+        Raises
+        ------
+        ContentError
+            If no such pack is loaded.
+        """
+        self.pack(pack_id)
+        by_id = self.by_id
+        needed: set[str] = set()
+        frontier = [pack_id]
+        while frontier:
+            current = frontier.pop()
+            if current in needed:
+                continue
+            needed.add(current)
+            frontier.extend(
+                requirement.id for requirement in by_id[current].manifest.requires
+            )
+        return Library(tuple(pack for pack in self.packs if pack.id in needed))
+
     def pack(self, pack_id: str) -> LoadedPack:
         """Look up one pack.
 

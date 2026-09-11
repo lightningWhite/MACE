@@ -386,3 +386,44 @@ def test_an_ambiguous_bare_reference_is_an_error_not_a_guess(tmp_path: Path) -> 
     library = load_library(tmp_path / "packs")
     with pytest.raises(ContentError, match="ambiguous"):
         library.resolve("bridge-troll", "entities", within="both")
+
+
+# ── Narrowing a library to one game ─────────────────────────────────────────────
+
+
+def test_reachable_keeps_a_pack_and_its_transitive_dependencies(
+    tmp_path: Path,
+) -> None:
+    write_pack(tmp_path / "packs", "core")
+    write_pack(tmp_path / "packs", "fantasy", requires=["core"])
+    write_pack(tmp_path / "packs", "game-a", requires=["fantasy"])
+    library = load_library(tmp_path / "packs")
+
+    scoped = library.reachable("game-a")
+
+    assert [pack.id for pack in scoped.packs] == ["core", "fantasy", "game-a"]
+
+
+def test_reachable_drops_a_sibling_game_that_shares_no_dependency(
+    tmp_path: Path,
+) -> None:
+    """The bug this exists to fix: a process holding two unrelated games at
+    once must never let one see the other's content just because both
+    happened to load into the same `Library`."""
+    write_pack(tmp_path / "packs", "core")
+    write_pack(tmp_path / "packs", "game-a", requires=["core"])
+    write_pack(tmp_path / "packs", "game-b", requires=["core"])
+    library = load_library(tmp_path / "packs")
+
+    scoped = library.reachable("game-a")
+
+    assert "game-b" not in scoped.by_id
+    assert "game-a" in scoped.by_id
+    assert "core" in scoped.by_id
+
+
+def test_reachable_refuses_a_pack_that_is_not_loaded(tmp_path: Path) -> None:
+    write_pack(tmp_path, "solo")
+    library = load_library(tmp_path)
+    with pytest.raises(ContentError, match="no pack `absent`"):
+        library.reachable("absent")
