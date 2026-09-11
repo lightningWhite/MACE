@@ -184,6 +184,13 @@ class Step:
     optional : bool
         Whether leaving it blank is a finished state rather than an unfinished
         one. Nothing ever *blocks* on a step; this only changes the count.
+    visible_when : tuple of (str, object) or None
+        Another step's id in the same flow, and the value it must currently
+        hold for this one to make sense — `("entity.kind", "item")` for a
+        step that only applies to an item. None for a step that always
+        applies. Checked by `Flow.visible`, since answering the sibling is
+        what this step's own visibility depends on, not anything `Step`
+        alone can resolve.
     """
 
     id: str
@@ -192,6 +199,7 @@ class Step:
     field: Field = field(default_factory=Text)
     help: str = ""
     optional: bool = False
+    visible_when: tuple[str, Any] | None = None
 
     @property
     def binding(self) -> Binding:
@@ -290,6 +298,33 @@ class Flow:
                 return found
         raise KeyError(f"{self.id} has no step `{step_id}`")
 
+    def visible(
+        self, step: Step, project: Project, object_id: str | None = None
+    ) -> bool:
+        """Whether a step makes sense to show right now.
+
+        Parameters
+        ----------
+        step : Step
+            The step in question — its own `visible_when` names the sibling
+            to check, if it has one.
+        project : Project
+            The open pack.
+        object_id : str or None
+            Which object.
+
+        Returns
+        -------
+        bool
+            True unless `visible_when` names a sibling step whose current
+            answer does not match.
+        """
+        if step.visible_when is None:
+            return True
+        sibling_id, expected = step.visible_when
+        sibling = self.step(sibling_id)
+        return bool(sibling.read(project, object_id) == expected)
+
     def unanswered(
         self, project: Project, object_id: str | None = None
     ) -> tuple[Step, ...]:
@@ -305,12 +340,15 @@ class Flow:
         Returns
         -------
         tuple of Step
-            The required steps with nothing in them, in flow order.
+            The required, currently visible steps with nothing in them, in
+            flow order.
         """
         return tuple(
             step
             for step in self.steps
-            if not step.optional and not answered(step.read(project, object_id))
+            if not step.optional
+            and self.visible(step, project, object_id)
+            and not answered(step.read(project, object_id))
         )
 
     def each(

@@ -320,6 +320,54 @@ def test_asking_for_a_step_that_does_not_exist_says_which_flow() -> None:
         LOCATION.step("location.nonsense")
 
 
+def test_a_step_is_invisible_when_its_sibling_does_not_match(project: Project) -> None:
+    probe = Flow(
+        id="probe",
+        title="Probe",
+        collection="locations",
+        steps=(
+            Step(id="probe.name", title="Name?", binds="locations[{id}].name"),
+            Step(
+                id="probe.detail",
+                title="Detail?",
+                binds="locations[{id}].description",
+                visible_when=("probe.name", "Home"),
+            ),
+        ),
+    )
+    detail = probe.step("probe.detail")
+    assert probe.visible(detail, project, "home") is True
+
+    probe.step("probe.name").write(project, "Somewhere else", "home")
+    assert probe.visible(detail, project, "home") is False
+
+
+def test_a_step_with_no_visible_when_is_always_visible(project: Project) -> None:
+    assert LOCATION.visible(LOCATION.step("location.name"), project, "home") is True
+
+
+def test_unanswered_skips_a_required_step_that_is_not_currently_visible(
+    project: Project,
+) -> None:
+    probe = Flow(
+        id="probe",
+        title="Probe",
+        collection="locations",
+        steps=(
+            Step(id="probe.name", title="Name?", binds="locations[{id}].name"),
+            Step(
+                id="probe.required",
+                title="Required, but only sometimes",
+                binds="locations[{id}].onArrive",
+                visible_when=("probe.name", "Never matches"),
+            ),
+        ),
+    )
+    assert "probe.required" not in {
+        step.id for step in probe.unanswered(project, "home")
+    }
+
+
 # ── The task list ─────────────────────────────────────────────────────────────
 
 

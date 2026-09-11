@@ -601,7 +601,9 @@ class Wizard:
             title = flow.title if object_id is None else f"{flow.title} — {object_id}"
             self.say(f"  {title.upper()}")
             self.say("")
-            steps = list(flow.steps)
+            steps = [
+                one for one in flow.steps if flow.visible(one, self.project, object_id)
+            ]
             for number, one in enumerate(steps, start=1):
                 value = one.read(self.project, object_id)
                 mark = " " if answered(value) or one.optional else "·"

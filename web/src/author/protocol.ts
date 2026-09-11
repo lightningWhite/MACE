@@ -164,6 +164,13 @@ export interface Step extends StepSpec {
   described: string;
   answered: boolean;
   /**
+   * Whether this step makes sense to show right now — false when it names a
+   * sibling step (`entity.kind`, `move.kind`, ...) whose current answer
+   * rules it out, resolved server-side against that answer. A hidden step
+   * still exists as data; the client just should not render it.
+   */
+  visible: boolean;
+  /**
    * The pieces of an answer that holds several of something, so a list can be
    * shown and taken apart. `null` for a field that holds one answer.
    */

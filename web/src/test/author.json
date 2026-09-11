@@ -1010,6 +1010,7 @@
           "value": "A Peasant's Quest",
           "described": "A Peasant's Quest",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": false,
@@ -1028,6 +1029,7 @@
           "value": "Seven days, one road, no choice.",
           "described": "Seven days, one road, no choice.",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": true,
@@ -1053,6 +1055,7 @@
           ],
           "described": "You are a peasant. You have worked your old fri\u2026 (+2 more)",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text-list",
             "optional": false,
@@ -1072,6 +1075,7 @@
           "value": "letholin",
           "described": "Letholin",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": false,
@@ -1098,6 +1102,7 @@
           "value": "fenmoor",
           "described": "Fenmoor",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": false,
@@ -1142,6 +1147,7 @@
           "value": 15,
           "described": "15",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "number",
             "optional": true,
@@ -1166,6 +1172,7 @@
           ],
           "described": "Farmhand, Poacher, Old Soldier",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -1206,6 +1213,7 @@
           "value": 30,
           "described": "30",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "number",
             "optional": true,
@@ -1226,6 +1234,7 @@
           "value": "mace.core:standard-year",
           "described": "The Standard Year",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -1252,6 +1261,7 @@
           "value": 20,
           "described": "20",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "number",
             "optional": true,
@@ -1272,6 +1282,7 @@
           "value": "autumn",
           "described": "autumn",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": true,
@@ -1290,6 +1301,7 @@
           "value": "the-lowlands",
           "described": "The Lowlands",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -1328,6 +1340,7 @@
           "value": "hitpoints",
           "described": "hitpoints",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": true,
@@ -1346,6 +1359,7 @@
           "value": "stamina",
           "described": "stamina",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": true,
@@ -1364,6 +1378,7 @@
           "value": "reflex",
           "described": "reflex \u2014 a real timing window",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -1402,6 +1417,7 @@
           "value": false,
           "described": "no",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "bool",
             "optional": true,
@@ -1419,6 +1435,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -1465,6 +1482,7 @@
           "value": "market",
           "described": "market \u2014 shelves, scarcity, and trade along the roads",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -1497,6 +1515,7 @@
           "value": "fantasy.core:gold",
           "described": "Gold",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -1583,6 +1602,7 @@
           "value": "standard",
           "described": "standard",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -1629,6 +1649,7 @@
           ],
           "described": "The King's Summons",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -1661,6 +1682,7 @@
           ],
           "described": "The King's Summons is complete",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "conditions",
             "optional": false,
@@ -1693,6 +1715,7 @@
           ],
           "described": "The King's Summons has failed and `player.pools.hitpoints.current <= 0` is true",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "conditions",
             "optional": false,
@@ -1724,6 +1747,7 @@
           "value": "victory",
           "described": "victory",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -1966,6 +1990,7 @@
           "value": "defeat",
           "described": "defeat",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -2355,6 +2380,7 @@
           "value": "Fenmoor",
           "described": "Fenmoor",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": false,
@@ -2375,6 +2401,7 @@
           ],
           "described": "Six houses, a well, and more geese than people.\u2026",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text-list",
             "optional": false,
@@ -2394,6 +2421,7 @@
           "value": "the-lowlands",
           "described": "The Lowlands",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -2432,6 +2460,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -2476,6 +2505,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "bool",
             "optional": true,
@@ -2493,6 +2523,7 @@
           "value": true,
           "described": "yes",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "bool",
             "optional": true,
@@ -2513,6 +2544,7 @@
           ],
           "described": "Old Hallam, Mereth the Reeve",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -2679,6 +2711,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -2923,6 +2956,7 @@
           "value": "fenmoor-arrival",
           "described": "fenmoor arrival",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -3165,6 +3199,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -3213,6 +3248,7 @@
           ],
           "described": "2 exits",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "repeat",
             "optional": false,
@@ -3354,6 +3390,7 @@
           },
           "described": "(0, 120)",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "map-position",
             "optional": true,
@@ -3518,6 +3555,7 @@
           "value": "Speak to the troll",
           "described": "Speak to the troll",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": true,
@@ -3544,6 +3582,7 @@
           ],
           "described": "Gorm is not flagged `has-been-paid`",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "conditions",
             "optional": false,
@@ -3579,6 +3618,7 @@
           ],
           "described": "The troll unfolds itself from beneath the bridg\u2026 (+1 more)",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text-list",
             "optional": false,
@@ -3605,6 +3645,7 @@
           ],
           "described": "Gorm is flagged `has-spoken`",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "effects",
             "optional": false,
@@ -3675,6 +3716,7 @@
           ],
           "described": "5 choices",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "repeat",
             "optional": false,
@@ -4101,6 +4143,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -4343,6 +4386,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "bool",
             "optional": true,
@@ -4360,6 +4404,7 @@
           "value": "gorm-has-been-paid",
           "described": "gorm has been paid",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -4749,6 +4794,7 @@
           "value": "Gorm",
           "described": "Gorm",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": false,
@@ -4767,6 +4813,7 @@
           "value": "actor",
           "described": "actor \u2014 a person, a monster, anything that acts",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": false,
@@ -4817,6 +4864,7 @@
           "value": "It has moss in its hair and the patient look of something that gets paid eventually.",
           "described": "It has moss in its hair and the patient look of\u2026",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text-list",
             "optional": false,
@@ -4836,6 +4884,7 @@
           "value": "fantasy.core:bridge-troll",
           "described": "Bridge Troll",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -5003,6 +5052,7 @@
           ],
           "described": "$append, named",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -5167,6 +5217,7 @@
           },
           "described": "strength 85",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "stat-allocator",
             "optional": false,
@@ -5210,6 +5261,7 @@
           "value": "neutral",
           "described": "neutral",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -5248,6 +5300,7 @@
           "value": "profile='bridge-troll-profile' moves=()",
           "described": "profile='bridge-troll-profile' moves=() (?)",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -5309,6 +5362,7 @@
           ],
           "described": "1 stack",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "repeat",
             "optional": false,
@@ -5438,6 +5492,7 @@
           ],
           "described": "talk to gorm",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -5682,6 +5737,7 @@
           "value": false,
           "described": "no",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "bool",
             "optional": true,
@@ -5841,6 +5897,7 @@
       "value": true,
       "described": "yes",
       "answered": true,
+      "visible": true,
       "field": {
         "kind": "bool",
         "optional": true,
@@ -6005,6 +6062,7 @@
           "value": "The Long Moor",
           "described": "The Long Moor",
           "answered": true,
+          "visible": true,
           "field": {
             "kind": "text",
             "optional": false,
@@ -6023,6 +6081,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "text-list",
             "optional": false,
@@ -6042,6 +6101,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -6080,6 +6140,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -6130,6 +6191,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "bool",
             "optional": true,
@@ -6147,6 +6209,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "bool",
             "optional": true,
@@ -6164,6 +6227,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -6330,6 +6394,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "multi-select",
             "optional": false,
@@ -6574,6 +6639,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -6816,6 +6882,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -6854,6 +6921,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "repeat",
             "optional": false,
@@ -6976,6 +7044,7 @@
           "value": null,
           "described": "\u2014",
           "answered": false,
+          "visible": true,
           "field": {
             "kind": "map-position",
             "optional": true,

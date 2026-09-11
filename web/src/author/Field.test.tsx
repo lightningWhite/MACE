@@ -57,6 +57,7 @@ const STEP: Step = {
   value: null,
   described: "—",
   answered: false,
+  visible: true,
   entries: [],
 };
 
@@ -153,6 +154,7 @@ describe("a statblock with a value relative to the player", () => {
     },
     described: "hitpoints 3x player's hitpoints",
     answered: true,
+    visible: true,
     entries: [
       {
         stat: "hitpoints",

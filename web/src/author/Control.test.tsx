@@ -38,6 +38,7 @@ const STEP: Step = {
   value: null,
   described: "—",
   answered: false,
+  visible: true,
   entries: [],
 };
 

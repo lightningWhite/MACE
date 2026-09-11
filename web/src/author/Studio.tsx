@@ -581,14 +581,16 @@ function ObjectForm({
         />
       )}
       <div className="fields">
-        {screen.steps.map((step) => (
-          <Field
-            key={step.id}
-            step={step}
-            busy={busy}
-            onAnswer={(value) => onAnswer(step.id, value)}
-          />
-        ))}
+        {screen.steps
+          .filter((step) => step.visible)
+          .map((step) => (
+            <Field
+              key={step.id}
+              step={step}
+              busy={busy}
+              onAnswer={(value) => onAnswer(step.id, value)}
+            />
+          ))}
       </div>
     </section>
   );

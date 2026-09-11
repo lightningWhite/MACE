@@ -585,7 +585,7 @@ class Studio:
                 if object_id is None
                 else catalog.label(object_id, flow.collection or collection)
             ),
-            "steps": [self._step(one, object_id, catalog) for one in flow.steps],
+            "steps": [self._step(flow, one, object_id, catalog) for one in flow.steps],
         }
 
     def preview(self, collection: str, object_id: str) -> dict[str, Any]:
@@ -774,7 +774,7 @@ class Studio:
             found = flow.step(step_id)
         except KeyError as error:
             raise Unknown(str(error)) from error
-        return self._step(found, object_id, self.catalog)
+        return self._step(flow, found, object_id, self.catalog)
 
     # ── Changing things ───────────────────────────────────────────────────
 
@@ -820,7 +820,7 @@ class Studio:
         except KeyError as error:
             raise Unknown(str(error)) from error
         found.write(self.project, value, object_id)
-        return self._step(found, object_id, self.catalog)
+        return self._step(flow, found, object_id, self.catalog)
 
     def create(
         self,
@@ -1157,12 +1157,15 @@ class Studio:
     # ── Projecting one step ───────────────────────────────────────────────
 
     def _step(
-        self, one: Step, object_id: str | None, catalog: Catalog
+        self, flow: Flow, one: Step, object_id: str | None, catalog: Catalog
     ) -> dict[str, Any]:
         """One question, its answer, and everything a form needs to draw it.
 
         Parameters
         ----------
+        flow : Flow
+            The step's own flow — for resolving `visible_when` against a
+            sibling step's current answer.
         one : Step
             The step.
         object_id : str or None
@@ -1185,6 +1188,7 @@ class Studio:
             "value": _plain(value),
             "described": one.field.describe(value, catalog),
             "answered": answered(value),
+            "visible": flow.visible(one, self.project, object_id),
             "field": _field(
                 one.field, catalog, self._core_stats(), self._player_stat_names()
             ),
