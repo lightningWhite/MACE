@@ -120,6 +120,16 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     player.add_argument(
+        "--units",
+        choices=["celsius", "fahrenheit"],
+        default="fahrenheit",
+        help=(
+            "the scale the status line reads temperature in, converting from "
+            "whichever one the game's climate is written in (default: "
+            "fahrenheit)"
+        ),
+    )
+    player.add_argument(
         "--save",
         type=Path,
         metavar="FILE",
@@ -559,6 +569,7 @@ def run_play(options: argparse.Namespace) -> int:
         character=character,
         save=options.save,
         resume=options.load,
+        units=options.units,
     )
 
 

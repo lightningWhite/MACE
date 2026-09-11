@@ -102,6 +102,7 @@
           ],
           "visibility": 0.8,
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
         },
         {
@@ -170,6 +171,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "light": 0.8,
           "indoors": false,
           "exposure": 0.0
@@ -250,6 +252,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "light": 0.8,
           "indoors": false,
           "exposure": 0.0
@@ -374,6 +377,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": true,
           "exposure": 0.0843
@@ -477,6 +481,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": true,
           "exposure": 0.0843
@@ -595,6 +600,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": true,
           "exposure": 0.0843
@@ -714,6 +720,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": true,
           "exposure": 0.0843
@@ -808,6 +815,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "light": 0.8,
           "indoors": false,
           "exposure": 0.0
@@ -835,6 +843,7 @@
           "tags": [],
           "visibility": 0.85,
           "temperature": 11.31,
+          "temperatureUnit": "celsius",
           "text": "The sky closes over, flat and grey, with no weather in it yet."
         },
         {
@@ -947,6 +956,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 2.92,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -1025,6 +1035,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 2.92,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -1102,6 +1113,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 2.92,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -1180,6 +1192,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 2.92,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -1265,6 +1278,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 2.92,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -1302,6 +1316,7 @@
           "tags": [],
           "visibility": 0.85,
           "temperature": 2.92,
+          "temperatureUnit": "celsius",
           "text": "The sky closes over, flat and grey, with no weather in it yet."
         },
         {
@@ -1390,6 +1405,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 3.76,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0

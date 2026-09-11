@@ -14,6 +14,8 @@ resumes. See docs/05-world-simulation.md § Layer 2.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import Field, model_validator
 
 from mace.model.base import ClimateRef, ContentModel, FrontRef, Id, WeatherRef
@@ -25,9 +27,9 @@ __all__ = ["Climate", "ClimateSequence", "SeasonProfile", "TemperatureRange"]
 class TemperatureRange(ContentModel):
     """The band a season's daily temperatures are drawn from.
 
-    Units are the author's business — the engine only ever compares against
-    `freezingPoint`, so a pack may work in degrees Celsius, Fahrenheit, or
-    something a sci-fi world made up.
+    Written in whatever scale the climate that holds it declares with
+    `temperatureUnit` — the engine itself only ever compares against
+    `freezingPoint`, so it never needs to know which one a pack chose.
 
     Attributes
     ----------
@@ -140,6 +142,12 @@ class Climate(ContentModel):
         Degrees lost per hundred units of a region's `elevation`. 0.65 is the
         real world's; a game whose elevations are in feet, or whose
         temperatures are in Fahrenheit, sets its own.
+    temperature_unit : "celsius" or "fahrenheit"
+        The scale every temperature in this climate is written in. A
+        front-end that lets a player choose °F or °C needs to know which one
+        it was handed before it can convert; this is the one place that says
+        so. Defaults to Celsius, which is what every temperature elsewhere in
+        this model was already written assuming.
     """
 
     id: Id
@@ -155,6 +163,7 @@ class Climate(ContentModel):
     front_frequency: float = Field(default=0.0, ge=0.0, le=1.0)
     freezing_point: float = 0.0
     lapse_rate: float = 0.65
+    temperature_unit: Literal["celsius", "fahrenheit"] = "celsius"
 
     @model_validator(mode="after")
     def _check_weights(self) -> Climate:

@@ -97,6 +97,7 @@
           "tags": [],
           "visibility": 1.0,
           "temperature": 12.3,
+          "temperatureUnit": "celsius",
           "text": "The cloud breaks up and the sky comes through behind it."
         },
         {
@@ -165,6 +166,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 12.3,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -300,6 +302,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -378,6 +381,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -530,6 +534,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -641,6 +646,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -752,6 +758,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -863,6 +870,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -974,6 +982,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -1085,6 +1094,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -1196,6 +1206,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -1307,6 +1318,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -1431,6 +1443,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.0
@@ -1477,6 +1490,7 @@
           ],
           "visibility": 0.8,
           "temperature": 7.76,
+          "temperatureUnit": "celsius",
           "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
         },
         {
@@ -1578,6 +1592,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 7.83,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.1238

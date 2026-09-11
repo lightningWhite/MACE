@@ -840,7 +840,7 @@
     },
     "Climate": {
       "additionalProperties": false,
-      "description": "How weather behaves in the regions that use it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nseasons : mapping\n    Season id to what that season is like here. A season the calendar has\n    and the climate does not falls back to the transition matrix alone.\ntransitions : mapping\n    Condition to the relative weight of each condition it can become.\n    A condition absent from the matrix holds until something else moves\n    it, which is a reasonable reading of \"the author forgot\".\nstep_ticks : int\n    How many ticks pass between chain steps. One means the sky is\n    reconsidered every tick, which is twitchy at thirty minutes a tick;\n    two is an hour and reads much better.\nsequences : tuple of ClimateSequence\n    Authored progressions that override the chain while they run.\nfronts : tuple of str\n    The kinds of front that can form in regions with this climate.\nfront_frequency : float\n    The chance **per tick** that a front forms somewhere on the map. One\n    roll is made across the whole world rather than one per region, so\n    adding regions does not silently make a game stormier. Two or three\n    fronts alive at once is plenty, so this wants to be small: at a\n    sixty-tick lifespan, 0.02 keeps about one and a bit in the air.\nfreezing_point : float\n    The temperature below which a condition becomes its `freezesTo`.\nlapse_rate : float\n    Degrees lost per hundred units of a region's `elevation`. 0.65 is the\n    real world's; a game whose elevations are in feet, or whose\n    temperatures are in Fahrenheit, sets its own.",
+      "description": "How weather behaves in the regions that use it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nseasons : mapping\n    Season id to what that season is like here. A season the calendar has\n    and the climate does not falls back to the transition matrix alone.\ntransitions : mapping\n    Condition to the relative weight of each condition it can become.\n    A condition absent from the matrix holds until something else moves\n    it, which is a reasonable reading of \"the author forgot\".\nstep_ticks : int\n    How many ticks pass between chain steps. One means the sky is\n    reconsidered every tick, which is twitchy at thirty minutes a tick;\n    two is an hour and reads much better.\nsequences : tuple of ClimateSequence\n    Authored progressions that override the chain while they run.\nfronts : tuple of str\n    The kinds of front that can form in regions with this climate.\nfront_frequency : float\n    The chance **per tick** that a front forms somewhere on the map. One\n    roll is made across the whole world rather than one per region, so\n    adding regions does not silently make a game stormier. Two or three\n    fronts alive at once is plenty, so this wants to be small: at a\n    sixty-tick lifespan, 0.02 keeps about one and a bit in the air.\nfreezing_point : float\n    The temperature below which a condition becomes its `freezesTo`.\nlapse_rate : float\n    Degrees lost per hundred units of a region's `elevation`. 0.65 is the\n    real world's; a game whose elevations are in feet, or whose\n    temperatures are in Fahrenheit, sets its own.\ntemperature_unit : \"celsius\" or \"fahrenheit\"\n    The scale every temperature in this climate is written in. A\n    front-end that lets a player choose \u00b0F or \u00b0C needs to know which one\n    it was handed before it can convert; this is the one place that says\n    so. Defaults to Celsius, which is what every temperature elsewhere in\n    this model was already written assuming.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -948,6 +948,15 @@
           "default": 0.65,
           "title": "Lapserate",
           "type": "number"
+        },
+        "temperatureUnit": {
+          "default": "celsius",
+          "enum": [
+            "celsius",
+            "fahrenheit"
+          ],
+          "title": "Temperatureunit",
+          "type": "string"
         },
         "$remove": {
           "type": "array",
@@ -6302,7 +6311,7 @@
     },
     "TemperatureRange": {
       "additionalProperties": false,
-      "description": "The band a season's daily temperatures are drawn from.\n\nUnits are the author's business \u2014 the engine only ever compares against\n`freezingPoint`, so a pack may work in degrees Celsius, Fahrenheit, or\nsomething a sci-fi world made up.\n\nAttributes\n----------\nmin, max : float\n    The coldest and warmest a day gets, before elevation.",
+      "description": "The band a season's daily temperatures are drawn from.\n\nWritten in whatever scale the climate that holds it declares with\n`temperatureUnit` \u2014 the engine itself only ever compares against\n`freezingPoint`, so it never needs to know which one a pack chose.\n\nAttributes\n----------\nmin, max : float\n    The coldest and warmest a day gets, before elevation.",
       "properties": {
         "min": {
           "title": "Min",

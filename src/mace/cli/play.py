@@ -73,11 +73,16 @@ class Renderer:
     interactive : bool
         Whether to honour `pause`. A recorded or piped session should not stop
         and wait for a keypress nobody is there to give.
+    units : str
+        `"celsius"` or `"fahrenheit"` — the scale the status line reads
+        temperature in, converting from whatever a `world.status` event's own
+        `temperatureUnit` says the number was written in.
     """
 
     out: TextIO
     interactive: bool = True
     fighting: bool = False
+    units: str = "fahrenheit"
 
     def show(self, events: Iterable[Event]) -> None:
         """Render a step's events in order.
@@ -275,6 +280,13 @@ class Renderer:
             if payload["indoors"]:
                 sky += ", outside"
             parts.append(sky)
+        temperature = _temperature(
+            payload.get("temperature"),
+            str(payload.get("temperatureUnit", "celsius")),
+            self.units,
+        )
+        if temperature is not None:
+            parts.append(temperature)
         cold = _exposure(float(payload.get("exposure") or 0.0))
         if cold:
             parts.append(cold)
@@ -308,6 +320,36 @@ EXPOSURE_WORDS: tuple[tuple[float, str], ...] = (
     (0.35, "cold through"),
     (0.15, "feeling it"),
 )
+
+
+def _temperature(value: float | None, source: str, target: str) -> str | None:
+    """Convert and format a temperature reading for the status line.
+
+    Parameters
+    ----------
+    value : float or None
+        A `world.status` or `weather.changed` event's `temperature`. None
+        where the region has no climate.
+    source : str
+        The scale it was written in — the same event's `temperatureUnit`.
+    target : str
+        The scale the player asked to read it in.
+
+    Returns
+    -------
+    str or None
+        `"46°F"`, or None where there is nothing to show.
+    """
+    if value is None:
+        return None
+    if source == target:
+        converted = value
+    elif target == "fahrenheit":
+        converted = value * 9 / 5 + 32
+    else:
+        converted = (value - 32) * 5 / 9
+    suffix = "°F" if target == "fahrenheit" else "°C"
+    return f"{round(converted)}{suffix}"
 
 
 def _exposure(level: float) -> str:
@@ -669,6 +711,7 @@ def play(
     character: Character | None = None,
     save: Path | None = None,
     resume: Path | None = None,
+    units: str = "fahrenheit",
     out: TextIO | None = None,
 ) -> int:
     """Load some packs and play one of them.
@@ -694,6 +737,9 @@ def play(
     resume : Path or None
         A save to carry on from. Its seed, combat mode and character are the
         session's, so the arguments that would have set those are ignored.
+    units : str
+        `"celsius"` or `"fahrenheit"` — the scale the status line reads
+        temperature in, converting from whatever the climate is written in.
     out : TextIO or None
         Where to write. Defaults to standard output.
 
@@ -704,7 +750,7 @@ def play(
     """
     stream = out or sys.stdout
     interactive = sys.stdin.isatty()
-    renderer = Renderer(stream, interactive=interactive)
+    renderer = Renderer(stream, interactive=interactive, units=units)
 
     try:
         library = load_library(*paths)

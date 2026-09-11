@@ -152,6 +152,24 @@ def test_a_game_with_a_climate_has_weather_from_the_first_event(tmp_path: Path) 
     assert status["temperature"] is not None
 
 
+def test_temperature_defaults_to_celsius(tmp_path: Path) -> None:
+    library = weather_pack(tmp_path)
+    result = begin(library, "tiny")
+    status = statuses(result.events)[-1]
+    assert status["temperatureUnit"] == "celsius"
+
+
+def test_a_climate_can_declare_its_own_scale(tmp_path: Path) -> None:
+    library = weather_pack(tmp_path, climate={"temperatureUnit": "fahrenheit"})
+    result = begin(library, "tiny")
+    status = statuses(result.events)[-1]
+    assert status["temperatureUnit"] == "fahrenheit"
+    # The number itself is untouched — the climate simply says what scale the
+    # author already wrote its bands in. A fahrenheit-declared 4-12 band reads
+    # as 4-12, not as a conversion of some assumed celsius original.
+    assert status["temperature"] is not None
+
+
 def test_a_game_with_no_regions_still_plays(tmp_path: Path) -> None:
     """Weather is optional. A pack that says nothing about it gets none."""
     game_pack(tmp_path)

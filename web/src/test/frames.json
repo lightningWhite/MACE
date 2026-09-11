@@ -45,6 +45,7 @@
         ],
         "visibility": 0.8,
         "temperature": 5.94,
+        "temperatureUnit": "celsius",
         "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
       },
       {
@@ -113,6 +114,7 @@
         "weather": "fantasy.core:drizzle",
         "sky": "drizzle",
         "temperature": 5.94,
+        "temperatureUnit": "celsius",
         "light": 0.8,
         "indoors": false,
         "exposure": 0.0
@@ -390,6 +392,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857
@@ -655,6 +658,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857
@@ -993,6 +997,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857
@@ -1286,6 +1291,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857
@@ -1551,6 +1557,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857
@@ -1889,6 +1896,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857
@@ -2181,6 +2189,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857
@@ -2473,6 +2482,7 @@
             "weather": "fantasy.core:clear",
             "sky": "clear",
             "temperature": 11.52,
+            "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
             "exposure": 0.0857

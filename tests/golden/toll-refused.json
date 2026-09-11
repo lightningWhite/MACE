@@ -112,6 +112,7 @@
           ],
           "visibility": 0.8,
           "temperature": 11.01,
+          "temperatureUnit": "celsius",
           "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
         },
         {
@@ -180,6 +181,7 @@
           "weather": "fantasy.core:drizzle",
           "sky": "drizzle",
           "temperature": 11.01,
+          "temperatureUnit": "celsius",
           "light": 0.8,
           "indoors": false,
           "exposure": 0.0
@@ -209,6 +211,7 @@
           ],
           "visibility": 0.65,
           "temperature": 11.01,
+          "temperatureUnit": "celsius",
           "text": "The rain sets in properly, straight down and steady."
         },
         {
@@ -230,6 +233,7 @@
           ],
           "visibility": 0.8,
           "temperature": 11.01,
+          "temperatureUnit": "celsius",
           "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
         },
         {
@@ -251,6 +255,7 @@
           ],
           "visibility": 0.65,
           "temperature": 11.01,
+          "temperatureUnit": "celsius",
           "text": "The rain sets in properly, straight down and steady."
         },
         {
@@ -330,6 +335,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -408,6 +414,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -560,6 +567,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -672,6 +680,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -784,6 +793,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -896,6 +906,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -1000,6 +1011,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -1104,6 +1116,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -1208,6 +1221,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -1312,6 +1326,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -1416,6 +1431,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 14.58,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.2498
@@ -1547,6 +1563,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 11.01,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.2498
@@ -1637,6 +1654,7 @@
           "weather": "fantasy.core:rain",
           "sky": "rain",
           "temperature": 11.01,
+          "temperatureUnit": "celsius",
           "light": 0.65,
           "indoors": false,
           "exposure": 0.2498

@@ -2198,6 +2198,7 @@ def _status(context: RuleContext) -> WorldStatus:
         temperature=(
             None if observed.temperature is None else round(observed.temperature, 2)
         ),
+        temperature_unit=observed.temperature_unit,
         light=round(context.light(), 4),
         indoors=observed.sheltered,
         exposure=round(state.protagonist.exposure, 4),
@@ -3124,6 +3125,7 @@ def _sync_weather(context: RuleContext, events: list[Event]) -> None:
             temperature=(
                 None if observed.temperature is None else round(observed.temperature, 2)
             ),
+            temperature_unit=observed.temperature_unit,
             text=line.text if line is not None else None,
         )
     )

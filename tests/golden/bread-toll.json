@@ -72,6 +72,7 @@
           "tags": [],
           "visibility": 1.0,
           "temperature": 15.6,
+          "temperatureUnit": "celsius",
           "text": "The cloud breaks up and the sky comes through behind it."
         },
         {
@@ -140,6 +141,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 15.6,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -220,6 +222,7 @@
           "weather": "fantasy.core:clear",
           "sky": "clear",
           "temperature": 15.6,
+          "temperatureUnit": "celsius",
           "light": 1.0,
           "indoors": false,
           "exposure": 0.0
@@ -348,6 +351,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 12.55,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.0
@@ -426,6 +430,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 12.55,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.0
@@ -511,6 +516,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 12.55,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.0
@@ -625,6 +631,7 @@
           "weather": "fantasy.core:overcast",
           "sky": "overcast",
           "temperature": 0.83,
+          "temperatureUnit": "celsius",
           "light": 0.85,
           "indoors": false,
           "exposure": 0.0

@@ -104,6 +104,8 @@ export interface WorldStatus {
   weather: string | null;
   sky: string;
   temperature: number | null;
+  /** The scale `temperature` is written in — the climate's own choice. */
+  temperatureUnit: "celsius" | "fahrenheit";
   light: number;
   indoors: boolean;
   /** 0 to 1. A number on purpose: how to say it is ours to decide. */
@@ -137,6 +139,8 @@ export interface WeatherChanged {
   tags: string[];
   visibility: number;
   temperature: number | null;
+  /** The scale `temperature` is written in — the climate's own choice. */
+  temperatureUnit: "celsius" | "fahrenheit";
   text: string | null;
 }
 

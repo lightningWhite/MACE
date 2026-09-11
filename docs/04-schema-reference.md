@@ -251,6 +251,7 @@ Files under `climates/`. Two halves multiplied: `seasons` says what a place is
 | `frontFrequency` | number? | Chance per tick that a front spawns in a region with this climate. |
 | `freezingPoint` | number? | Below this, a condition becomes its `freezesTo`. Default 0. |
 | `lapseRate` | number? | Degrees lost per hundred units of a region's `elevation`. Default 0.65. |
+| `temperatureUnit` | `celsius` \| `fahrenheit`? | The scale every temperature in this climate is written in. Default `celsius`. A front-end that offers a player °F/°C reads this to know which one it was handed. |
 
 **How a step resolves.** The transition row from the current condition is
 multiplied by the season's weights and one entry is drawn. A season that lists

@@ -80,6 +80,10 @@ class Observation:
         Whether an active world event has closed the roads.
     light_override : float or None
         An active world event's override on the sky's light. Night, at noon.
+    temperature_unit : "celsius" or "fahrenheit"
+        The scale `temperature` is written in — the governing climate's own
+        `temperatureUnit`. Celsius where there is no region or no climate,
+        which is also the model's own default.
     """
 
     region: str | None = None
@@ -92,6 +96,7 @@ class Observation:
     extra_travel: float = 1.0
     event_blocks_travel: bool = False
     light_override: float | None = None
+    temperature_unit: str = "celsius"
 
     def under(self, standing: object) -> Observation:
         """This weather, with an active world event's standing changes folded in.
@@ -124,6 +129,7 @@ class Observation:
             extra_travel=travel,
             event_blocks_travel=blocks,
             light_override=light,
+            temperature_unit=self.temperature_unit,
         )
 
     @property
@@ -333,6 +339,7 @@ def observe(
                     None if here is None else _temperature_now(here, clock, state.tick)
                 ),
                 sheltered=sheltered,
+                temperature_unit=_temperature_unit(library, region),
             )
 
     region_id = region_of(library, pack, location, fallback_region)
@@ -351,7 +358,30 @@ def observe(
         intensity=here.intensity,
         temperature=_temperature_now(here, clock, state.tick),
         sheltered=sheltered,
+        temperature_unit=_temperature_unit(library, region_id),
     )
+
+
+def _temperature_unit(library: Library, region_id: str | None) -> str:
+    """The scale a region's climate writes its temperatures in.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    region_id : str or None
+        Qualified region id, or None where there is nothing to look up.
+
+    Returns
+    -------
+    str
+        `"celsius"` or `"fahrenheit"` — Celsius where the region names no
+        climate, or names none at all.
+    """
+    if region_id is None:
+        return "celsius"
+    _, climate, _ = climate_of(library, region_id)
+    return climate.temperature_unit if climate is not None else "celsius"
 
 
 def _temperature_now(here: RegionWeather, clock: Clock, tick: int) -> float:

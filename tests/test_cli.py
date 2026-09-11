@@ -117,6 +117,28 @@ def test_play_walks_a_pack_to_its_ending(
     assert "You won." in printed
 
 
+def test_play_reads_temperature_in_fahrenheit_by_default(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scripted(monkeypatch, ["q"])
+    assert main(["play", "packs", "--pack", "peasants-quest"]) == 0
+    printed = capsys.readouterr().out
+    assert "°F" in printed
+    assert "°C" not in printed
+
+
+def test_play_can_be_asked_to_read_temperature_in_celsius(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scripted(monkeypatch, ["q"])
+    assert (
+        main(["play", "packs", "--pack", "peasants-quest", "--units", "celsius"]) == 0
+    )
+    printed = capsys.readouterr().out
+    assert "°C" in printed
+    assert "°F" not in printed
+
+
 def test_play_stops_when_the_player_does(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

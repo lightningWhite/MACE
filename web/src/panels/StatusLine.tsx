@@ -6,9 +6,14 @@
  * or not. So it renders from the last `world.status` event and stays put.
  */
 
+import { useState } from "react";
+
 import type { WorldStatus } from "../protocol";
+import { formatTemperature, setUnitPreference, unitPreference } from "../units";
 
 export function StatusLine({ status }: { status: WorldStatus | null }) {
+  const [unit, setUnit] = useState(unitPreference);
+
   if (status === null) {
     return <footer className="status" aria-live="polite" />;
   }
@@ -23,7 +28,21 @@ export function StatusLine({ status }: { status: WorldStatus | null }) {
     <footer className="status" aria-live="polite">
       {parts.join(" · ")}
       {status.temperature !== null && (
-        <span className="dim"> · {Math.round(status.temperature)}°</span>
+        <>
+          {" · "}
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => {
+              const next = unit === "fahrenheit" ? "celsius" : "fahrenheit";
+              setUnit(next);
+              setUnitPreference(next);
+            }}
+            title="Click to switch °F/°C"
+          >
+            {formatTemperature(status.temperature, status.temperatureUnit, unit)}
+          </button>
+        </>
       )}
     </footer>
   );

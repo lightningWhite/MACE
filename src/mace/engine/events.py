@@ -450,6 +450,9 @@ class WeatherChanged(Event):
         0 to 1, the multiplier on the day part's light.
     temperature : float or None
         Now, at this region's elevation.
+    temperature_unit : str
+        The scale `temperature` is written in — `"celsius"` or `"fahrenheit"`,
+        the governing climate's own `temperatureUnit`.
     text : str or None
         The condition's own line, when the author wrote one.
     """
@@ -462,6 +465,7 @@ class WeatherChanged(Event):
     tags: tuple[str, ...] = ()
     visibility: float = 1.0
     temperature: float | None = None
+    temperature_unit: str = "celsius"
     text: str | None = None
 
     def payload(self) -> dict[str, Any]:
@@ -473,6 +477,7 @@ class WeatherChanged(Event):
             "tags": list(self.tags),
             "visibility": self.visibility,
             "temperature": self.temperature,
+            "temperatureUnit": self.temperature_unit,
             "text": self.text,
         }
 
@@ -511,6 +516,9 @@ class WorldStatus(Event):
         What to call the weather. Empty where there is none.
     temperature : float or None
         Now.
+    temperature_unit : str
+        The scale `temperature` is written in — `"celsius"` or `"fahrenheit"`,
+        the governing climate's own `temperatureUnit`.
     light : float
         The day part's light after the weather has had its share, 0 to 1.
     indoors : bool
@@ -533,6 +541,7 @@ class WorldStatus(Event):
     weather: str | None = None
     sky: str = ""
     temperature: float | None = None
+    temperature_unit: str = "celsius"
     light: float = 1.0
     indoors: bool = False
     exposure: float = 0.0
@@ -550,6 +559,7 @@ class WorldStatus(Event):
             "weather": self.weather,
             "sky": self.sky,
             "temperature": self.temperature,
+            "temperatureUnit": self.temperature_unit,
             "light": self.light,
             "indoors": self.indoors,
             "exposure": self.exposure,
