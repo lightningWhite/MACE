@@ -718,6 +718,13 @@ h2 {
   text-anchor: middle;
 }
 
+.region-elevation {
+  fill: var(--ink-dim);
+  font-size: 9px;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
 .road line {
   stroke: var(--edge);
   stroke-width: 1.5;

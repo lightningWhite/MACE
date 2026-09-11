@@ -36,7 +36,7 @@ from mace.engine.economy.trade import Stall, look
 from mace.engine.state import GameState, QuestStatus
 from mace.engine.stats import effective, pool_bounds
 from mace.engine.step import context_for
-from mace.engine.world import observe
+from mace.engine.world import climate_of, observe
 from mace.model import Entity, Location, Quest, Route
 
 __all__ = [
@@ -219,6 +219,10 @@ class Place:
     x, y : float or None
         Authored map coordinates. None means the client lays it out itself,
         which is what `mapPosition` being optional is for.
+    elevation : float or None
+        The place's region's height above the map's baseline, or None where
+        it has no region. Unlike prices, this is never a spoiler — it is
+        drawn on the map unconditionally.
     """
 
     location: str
@@ -232,6 +236,7 @@ class Place:
     prices: dict[str, int]
     x: float | None
     y: float | None
+    elevation: float | None
 
     def record(self) -> dict[str, Any]:
         """The place, JSON-safe.
@@ -253,6 +258,7 @@ class Place:
             "prices": dict(self.prices),
             "x": self.x,
             "y": self.y,
+            "elevation": self.elevation,
         }
 
 
@@ -814,6 +820,27 @@ def _prices_seen(context: RuleContext) -> dict[str, dict[str, int]]:
     return found
 
 
+def _elevation_of(library: Library, region_id: str | None) -> float | None:
+    """A region's height above the map's baseline, for the map to shade by.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded content.
+    region_id : str or None
+        Qualified region id, or None where a place has no region.
+
+    Returns
+    -------
+    float or None
+        The region's `elevation`, or None where there is no region to ask.
+    """
+    if region_id is None:
+        return None
+    region, _climate, _home = climate_of(library, region_id)
+    return region.elevation
+
+
 def _place(
     context: RuleContext,
     qualified: str,
@@ -869,6 +896,7 @@ def _place(
         prices=seen_prices.get(qualified, {}),
         x=None if definition.map_position is None else definition.map_position.x,
         y=None if definition.map_position is None else definition.map_position.y,
+        elevation=_elevation_of(context.library, seen.region),
     )
 
 

@@ -176,6 +176,11 @@ env:
 Encounter tables also read weather, so the ogre that hunts the road in fog stays
 home in the sun. See [Travel & Encounters](06-travel-and-encounters.md).
 
+**Elevation costs travel time too**, on top of what it already does to
+temperature here: a route gains a multiplier for the height it climbs from
+origin to destination, same place `terrain` multiplies. See
+[Travel & Encounters § "Terrain and elevation multiply on top"](06-travel-and-encounters.md#terrain-and-elevation-multiply-on-top).
+
 **Shelter** matters: locations flagged `indoors: true` suppress `modify` and
 `visibility` effects. That gives the inn a reason to exist and makes "wait out
 the storm" a real decision with a real cost in days.

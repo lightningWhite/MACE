@@ -153,6 +153,45 @@ So there are two honest ways to get "the pass closes on its own":
 
 `openRoute` is the same effect vocabulary in reverse, for reopening it later.
 
+### Revealing the map as the player explores, instead of showing it all at once
+
+**Fully wizard-built today** — this isn't a missing feature, it's a content
+choice most first drafts skip because every location defaults to visible.
+
+A location starts known to the player if its `visible` field is true (the
+default) — or, if `discovered` is set, whatever that says instead (see
+`Location.starts_discovered`). Set `visible: false` on any location you don't
+want on the map or in travel menus at the start of the game:
+
+```yaml
+# in locations.yml
+- id: dark-mountain
+  name: "The Dark Mountain"
+  visible: false
+  ...
+```
+
+Then put a `reveal` effect wherever the discovery should happen — a scene
+`say` beat, a choice, a quest stage, a pressure event's `aftermath`, anywhere
+an effect list is accepted:
+
+```yaml
+effects:
+  - {giveItem: {actor: player, item: kings-token, qty: 1}}
+  - {reveal: {location: dark-mountain}}
+```
+
+`packs/games/peasants-quest`'s `report-to-orin` scene does exactly this: the
+captain hands over a token *and* the mountain appears on the map in the same
+effect list. `reveal` can appear more than once in the same list to unlock
+several places at once — "you find a map and a chest that marks three ruins"
+is just three `reveal` effects.
+
+The atlas the front-end draws from tracks three states per location, not two:
+*here* (current), *visited* (been there), and *known* (revealed but never
+visited) — so a revealed-but-unvisited ruin can be drawn differently from one
+the player has actually walked into, without any extra authoring.
+
 ## A complete example
 
 `packs/games/peasants-quest` is a real, playable, fully wizard-editable game —

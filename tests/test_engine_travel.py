@@ -37,6 +37,7 @@ def road_pack(
     *,
     route: dict[str, Any] | None = None,
     locations: list[dict[str, Any]] | None = None,
+    regions: list[dict[str, Any]] | None = None,
     weather: str | None = None,
     extra_entities: list[dict[str, Any]] | None = None,
 ) -> Any:
@@ -50,6 +51,8 @@ def road_pack(
         Fields to merge into the road.
     locations : list or None
         Locations, replacing the defaults.
+    regions : list or None
+        Regions, replacing the single flat `valley` default.
     weather : str or None
         A condition to pin over the starting location.
     extra_entities : list or None
@@ -112,7 +115,7 @@ def road_pack(
                     "transitions": {"clear": {"clear": 1}},
                 }
             ],
-            "regions": [{"id": "valley", "climate": "still"}],
+            "regions": regions or [{"id": "valley", "climate": "still"}],
             "routes": [road],
             "locations": locations
             or [
@@ -242,6 +245,58 @@ def test_bad_weather_makes_the_road_longer(tmp_path: Path) -> None:
     assert moved(result)["ticks"] == 12  # type: ignore[index]
     # The road is still six legs long. It just took twice as long to walk.
     assert [leg["leg"] for leg in legs(result)] == [1, 2, 3, 4, 5, 6]
+
+
+def test_climbing_into_the_mountains_makes_the_road_longer(tmp_path: Path) -> None:
+    """A road gaining 1000 units of elevation costs extra, on top of weather."""
+    flat = road_pack(tmp_path / "flat")
+    result = step(begin(flat, "tiny").state, Choose(0), flat)
+    assert moved(result) is not None
+    assert moved(result)["ticks"] == 6  # type: ignore[index]
+
+    climbing = road_pack(
+        tmp_path / "climbing",
+        regions=[
+            {"id": "foothills", "climate": "still", "elevation": 0},
+            {"id": "summit", "climate": "still", "elevation": 1000},
+        ],
+        locations=[
+            {
+                "id": "home",
+                "name": "Home",
+                "region": "foothills",
+                "exits": [{"to": "castle", "route": "road"}],
+            },
+            {"id": "castle", "name": "The Castle", "region": "summit"},
+        ],
+    )
+    result = step(begin(climbing, "tiny").state, Choose(0), climbing)
+    assert moved(result) is not None
+    # 1.0 + 1000/1000 == 2.0, so the six-tick road takes twelve.
+    assert moved(result)["ticks"] == 12  # type: ignore[index]
+
+
+def test_descending_costs_nothing_extra(tmp_path: Path) -> None:
+    """Coming down the mountain isn't rewarded, but it isn't punished either."""
+    library = road_pack(
+        tmp_path,
+        regions=[
+            {"id": "summit", "climate": "still", "elevation": 2000},
+            {"id": "foothills", "climate": "still", "elevation": 0},
+        ],
+        locations=[
+            {
+                "id": "home",
+                "name": "Home",
+                "region": "summit",
+                "exits": [{"to": "castle", "route": "road"}],
+            },
+            {"id": "castle", "name": "The Castle", "region": "foothills"},
+        ],
+    )
+    result = step(begin(library, "tiny").state, Choose(0), library)
+    assert moved(result) is not None
+    assert moved(result)["ticks"] == 6  # type: ignore[index]
 
 
 def test_a_closed_road_cannot_be_set_out_on(tmp_path: Path) -> None:

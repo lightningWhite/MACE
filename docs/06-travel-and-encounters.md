@@ -50,6 +50,19 @@ being stopped three ticks down a road you already committed to is a punishment.
 Weather met mid-journey slows you instead, which a blizzard's `travelMultiplier`
 does hard enough to hurt.
 
+### Terrain and elevation multiply on top
+
+A road's own `terrain` (docs/07's neighbor, `mace.model.terrain.Terrain`) adds
+its own multiplier — a paved highway shrugs off rain that turns a forest track
+to mud — and elevation adds a third, on top of both: a route gains
+`1.0 + max(0, destinationElevation − originElevation) / 1000` for the whole
+road, once, the same granularity `terrain` resolves at. Coming down costs
+nothing extra. So a storm on a muddy mountain road stacks all three — weather,
+surface, and the climb — and none of it needs an author to compute a total in
+advance. See [World Simulation](05-world-simulation.md#layer-4--local-weather-and-its-consequences)
+for where `elevation` comes from and what else it already does to the weather
+itself.
+
 ### Being stopped
 
 A waypoint's `stopIf` ends the journey where it stands. The player is *at* the

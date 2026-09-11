@@ -27,6 +27,11 @@
  * that they work out there is money in carrying salt north on their own.
  * Prices are drawn as numbers as well as shades for the usual reason: a map
  * legible only in colour is not legible.
+ *
+ * Elevation is different: it's geography, not a discovery, so it rides the
+ * same always-drawn region blob the weather does — a tint from `place.elevation`
+ * (higher regions shade darker) plus the number itself, for the same reason
+ * prices are.
  */
 
 import { useState } from "react";
@@ -122,6 +127,12 @@ export function MapView({
   const cheapest = quoted.length > 0 ? Math.min(...quoted) : 0;
   const dearest = quoted.length > 0 ? Math.max(...quoted) : 0;
 
+  const elevations = atlas.places.flatMap((place) =>
+    place.elevation === null ? [] : [place.elevation],
+  );
+  const lowest = elevations.length > 0 ? Math.min(...elevations) : 0;
+  const highest = elevations.length > 0 ? Math.max(...elevations) : 0;
+
   const positions = layout(atlas);
   const box = fit(positions, PAD);
   const authored = isAuthored(atlas.places);
@@ -148,18 +159,40 @@ export function MapView({
         role="img"
         aria-label={label}
       >
-        {/* Weather, per region, named rather than merely tinted. */}
+        {/* Weather, per region, named rather than merely tinted. Elevation
+            rides the same blob, as a tint plus a printed number — it's a
+            geographic fact rather than a spoiler, so it's always shown. */}
         {[...byRegion].map(([region, places]) => {
           const blob = centre(positions, places);
           const sky = places.find((place) => place.sky !== null)?.sky ?? null;
+          const elevation =
+            places.find((place) => place.elevation !== null)?.elevation ?? null;
           if (blob === null) return null;
           const mine = places.some((place) => place.location === atlas.here);
+          const risen =
+            elevation !== null && highest > lowest
+              ? (elevation - lowest) / (highest - lowest)
+              : null;
           return (
             <g key={region} className={mine ? "region region-here" : "region"}>
-              <circle cx={blob.x} cy={blob.y} r={blob.radius} />
+              <circle
+                cx={blob.x}
+                cy={blob.y}
+                r={blob.radius}
+                style={risen === null ? undefined : { opacity: 0.05 + risen * 0.22 }}
+              />
               {sky !== null && (
                 <text x={blob.x} y={blob.y - blob.radius + 12} className="region-sky">
                   {sky}
+                </text>
+              )}
+              {elevation !== null && (
+                <text
+                  x={blob.x}
+                  y={blob.y + blob.radius - 6}
+                  className="region-elevation"
+                >
+                  {elevation}
                 </text>
               )}
             </g>

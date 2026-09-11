@@ -274,3 +274,61 @@ Not yet worth deciding, listed so they aren't forgotten:
   player play?'" without knowing the schema. Would need the problem list to
   carry (or look up) the step id a field belongs to, so the wizard could both
   say the human question and highlight its control.
+- **Submaps for a single location.** `Location` has no `parent`/`interior`/
+  `contains` field (see `src/mace/model/location.py`) — a castle is one
+  location, full stop. Raised by an author (2026-09-10): a castle's grounds,
+  corridors, quarters and dungeon want to be *places on their own small map*
+  without each becoming a pin on the world map and cluttering it. Whatever
+  this becomes has to answer: is a room a `Location` with a `parent` (reusing
+  `exits`/`scenes`/`entities` as-is, one more field) or a distinct nested-map
+  concept; does the world map keep showing "at the castle" as one pin while
+  the sub-map is open; and does travel time / encounter resolution treat a
+  move between rooms differently from a move between world locations (rooms
+  presumably don't roll world encounters or burn a full route leg). The
+  `region.py:39` docstring's aside about "an undercity or a station interior"
+  is the only prior thought on record, and it's about climate-less regions,
+  not nested maps — this is a different problem.
+- **Elevation on the map and in travel — RESOLVED (2026-09-11).** Turned out
+  smaller than it looked. Rain
+  converting to snow at altitude was **already built**: `WeatherCondition.freezes_to`
+  plus `_settle()`'s per-region freezing-point check (`src/mace/engine/world/weather.py`)
+  means two neighboring regions at different elevations, hit by the same
+  front, already settle independently to rain and snow — no code needed,
+  just a climate/elevation combination that pushes one region below
+  freezing (`fantasy.core`'s `rain`/`light-snow` pair already demonstrates
+  it). What was actually missing has been built: a route now costs
+  `1.0 + max(0, gain) / 1000` extra for the elevation it climbs
+  (`_climb_cost` in `src/mace/engine/step.py`, whole-route granularity —
+  see [Travel & Encounters](06-travel-and-encounters.md#terrain-and-elevation-multiply-on-top)),
+  and the map now tints and labels each region's blob by elevation
+  (`Place.elevation` in `src/mace/session/view.py`, drawn in `web/src/map/Map.tsx`
+  the same way weather already is — unconditionally, since elevation isn't a
+  spoiler the way a price is). `elevation` stays on `Region`, not `Location`;
+  nothing so far has needed finer granularity than that.
+- **Switching equipped weapon or tool, mid-scene or mid-combat.** Equipment
+  is set once at entity-definition load (`src/mace/engine/step.py`, populating
+  `state.equipment` from the definition) and read when a combat roster is
+  built (`src/mace/engine/combat/roster.py`); there's no runtime `equip`
+  effect and no `EffectPayload` for it in `src/mace/model/effects.py`. Wanted
+  for two different reasons that may want two different mechanisms: a tool
+  swap outside combat (need an axe equipped to fell a tree — a condition plus
+  maybe a use-effect, not really "combat gear") versus swapping weapons
+  *during* a fight (bow to shortsword when the enemy closes — this one
+  probably costs an exchange the same way the existing `focus` ally-order
+  does, so it can't be a free action that trivializes the range question
+  below).
+- **Range in combat.** There is no range concept anywhere in combat today —
+  `Move` (`src/mace/model/combat.py`) has no melee/ranged/optimal-range
+  field, `ItemProps`' `damage` (`src/mace/model/entity.py`) has no range
+  field either, and `docs/07-combat.md` doesn't mention distance. Proposed:
+  weapons tagged ranged or melee, each with an optimal-range band and
+  accuracy falling off (the author's suggestion was exponentially) outside
+  it; a melee weapon simply can't connect outside its band at all; combatants
+  have a distance between them that a "close the distance" / "back off"
+  option changes during an exchange, at a rate scaled by a stat (`speed` or
+  `dexterity` already exist and are the obvious candidates). This is the
+  largest of the four items here — it touches the move model, the exchange
+  resolver, and the tactical/reflex front-end input, not just one file — and
+  probably deserves its own [decision record](decisions/) rather than being
+  settled in this list, given how central [ADR-0006](decisions/0006-tempo-combat.md)'s
+  tempo model already is to combat's shape.

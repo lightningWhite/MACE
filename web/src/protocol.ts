@@ -411,6 +411,11 @@ export interface Place {
   prices: Record<string, number>;
   x: number | null;
   y: number | null;
+  /**
+   * The place's region's height above the map's baseline, or null where it
+   * has no region. Unlike prices, never a spoiler — drawn unconditionally.
+   */
+  elevation: number | null;
 }
 
 export interface Road {

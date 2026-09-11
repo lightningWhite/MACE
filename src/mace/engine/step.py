@@ -80,7 +80,7 @@ from mace.engine.state import (
     QuestStatus,
 )
 from mace.engine.stats import pool_bounds, starting_pools
-from mace.engine.world import Clock, advance, region_of
+from mace.engine.world import Clock, advance, climate_of, region_of
 from mace.engine.world import events as world_events
 from mace.model import (
     Background,
@@ -1250,6 +1250,7 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
         return False
 
     surface = _terrain(route, context)
+    climb = _climb_cost(route, context)
 
     while journey.progress < length:
         leg_before = int(journey.progress)
@@ -1258,6 +1259,7 @@ def _walk(route: Route, context: RuleContext, events: list[Event]) -> bool:
         going = observed.travel_multiplier
         if surface is not None:
             going *= surface.cost(observed.tags)
+        going *= climb
         journey.progress += 1.0 / max(0.01, going)
 
         reached = _next_waypoint(stops, journey)
@@ -1353,6 +1355,66 @@ def _still_barred(
     journey.passed = (*journey.passed, journey.blocked_at)
     journey.blocked_at = None
     return False
+
+
+def _climb_cost(route: Route, context: RuleContext) -> float:
+    """How much slower a road is for the elevation it gains, end to end.
+
+    A goat path into the mountains is slow before anything falls on it, the
+    same reasoning `Terrain` already applies to surface — this just applies
+    it to the climb. Computed once for the whole route rather than leg by
+    leg, the same granularity `_terrain` resolves at.
+
+    Parameters
+    ----------
+    route : Route
+        The road.
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    float
+        The multiplier, 1.0 or higher. Descending costs nothing extra.
+    """
+    pack_id = context.state.pack
+    gain = _elevation_of(route.destination, context, pack_id) - _elevation_of(
+        route.origin, context, pack_id
+    )
+    return 1.0 + max(0.0, gain) / 1000.0
+
+
+def _elevation_of(location: str, context: RuleContext, pack_id: str) -> float:
+    """A named location's region's elevation, or 0.0 if either is unknown.
+
+    Parameters
+    ----------
+    location : str
+        A location reference, as written in content.
+    context : RuleContext
+        The playthrough.
+    pack_id : str
+        The pack references resolve against.
+
+    Returns
+    -------
+    float
+        The elevation, or 0.0 for a location with no region or a region with
+        no elevation of its own — the same default `Region.elevation` has.
+    """
+    try:
+        found = context.library.find(location, "locations", within=pack_id)
+    except ContentError:
+        return 0.0
+    if not isinstance(found, Location):
+        return 0.0
+    region_id = region_of(
+        context.library, pack_id, found, context.game.world.start_region
+    )
+    if region_id is None:
+        return 0.0
+    region, _climate, _home = climate_of(context.library, region_id)
+    return region.elevation
 
 
 def _terrain(route: Route, context: RuleContext) -> Terrain | None:

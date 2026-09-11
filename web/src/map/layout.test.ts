@@ -24,6 +24,7 @@ function place(id: string, extra: Partial<Place> = {}): Place {
     prices: {},
     x: null,
     y: null,
+    elevation: null,
     ...extra,
   };
 }
