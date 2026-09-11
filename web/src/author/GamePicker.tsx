@@ -28,6 +28,10 @@ export function GamePicker({
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
+  // Set only when the last attempt failed because the pack open now has
+  // unsaved edits — the one refusal a picker can do something about, by
+  // retrying the same call with `discard` this time.
+  const [discardable, setDiscardable] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     void api
@@ -46,14 +50,28 @@ export function GamePicker({
       .catch(() => undefined);
   }, []);
 
-  function settle(reply: Promise<Frame>): void {
+  /**
+   * Run one attempt to open or create a pack.
+   *
+   * @param reply - the call already in flight.
+   * @param onDirty - the same call, asked again with `discard: true`. Kept
+   *   only when `reply` was refused for exactly that reason, so the picker
+   *   can offer "lose them and switch anyway" instead of leaving an author
+   *   stuck re-reading a message that does not say what to do about it.
+   */
+  function settle(reply: Promise<Frame>, onDirty?: () => void): void {
     setBusy(true);
     setFailure(null);
+    setDiscardable(null);
     reply
       .then(onOpened)
-      .catch((error: unknown) =>
-        setFailure(error instanceof StudioError ? error.message : "that did not work"),
-      )
+      .catch((error: unknown) => {
+        const message = error instanceof StudioError ? error.message : "that did not work";
+        setFailure(message);
+        if (onDirty !== undefined && message.includes("unsaved changes")) {
+          setDiscardable(() => onDirty);
+        }
+      })
       .finally(() => setBusy(false));
   }
 
@@ -64,6 +82,11 @@ export function GamePicker({
         <p className="studio-failure" role="alert">
           {failure}
         </p>
+      )}
+      {discardable === null ? null : (
+        <button type="button" className="link-button" disabled={busy} onClick={discardable}>
+          Discard those changes and switch anyway
+        </button>
       )}
 
       {games === null ? (
@@ -78,7 +101,9 @@ export function GamePicker({
                 type="button"
                 className="game"
                 disabled={busy}
-                onClick={() => settle(api.openGame(game.id))}
+                onClick={() =>
+                  settle(api.openGame(game.id), () => settle(api.openGame(game.id, true)))
+                }
               >
                 <span className="game-name">{game.name}</span>
               </button>
@@ -91,7 +116,9 @@ export function GamePicker({
         <NewGame
           libraries={libraries}
           busy={busy}
-          onCreate={(name, requires) => settle(api.newGame(name, requires))}
+          onCreate={(name, requires) =>
+            settle(api.newGame(name, requires), () => settle(api.newGame(name, requires, true)))
+          }
           onCancel={() => setCreating(false)}
         />
       ) : (

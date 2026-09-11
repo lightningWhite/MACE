@@ -290,7 +290,7 @@ class Studio:
         Returns
         -------
         dict
-            JSON-safe: `places` and `roads`.
+            JSON-safe: `places`, `roads`, and `regions`.
         """
         places = [
             {
@@ -303,6 +303,7 @@ class Studio:
                     for one in _sequence(self._read("locations", local_id, "exits"))
                     if isinstance(one, Mapping) and one.get("to") is not None
                 ],
+                "region": _plain(self._read("locations", local_id, "region")),
             }
             for local_id in self.project.ids("locations")
         ]
@@ -318,7 +319,14 @@ class Studio:
             }
             for local_id in self.project.ids("routes")
         ]
-        return {"places": places, "roads": roads}
+        regions = [
+            {
+                "id": local_id,
+                "name": str(self._read("regions", local_id, "name") or local_id),
+            }
+            for local_id in self.project.ids("regions")
+        ]
+        return {"places": places, "roads": roads, "regions": regions}
 
     def graph(self) -> dict[str, Any]:
         """Every scene, what leads to it, and what it leads to.
@@ -1295,13 +1303,17 @@ class Desk:
             )
         return sorted(found, key=lambda one: one["id"])
 
-    def open(self, pack_id: str) -> Studio:
+    def open(self, pack_id: str, *, discard: bool = False) -> Studio:
         """Switch to an existing game pack.
 
         Parameters
         ----------
         pack_id : str
             The pack's id, as `games()` lists it.
+        discard : bool
+            Switch even though the current pack has unsaved edits, and lose
+            them. They were never written to disk, so "discarding" them is
+            nothing more than not stopping the switch that abandons them.
 
         Returns
         -------
@@ -1311,9 +1323,11 @@ class Desk:
         Raises
         ------
         ContentError
-            If the current pack has unsaved edits, or there is no such game.
+            If the current pack has unsaved edits and `discard` was not
+            asked for, or there is no such game.
         """
-        self._refuse_if_dirty()
+        if not discard:
+            self._refuse_if_dirty()
         match = next((one for one in self.games() if one["id"] == pack_id), None)
         if match is None:
             raise ContentError(f"no game `{pack_id}` here")
@@ -1321,7 +1335,13 @@ class Desk:
         self.studio = Studio.open(Path(match["path"]), *search)
         return self.studio
 
-    def create(self, name: str, requires: Mapping[str, str] | None = None) -> Studio:
+    def create(
+        self,
+        name: str,
+        requires: Mapping[str, str] | None = None,
+        *,
+        discard: bool = False,
+    ) -> Studio:
         """Start a new game pack and open it.
 
         Parameters
@@ -1331,6 +1351,9 @@ class Desk:
             way `Studio.create` derives an object's id from its name.
         requires : mapping or None
             Pack id to version range.
+        discard : bool
+            Start the new pack even though the current one has unsaved
+            edits, and lose them — see `open`.
 
         Returns
         -------
@@ -1341,11 +1364,13 @@ class Desk:
         ------
         ContentError
             If no games directory is configured, the current pack has
-            unsaved edits, or a pack already exists at the derived path.
+            unsaved edits and `discard` was not asked for, or a pack already
+            exists at the derived path.
         """
         if self.root is None:
             raise ContentError("no games directory is configured")
-        self._refuse_if_dirty()
+        if not discard:
+            self._refuse_if_dirty()
         local_id = slug(name)
         search = () if self.search is None else (self.search,)
         project = Project.create(

@@ -917,6 +917,30 @@ def test_a_desk_refuses_to_switch_away_from_unsaved_work(tmp_path: Path) -> None
     assert held.studio is open_studio
 
 
+def test_a_desk_can_discard_unsaved_work_and_switch_anyway(tmp_path: Path) -> None:
+    """The edits were never written, so discarding them is just not refusing."""
+    root = two_games(tmp_path)
+    open_studio = Studio.open(root / "castle-quest")
+    held = Desk(studio=open_studio, root=root)
+    open_studio.create("locations", "Somewhere")
+
+    switched = held.open("moor-quest", discard=True)
+    assert switched.project.manifest.id == "moor-quest"
+    # The abandoned edit never reached disk, so the game it was made in opens
+    # clean the next time somebody switches to it.
+    assert not Studio.open(root / "castle-quest").project.dirty
+
+
+def test_a_desk_can_discard_unsaved_work_and_create_a_new_game(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    open_studio = Studio.open(root / "castle-quest")
+    held = Desk(studio=open_studio, root=root)
+    open_studio.create("locations", "Somewhere")
+
+    made = held.create("A Third Game", discard=True)
+    assert made.project.manifest.id == "a-third-game"
+
+
 def test_creating_a_game_derives_its_id_from_the_name(tmp_path: Path) -> None:
     root = two_games(tmp_path)
     held = Desk(studio=None, root=root)

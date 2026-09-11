@@ -26,6 +26,7 @@ game:
   rules:
     vitalPool: hitpoints
     effortPool: stamina
+    combatMode: reflex
     deathIsPermanent: false
     # `market`, because this pack defines three of them and the whole point
     # of the valley is that grain is cheap where it grows and dear where the

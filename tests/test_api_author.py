@@ -578,6 +578,30 @@ def test_switching_away_from_unsaved_changes_is_refused(root: Path) -> None:
     assert got(client, "/api/author")["pack"]["id"] == "tiny"
 
 
+def test_discard_switches_away_from_unsaved_changes_anyway(root: Path) -> None:
+    alone = FastAPI()
+    alone.include_router(
+        author_routes(Desk(studio=Studio.open(root, root.parent), root=root.parent))
+    )
+    client = TestClient(alone)
+    client.post(
+        "/api/author/answers",
+        json={
+            "collection": "locations",
+            "object": "home",
+            "step": "location.safe",
+            "value": True,
+        },
+    )
+
+    made = client.post(
+        "/api/author/games",
+        json={"name": "Somewhere Else", "discard": True},
+    )
+    assert made.status_code == 201, made.text
+    assert made.json()["pack"]["id"] == "somewhere-else"
+
+
 def test_a_pack_that_does_not_validate_is_still_listed(root: Path) -> None:
     """An author has to be able to open a half-written pack, not just a
     finished one — the same tolerance `Project` gives raw content

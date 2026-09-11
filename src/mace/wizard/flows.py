@@ -150,14 +150,17 @@ GAME = Flow(
         ),
         Step(
             id="game.world.minutesPerTick",
-            title="How much time is one tick?",
+            title="How many minutes does one tick take?",
             binds="game.world.minutesPerTick",
             field=Number(minimum=1, optional=True),
             help=(
-                "The pace of everything: travel, weather, hunger, the seven "
-                "days you have left. Thirty minutes suits a game about a "
-                "week-long journey; a game about one night wants less. Blank "
-                "leaves it at thirty."
+                "The number you enter is minutes: 30 means a tick is half an "
+                "hour, 60 means a tick is an hour. It sets the pace of "
+                "everything — travel, weather, hunger, the seven days you "
+                "have left — but not how many ticks make a day; the "
+                "calendar's own `ticksPerDay` decides that. Thirty minutes "
+                "suits a game about a week-long journey; a game about one "
+                "night wants less. Blank leaves it at thirty."
             ),
             optional=True,
         ),

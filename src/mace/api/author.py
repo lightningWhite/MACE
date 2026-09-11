@@ -156,12 +156,16 @@ class NewGame(Wire):
     ----------
     name : str
         Its title. The id and directory are derived from it.
+    discard : bool
+        Go ahead even though the pack open now has unsaved edits, and lose
+        them.
     requires : dict
         Pack id to version range — which libraries it builds on.
     """
 
     name: str
     requires: dict[str, str] = {}  # noqa: RUF012 — pydantic copies per instance
+    discard: bool = False
 
 
 class OpenGame(Wire):
@@ -171,9 +175,13 @@ class OpenGame(Wire):
     ----------
     pack : str
         Its id, as `GET /api/author/games` lists it.
+    discard : bool
+        Switch even though the pack open now has unsaved edits, and lose
+        them.
     """
 
     pack: str
+    discard: bool = False
 
 
 class Built(Wire):
@@ -312,7 +320,7 @@ def author_routes(studio: Studio | Desk, registry: Registry | None = None) -> AP
             was open before.
         """
         try:
-            held.create(body.name, body.requires)
+            held.create(body.name, body.requires, discard=body.discard)
         except ContentError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         return screened()
@@ -338,7 +346,7 @@ def author_routes(studio: Studio | Desk, registry: Registry | None = None) -> AP
             whatever was open before, or no such game.
         """
         try:
-            held.open(body.pack)
+            held.open(body.pack, discard=body.discard)
         except ContentError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         return screened()

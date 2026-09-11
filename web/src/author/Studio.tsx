@@ -58,6 +58,14 @@ const MARKS: Record<string, string> = {
   done: "✓",
 };
 
+/** What one member of a collection is called — `locations` reads as
+ * `location`. Good enough for every collection this labels a list with
+ * today; a plural English cannot derive this way would need its own entry
+ * here, the same as `mace.content.library.SINGULAR` does on the Python side. */
+function singular(collection: string): string {
+  return collection.endsWith("s") ? collection.slice(0, -1) : collection;
+}
+
 export function Studio() {
   const [frame, setFrame] = useState<Frame | null>(null);
   const [where, setWhere] = useState<Where>({ at: "desk" });
@@ -432,6 +440,13 @@ function Section({
   const [naming, setNaming] = useState("");
   const [making, setMaking] = useState(screen.creates[0] ?? "");
 
+  // The world section lists locations, routes, and regions together — one
+  // map, three kinds of thing on it — and nothing about a bare label like
+  // "The Lowlands" says which of those it is until you open it. A section
+  // that only ever holds one collection (every other section) needs no such
+  // badge, so it only appears once there is actually something to tell apart.
+  const mixed = new Set(screen.objects.map((one) => one.collection)).size > 1;
+
   return (
     <section className="studio-section">
       <h2>{screen.title}</h2>
@@ -474,6 +489,9 @@ function Section({
                 onClick={() => onOpen(one.collection, one.id)}
               >
                 <span className="object-label">{one.label}</span>
+                {mixed ? (
+                  <span className="object-kind dim">{singular(one.collection)}</span>
+                ) : null}
                 <span className="dim">{one.id}</span>
                 {one.unfinished ? (
                   <span className="object-unfinished">unfinished</span>

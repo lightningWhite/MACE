@@ -1199,8 +1199,8 @@
         },
         {
           "id": "game.world.minutesPerTick",
-          "title": "How much time is one tick?",
-          "help": "The pace of everything: travel, weather, hunger, the seven days you have left. Thirty minutes suits a game about a week-long journey; a game about one night wants less. Blank leaves it at thirty.",
+          "title": "How many minutes does one tick take?",
+          "help": "The number you enter is minutes: 30 means a tick is half an hour, 60 means a tick is an hour. It sets the pace of everything \u2014 travel, weather, hunger, the seven days you have left \u2014 but not how many ticks make a day; the calendar's own `ticksPerDay` decides that. Thirty minutes suits a game about a week-long journey; a game about one night wants less. Blank leaves it at thirty.",
           "optional": true,
           "binds": "game.world.minutesPerTick",
           "value": 30,
@@ -1361,9 +1361,9 @@
           "help": "The player can override this. Pick what your game is about.",
           "optional": true,
           "binds": "game.rules.combatMode",
-          "value": null,
-          "described": "\u2014",
-          "answered": false,
+          "value": "reflex",
+          "described": "reflex \u2014 a real timing window",
+          "answered": true,
           "field": {
             "kind": "select",
             "optional": true,
@@ -6885,7 +6885,8 @@
         "exits": [
           "traders-post",
           "hagans-castle"
-        ]
+        ],
+        "region": "the-lowlands"
       },
       {
         "id": "hagans-castle",
@@ -6894,14 +6895,16 @@
         "y": 0.0,
         "exits": [
           "fenmoor"
-        ]
+        ],
+        "region": "the-marches"
       },
       {
         "id": "the-long-moor",
         "name": "The Long Moor",
         "x": null,
         "y": null,
-        "exits": []
+        "exits": [],
+        "region": null
       },
       {
         "id": "traders-post",
@@ -6910,14 +6913,16 @@
         "y": 160.0,
         "exits": [
           "fenmoor"
-        ]
+        ],
+        "region": "the-lowlands"
       },
       {
         "id": "troll-bridge",
         "name": "The Old Bridge",
         "x": 10.0,
         "y": 60.0,
-        "exits": []
+        "exits": [],
+        "region": "the-northwood"
       }
     ],
     "roads": [
@@ -6936,6 +6941,20 @@
         "to": "traders-post",
         "ticks": 2,
         "bidirectional": true
+      }
+    ],
+    "regions": [
+      {
+        "id": "the-lowlands",
+        "name": "The Lowlands"
+      },
+      {
+        "id": "the-marches",
+        "name": "The Marches"
+      },
+      {
+        "id": "the-northwood",
+        "name": "The Northwood"
       }
     ]
   },

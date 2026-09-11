@@ -200,6 +200,8 @@ export interface Drawn {
   y: number | null;
   /** Local ids of the places you can walk to from here. */
   exits: string[];
+  /** The region it belongs to, id as authored — `null` for none. */
+  region: string | null;
 }
 
 /** One road on the author's map. */
@@ -218,9 +220,17 @@ export interface Road {
  * Not the player's atlas: no fog of war, no weather, and no opinion about
  * where anybody has been. It is the shape of the pack.
  */
+/** One region on the author's map — a name, nothing more; membership lives on
+ * each place's own `region`. */
+export interface MapRegion {
+  id: string;
+  name: string;
+}
+
 export interface Atlas {
   places: Drawn[];
   roads: Road[];
+  regions: MapRegion[];
 }
 
 /** One line of an object's description, and when the player reads it. */

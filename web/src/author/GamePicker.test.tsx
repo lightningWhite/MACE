@@ -103,7 +103,11 @@ describe("the game picker", () => {
     await user.click(screen.getByRole("checkbox", { name: "Fantasy Core" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(posted).toEqual({ name: "A New Quest", requires: { "fantasy.core": "^0.1" } });
+    expect(posted).toEqual({
+      name: "A New Quest",
+      requires: { "fantasy.core": "^0.1" },
+      discard: false,
+    });
     expect(onOpened).toHaveBeenCalledWith(OPENED_FRAME);
   });
 
@@ -124,6 +128,35 @@ describe("the game picker", () => {
     await user.click(await screen.findByRole("button", { name: "Castle Quest" }));
 
     expect(await screen.findByText("this pack has unsaved changes")).toBeTruthy();
+  });
+
+  it("offers to discard unsaved changes and switch anyway, then does", async () => {
+    const user = userEvent.setup();
+    const onOpened = vi.fn();
+    let posted: unknown = null;
+    stub({
+      "GET /api/author/games": () => ({
+        games: [{ id: "castle-quest", name: "Castle Quest", path: "/x" }],
+        open: null,
+      }),
+      "GET /api/author/libraries": () => ({ libraries: [] }),
+      "POST /api/author/open": (body) => {
+        posted = body;
+        if (body !== null && typeof body === "object" && "discard" in body && body.discard) {
+          return OPENED_FRAME;
+        }
+        throw new Refused(400, "this pack has unsaved changes — save them first");
+      },
+    });
+
+    render(<GamePicker onOpened={onOpened} />);
+    await user.click(await screen.findByRole("button", { name: "Castle Quest" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Discard those changes and switch anyway" }),
+    );
+
+    expect(posted).toEqual({ pack: "castle-quest", discard: true });
+    expect(onOpened).toHaveBeenCalledWith(OPENED_FRAME);
   });
 
   it("offers a way back only once there is somewhere to go back to", async () => {

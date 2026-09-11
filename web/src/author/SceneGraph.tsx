@@ -17,10 +17,11 @@
  * more impressive and answer the question worse.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import * as api from "./api";
 import { StudioError } from "./api";
+import { useSvgPanZoom } from "./panzoom";
 import type { Graph, Node } from "./protocol";
 
 /** Space between columns and between rows. */
@@ -73,6 +74,7 @@ function laid(graph: Graph): Laid[] {
 export function SceneGraph({ onOpen }: { onOpen: (id: string) => void }) {
   const [graph, setGraph] = useState<Graph | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  const surface = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
     void api
@@ -83,14 +85,18 @@ export function SceneGraph({ onOpen }: { onOpen: (id: string) => void }) {
       });
   }, []);
 
+  // Computed unconditionally — see MapEditor's own note by its pan/zoom hook
+  // call — so an empty or not-yet-loaded graph still gives the hook a box.
+  const nodes = graph === null ? [] : laid(graph);
+  const width = (Math.max(0, ...nodes.map((one) => one.depth)) + 1) * COLUMN;
+  const height = (Math.max(0, ...nodes.map((one) => one.row)) + 1) * ROW + 20;
+  const pan = useSvgPanZoom(surface, { x: 0, y: 0, w: width, h: height });
+
   if (failure !== null) return <p className="studio-failure">{failure}</p>;
   if (graph === null) return <p className="dim">Working out what leads where…</p>;
   if (graph.scenes.length === 0) return null;
 
-  const nodes = laid(graph);
   const at = new Map(nodes.map((one) => [one.node.id, one]));
-  const width = (Math.max(...nodes.map((one) => one.depth)) + 1) * COLUMN;
-  const height = (Math.max(...nodes.map((one) => one.row)) + 1) * ROW + 20;
   const orphans = graph.scenes.filter((one) => !one.reachable);
 
   const point = (one: Laid) => ({ x: one.depth * COLUMN + 10, y: one.row * ROW + 20 });
@@ -112,9 +118,16 @@ export function SceneGraph({ onOpen }: { onOpen: (id: string) => void }) {
         </p>
       )}
 
+      {pan.zoomed ? (
+        <button type="button" className="link-button graph-reset" onClick={pan.reset}>
+          reset view
+        </button>
+      ) : null}
+
       <svg
+        ref={surface}
         className="graph"
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={pan.viewBox}
         role="img"
         aria-label={
           `${graph.scenes.length} scenes. ` +
@@ -124,6 +137,7 @@ export function SceneGraph({ onOpen }: { onOpen: (id: string) => void }) {
                 .map((one) => one.id)
                 .join(", ")}.`)
         }
+        {...pan.background}
       >
         {nodes.flatMap((one) =>
           one.node.leadsTo.flatMap((onward) => {

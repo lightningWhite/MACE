@@ -25,6 +25,7 @@ import { useEffect, useRef, useState } from "react";
 
 import * as api from "./api";
 import { StudioError } from "./api";
+import { svgPoint, useSvgPanZoom } from "./panzoom";
 import type { Atlas, Drawn } from "./protocol";
 
 /** Room around the outermost place, for its label. */
@@ -32,6 +33,9 @@ const PAD = 60;
 
 /** Where a place with no authored position is put, before anybody drags it. */
 const GUESS_RADIUS = 140;
+
+/** Room a region's oval leaves around its outermost member. */
+const REGION_PAD = 55;
 
 interface Placed {
   place: Drawn;
@@ -80,10 +84,72 @@ function box(placed: Placed[]) {
   };
 }
 
+/** Widen a fitted box so every region's oval fits inside it too. */
+function withRegions(fitted: ReturnType<typeof box>, regions: RegionShape[]) {
+  let minX = fitted.minX;
+  let minY = fitted.minY;
+  let maxX = fitted.minX + fitted.width;
+  let maxY = fitted.minY + fitted.height;
+  for (const one of regions) {
+    minX = Math.min(minX, one.cx - one.rx);
+    minY = Math.min(minY, one.cy - one.ry);
+    maxX = Math.max(maxX, one.cx + one.rx);
+    maxY = Math.max(maxY, one.cy + one.ry);
+  }
+  return { minX, minY, width: maxX - minX, height: maxY - minY };
+}
+
 /** What a road is called, for a label somebody has to read. */
 function roadName(atlas: Atlas, id: string): string {
   const road = atlas.roads.find((one) => one.id === id);
   return road === undefined ? id : String(road.name ?? road.id);
+}
+
+interface RegionShape {
+  id: string;
+  name: string;
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+}
+
+/**
+ * An oval around each region's own places.
+ *
+ * A region is a fact about a location, not a thing with a position of its
+ * own, so it is drawn from wherever its members already are rather than
+ * placed independently — the same reasoning `mapPosition` is per-place. A
+ * region with one member still gets a real oval, padded the same as the
+ * label would need, so it reads as a region rather than a ring drawn around
+ * a dot for no reason a reader can see.
+ */
+function regionShapes(placed: Placed[], atlas: Atlas): RegionShape[] {
+  const members = new Map<string, Placed[]>();
+  for (const one of placed) {
+    const region = one.place.region;
+    if (region === null) continue;
+    const list = members.get(region) ?? [];
+    list.push(one);
+    members.set(region, list);
+  }
+  const named = new Map(atlas.regions.map((one) => [one.id, one.name]));
+  return [...members.entries()].map(([id, group]) => {
+    const xs = group.map((one) => one.x);
+    const ys = group.map((one) => one.y);
+    const minX = Math.min(...xs) - REGION_PAD;
+    const maxX = Math.max(...xs) + REGION_PAD;
+    const minY = Math.min(...ys) - REGION_PAD;
+    const maxY = Math.max(...ys) + REGION_PAD;
+    return {
+      id,
+      name: named.get(id) ?? id,
+      cx: (minX + maxX) / 2,
+      cy: (minY + maxY) / 2,
+      rx: (maxX - minX) / 2,
+      ry: (maxY - minY) / 2,
+    };
+  });
 }
 
 export function MapEditor({
@@ -117,6 +183,19 @@ export function MapEditor({
       });
   }, []);
 
+  // Computed unconditionally, atlas or no atlas, because the pan/zoom hook
+  // below has to be called on every render regardless of what this one
+  // returns — an empty map still has a box to fit and a gesture to track.
+  const placed = atlas === null ? [] : positioned(atlas.places);
+  const regions = atlas === null ? [] : regionShapes(placed, atlas);
+  const fitted = withRegions(box(placed), regions);
+  const pan = useSvgPanZoom(surface, {
+    x: fitted.minX,
+    y: fitted.minY,
+    w: fitted.width,
+    h: fitted.height,
+  });
+
   const refresh = async () => {
     setAtlas(await api.atlas());
     onChanged();
@@ -137,24 +216,14 @@ export function MapEditor({
   }
   if (atlas === null) return <p className="dim">Drawing the map…</p>;
 
-  const placed = positioned(atlas.places);
   const at = new Map(placed.map((one) => [one.place.id, one]));
-  const view = box(placed);
 
   /** Turn a pointer event into the coordinates the author is choosing. */
   const pointAt = (event: React.PointerEvent): { x: number; y: number } | null => {
     const svg = surface.current;
     if (svg === null) return null;
-    const rect = svg.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return null;
-    return {
-      x: Math.round(
-        view.minX + ((event.clientX - rect.left) / rect.width) * view.width,
-      ),
-      y: Math.round(
-        view.minY + ((event.clientY - rect.top) / rect.height) * view.height,
-      ),
-    };
+    const local = svgPoint(svg, event.clientX, event.clientY);
+    return local === null ? null : { x: Math.round(local.x), y: Math.round(local.y) };
   };
 
   const drop = (id: string) => {
@@ -179,6 +248,7 @@ export function MapEditor({
       <p className="dim">
         Drag a place to put it somewhere. Click two places to draw a road
         between them — {atlas.places.length < 2 ? "once there are two" : "in that order"}.
+        Scroll to zoom; drag the empty map to pan.
       </p>
 
       {failure === null ? null : (
@@ -190,17 +260,36 @@ export function MapEditor({
       <svg
         ref={surface}
         className="author-map"
-        viewBox={`${view.minX} ${view.minY} ${view.width} ${view.height}`}
+        viewBox={pan.viewBox}
         role="img"
         aria-label={`A map of ${atlas.places.length} places and ${atlas.roads.length} roads`}
+        onPointerDown={pan.background.onPointerDown}
         onPointerMove={(event) => {
-          if (dragging === null) return;
-          const point = pointAt(event);
-          if (point !== null) setDragging({ id: dragging.id, ...point });
+          if (dragging !== null) {
+            const point = pointAt(event);
+            if (point !== null) setDragging({ id: dragging.id, ...point });
+            return;
+          }
+          pan.background.onPointerMove(event);
         }}
-        onPointerUp={() => dragging !== null && drop(dragging.id)}
+        onPointerUp={(event) => {
+          if (dragging !== null) {
+            drop(dragging.id);
+            return;
+          }
+          pan.background.onPointerUp(event);
+        }}
         onPointerLeave={() => setDragging(null)}
       >
+        {regions.map((region) => (
+          <g key={region.id} className="author-region">
+            <ellipse cx={region.cx} cy={region.cy} rx={region.rx} ry={region.ry} />
+            <text x={region.cx - region.rx + 8} y={region.cy - region.ry + 14}>
+              {region.name}
+            </text>
+          </g>
+        ))}
+
         {atlas.roads.map((road) => {
           const from = at.get(String(road.from));
           const to = at.get(String(road.to));
@@ -281,6 +370,11 @@ export function MapEditor({
           />
           <span className="dim">ticks</span>
         </label>
+        {pan.zoomed ? (
+          <button type="button" className="link-button" onClick={pan.reset}>
+            reset view
+          </button>
+        ) : null}
         {drawing === null ? null : (
           <span className="dim">
             drawing from {at.get(drawing)?.place.name ?? drawing} — click where it

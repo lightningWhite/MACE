@@ -88,17 +88,28 @@ export function libraries(): Promise<AuthorableLibraries> {
   return ask<AuthorableLibraries>("/libraries");
 }
 
-/** Start a new game pack, from as little as its title, and open it. */
+/**
+ * Start a new game pack, from as little as its title, and open it.
+ *
+ * Refused while the pack open now has unsaved edits, unless `discard` says
+ * to lose them.
+ */
 export function newGame(
   name: string,
   requires: Record<string, string> = {},
+  discard = false,
 ): Promise<Frame> {
-  return ask<Frame>("/games", sending({ name, requires }));
+  return ask<Frame>("/games", sending({ name, requires, discard }));
 }
 
-/** Switch to an existing game pack. Refused while the open one is unsaved. */
-export function openGame(pack: string): Promise<Frame> {
-  return ask<Frame>("/open", sending({ pack }));
+/**
+ * Switch to an existing game pack.
+ *
+ * Refused while the pack open now has unsaved edits, unless `discard` says
+ * to lose them.
+ */
+export function openGame(pack: string, discard = false): Promise<Frame> {
+  return ask<Frame>("/open", sending({ pack, discard }));
 }
 
 /** One section's contents. */
