@@ -1570,15 +1570,69 @@
     },
     "Damage": {
       "additionalProperties": false,
-      "description": "A weapon's damage range.\n\nAttributes\n----------\nmin, max : float\n    The bounds of a single hit, before stats and gear.\ntype : str\n    Author-defined: `slash`, `pierce`, `plasma`.",
+      "description": "A weapon's damage range.\n\nAttributes\n----------\nmin, max : float or RelativeStat\n    The bounds of a single hit, before stats and gear. Either bound may\n    be a multiple of the player's own stat instead of a literal number.\ntype : str\n    Author-defined: `slash`, `pierce`, `plasma`.",
       "properties": {
         "min": {
-          "title": "Min",
-          "type": "number"
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "relativeToPlayer": {
+                  "properties": {
+                    "stat": {
+                      "type": "string"
+                    },
+                    "factor": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "stat"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "relativeToPlayer"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Min"
         },
         "max": {
-          "title": "Max",
-          "type": "number"
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "relativeToPlayer": {
+                  "properties": {
+                    "stat": {
+                      "type": "string"
+                    },
+                    "factor": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "stat"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "relativeToPlayer"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Max"
         },
         "type": {
           "anyOf": [
@@ -6140,16 +6194,70 @@
     },
     "Stat": {
       "additionalProperties": false,
-      "description": "A single ability or pool, before anything acts on it.\n\nAttributes\n----------\nbase : float\n    The value with nothing acting on it.\nmax : float or None\n    Cap. Defaults to 100 for abilities; pools should set it explicitly.\nmin : float\n    Floor. Defaults to 0.\ncustomizable : bool\n    Whether the player may spend creation points here at game start.\ngrowth : {'none', 'slow', 'normal', 'fast'}\n    How fast the stat improves through use.",
+      "description": "A single ability or pool, before anything acts on it.\n\nAttributes\n----------\nbase : float or RelativeStat\n    The value with nothing acting on it. May be a multiple of the\n    player's own stat instead of a literal number.\nmax : float, RelativeStat, or None\n    Cap. Defaults to 100 for abilities; pools should set it explicitly.\nmin : float\n    Floor. Defaults to 0.\ncustomizable : bool\n    Whether the player may spend creation points here at game start.\ngrowth : {'none', 'slow', 'normal', 'fast'}\n    How fast the stat improves through use.",
       "properties": {
         "base": {
-          "title": "Base",
-          "type": "number"
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "relativeToPlayer": {
+                  "properties": {
+                    "stat": {
+                      "type": "string"
+                    },
+                    "factor": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "stat"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "relativeToPlayer"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Base"
         },
         "max": {
           "anyOf": [
             {
-              "type": "number"
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "relativeToPlayer": {
+                      "properties": {
+                        "stat": {
+                          "type": "string"
+                        },
+                        "factor": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "stat"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "relativeToPlayer"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             {
               "type": "null"

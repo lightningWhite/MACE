@@ -50,8 +50,9 @@ from mace.engine.events import (
 )
 from mace.engine.rng import RandomStream
 from mace.engine.state import Combatant, CombatState, EntityState, PendingTell
-from mace.engine.stats import pool_bounds
+from mace.engine.stats import pool_bounds, resolve_relative
 from mace.model import CombatProfile, Entity, Move
+from mace.model.entity import Damage, RelativeStat
 
 __all__ = ["begin", "respond", "responses_for"]
 
@@ -505,7 +506,7 @@ def _resolve(
     precision = _precision(defender, response, elapsed_ms, tell, staggered)
     outcome = resolution.outcome_of(correct=correct, precision=precision)
 
-    incoming = _incoming(attacker, defender, move, stream)
+    incoming = _incoming(context, attacker, defender, move, stream)
     mitigation = chosen[1].mitigation if chosen is not None and not staggered else 0.0
     exchange = _Exchange(
         outcome=outcome,
@@ -527,7 +528,9 @@ def _resolve(
         exchange.spent -= _share(defender, effort, PASSIVE_REGEN)
 
     if outcome is Outcome.COUNTER:
-        exchange.dealt, exchange.critical = _opening(defender, attacker, chosen, stream)
+        exchange.dealt, exchange.critical = _opening(
+            context, defender, attacker, chosen, stream
+        )
 
     _apply(context, attacker, defender, exchange, move, events)
     _remember(defender, attacker, exchange)
@@ -607,8 +610,37 @@ def _precision(
     return resolution.eased(raw, defender.skill_with(defender.weapon))
 
 
+def _damage_bounds(damage: Damage, context: RuleContext) -> tuple[float, float]:
+    """A damage band's bounds, as absolute numbers.
+
+    Either bound may be authored relative to the player's own stat — resolved
+    fresh here, every roll, against the player's *current* state.
+
+    Parameters
+    ----------
+    damage : Damage
+        The authored band.
+    context : RuleContext
+        The playthrough, for resolving a relative bound.
+
+    Returns
+    -------
+    tuple of (float, float)
+        The min and max, both absolute.
+    """
+    player = context.state.entities.get(context.state.player)
+    return (
+        resolve_relative(damage.min, context.library, player),
+        resolve_relative(damage.max, context.library, player),
+    )
+
+
 def _incoming(
-    attacker: Fighter, defender: Fighter, move: Move, stream: RandomStream
+    context: RuleContext,
+    attacker: Fighter,
+    defender: Fighter,
+    move: Move,
+    stream: RandomStream,
 ) -> float:
     """What a move is worth before the read is taken into account.
 
@@ -617,6 +649,8 @@ def _incoming(
 
     Parameters
     ----------
+    context : RuleContext
+        The playthrough, for resolving a relative damage bound.
     attacker : Fighter
         Who is swinging.
     defender : Fighter
@@ -633,13 +667,14 @@ def _incoming(
     """
     if move.damage is None:
         return 0.0
-    span = move.damage.max - move.damage.min
-    rolled = move.damage.min + stream.fraction() * span
+    low, high = _damage_bounds(move.damage, context)
+    rolled = low + stream.fraction() * (high - low)
     strength = resolution.power(attacker.stat("strength"))
     return max(0.0, rolled * strength - defender.armor)
 
 
 def _opening(
+    context: RuleContext,
     defender: Fighter,
     attacker: Fighter,
     chosen: tuple[str, Move] | None,
@@ -649,6 +684,8 @@ def _opening(
 
     Parameters
     ----------
+    context : RuleContext
+        The playthrough, for resolving a relative damage bound.
     defender : Fighter
         Who read it right, and now has an opening.
     attacker : Fighter
@@ -664,11 +701,11 @@ def _opening(
     tuple
         The damage dealt and whether it was critical.
     """
-    band = defender.weapon_damage
-    rolled = band.min + stream.fraction() * (band.max - band.min)
+    low, high = _damage_bounds(defender.weapon_damage, context)
+    rolled = low + stream.fraction() * (high - low)
     if chosen is not None and chosen[1].damage is not None:
-        extra = chosen[1].damage
-        rolled += extra.min + stream.fraction() * (extra.max - extra.min)
+        extra_low, extra_high = _damage_bounds(chosen[1].damage, context)
+        rolled += extra_low + stream.fraction() * (extra_high - extra_low)
 
     dealt = (
         rolled
@@ -823,9 +860,10 @@ def _grow(fighter: Fighter, stat: str) -> None:
     step = resolution.growth_step(declared.growth)
     if not step:
         return
-    ceiling = declared.max if declared.max is not None else 100.0
-    stored = fighter.state.pools.get(stat, declared.base)
-    fighter.state.pools[stat] = round(min(float(ceiling), stored + step), 3)
+    _low, ceiling = pool_bounds(fighter.definition, fighter.state, stat)
+    fallback = 0.0 if isinstance(declared.base, RelativeStat) else float(declared.base)
+    stored = fighter.state.pools.get(stat, fallback)
+    fighter.state.pools[stat] = round(min(ceiling, stored + step), 3)
 
 
 def _reach_for_it(

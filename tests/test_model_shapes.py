@@ -11,10 +11,12 @@ from pydantic import ValidationError
 from mace.engine.expr import Expression
 from mace.model import (
     Condition,
+    Damage,
     Effect,
     Entity,
     Location,
     Pack,
+    RelativeStat,
     Scene,
     Stat,
 )
@@ -167,6 +169,69 @@ def test_only_an_actor_can_be_playable() -> None:
 def test_a_stat_range_must_be_satisfiable() -> None:
     with pytest.raises(ValidationError, match="above max"):
         Stat.model_validate({"base": 10, "min": 50, "max": 20})
+
+
+# ── Relative-to-player values ────────────────────────────────────────────────
+
+
+def test_a_stat_base_may_be_relative_to_the_player() -> None:
+    stat = Stat.model_validate(
+        {"base": {"relativeToPlayer": {"stat": "hitpoints", "factor": 3}}}
+    )
+    assert isinstance(stat.base, RelativeStat)
+    assert stat.base.stat == "hitpoints"
+    assert stat.base.factor == 3
+
+
+def test_a_relative_stat_defaults_to_a_1x_factor() -> None:
+    stat = Stat.model_validate({"base": {"relativeToPlayer": {"stat": "strength"}}})
+    assert isinstance(stat.base, RelativeStat)
+    assert stat.base.factor == 1.0
+
+
+def test_a_relative_value_rejects_an_unknown_wrapper() -> None:
+    with pytest.raises(ValidationError, match="relativeToPlayer"):
+        Stat.model_validate({"base": {"somethingElse": {"stat": "hitpoints"}}})
+
+
+def test_a_relative_value_rejects_a_string() -> None:
+    with pytest.raises(ValidationError):
+        Stat.model_validate({"base": "a lot"})
+
+
+def test_a_stats_range_check_skips_a_relative_max() -> None:
+    """A literal can't be compared to a reference that isn't resolved yet."""
+    Stat.model_validate(
+        {"base": 10, "max": {"relativeToPlayer": {"stat": "hitpoints", "factor": 2}}}
+    )
+
+
+def test_a_customizable_stat_cannot_be_relative_to_the_player() -> None:
+    """A customizable stat is the player's own — relative to itself is nonsense."""
+    with pytest.raises(ValidationError, match="can't be relative"):
+        Stat.model_validate(
+            {
+                "base": {"relativeToPlayer": {"stat": "hitpoints"}},
+                "customizable": True,
+            }
+        )
+
+
+def test_damage_bounds_may_be_relative_to_the_player() -> None:
+    damage = Damage.model_validate(
+        {
+            "min": {"relativeToPlayer": {"stat": "hitpoints", "factor": 0.1}},
+            "max": {"relativeToPlayer": {"stat": "hitpoints", "factor": 0.2}},
+        }
+    )
+    assert isinstance(damage.min, RelativeStat)
+    assert isinstance(damage.max, RelativeStat)
+
+
+def test_a_damage_range_check_skips_a_relative_bound() -> None:
+    Damage.model_validate(
+        {"min": {"relativeToPlayer": {"stat": "hitpoints"}}, "max": 5}
+    )
 
 
 # ── Scenes and locations ──────────────────────────────────────────────────────

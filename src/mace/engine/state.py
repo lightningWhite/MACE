@@ -203,6 +203,12 @@ class EntityState:
         wood twenty times`. Session state, never content: the same troll
         definition stays `max: 40` for every other playthrough: this one's
         troll just happens to have outgrown it.
+    resolved_stats : dict
+        A stat's `max`, resolved to an absolute number once at instantiation
+        time, for any stat whose content authored `max` as a `RelativeStat`
+        (a multiple of the player's own stat) rather than a literal. Absent
+        for every stat authored as a plain number — those keep reading `max`
+        straight off content, as they always have.
     """
 
     instance_id: str
@@ -221,6 +227,7 @@ class EntityState:
     transient: bool = False
     ally_until: Any = None
     stat_caps: dict[str, float] = field(default_factory=dict)
+    resolved_stats: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(slots=True)

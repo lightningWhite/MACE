@@ -12,9 +12,9 @@ current hitpoints live in session state and never come back here.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, PlainValidator, WithJsonSchema, model_validator
 
 from mace.model.base import (
     CombatProfileRef,
@@ -46,6 +46,8 @@ __all__ = [
     "InventoryEntry",
     "Merchant",
     "PortalProps",
+    "RelativeStat",
+    "RelativeValue",
     "Stat",
     "StatModifier",
 ]
@@ -64,14 +66,104 @@ KIND_BLOCKS: dict[str, EntityKind] = {
 }
 
 
+class RelativeStat(ContentModel):
+    """A number expressed as a multiple of the player's own stat.
+
+    Resolved against the player's stat *cap*, not their fluctuating current
+    value — a hit re-rolls fresh every time it's asked for, but a monster's
+    stat is baked into an absolute number once, at the moment it's created.
+    It does not keep tracking the player afterward: a monster that quietly
+    gets tougher mid-playthrough because the player leveled up would be a
+    bug for most games, not a feature. A game that wants that anyway can
+    already build it with `raiseMax`/`adjustStat` — this type doesn't need
+    to cover that case too.
+
+    Attributes
+    ----------
+    stat : str
+        Which of the player's own stats to read.
+    factor : float
+        The multiple of it — `0.15` for "15%", `3` for "3x".
+    """
+
+    stat: Name
+    factor: float = 1.0
+
+
+def _to_relative_value(value: Any) -> Any:
+    """Coerce a value that may be a literal number or a relative reference.
+
+    Parameters
+    ----------
+    value : object
+        The raw YAML value.
+
+    Returns
+    -------
+    object
+        The literal number unchanged, or a parsed `RelativeStat`.
+
+    Raises
+    ------
+    ValueError
+        If the value is a mapping that is not a `relativeToPlayer` wrapper,
+        or is not a number at all.
+    """
+    if isinstance(value, RelativeStat):
+        return value
+    if isinstance(value, Mapping):
+        if set(value) == {"relativeToPlayer"}:
+            return RelativeStat.model_validate(value["relativeToPlayer"])
+        raise ValueError(
+            "a value may be a number or `{relativeToPlayer: {stat, factor}}`; "
+            f"got a mapping with keys {sorted(map(str, value))}"
+        )
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(
+            f"expected a number or a relative value, got {type(value).__name__}"
+        )
+    return float(value)
+
+
+#: A field that holds either a literal number or a `{relativeToPlayer: {...}}`
+#: reference to the player's own stat.
+RelativeValue = Annotated[
+    RelativeStat | float,
+    PlainValidator(_to_relative_value),
+    WithJsonSchema(
+        {
+            "oneOf": [
+                {"type": "number"},
+                {
+                    "type": "object",
+                    "properties": {
+                        "relativeToPlayer": {
+                            "type": "object",
+                            "properties": {
+                                "stat": {"type": "string"},
+                                "factor": {"type": "number"},
+                            },
+                            "required": ["stat"],
+                        }
+                    },
+                    "required": ["relativeToPlayer"],
+                    "additionalProperties": False,
+                },
+            ]
+        }
+    ),
+]
+
+
 class Stat(ContentModel):
     """A single ability or pool, before anything acts on it.
 
     Attributes
     ----------
-    base : float
-        The value with nothing acting on it.
-    max : float or None
+    base : float or RelativeStat
+        The value with nothing acting on it. May be a multiple of the
+        player's own stat instead of a literal number.
+    max : float, RelativeStat, or None
         Cap. Defaults to 100 for abilities; pools should set it explicitly.
     min : float
         Floor. Defaults to 0.
@@ -81,8 +173,8 @@ class Stat(ContentModel):
         How fast the stat improves through use.
     """
 
-    base: float
-    max: float | None = None
+    base: RelativeValue
+    max: RelativeValue | None = None
     min: float = 0.0
     customizable: bool = False
     growth: Growth = "none"
@@ -90,8 +182,24 @@ class Stat(ContentModel):
     @model_validator(mode="after")
     def _range_is_sane(self) -> Stat:
         """A stat whose floor is above its cap can never be satisfied."""
-        if self.max is not None and self.min > self.max:
+        if (
+            self.max is not None
+            and not isinstance(self.max, RelativeStat)
+            and self.min > self.max
+        ):
             raise ValueError(f"min ({self.min}) is above max ({self.max})")
+        return self
+
+    @model_validator(mode="after")
+    def _customizable_is_literal(self) -> Stat:
+        """A player-customizable stat can't be relative to the player."""
+        if self.customizable and (
+            isinstance(self.base, RelativeStat) or isinstance(self.max, RelativeStat)
+        ):
+            raise ValueError(
+                "a customizable stat's base/max can't be relative to the "
+                "player — it is the player's own stat"
+            )
         return self
 
 
@@ -158,20 +266,25 @@ class Damage(ContentModel):
 
     Attributes
     ----------
-    min, max : float
-        The bounds of a single hit, before stats and gear.
+    min, max : float or RelativeStat
+        The bounds of a single hit, before stats and gear. Either bound may
+        be a multiple of the player's own stat instead of a literal number.
     type : str
         Author-defined: `slash`, `pierce`, `plasma`.
     """
 
-    min: float
-    max: float
+    min: RelativeValue
+    max: RelativeValue
     type: Id | None = None
 
     @model_validator(mode="after")
     def _range_is_sane(self) -> Damage:
         """Damage that can never roll is a content mistake."""
-        if self.min > self.max:
+        if (
+            not isinstance(self.min, RelativeStat)
+            and not isinstance(self.max, RelativeStat)
+            and self.min > self.max
+        ):
             raise ValueError(f"min damage ({self.min}) is above max ({self.max})")
         return self
 

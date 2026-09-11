@@ -71,6 +71,7 @@ from mace.model.entity import (
     ItemProps,
     ItemUse,
     PortalProps,
+    RelativeStat,
     Stat,
     StatModifier,
 )
@@ -181,6 +182,7 @@ __all__ = [
     "QuestStage",
     "Ref",
     "Region",
+    "RelativeStat",
     "Route",
     "Say",
     "SayLine",

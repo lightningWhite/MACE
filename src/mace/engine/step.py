@@ -79,7 +79,7 @@ from mace.engine.state import (
     QuestState,
     QuestStatus,
 )
-from mace.engine.stats import pool_bounds, starting_pools
+from mace.engine.stats import pool_bounds, resolve_relative, starting_pools
 from mace.engine.world import Clock, advance, climate_of, region_of
 from mace.engine.world import events as world_events
 from mace.model import (
@@ -96,6 +96,7 @@ from mace.model import (
 )
 from mace.model.calendar import STANDARD_YEAR
 from mace.model.effects import Rest
+from mace.model.entity import RelativeStat
 from mace.model.text import DescriptionLine, SayLine
 
 __all__ = ["StepResult", "begin", "context_for", "spawn", "step"]
@@ -2615,6 +2616,7 @@ def _initial_state(
     state.entities[state.player] = _instantiate(
         library, protagonist_id, start, pack_id, currency=coin
     )
+    player = state.entities[state.player]
     for pack in library.packs:
         for local_id, location in sorted(pack.locations.items()):
             qualified_location = f"{pack.id}:{local_id}"
@@ -2626,6 +2628,7 @@ def _initial_state(
                     qualified_location,
                     pack.id,
                     currency=coin,
+                    player=player,
                 )
                 state.entities[instance.instance_id] = instance
             if location.starts_discovered:
@@ -2726,6 +2729,7 @@ def _instantiate(
     *,
     taken: Container[str] = (),
     currency: str | None = None,
+    player: EntityState | None = None,
 ) -> EntityState:
     """Make a session instance of a content entity.
 
@@ -2747,6 +2751,10 @@ def _instantiate(
         capital. The same rule a market's `initial` follows against its
         `target`: a world should not open in a shortage nobody asked for, and
         a quartermaster with an empty chest on day one is one.
+    player : EntityState or None
+        The player's current state, for resolving any `RelativeStat`-valued
+        `base`/`max` this entity's own stats declare. `None` only while the
+        player itself is being instantiated.
 
     Returns
     -------
@@ -2770,11 +2778,17 @@ def _instantiate(
     ):
         inventory[currency] = int(merchant.capital)
 
+    resolved_stats = {
+        name: resolve_relative(stat.max, library, player)
+        for name, stat in (definition.stats or {}).items()
+        if isinstance(stat.max, RelativeStat)
+    }
+
     return EntityState(
         instance_id=_instance_id(definition_id, taken),
         definition=definition_id,
         location=location,
-        pools=starting_pools(definition),
+        pools=starting_pools(definition, library, player),
         inventory=inventory,
         equipment={
             slot: library.resolve(item, "entities", within=within)
@@ -2786,6 +2800,7 @@ def _instantiate(
             library.resolve(item, "entities", within=within): float(level)
             for item, level in (definition.skills or {}).items()
         },
+        resolved_stats=resolved_stats,
     )
 
 
@@ -2883,6 +2898,7 @@ def spawn(
         state.pack,
         taken=state.entities,
         currency=_currency_of(context.library, context.game, state.pack),
+        player=state.entities.get(state.player),
     )
     instance.transient = transient
     state.entities[instance.instance_id] = instance

@@ -23,7 +23,7 @@ from mace.engine.combat import resolution
 from mace.engine.combat.resolution import Outcome
 from mace.engine.conditions import RuleError
 from mace.engine.state import GameState
-from mace.engine.step import StepResult, begin, step
+from mace.engine.step import StepResult, begin, context_for, spawn, step
 
 # ── The arithmetic ────────────────────────────────────────────────────────────
 
@@ -408,6 +408,179 @@ def test_a_wrong_read_timed_well_still_hurts_less_than_a_bad_one(
     assert resolved(sharp)["result"] == "glancing"
     assert resolved(sloppy)["result"] == "clean"
     assert resolved(sharp)["damageTaken"] < resolved(sloppy)["damageTaken"]
+
+
+# ── Relative-to-player values ────────────────────────────────────────────────
+
+
+def test_a_moves_relative_damage_resolves_against_the_players_own_hitpoints(
+    tmp_path: Path,
+) -> None:
+    """A move's `damage` authored `relativeToPlayer` rolls off the player's cap.
+
+    `swing` is authored to deal half the player's own max hitpoints, every
+    time, regardless of who is wearing them. Hero opens at 40 hitpoints, so a
+    fully unmitigated hit should land for exactly 20 — the `_incoming` path,
+    which reads `move.damage`, not `defender.weapon_damage`.
+    """
+    library = brawl_pack(
+        tmp_path,
+        moves=[
+            {"id": "guard", "kind": "defense", "type": "block", "cost": 4},
+            {"id": "duck", "kind": "defense", "type": "dodge", "cost": 3},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "vagueTell": "He moves.",
+                "windupMs": 1000,
+                "counters": ["block"],
+                "damage": {
+                    "min": {"relativeToPlayer": {"stat": "hitpoints", "factor": 0.5}},
+                    "max": {"relativeToPlayer": {"stat": "hitpoints", "factor": 0.5}},
+                },
+                "cost": 5,
+            },
+        ],
+    )
+    result = start(library)
+    # "dodge" is not in `swing.counters`, and a rushed answer reads as CLEAN —
+    # full, unmitigated damage.
+    result = answer(result.state, library, "dodge", share=0.05)
+    payload = resolved(result)
+    assert payload["result"] == "clean"
+    assert payload["damageTaken"] == 20.0
+
+
+def test_a_weapons_relative_damage_resolves_against_the_players_own_hitpoints(
+    tmp_path: Path,
+) -> None:
+    """An item's `damage` authored `relativeToPlayer` reaches the `_opening` path.
+
+    The club is authored to deal a quarter of the player's own max hitpoints
+    on a clean counter — a different read site (`defender.weapon_damage`)
+    than a move's own damage.
+    """
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Club",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {
+                        "min": {
+                            "relativeToPlayer": {"stat": "hitpoints", "factor": 0.25}
+                        },
+                        "max": {
+                            "relativeToPlayer": {"stat": "hitpoints", "factor": 0.25}
+                        },
+                    },
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = answer(start(library).state, library, "block")
+    payload = resolved(result)
+    assert payload["result"] == "counter"
+    assert payload["damageDealt"] > 0.0
+
+
+def test_a_stat_base_relative_to_the_player_resolves_once_at_spawn(
+    tmp_path: Path,
+) -> None:
+    """A monster's `hitpoints.base` set to 3x the player's own resolves once.
+
+    A later change to the player's own hitpoints *cap* must not retroactively
+    rescale an already-spawned monster — only a freshly spawned one should
+    reflect the new number.
+    """
+    entities = [
+        {
+            "id": "hero",
+            "kind": "actor",
+            "name": "Hero",
+            "playable": True,
+            "stats": {
+                "hitpoints": {"base": 40, "max": 40},
+                "stamina": {"base": 30, "max": 30},
+                "strength": {"base": 50},
+                "speed": {"base": 50},
+            },
+            "combat": {"profile": "hero-style"},
+            "equipment": {"mainHand": "club"},
+        },
+        {
+            "id": "thug",
+            "kind": "actor",
+            "name": "Thug",
+            "stats": {
+                "hitpoints": {
+                    "base": {"relativeToPlayer": {"stat": "hitpoints", "factor": 3}},
+                    "max": 200,
+                },
+                "stamina": {"base": 30, "max": 30},
+                "strength": {"base": 50},
+                "speed": {"base": 50},
+            },
+            "combat": {"profile": "thug-style"},
+            "inventory": [{"item": "purse", "qty": 3}],
+        },
+        {
+            "id": "club",
+            "kind": "item",
+            "name": "Club",
+            "item": {"equipSlot": "mainHand", "damage": {"min": 4, "max": 4}},
+        },
+        {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+    ]
+    library = brawl_pack(tmp_path, entities=entities)
+    opened = begin(library, "brawl", seed="brawl")
+    state = opened.state
+    context = context_for(library, state)
+    location = state.protagonist.location
+
+    first_id = spawn("thug", context, location)
+    assert state.entities[first_id].pools["hitpoints"] == 120.0
+
+    # Growing the player's own cap (the `raiseMax` mechanism) must not
+    # rescale the monster already spawned against the old cap...
+    state.protagonist.stat_caps["hitpoints"] = 360.0
+    assert state.entities[first_id].pools["hitpoints"] == 120.0
+
+    # ...but a monster spawned fresh afterward should reflect the new cap.
+    second_id = spawn("thug", context, location)
+    assert state.entities[second_id].pools["hitpoints"] == 1200.0
 
 
 def test_committing_after_the_window_is_simply_too_late(tmp_path: Path) -> None:
