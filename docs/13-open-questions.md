@@ -225,14 +225,19 @@ Not yet worth deciding, listed so they aren't forgotten:
   question that needs playtesting.
 - **Audio.** Ambient sound and music in the web client would do a lot for
   atmosphere. Entirely unexplored, and out of scope until phase 6.
-- **Should a monster's pools have to match the player's?** `StatAllocator` is
-  deliberately genre-neutral — free-form, with suggestions drawn from what the
-  pack already uses, so a monster can invent `hull-integrity` beside
-  `hitpoints`. Surfaced by an author (2026-09-07) trying to build a
-  statblock and wondering whether pools should instead be a closed list
-  matching the player's own, so `hitpoints` always means the same axis on
-  both sides of a fight. Needs a decision, not a fix — the free-form shape is
-  intentional as things stand.
+- **Should a monster's pools have to match the player's? — RESOLVED
+  (2026-09-11).** **Decided: no — `StatAllocator` stays free-form.** Surfaced
+  by an author (2026-09-07) trying to build a statblock and wondering whether
+  a monster's pools should instead be a closed list matching the player's
+  own, so `hitpoints` always means the same axis on both sides of a fight.
+  Genre neutrality wins: forcing a sci-fi drone to have `hitpoints` instead
+  of `hull-integrity` would bake in a fantasy-RPG assumption, the same
+  reasoning that keeps magic in content rather than the engine (see #5
+  above). A monster naming a different axis than the player's own is
+  accepted as intentional — nothing to fix. Distinct from the separate,
+  already-resolved question of pool *magnitude* ("Damage and hitpoints as
+  absolute numbers", below) — this one was always about pool *identity*,
+  and stays free-form.
 - **What coordinate convention does the map editor use?** A `mapPosition` is
   two numbers with no stated origin, axis direction, or unit — an author
   dragging a place has no way to read back "how far" or "which way" beyond
@@ -245,29 +250,45 @@ Not yet worth deciding, listed so they aren't forgotten:
   what time of day a tick number means. Needs a small readout (ticks per day,
   and the wall-clock time a given tick lands on) wherever ticks are set or
   shown, in both the wizard and play itself.
-- **Editing an existing repeat entry.** An exit, a stage, an inventory stack —
-  anything added through a `Repeat` field — can be added or removed but not
-  reopened once it exists. Found while fixing the exit/stage condition bug
-  (2026-09-07): the entry's own little form (`EntryForm` in
-  `web/src/author/Field.tsx`) only ever composes a *new* entry locally, and
-  there is no endpoint that hands back the English rendering of an
-  already-authored condition/effect the way a fresh `POST /build` does, which
-  is what an edit screen would need to redraw one. A real fix wants either
-  that endpoint or a redesign of how repeat entries round-trip, not a quick
-  patch.
+- **Editing an existing repeat entry — RESOLVED (2026-09-07).** An exit, a
+  stage, an inventory stack — anything added through a `Repeat` field — used
+  to be add-or-remove only, never reopened once it existed, because the
+  entry's own little form only ever composed a *new* entry locally and
+  nothing handed back the English rendering of an already-authored
+  condition/effect the way a fresh `POST /build` does. Both closed, in the
+  same pass that wired up encounter tables and narrowed quest-stage pickers:
+  `Studio._entry_pieces` (`src/mace/wizard/studio.py`) now returns that
+  English rendering, keyed the way the client's own local form state is, so
+  reopening an entry seeds `PiecesEditor` correctly instead of showing an
+  existing condition as if it had never been there. The CLI's `_repeat()`
+  (`src/mace/cli/author.py`) gained `[e] edit` alongside `[a] add`/`[r]
+  remove`; the web client's `EntryForm` (`web/src/author/Field.tsx`) opens
+  seeded with the entry being edited and replaces it in place rather than
+  appending a new one. Covered by `test_a_repeat_entry_can_be_edited_not_only_removed`
+  (`tests/test_cli_author.py`) and the `"editing an existing entry"` suite in
+  `web/src/author/Field.test.tsx`.
 - **An author-facing reachability view for locations, not just scenes.** The
   scene graph answers "is there any way in?" for scenes; there is nothing
   equivalent for the world map — no single screen answering "from here, where
   can you actually get to, and is anywhere unreachable?" for locations and
   their exits.
-- **A full-screen, non-scrolling layout for play.** Raised by an author
-  (2026-09-07): on a large screen the map, status (hitpoints, stamina, day,
-  location, weather), and prompt currently fight for space rather than
-  sitting in fixed regions of a grid, the status has to be scrolled to, the
-  map has no way to hide itself, and the prompt behaves like a scrolling
-  terminal instead of a fixed-size window that reveals new text each tick and
-  labels what's location, what's description, and what's happening. This is a
-  real redesign of the game client's layout, not a single change.
+- **A full-screen, non-scrolling layout for play — RESOLVED, with one gap
+  (2026-09-10).** Raised by an author (2026-09-07): on a large screen the
+  map, status (hitpoints, stamina, day, location, weather), and prompt fought
+  for space rather than sitting in fixed regions of a grid, the status had to
+  be scrolled to, the map had no way to hide itself, and the prompt behaved
+  like a scrolling terminal instead of a fixed-size window that reveals new
+  text each tick. `web/src/App.tsx` now lays the play view out as four fixed,
+  independently resizable quadrants (map, action/status, story, and a
+  stats/pack/journal sidebar) sharing one column split and one row split
+  (`useSplitGrid.ts`) rather than one scrolling page — `StatusLine` sits
+  inside the action quadrant, always in view rather than scrolled to, and the
+  story panel got the memory/current-tick split this same pass asked for: a
+  collapsible "memory" of everything so far, and a `current-tick` region
+  (`role="log"`) that is always what just happened. **Not fully closed**: the
+  map quadrant can be resized down but not actually hidden — `useSplitGrid`'s
+  `MIN_PERCENT` floors every pane at 20% width, so "a way to hide the map"
+  specifically remains unbuilt.
 - **Mapping a validation error back to the step that causes it.** A raw
   message like `player.entity: Field required` names a model field, not a
   wizard step — an author has no way to tell that means "answer 'Who does the
