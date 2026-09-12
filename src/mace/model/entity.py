@@ -46,6 +46,7 @@ __all__ = [
     "InventoryEntry",
     "Merchant",
     "PortalProps",
+    "Range",
     "RelativeStat",
     "RelativeValue",
     "Stat",
@@ -289,6 +290,43 @@ class Damage(ContentModel):
         return self
 
 
+class Range(ContentModel):
+    """How close or far a move works, and where it works best.
+
+    Distance is one shared scalar per fight (docs/07-combat.md § Range), so
+    this is feet along that line, not a 2D or relative measure.
+
+    Attributes
+    ----------
+    min, max : float
+        The band a move can be attempted in at all. Outside it, the move
+        cannot be attempted — a bow's `min` is what keeps it from being
+        usable point-blank.
+    sweet_min, sweet_max : float
+        The band inside `[min, max]` where the move is at its best.
+        Effectiveness ramps from 0 at the outer edges of `[min, max]` to 1.0
+        across `[sweetMin, sweetMax]` — the same shape `precision` uses for
+        timing.
+    """
+
+    min: float = Field(ge=0.0)
+    max: float = Field(gt=0.0)
+    sweet_min: float
+    sweet_max: float
+
+    @model_validator(mode="after")
+    def _band_is_sane(self) -> Range:
+        """A sweet spot outside its own band, or an inverted one, can never be hit."""
+        if self.min > self.max:
+            raise ValueError(f"min range ({self.min}) is above max ({self.max})")
+        if not (self.min <= self.sweet_min <= self.sweet_max <= self.max):
+            raise ValueError(
+                f"sweet spot ({self.sweet_min}-{self.sweet_max}) must sit "
+                f"inside the range ({self.min}-{self.max}), in order"
+            )
+        return self
+
+
 class ItemUse(ContentModel):
     """What happens when an item is used from the inventory.
 
@@ -317,6 +355,15 @@ class ItemProps(ContentModel):
         Which slot it occupies when equipped.
     damage : Damage or None
         For weapons.
+    range : Range or None
+        For weapons: how close or far it works. `strike` — the player's only
+        source of damage — reads this from whatever is equipped, falling
+        back to bare hands when nothing is (docs/07-combat.md § Range).
+        `None` on a weapon means the melee default, the same way `None`
+        armor means no reduction.
+    ammo : int or None
+        For weapons: how many times it can be used before it's spent.
+        `None` is unlimited, a sword. A thrown rock is `1`.
     armor : float or None
         Damage reduction when worn.
     moves : tuple of str
@@ -334,6 +381,8 @@ class ItemProps(ContentModel):
     stackable: bool | None = None
     equip_slot: SlotName | None = None
     damage: Damage | None = None
+    range: Range | None = None
+    ammo: int | None = Field(default=None, ge=1)
     armor: float | None = None
     moves: tuple[MoveRef, ...] = ()
     use: ItemUse | None = None

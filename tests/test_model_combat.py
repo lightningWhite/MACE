@@ -71,6 +71,32 @@ def test_a_defense_may_deal_damage() -> None:
     assert move.damage.max == 7
 
 
+def test_a_defense_cannot_carry_its_own_range() -> None:
+    """`strike` reads its range from whatever's equipped, not from itself."""
+    with pytest.raises(ValidationError, match="reads its range from whatever weapon"):
+        Move.model_validate(
+            {
+                "id": "strike",
+                "kind": "defense",
+                "type": "strike",
+                "range": {"min": 1, "max": 3, "sweetMin": 1.5, "sweetMax": 2.5},
+            }
+        )
+
+
+def test_an_attack_may_carry_a_range() -> None:
+    move = Move.model_validate(
+        {
+            "id": "club-overhead",
+            "type": "overhead",
+            "tell": "...",
+            "range": {"min": 3, "max": 6, "sweetMin": 3.5, "sweetMax": 5},
+        }
+    )
+    assert move.range is not None
+    assert move.range.max == 6
+
+
 def test_a_move_falls_back_to_its_id_for_a_name() -> None:
     move = Move.model_validate({"id": "club-sweep", "type": "sweep", "tell": "..."})
     assert move.label == "club-sweep"

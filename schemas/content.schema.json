@@ -3439,7 +3439,7 @@
     },
     "ItemProps": {
       "additionalProperties": false,
-      "description": "The `kind: item` block.\n\nAttributes\n----------\nweight : float or None\n    Carried weight.\nstackable : bool or None\n    Whether copies collapse into one inventory entry.\nequip_slot : str or None\n    Which slot it occupies when equipped.\ndamage : Damage or None\n    For weapons.\narmor : float or None\n    Damage reduction when worn.\nmoves : tuple of str\n    Combat moves this item grants its wielder. A weapon is how a fighter\n    gets a `thrust` to answer with; a shield is how they get a `block`.\nuse : ItemUse or None\n    What using it from the inventory does.\nbase_value : float or None\n    The price anchor. `simple` economies use it as the price; `market`\n    economies price around it. Same name as a good's, because it is the\n    same idea.",
+      "description": "The `kind: item` block.\n\nAttributes\n----------\nweight : float or None\n    Carried weight.\nstackable : bool or None\n    Whether copies collapse into one inventory entry.\nequip_slot : str or None\n    Which slot it occupies when equipped.\ndamage : Damage or None\n    For weapons.\nrange : Range or None\n    For weapons: how close or far it works. `strike` \u2014 the player's only\n    source of damage \u2014 reads this from whatever is equipped, falling\n    back to bare hands when nothing is (docs/07-combat.md \u00a7 Range).\n    `None` on a weapon means the melee default, the same way `None`\n    armor means no reduction.\nammo : int or None\n    For weapons: how many times it can be used before it's spent.\n    `None` is unlimited, a sword. A thrown rock is `1`.\narmor : float or None\n    Damage reduction when worn.\nmoves : tuple of str\n    Combat moves this item grants its wielder. A weapon is how a fighter\n    gets a `thrust` to answer with; a shield is how they get a `block`.\nuse : ItemUse or None\n    What using it from the inventory does.\nbase_value : float or None\n    The price anchor. `simple` economies use it as the price; `market`\n    economies price around it. Same name as a good's, because it is the\n    same idea.",
       "properties": {
         "weight": {
           "anyOf": [
@@ -3488,6 +3488,30 @@
             }
           ],
           "default": null
+        },
+        "range": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ammo": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ammo"
         },
         "armor": {
           "anyOf": [
@@ -4232,7 +4256,7 @@
     },
     "Move": {
       "additionalProperties": false,
-      "description": "One thing a fighter can do in an exchange.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A move to inherit from.\nkind : {'attack', 'defense'}\n    Whether this is something you telegraph or something you answer with.\ntype : str\n    Author-defined: `overhead`, `thrust`, `sweep` for attacks; `parry`,\n    `dodge`, `block` for defenses. An attack's `counters` names defense\n    types, so the two vocabularies meet here and nowhere in the engine.\ntell : Description or None\n    The telegraph, for an attack. \"The troll hauls the club over its head.\"\nvague_tell : Description or None\n    The same windup, badly read \u2014 what a low `tellClarity` shows instead.\n    Without one, an unclear tell is simply withheld, which is worse\n    atmosphere and the same information.\nwindup_ms : int\n    How long the defender has, before their speed widens it.\ncounters : tuple of str\n    Defense *types* that beat this attack.\ndamage : Damage or None\n    What it does when it lands. A defense may carry damage too \u2014 that is\n    what `strike` is: an interrupt that answers a grapple by hurting it.\ncost : float\n    Effort-pool cost of using it.\nmitigation : float\n    For a defense: the share of damage it stops when the read was right\n    but the timing was not. A dodge is cheap and stops everything or\n    nothing; a block is expensive and always takes some of the sting out.\nfeint : bool\n    Marks a move as the pack's feint: a windup that means nothing, whose\n    only correct answer is whatever `counters` names.\neffects : tuple of Effect\n    Applied to the defender when the move lands.\ntags : tuple of str\n    Free-form labels.\n\nExtending another definition makes type optional here \u2014 the parent supplies them.",
+      "description": "One thing a fighter can do in an exchange.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A move to inherit from.\nkind : {'attack', 'defense'}\n    Whether this is something you telegraph or something you answer with.\ntype : str\n    Author-defined: `overhead`, `thrust`, `sweep` for attacks; `parry`,\n    `dodge`, `block` for defenses. An attack's `counters` names defense\n    types, so the two vocabularies meet here and nowhere in the engine.\ntell : Description or None\n    The telegraph, for an attack. \"The troll hauls the club over its head.\"\nvague_tell : Description or None\n    The same windup, badly read \u2014 what a low `tellClarity` shows instead.\n    Without one, an unclear tell is simply withheld, which is worse\n    atmosphere and the same information.\nwindup_ms : int\n    How long the defender has, before their speed widens it.\ncounters : tuple of str\n    Defense *types* that beat this attack.\nrange : Range or None\n    For an attack: how close or far it can land, and where it lands\n    best. `None` falls back to a melee default. A defense never sets\n    this \u2014 the player's own damage-carrying defense (`strike`) reads its\n    range from whatever weapon is equipped instead, the same way its\n    damage already does (docs/07-combat.md \u00a7 Range).\ndamage : Damage or None\n    What it does when it lands. A defense may carry damage too \u2014 that is\n    what `strike` is: an interrupt that answers a grapple by hurting it.\ncost : float\n    Effort-pool cost of using it.\nmitigation : float\n    For a defense: the share of damage it stops when the read was right\n    but the timing was not. A dodge is cheap and stops everything or\n    nothing; a block is expensive and always takes some of the sting out.\nfeint : bool\n    Marks a move as the pack's feint: a windup that means nothing, whose\n    only correct answer is whatever `counters` names.\neffects : tuple of Effect\n    Applied to the defender when the move lands.\ntags : tuple of str\n    Free-form labels.\n\nExtending another definition makes type optional here \u2014 the parent supplies them.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -4335,6 +4359,17 @@
           },
           "title": "Counters",
           "type": "array"
+        },
+        "range": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "damage": {
           "anyOf": [
@@ -5277,6 +5312,38 @@
         "amount"
       ],
       "title": "RaiseMax",
+      "type": "object"
+    },
+    "Range": {
+      "additionalProperties": false,
+      "description": "How close or far a move works, and where it works best.\n\nDistance is one shared scalar per fight (docs/07-combat.md \u00a7 Range), so\nthis is feet along that line, not a 2D or relative measure.\n\nAttributes\n----------\nmin, max : float\n    The band a move can be attempted in at all. Outside it, the move\n    cannot be attempted \u2014 a bow's `min` is what keeps it from being\n    usable point-blank.\nsweet_min, sweet_max : float\n    The band inside `[min, max]` where the move is at its best.\n    Effectiveness ramps from 0 at the outer edges of `[min, max]` to 1.0\n    across `[sweetMin, sweetMax]` \u2014 the same shape `precision` uses for\n    timing.",
+      "properties": {
+        "min": {
+          "minimum": 0.0,
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "exclusiveMinimum": 0.0,
+          "title": "Max",
+          "type": "number"
+        },
+        "sweetMin": {
+          "title": "Sweetmin",
+          "type": "number"
+        },
+        "sweetMax": {
+          "title": "Sweetmax",
+          "type": "number"
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "sweetMin",
+        "sweetMax"
+      ],
+      "title": "Range",
       "type": "object"
     },
     "Region": {

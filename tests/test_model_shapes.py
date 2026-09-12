@@ -16,6 +16,7 @@ from mace.model import (
     Entity,
     Location,
     Pack,
+    Range,
     RelativeStat,
     Scene,
     Stat,
@@ -232,6 +233,21 @@ def test_a_damage_range_check_skips_a_relative_bound() -> None:
     Damage.model_validate(
         {"min": {"relativeToPlayer": {"stat": "hitpoints"}}, "max": 5}
     )
+
+
+def test_a_ranges_min_cannot_exceed_its_max() -> None:
+    with pytest.raises(ValidationError, match="min range"):
+        Range.model_validate({"min": 10, "max": 5, "sweetMin": 6, "sweetMax": 8})
+
+
+def test_a_ranges_sweet_spot_must_sit_inside_the_band() -> None:
+    with pytest.raises(ValidationError, match="sweet spot"):
+        Range.model_validate({"min": 3, "max": 5, "sweetMin": 1, "sweetMax": 4})
+
+
+def test_a_ranges_sweet_spot_cannot_be_inverted() -> None:
+    with pytest.raises(ValidationError, match="sweet spot"):
+        Range.model_validate({"min": 3, "max": 5, "sweetMin": 4.5, "sweetMax": 3.5})
 
 
 # ── Scenes and locations ──────────────────────────────────────────────────────

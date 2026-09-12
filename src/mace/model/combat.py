@@ -33,7 +33,7 @@ from mace.model.base import (
 )
 from mace.model.conditions import Conditions
 from mace.model.effects import Effect
-from mace.model.entity import Damage
+from mace.model.entity import Damage, Range
 from mace.model.text import Description
 
 __all__ = ["CombatProfile", "Move", "MoveKind", "Pattern"]
@@ -66,6 +66,12 @@ class Move(ContentModel):
         How long the defender has, before their speed widens it.
     counters : tuple of str
         Defense *types* that beat this attack.
+    range : Range or None
+        For an attack: how close or far it can land, and where it lands
+        best. `None` falls back to a melee default. A defense never sets
+        this — the player's own damage-carrying defense (`strike`) reads its
+        range from whatever weapon is equipped instead, the same way its
+        damage already does (docs/07-combat.md § Range).
     damage : Damage or None
         What it does when it lands. A defense may carry damage too — that is
         what `strike` is: an interrupt that answers a grapple by hurting it.
@@ -94,6 +100,7 @@ class Move(ContentModel):
     vague_tell: Description | None = None
     windup_ms: int = Field(default=1000, gt=0)
     counters: tuple[Id, ...] = ()
+    range: Range | None = None
 
     damage: Damage | None = None
     cost: float = Field(default=0.0, ge=0.0)
@@ -130,6 +137,12 @@ class Move(ContentModel):
                 )
             if self.feint:
                 raise ValueError(f"defense `{self.id}` cannot be a feint")
+            if self.range is not None:
+                raise ValueError(
+                    f"defense `{self.id}` has a `range`; a defense reads its "
+                    "range from whatever weapon is equipped, the same way its "
+                    "damage already does"
+                )
         return self
 
 
