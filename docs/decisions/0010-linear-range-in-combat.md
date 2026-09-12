@@ -207,11 +207,15 @@ costs the exchange, same as switching does now.
   good texture but needs a bound — either arena/room edges on `position`, or
   a per-profile willingness-to-retreat-only-so-far dial — so a fight can't
   turn into an archer backpedaling for `MAX_EXCHANGES`.
-- **A new event/UI surface**: front-ends need to show the range band and
-  sweet spot the same way they show the timing window — `07-combat.md`
-  already describes a shrinking bar for timing; range wants a static bar with
-  a moving marker, which is a smaller lift than timing was, not a new
-  pattern.
+- **A new event/UI surface, built on both front-ends.** `combat.tell` and
+  `combat.resolve` carry `distance`; `combat.responses` carries `weaponRange`
+  — the same number `strike` itself reads, so the bar can't draw something
+  the engine doesn't actually reward, the discipline `TimingBar` already
+  holds for the window. The CLI's `+`/`-` (`=`/`_` as unshifted aliases)
+  nudge a running total that keeps the countdown open rather than ending it;
+  the web client's `RangeBar` is `TimingBar`'s static counterpart — a band
+  and a sweet zone that don't drain, plus a marker that moves as the same
+  accumulator changes, spent out of the identical clock.
 - **Determinism**: `moveBy` is recorded on the action like `elapsedMs` is, so
   a replay resolves against what was written down, not a re-derived value —
   same discipline ADR-0004 already requires for timing.

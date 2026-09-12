@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Action, CombatBegan, CombatTell, ResponsesOffered } from "../protocol";
 import { isKind } from "../protocol";
-import { Combat, type Fight } from "./Combat";
+import { Combat, MOVE_STEP, type Fight } from "./Combat";
 import { IDEAL, OPENS } from "./TimingBar";
 import { fight } from "../test/wire";
 
@@ -202,6 +202,113 @@ describe("the window", () => {
     );
     expect(container.querySelector(".timing")).toBeNull();
     expect(screen.getByRole("timer").textContent).toMatch(/^\d+\.\ds$/);
+  });
+});
+
+// ── Range ─────────────────────────────────────────────────────────────────────
+
+describe("range", () => {
+  it("marks the band and the sweet spot from the wire's own weaponRange", () => {
+    const f = recorded();
+    const { container } = render(
+      <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    const scale = Math.max(f.responses.weaponRange.max, f.tell.distance, 1) * 1.15;
+    const pct = (v: number) => (v / scale) * 100;
+
+    const band = container.querySelector<HTMLElement>(".range-band");
+    expect(parseFloat(band?.style.insetInlineStart ?? "")).toBeCloseTo(
+      pct(f.responses.weaponRange.min),
+      3,
+    );
+    const sweet = container.querySelector<HTMLElement>(".range-sweet");
+    expect(parseFloat(sweet?.style.insetInlineStart ?? "")).toBeCloseTo(
+      pct(f.responses.weaponRange.sweetMin),
+      3,
+    );
+  });
+
+  it("shows the marker as in range when distance sits inside the band", () => {
+    const { container } = render(
+      <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    expect(container.querySelector(".range-marker")?.className).not.toMatch(
+      /range-marker-out/,
+    );
+  });
+
+  it("flags the marker once distance is pushed outside the weapon's reach", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    await user.keyboard("---");
+    expect(container.querySelector(".range-marker")?.className).toMatch(
+      /range-marker-out/,
+    );
+  });
+
+  it("sends the accumulated moveBy with the next answer", async () => {
+    const user = userEvent.setup();
+    const onAnswer = show(tactical(recorded()));
+
+    await user.keyboard("++-"); // close, close, open — net +1
+    await user.click(screen.getByRole("button", { name: /dodge/ }));
+    expect(onAnswer).toHaveBeenCalledWith({
+      kind: "combat.input",
+      response: "dodge",
+      moveBy: 1,
+    });
+  });
+
+  it("carries no moveBy at all when nothing was pressed", async () => {
+    const user = userEvent.setup();
+    const onAnswer = show(tactical(recorded()));
+    await user.click(screen.getByRole("button", { name: /dodge/ }));
+    expect(onAnswer).toHaveBeenCalledWith({
+      kind: "combat.input",
+      response: "dodge",
+    });
+  });
+
+  it("carries whatever was pressed even into a window that ran out", () => {
+    vi.useFakeTimers();
+    const f = recorded();
+    const onAnswer = show({ ...f, openedAt: performance.now() });
+
+    act(() => {
+      screen.getByRole("button", { name: /close the distance/ }).click();
+    });
+    vi.advanceTimersByTime(f.tell.windowMs + 50);
+
+    expect(onAnswer).toHaveBeenCalledWith({
+      kind: "combat.input",
+      response: "recover",
+      elapsedMs: f.tell.windowMs,
+      moveBy: MOVE_STEP,
+    });
+  });
+
+  it("resets once a new tell replaces the old one", async () => {
+    const user = userEvent.setup();
+    const f = recorded();
+    const { rerender } = render(
+      <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    await user.keyboard("++"); // closes the distance, so it goes down
+    expect(
+      screen.getByText(new RegExp(`distance ${f.tell.distance - 2}ft`)),
+    ).toBeTruthy();
+
+    rerender(
+      <Combat
+        fight={{ ...f, tell: { ...f.tell, distance: 10 }, openedAt: f.openedAt + 1 }}
+        onAnswer={() => {}}
+        busy={false}
+        staminaOf={40}
+      />,
+    );
+    expect(screen.getByText(/distance 10ft/)).toBeTruthy();
   });
 });
 

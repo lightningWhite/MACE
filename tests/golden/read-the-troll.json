@@ -522,7 +522,13 @@
           ],
           "stamina": 40.0,
           "momentum": 1.0,
-          "streak": 0
+          "streak": 0,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",
@@ -637,7 +643,13 @@
           ],
           "stamina": 38.0,
           "momentum": 1.15,
-          "streak": 1
+          "streak": 1,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",
@@ -752,7 +764,13 @@
           ],
           "stamina": 36.0,
           "momentum": 1.3,
-          "streak": 2
+          "streak": 2,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",
@@ -867,7 +885,13 @@
           ],
           "stamina": 33.0,
           "momentum": 1.5,
-          "streak": 3
+          "streak": 3,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",
@@ -982,7 +1006,13 @@
           ],
           "stamina": 31.0,
           "momentum": 1.5,
-          "streak": 4
+          "streak": 4,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",
@@ -1097,7 +1127,13 @@
           ],
           "stamina": 29.0,
           "momentum": 1.5,
-          "streak": 5
+          "streak": 5,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",
@@ -1212,7 +1248,13 @@
           ],
           "stamina": 26.0,
           "momentum": 1.5,
-          "streak": 6
+          "streak": 6,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",
@@ -1327,7 +1369,13 @@
           ],
           "stamina": 23.0,
           "momentum": 1.5,
-          "streak": 7
+          "streak": 7,
+          "weaponRange": {
+            "min": 1.0,
+            "max": 5.0,
+            "sweetMin": 2.0,
+            "sweetMax": 3.5
+          }
         },
         {
           "kind": "world.status",

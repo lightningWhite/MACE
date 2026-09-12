@@ -1283,6 +1283,7 @@ def _next_tell(context: RuleContext, events: list[Event]) -> None:
 
         _telegraph(context, fight, attacker, target, chosen, events)
         if target.actor == state.player and fight.mode != "auto":
+            span = target.weapon_range
             events.append(
                 ResponseOffered(
                     combat=fight.id,
@@ -1290,6 +1291,12 @@ def _next_tell(context: RuleContext, events: list[Event]) -> None:
                     stamina=round(target.pool(context.game.rules.effort_pool), 2),
                     momentum=resolution.multiplier(target.combatant.momentum),
                     streak=target.combatant.streak,
+                    weapon_range=(
+                        span.min,
+                        span.max,
+                        span.sweet_min,
+                        span.sweet_max,
+                    ),
                 )
             )
             return

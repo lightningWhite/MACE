@@ -1209,6 +1209,11 @@ class ResponseOffered(Event):
         The damage multiplier a streak has earned, 1.0 at rest.
     streak : int
         Consecutive correct reads.
+    weapon_range : tuple of float
+        `(min, max, sweetMin, sweetMax)` in feet — whatever `strike` reads
+        right now, bare hands or a weapon. Published so a front-end can draw
+        the band `moveBy` is spent moving inside, the same way `windowMs`
+        lets it draw the timing door (docs/07-combat.md § Range).
     """
 
     kind: ClassVar[str] = "combat.responses"
@@ -1217,8 +1222,10 @@ class ResponseOffered(Event):
     stamina: float = 0.0
     momentum: float = 1.0
     streak: int = 0
+    weapon_range: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
 
     def payload(self) -> dict[str, Any]:
+        low, high, sweet_low, sweet_high = self.weapon_range
         return {
             "combat": self.combat,
             "options": [
@@ -1228,6 +1235,12 @@ class ResponseOffered(Event):
             "stamina": self.stamina,
             "momentum": self.momentum,
             "streak": self.streak,
+            "weaponRange": {
+                "min": low,
+                "max": high,
+                "sweetMin": sweet_low,
+                "sweetMax": sweet_high,
+            },
         }
 
 

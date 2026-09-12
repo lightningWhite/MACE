@@ -458,6 +458,56 @@ h2 {
   color: var(--warm);
 }
 
+/* Distance, against the reach `strike` is currently reading. */
+.range {
+  position: relative;
+  block-size: 0.7rem;
+  background: var(--ground-raised);
+  border: 1px solid var(--edge);
+  border-radius: 0.2rem;
+}
+
+.range-band {
+  position: absolute;
+  inset-block: 0;
+  background: var(--edge);
+  opacity: 0.5;
+}
+
+.range-sweet {
+  position: absolute;
+  inset-block: 0;
+  background: var(--cold);
+  opacity: 0.35;
+}
+
+.range-marker {
+  position: absolute;
+  inset-block: -2px;
+  inline-size: 3px;
+  background: var(--cold);
+  transform: translateX(-50%);
+}
+
+.range-marker-out {
+  background: var(--loss);
+}
+
+.range-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+
+.range-step {
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  line-height: 1;
+  font-size: 1rem;
+}
+
 .answers {
   list-style: none;
   margin: 0;

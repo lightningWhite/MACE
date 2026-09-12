@@ -23,7 +23,12 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { Action, CombatBegan, CombatTell, Gauge, ResponsesOffered } from "../protocol";
 import { keysFor } from "./keys";
+import { RangeBar } from "./RangeBar";
 import { TimingBar } from "./TimingBar";
+
+/** Feet per press — clamped server-side by the mover's own speed regardless
+ * of what's requested, so this only needs to be a reasonable step. */
+export const MOVE_STEP = 1;
 
 export interface Fight {
   began: CombatBegan;
@@ -137,32 +142,50 @@ export function Combat({
   const [wheels, setWheels] = useState(true);
   const timed = fight.began.mode === "reflex";
 
+  // Feet closed (positive) or opened (negative) this exchange so far. Reset
+  // whenever a new tell arrives — footwork doesn't carry over between
+  // exchanges any more than a keypress does. Real time keeps passing while
+  // this accumulates: nudging it doesn't pause `TimingBar`, so moving and
+  // answering really do share one countdown (docs/07-combat.md § Range).
+  const [moveBy, setMoveBy] = useState(0);
+  useEffect(() => {
+    setMoveBy(0);
+  }, [fight.tell.combat, fight.openedAt]);
+
+  const nudge = useCallback(
+    (by: number) => {
+      if (busy) return;
+      setMoveBy((current) => current + by);
+    },
+    [busy],
+  );
+
   const answer = useCallback(
     (response: string) => {
       if (busy) return;
-      onAnswer(
-        timed
-          ? {
-              kind: "combat.input",
-              response,
-              elapsedMs: Math.round(performance.now() - fight.openedAt),
-            }
-          : { kind: "combat.input", response },
-      );
+      onAnswer({
+        kind: "combat.input",
+        response,
+        ...(timed ? { elapsedMs: Math.round(performance.now() - fight.openedAt) } : {}),
+        ...(moveBy ? { moveBy } : {}),
+      });
     },
-    [busy, onAnswer, timed, fight.openedAt],
+    [busy, onAnswer, timed, fight.openedAt, moveBy],
   );
 
   // The window ran out. `recover` is the answer that takes the blow on
-  // purpose, and the engine is told exactly how much of the window went by.
+  // purpose, and the engine is told exactly how much of the window went by
+  // — footwork already spent still counts, the same as a keypress that
+  // arrived too late still gets its elapsed time recorded.
   const expire = useCallback(() => {
     if (busy) return;
     onAnswer({
       kind: "combat.input",
       response: "recover",
       elapsedMs: fight.tell.windowMs,
+      ...(moveBy ? { moveBy } : {}),
     });
-  }, [busy, onAnswer, fight.tell.windowMs]);
+  }, [busy, onAnswer, fight.tell.windowMs, moveBy]);
 
   // A fight is played with the hands on the keys, and on the same keys the
   // terminal binds: a player should not have to learn them twice.
@@ -173,6 +196,16 @@ export function Combat({
     const keys = new Map(bound.map((one) => [one.key, one.response]));
     const pressed = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        nudge(MOVE_STEP);
+        return;
+      }
+      if (event.key === "-" || event.key === "_") {
+        event.preventDefault();
+        nudge(-MOVE_STEP);
+        return;
+      }
       const response = keys.get(event.key.toLowerCase());
       if (response !== undefined) {
         event.preventDefault();
@@ -181,7 +214,7 @@ export function Combat({
     };
     window.addEventListener("keydown", pressed);
     return () => window.removeEventListener("keydown", pressed);
-  }, [bound, answer, busy]);
+  }, [bound, answer, busy, nudge]);
 
   const foes = fight.began.combatants.filter((one) => one.side === "enemy");
   const enemies = foes.map((one) => one.name).join(", ");
@@ -219,6 +252,35 @@ export function Combat({
           onExpire={expire}
         />
       )}
+
+      <RangeBar
+        range={fight.responses.weaponRange}
+        distance={Math.max(0, fight.tell.distance - moveBy)}
+      />
+      <div className="range-controls">
+        <button
+          type="button"
+          className="answer-key range-step"
+          disabled={busy}
+          onClick={() => nudge(-MOVE_STEP)}
+          aria-label="open the distance"
+        >
+          −
+        </button>
+        <span>
+          distance{" "}
+          {Math.round(Math.max(0, fight.tell.distance - moveBy) * 10) / 10}ft
+        </span>
+        <button
+          type="button"
+          className="answer-key range-step"
+          disabled={busy}
+          onClick={() => nudge(MOVE_STEP)}
+          aria-label="close the distance"
+        >
+          +
+        </button>
+      </div>
 
       <ul className="answers">
         {bound.map((one) => (

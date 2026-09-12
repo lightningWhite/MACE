@@ -263,11 +263,21 @@ export interface CombatTell {
   windowMs: number;
   /** Whether the tell gave the move away. */
   clear: boolean;
+  /** Feet between attacker and defender right now. */
+  distance: number;
 }
 
 export interface CombatResponse {
   response: string;
   label: string;
+}
+
+/** A reach in feet — a weapon's or a move's — the band and the sweet spot. */
+export interface Reach {
+  min: number;
+  max: number;
+  sweetMin: number;
+  sweetMax: number;
 }
 
 export interface ResponsesOffered {
@@ -277,6 +287,8 @@ export interface ResponsesOffered {
   stamina: number;
   momentum: number;
   streak: number;
+  /** What `strike` reads right now — bare hands or whatever's equipped. */
+  weaponRange: Reach;
 }
 
 export interface CombatResolved {
@@ -297,6 +309,10 @@ export interface CombatResolved {
   momentum: number;
   stamina: number;
   feint: boolean;
+  /** Feet between attacker and defender after this exchange's `moveBy`. */
+  distance: number;
+  /** Feet the defender actually closed (positive) or opened (negative). */
+  moveBy: number;
 }
 
 export interface Spoil {
@@ -539,7 +555,7 @@ export function isRefusal(message: Frame | Refusal): message is Refusal {
 export type Action =
   | { kind: "choose"; option: number }
   | { kind: "choose"; prompt: string }
-  | { kind: "combat.input"; response: string; elapsedMs?: number }
+  | { kind: "combat.input"; response: string; elapsedMs?: number; moveBy?: number }
   | { kind: "wait"; ticks: number }
   | { kind: "trade"; good: string; qty: number; sell: boolean }
   | { kind: "haggle" }
