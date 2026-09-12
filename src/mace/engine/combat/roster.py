@@ -42,6 +42,12 @@ FOCUS = "focus"
 #: an order there is no sensible way to cycle through potions.
 USE = "use"
 
+#: Draw a different weapon instead of answering — `equip:fantasy.core:dagger`.
+#: The actual fix for a ranged loadout caught at melee range: `strike` reads
+#: its range from whatever's equipped, so this is what changes it
+#: (docs/07-combat.md § Range).
+EQUIP = "equip"
+
 RESERVED_RESPONSES = frozenset({FLEE, RECOVER, FOCUS})
 
 #: The stats combat reads directly, by name, regardless of what a pack calls

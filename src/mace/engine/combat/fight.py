@@ -29,6 +29,7 @@ from mace.content.ids import split
 from mace.engine.combat import resolution
 from mace.engine.combat.resolution import Outcome
 from mace.engine.combat.roster import (
+    EQUIP,
     FLEE,
     FOCUS,
     RECOVER,
@@ -483,15 +484,19 @@ def respond(
         applied = _close_distance(defender, roster[tell.attacker], move_by)
 
     if response == FLEE:
-        _attempt_flight(context, roster, events)
+        _attempt_flight(context, roster, events, move_by=applied)
         return
 
     if response == FOCUS:
-        _give_an_order(context, fight, roster, events)
+        _give_an_order(context, fight, roster, events, move_by=applied)
         return
 
     if response.startswith(f"{USE}:"):
-        _reach_for_it(context, fight, roster, response, events)
+        _reach_for_it(context, fight, roster, response, events, move_by=applied)
+        return
+
+    if response.startswith(f"{EQUIP}:"):
+        _draw_weapon(context, fight, roster, response, events, move_by=applied)
         return
 
     _resolve(context, roster, tell, response, elapsed_ms, events, move_by=applied)
@@ -1020,6 +1025,8 @@ def _reach_for_it(
     roster: dict[str, Fighter],
     response: str,
     events: list[Event],
+    *,
+    move_by: float = 0.0,
 ) -> None:
     """Spend the exchange using something out of your pack.
 
@@ -1040,6 +1047,8 @@ def _reach_for_it(
         The response, `use:` and a qualified item id.
     events : list of Event
         Accumulator.
+    move_by : float
+        Feet already closed or opened this exchange, for the event.
     """
     from mace.engine.step import spend_item  # noqa: PLC0415
 
@@ -1047,7 +1056,52 @@ def _reach_for_it(
 
     tell = fight.tell
     assert tell is not None
-    _resolve(context, roster, tell, CAUGHT, None, events)
+    _resolve(context, roster, tell, CAUGHT, None, events, move_by=move_by)
+    if _settled(context, events):
+        return
+    _next_tell(context, events)
+
+
+def _draw_weapon(
+    context: RuleContext,
+    fight: CombatState,
+    roster: dict[str, Fighter],
+    response: str,
+    events: list[Event],
+    *,
+    move_by: float = 0.0,
+) -> None:
+    """Spend the exchange switching weapons instead of answering.
+
+    The actual fix for a ranged loadout caught at melee range — `strike`
+    reads its range from whatever's equipped, so a bow-wielder grappled at
+    2 ft draws the dagger rather than trusting a fallback that doesn't exist
+    (docs/07-combat.md § Range). Priced the same as `use:` and an order: the
+    move that was coming lands unanswered.
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+    fight : CombatState
+        The fight.
+    roster : dict
+        Instance id to fighter.
+    response : str
+        The response, `equip:` and a qualified item id.
+    events : list of Event
+        Accumulator.
+    move_by : float
+        Feet already closed or opened this exchange, for the event.
+    """
+    from mace.engine.step import equip_weapon  # noqa: PLC0415
+
+    drawn = equip_weapon(response.split(":", 1)[1], context, events)
+    events.append(Narrated(f"You draw the {drawn.name}.", pause=False))
+
+    tell = fight.tell
+    assert tell is not None
+    _resolve(context, roster, tell, CAUGHT, None, events, move_by=move_by)
     if _settled(context, events):
         return
     _next_tell(context, events)
@@ -1058,6 +1112,8 @@ def _give_an_order(
     fight: CombatState,
     roster: dict[str, Fighter],
     events: list[Event],
+    *,
+    move_by: float = 0.0,
 ) -> None:
     """Spend the exchange telling your allies who to concentrate on.
 
@@ -1077,6 +1133,8 @@ def _give_an_order(
         Instance id to fighter.
     events : list of Event
         Accumulator.
+    move_by : float
+        Feet already closed or opened this exchange, for the event.
     """
     standing = [c.actor for c in fight.standing("enemy")]
     if fight.focus in standing:
@@ -1089,7 +1147,7 @@ def _give_an_order(
 
     tell = fight.tell
     assert tell is not None
-    _resolve(context, roster, tell, CAUGHT, None, events)
+    _resolve(context, roster, tell, CAUGHT, None, events, move_by=move_by)
     if _settled(context, events):
         return
     _next_tell(context, events)
@@ -1099,7 +1157,11 @@ def _give_an_order(
 
 
 def _attempt_flight(
-    context: RuleContext, roster: dict[str, Fighter], events: list[Event]
+    context: RuleContext,
+    roster: dict[str, Fighter],
+    events: list[Event],
+    *,
+    move_by: float = 0.0,
 ) -> None:
     """Try to get away, and pay for it if it fails.
 
@@ -1115,6 +1177,9 @@ def _attempt_flight(
         Instance id to fighter.
     events : list of Event
         Accumulator.
+    move_by : float
+        Feet already closed or opened this exchange, for the event — only
+        reaches it on a failed break, since a successful one ends the fight.
     """
     state = context.state
     fight = state.combat
@@ -1143,7 +1208,7 @@ def _attempt_flight(
     events.append(Narrated("You turn to run, and it is on you before you can.", False))
     # A failed break gives the enemy the exchange for nothing: the move that
     # was already coming lands with nobody answering it.
-    _resolve(context, roster, tell, CAUGHT, None, events)
+    _resolve(context, roster, tell, CAUGHT, None, events, move_by=move_by)
     if _settled(context, events):
         return
     _next_tell(context, events)
@@ -1693,9 +1758,10 @@ def responses_for(
     if allies and len(fight.standing("enemy")) > 1:
         options.append(FOCUS)
     if context is not None:
-        from mace.engine.step import usable  # noqa: PLC0415
+        from mace.engine.step import equippable, usable  # noqa: PLC0415
 
         options.extend(f"{USE}:{item_id}" for item_id, _found in usable(context))
+        options.extend(f"{EQUIP}:{item_id}" for item_id, _found in equippable(context))
     return tuple(options)
 
 
@@ -1718,9 +1784,12 @@ def labelled(
     tuple of tuple
         Response and label, in presentation order.
     """
-    from mace.engine.step import usable  # noqa: PLC0415
+    from mace.engine.step import equippable, usable  # noqa: PLC0415
 
     names = {f"{USE}:{item_id}": found.name for item_id, found in usable(context)}
+    names.update(
+        {f"{EQUIP}:{item_id}": found.name for item_id, found in equippable(context)}
+    )
     return tuple(
         (response, names.get(response, response))
         for response in responses_for(fighter, fight, context)

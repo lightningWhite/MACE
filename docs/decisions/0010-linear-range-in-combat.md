@@ -1,6 +1,6 @@
 # ADR-0010 — Linear range as a combat axis
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 

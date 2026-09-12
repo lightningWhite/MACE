@@ -16,7 +16,7 @@ months later — and that if it *is* revisited, the reasons are on the table.
 | [0007](0007-full-market-economy.md) | A simulated market economy, not fixed prices | Accepted |
 | [0008](0008-the-player-answers.md) | The player answers; they do not take turns | Accepted |
 | [0009](0009-the-save-is-the-durability.md) | The server holds no playthroughs; the save does | Accepted |
-| [0010](0010-linear-range-in-combat.md) | Linear range as a combat axis | Proposed |
+| [0010](0010-linear-range-in-combat.md) | Linear range as a combat axis | Accepted |
 
 **Format:** Context (what problem), Decision (what we're doing), Alternatives
 (what we rejected and why), Consequences (what this costs us).

@@ -1218,6 +1218,145 @@ def test_a_weapon_out_of_its_own_range_cannot_open_a_counter(tmp_path: Path) -> 
     assert payload["damageDealt"] == 0.0
 
 
+# ── Weapon switching ─────────────────────────────────────────────────────────
+
+
+def two_weapon_pack(tmp_path: Path) -> Library:
+    """A brawl where the hero starts with a club and a dagger in the pack.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    return brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+                "inventory": [{"item": "dagger", "qty": 1}],
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Club",
+                "item": {"equipSlot": "mainHand", "damage": {"min": 4, "max": 4}},
+            },
+            {
+                "id": "dagger",
+                "kind": "item",
+                "name": "Dagger",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 2, "max": 5},
+                    "range": {"min": 1, "max": 3, "sweetMin": 1.5, "sweetMax": 2.5},
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+
+
+def test_a_spare_weapon_in_the_pack_is_offered(tmp_path: Path) -> None:
+    library = two_weapon_pack(tmp_path)
+    result = start(library)
+    offered = began_responses(result)
+    assert "equip:brawl:dagger" in offered
+    assert "equip:brawl:club" not in offered  # already wielding it
+
+
+def test_nothing_is_offered_with_no_spare_weapon(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    offered = began_responses(result)
+    assert not any(response.startswith("equip:") for response in offered)
+
+
+def began_responses(result: StepResult) -> list[str]:
+    """The response names on offer after a step, from `combat.responses`.
+
+    Parameters
+    ----------
+    result : StepResult
+        The step.
+
+    Returns
+    -------
+    list of str
+        Response names, in offer order.
+    """
+    offered = next(
+        (e.payload() for e in result.events if e.kind == "combat.responses"), None
+    )
+    assert offered is not None
+    return [str(option["response"]) for option in offered["options"]]
+
+
+def test_switching_costs_the_exchange_and_changes_the_weapon(tmp_path: Path) -> None:
+    """Drawing the dagger lands the coming move unanswered, then it's equipped."""
+    library = two_weapon_pack(tmp_path)
+    result = start(library)
+    result = step(result.state, Respond("equip:brawl:dagger"), library)
+    narrated = [e.payload()["text"] for e in result.events if e.kind == "narrate"]
+    assert any("draw the Dagger" in text for text in narrated)
+
+    resolved_payload = next(
+        e.payload() for e in result.events if e.kind == "combat.resolve"
+    )
+    assert resolved_payload["response"] == "caught"
+
+    protagonist = result.state.protagonist
+    assert protagonist.equipment["mainHand"] == "brawl:dagger"
+    assert protagonist.inventory.get("brawl:dagger", 0) == 0
+    assert protagonist.inventory.get("brawl:club", 0) == 1
+
+
+def test_equipping_changes_what_strike_reads(tmp_path: Path) -> None:
+    library = two_weapon_pack(tmp_path)
+    result = start(library)
+    result = step(result.state, Respond("equip:brawl:dagger"), library)
+    context = context_for(library, result.state)
+    combatant = next(
+        c
+        for c in result.state.combat.combatants  # type: ignore[union-attr]
+        if c.actor == context.state.player
+    )
+    fought = roster.fighter_for(combatant, context, cache={})
+    assert fought.weapon == "brawl:dagger"
+    assert fought.weapon_range.max == 3
+
+
+def test_switching_to_something_not_carried_is_refused(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    result = start(library)
+    result = step(result.state, Respond("equip:brawl:club"), library)
+    assert any(e.kind == "engine.rule-failed" for e in result.events)
+
+
 # ── Movement ──────────────────────────────────────────────────────────────────
 
 

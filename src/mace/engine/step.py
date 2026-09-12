@@ -747,6 +747,104 @@ def usable(context: RuleContext) -> list[tuple[str, Entity]]:
     return found
 
 
+def equippable(context: RuleContext) -> list[tuple[str, Entity]]:
+    """Everything in the player's pack that could be drawn instead of what's equipped.
+
+    A weapon — `damage` set — with an `equipSlot`, that isn't already the one
+    occupying that slot. What the item grants beyond damage (`parry`,
+    `strike`, its own `range`) is what actually changes when it's drawn; this
+    just says which items are candidates (docs/07-combat.md § Range).
+
+    Parameters
+    ----------
+    context : RuleContext
+        The playthrough.
+
+    Returns
+    -------
+    list of tuple
+        Qualified item id and definition, in inventory order.
+    """
+    found: list[tuple[str, Entity]] = []
+    player = context.state.protagonist
+    for item_id, quantity in sorted(player.inventory.items()):
+        if quantity < 1:
+            continue
+        try:
+            definition = _item(item_id, context)
+        except RuleError:  # pragma: no cover — inventory ids come from content
+            continue
+        props = definition.item
+        if props is None or props.damage is None or props.equip_slot is None:
+            continue
+        if player.equipment.get(props.equip_slot) == item_id:
+            continue
+        found.append((item_id, definition))
+    return found
+
+
+def equip_weapon(item_id: str, context: RuleContext, events: list[Event]) -> Entity:
+    """Draw a weapon from the pack, and put whatever was in its slot back.
+
+    Public for the same reason `spend_item` is: a fight reaches for it too,
+    and `equip:<item>` as a combat response draws the same way this does
+    anywhere else weapons are managed.
+
+    Parameters
+    ----------
+    item_id : str
+        Qualified entity id of the weapon to draw.
+    context : RuleContext
+        The playthrough.
+    events : list of Event
+        Accumulator.
+
+    Returns
+    -------
+    Entity
+        The drawn weapon's definition, so a caller can name it without a
+        second lookup.
+
+    Raises
+    ------
+    RuleError
+        If the player has none of it, or it isn't a weapon with a slot.
+    """
+    player = context.state.protagonist
+    definition = _item(item_id, context)
+    props = definition.item
+    if props is None or props.damage is None or props.equip_slot is None:
+        raise RuleError(f"`{definition.name}` is not a weapon you can wield")
+    if player.inventory.get(item_id, 0) < 1:
+        raise RuleError(f"you have no {definition.name}")
+
+    slot = props.equip_slot
+    previous = player.equipment.get(slot)
+
+    left = player.inventory.get(item_id, 0) - 1
+    if left > 0:
+        player.inventory[item_id] = left
+    else:
+        player.inventory.pop(item_id, None)
+    events.append(
+        InventoryChanged(
+            actor=player.instance_id, item=item_id, delta=-1, quantity=max(left, 0)
+        )
+    )
+
+    player.equipment[slot] = item_id
+
+    if previous is not None and previous != item_id:
+        gained = player.inventory.get(previous, 0) + 1
+        player.inventory[previous] = gained
+        events.append(
+            InventoryChanged(
+                actor=player.instance_id, item=previous, delta=1, quantity=gained
+            )
+        )
+    return definition
+
+
 # ── Trading ───────────────────────────────────────────────────────────────────
 
 
