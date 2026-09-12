@@ -4,6 +4,7 @@ CI runs `mace validate packs/`, so the exit code is a contract.
 """
 
 import json
+import re
 import zipfile
 from pathlib import Path
 
@@ -412,7 +413,7 @@ def test_a_timed_window_records_what_it_measured(
     """The one place a wall clock reaches the engine, as a recorded number."""
     presses = [Keypress("d", 900), Keypress("d", 900), Keypress(None, 1000)]
 
-    def press(_window: int) -> Keypress:
+    def press(_window: int, **_kwargs: object) -> Keypress:
         return presses.pop(0) if presses else Keypress("q", 10)
 
     monkeypatch.setattr("mace.cli.play.raw_terminal_available", lambda: True)
@@ -424,6 +425,41 @@ def test_a_timed_window_records_what_it_measured(
     printed = capsys.readouterr().out
     assert "Clean counter" in printed
     assert "(too slow)" in printed
+
+
+def test_movement_rides_along_with_a_timed_answer(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A keypress's `move_by` reaches the action, and the distance printed moves."""
+    presses = [Keypress("d", 900, 2.0)]
+
+    def press(_window: int, **_kwargs: object) -> Keypress:
+        return presses.pop(0) if presses else Keypress("q", 10)
+
+    monkeypatch.setattr("mace.cli.play.raw_terminal_available", lambda: True)
+    monkeypatch.setattr("mace.cli.play.read_key", press)
+    scripted(monkeypatch, ["4", "3", "5", "q"])
+    assert (
+        main(["play", "packs", "--pack", "peasants-quest", "--combat", "reflex"]) == 0
+    )
+    printed = capsys.readouterr().out
+    distances = [float(d) for d in re.findall(r"distance ([\d.]+)ft", printed)]
+    assert len(distances) >= 2
+    assert distances[1] != distances[0]
+
+
+def test_movement_rides_along_with_an_untimed_answer(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A trailing `+N`/`-N` on the typed line moves before the answer resolves."""
+    scripted(monkeypatch, ["4", "3", "5", "dodge +2", "q"])
+    assert (
+        main(["play", "packs", "--pack", "peasants-quest", "--combat", "tactical"]) == 0
+    )
+    printed = capsys.readouterr().out
+    distances = [float(d) for d in re.findall(r"distance ([\d.]+)ft", printed)]
+    assert len(distances) >= 2
+    assert distances[1] != distances[0]
 
 
 # ── Starting a pack ───────────────────────────────────────────────────────────

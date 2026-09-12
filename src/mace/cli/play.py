@@ -28,6 +28,11 @@ from mace.session import write as write_save
 
 __all__ = ["Renderer", "keys_for", "play"]
 
+#: Keys that adjust distance instead of answering — never alnum, so they can
+#: never collide with a response `keys_for` bound (docs/07-combat.md § Range).
+#: `+`/`=` share a key on most layouts, likewise `-`/`_`, so both work.
+MOVE_KEYS: dict[str, float] = {"+": 1.0, "=": 1.0, "-": -1.0, "_": -1.0}
+
 #: Printed once, at the top.
 RULE = "─" * 64
 
@@ -561,6 +566,14 @@ def fight(renderer: Renderer, session: Session, timed: bool) -> Action | None:
     )
     if offered is None:  # pragma: no cover — a live fight always offers them
         return None
+    tell = next(
+        (
+            event.payload()
+            for event in reversed(session.events)
+            if event.kind == "combat.tell"
+        ),
+        None,
+    )
 
     options = [
         (str(option["response"]), str(option["label"])) for option in offered["options"]
@@ -570,11 +583,14 @@ def fight(renderer: Renderer, session: Session, timed: bool) -> Action | None:
     renderer.line(
         "  " + "   ".join(_marked(key, label) for key, (_r, label) in bound.items())
     )
-    renderer.line(
+    stats = (
         f"  stamina {_number(offered['stamina'])}"
         f"   momentum ×{offered['momentum']}"
         + (f"   streak {offered['streak']}" if offered["streak"] else "")
     )
+    if tell is not None:
+        stats += f"   distance {_number(float(tell['distance']))}ft [+/-]"
+    renderer.line(stats)
 
     if not timed:
         return _untimed(renderer, bound)
@@ -583,6 +599,11 @@ def fight(renderer: Renderer, session: Session, timed: bool) -> Action | None:
 
 def _untimed(renderer: Renderer, bound: dict[str, tuple[str, str]]) -> Action | None:
     """Read an answer with no clock running.
+
+    A trailing `+N` or `-N` moves before answering — `d +2` steps in while
+    dodging, `block -1` gives ground while blocking. The response itself
+    still has to be one of `bound`; a bare `+2` or `-1` with nothing else is
+    not an answer, the same as any other unrecognized line.
 
     Parameters
     ----------
@@ -603,14 +624,38 @@ def _untimed(renderer: Renderer, bound: dict[str, tuple[str, str]]) -> Action | 
             return None
         if typed in {"q", "quit", "exit"}:
             return None
+        typed, move_by = _split_move(typed)
         chosen = bound.get(typed[:1]) or next(
             (pair for pair in bound.values() if typed in {pair[0], pair[1].lower()}),
             None,
         )
         if chosen is not None:
-            return Respond(chosen[0])
+            return Respond(chosen[0], move_by=move_by)
         names = ", ".join(label for _r, label in bound.values())
-        renderer.line(f"  One of: {names}, or `q` to stop.")
+        renderer.line(f"  One of: {names}, `+N`/`-N` to move, or `q` to stop.")
+
+
+def _split_move(typed: str) -> tuple[str, float | None]:
+    """Pull a trailing signed number off a typed line, if there is one.
+
+    Parameters
+    ----------
+    typed : str
+        The whole line, already stripped and lowercased.
+
+    Returns
+    -------
+    tuple
+        What's left to match as a response, and the feet requested — None
+        when nothing trailed.
+    """
+    parts = typed.rsplit(None, 1)
+    if len(parts) == 2 and parts[1] and parts[1][0] in "+-":
+        try:
+            return parts[0], float(parts[1])
+        except ValueError:
+            pass
+    return typed, None
 
 
 def _timed(
@@ -618,10 +663,13 @@ def _timed(
 ) -> Action | None:
     """Read an answer against a monotonic deadline.
 
-    A key that is not one of the answers still spends the window — hesitating
-    over the keyboard is hesitating, and a terminal that quietly gave the time
-    back would be a kinder window than the browser's, which is the one thing a
-    second front-end must never be.
+    A key that is not one of the answers or a movement key still spends the
+    window — hesitating over the keyboard is hesitating, and a terminal that
+    quietly gave the time back would be a kinder window than the browser's,
+    which is the one thing a second front-end must never be. `+`/`-` are the
+    exception: they adjust distance and keep the window open, spending real
+    time without ending the turn, so footwork and an answer can share one
+    countdown (docs/07-combat.md § Range).
 
     Parameters
     ----------
@@ -640,7 +688,7 @@ def _timed(
     renderer.out.write("\n> ")
     renderer.out.flush()
     try:
-        pressed: Keypress = read_key(window_ms)
+        pressed: Keypress = read_key(window_ms, move_keys=MOVE_KEYS)
     except (EOFError, KeyboardInterrupt):  # pragma: no cover — a real terminal
         return None
     renderer.line("")
@@ -652,8 +700,8 @@ def _timed(
         # Nothing, or the wrong key. Either way the window is spent, and the
         # engine is told exactly how much of it went by.
         renderer.line("  (too slow)" if pressed.key is None else "  (fumbled)")
-        return Respond("recover", pressed.elapsed_ms)
-    return Respond(chosen[0], pressed.elapsed_ms)
+        return Respond("recover", pressed.elapsed_ms, move_by=pressed.move_by or None)
+    return Respond(chosen[0], pressed.elapsed_ms, move_by=pressed.move_by or None)
 
 
 def choose(renderer: Renderer, session: Session) -> Action | None:

@@ -162,6 +162,9 @@ class _Exchange:
         Effort the defender spent answering.
     critical : bool
         Whether the opening was a critical one.
+    move_by : float
+        Feet the defender actually closed (positive) or opened (negative)
+        while answering, after their speed clamped it.
     """
 
     outcome: Outcome
@@ -171,6 +174,7 @@ class _Exchange:
     dealt: float = 0.0
     spent: float = 0.0
     critical: bool = False
+    move_by: float = 0.0
 
 
 # ── Starting and ending ───────────────────────────────────────────────────────
@@ -474,8 +478,9 @@ def respond(
             f"{', '.join(allowed)}"
         )
 
+    applied = 0.0
     if move_by:
-        _close_distance(defender, roster[tell.attacker], move_by)
+        applied = _close_distance(defender, roster[tell.attacker], move_by)
 
     if response == FLEE:
         _attempt_flight(context, roster, events)
@@ -489,7 +494,7 @@ def respond(
         _reach_for_it(context, fight, roster, response, events)
         return
 
-    _resolve(context, roster, tell, response, elapsed_ms, events)
+    _resolve(context, roster, tell, response, elapsed_ms, events, move_by=applied)
     if _settled(context, events):
         return
     _next_tell(context, events)
@@ -502,6 +507,8 @@ def _resolve(
     response: str,
     elapsed_ms: int | None,
     events: list[Event],
+    *,
+    move_by: float = 0.0,
 ) -> None:
     """Work out what one answer did, and apply it.
 
@@ -519,6 +526,9 @@ def _resolve(
         When it was committed.
     events : list of Event
         Accumulator.
+    move_by : float
+        Feet the defender already closed or opened this exchange, clamped —
+        for the event only; the movement itself already happened.
     """
     state = context.state
     fight = state.combat
@@ -548,6 +558,7 @@ def _resolve(
             ),
             1,
         ),
+        move_by=move_by,
     )
 
     if response == RECOVER:
@@ -588,6 +599,8 @@ def _resolve(
             momentum=resolution.multiplier(defender.combatant.momentum),
             stamina=round(defender.pool(effort), 2),
             feint=tell.feint,
+            distance=_distance(attacker, defender),
+            move_by=exchange.move_by,
         )
     )
     fight.tell = None
@@ -681,7 +694,7 @@ def _distance(attacker: Fighter, defender: Fighter) -> float:
     return abs(attacker.combatant.position - defender.combatant.position)
 
 
-def _close_distance(mover: Fighter, anchor: Fighter, move_by: float) -> None:
+def _close_distance(mover: Fighter, anchor: Fighter, move_by: float) -> float:
     """Adjust the distance between two combatants, in place.
 
     Positive `move_by` closes the gap, negative opens it — always relative to
@@ -700,6 +713,13 @@ def _close_distance(mover: Fighter, anchor: Fighter, move_by: float) -> None:
     move_by : float
         Feet requested, before the mover's own speed clamps it. `float("inf")`
         (or `-inf`) asks for as much as speed allows, in that direction.
+
+    Returns
+    -------
+    float
+        Feet actually closed (positive) or opened (negative), after both the
+        speed clamp and the zero floor — what a front-end should report, not
+        what was asked for.
     """
     step = resolution.move_step(BASE_MOVE_STEP, mover.stat("speed"))
     requested = max(-step, min(step, move_by))
@@ -707,6 +727,7 @@ def _close_distance(mover: Fighter, anchor: Fighter, move_by: float) -> None:
     new_distance = max(0.0, current - requested)
     towards = 1.0 if anchor.combatant.position >= mover.combatant.position else -1.0
     mover.combatant.position = anchor.combatant.position - towards * new_distance
+    return current - new_distance
 
 
 def _range_factor(span: Range | None, distance: float) -> float:
@@ -1272,6 +1293,7 @@ def _telegraph(
             text=_tell_text(move, clear, context),
             window_ms=window,
             clear=clear,
+            distance=_distance(attacker, target),
         )
     )
 

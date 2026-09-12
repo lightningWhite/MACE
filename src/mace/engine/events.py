@@ -1152,6 +1152,10 @@ class CombatTell(Event):
         How long the defender has, their speed already accounted for.
     clear : bool
         Whether the telegraph was legible.
+    distance : float
+        Feet between attacker and defender right now, for a front-end that
+        wants to show how far the answer's own `moveBy` has to close or open
+        (docs/07-combat.md § Range).
     """
 
     kind: ClassVar[str] = "combat.tell"
@@ -1163,6 +1167,7 @@ class CombatTell(Event):
     text: str = ""
     window_ms: int = 0
     clear: bool = True
+    distance: float = 0.0
 
     def payload(self) -> dict[str, Any]:
         return {
@@ -1174,6 +1179,7 @@ class CombatTell(Event):
             "text": self.text,
             "windowMs": self.window_ms,
             "clear": self.clear,
+            "distance": self.distance,
         }
 
 
@@ -1261,6 +1267,12 @@ class CombatResolved(Event):
         What the defender has left.
     feint : bool
         Whether the windup meant nothing.
+    distance : float
+        Feet between attacker and defender after this exchange's `moveBy`
+        resolved — the same number `combat.tell` carried before it, updated.
+    move_by : float
+        Feet the defender actually closed (positive) or opened (negative),
+        after their own speed clamped what was asked for.
     """
 
     kind: ClassVar[str] = "combat.resolve"
@@ -1279,6 +1291,8 @@ class CombatResolved(Event):
     momentum: float = 1.0
     stamina: float = 0.0
     feint: bool = False
+    distance: float = 0.0
+    move_by: float = 0.0
 
     def payload(self) -> dict[str, Any]:
         return {
@@ -1297,6 +1311,8 @@ class CombatResolved(Event):
             "momentum": self.momentum,
             "stamina": self.stamina,
             "feint": self.feint,
+            "distance": self.distance,
+            "moveBy": self.move_by,
         }
 
 
