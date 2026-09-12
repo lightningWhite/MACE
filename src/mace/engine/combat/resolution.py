@@ -38,6 +38,7 @@ __all__ = [
     "power",
     "precision_of",
     "quantize",
+    "range_factor",
     "skill_factor",
     "stamina_cost",
     "tactical_precision",
@@ -208,6 +209,51 @@ def precision_of(elapsed_ms: int, window: int) -> float:
     ideal = (3 * window) // 4
     reached = 1.0 - (2 * abs(elapsed_ms - ideal)) / window
     return round(min(max(reached, 0.0), 1.0), 4)
+
+
+def range_factor(
+    distance: float,
+    min_range: float,
+    max_range: float,
+    sweet_min: float,
+    sweet_max: float,
+) -> float:
+    """How well a move's reach matches the distance it's used at.
+
+    The same clamp shape `precision_of` uses for timing, but the sweet spot
+    is a band rather than a single instant: 1.0 inside it, ramping down to 0
+    at the outer edge of what the move can reach at all. Outside
+    `[min_range, max_range]` entirely, the move cannot connect — 0.0, the
+    same as answering a window zero seconds early or late (docs/07-combat.md
+    § Range).
+
+    Parameters
+    ----------
+    distance : float
+        Feet between attacker and defender.
+    min_range, max_range : float
+        The band the move can be attempted in at all.
+    sweet_min, sweet_max : float
+        The band inside it where the move is at its best.
+
+    Returns
+    -------
+    float
+        0 to 1.
+    """
+    if distance < min_range or distance > max_range:
+        return 0.0
+    if sweet_min <= distance <= sweet_max:
+        return 1.0
+    if distance < sweet_min:
+        spread = sweet_min - min_range
+        if spread <= 0:  # pragma: no cover — `Range` requires min <= sweetMin
+            return 1.0
+        return round((distance - min_range) / spread, 4)
+    spread = max_range - sweet_max
+    if spread <= 0:  # pragma: no cover — `Range` requires sweetMax <= max
+        return 1.0
+    return round((max_range - distance) / spread, 4)
 
 
 def tactical_precision() -> float:

@@ -32,6 +32,7 @@ from mace.engine.combat.roster import (
     FLEE,
     FOCUS,
     RECOVER,
+    UNARMED_RANGE,
     USE,
     Fighter,
     fighter_for,
@@ -51,7 +52,7 @@ from mace.engine.events import (
 from mace.engine.rng import RandomStream
 from mace.engine.state import Combatant, CombatState, EntityState, PendingTell
 from mace.engine.stats import pool_bounds, resolve_relative
-from mace.model import CombatProfile, Entity, Move
+from mace.model import CombatProfile, Entity, Move, Range
 from mace.model.entity import Damage, RelativeStat
 
 __all__ = ["begin", "respond", "responses_for"]
@@ -114,6 +115,13 @@ MAX_TURNS = 200
 #: the number that makes a clean read *feel* like the reward it is: eight good
 #: exchanges should finish a troll that twenty-five bad ones lose to.
 OPENING_MULTIPLIER = 1.9
+
+#: Where an enemy starts, in feet from the player, when a fight opens. Sits
+#: dead center of `UNARMED_RANGE`'s sweet spot — the melee default every
+#: unranged move and weapon falls back to — so a fight where nobody has
+#: authored `range` resolves exactly as it did before range existed. Movement
+#: is what changes it after that (docs/07-combat.md § Range).
+MELEE_ENGAGEMENT = (UNARMED_RANGE.sweet_min + UNARMED_RANGE.sweet_max) / 2
 
 #: How fast an action meter fills, per point of speed. A speed-50 fighter is
 #: ready every other beat; a speed-65 wolf is ready more often than that, and
@@ -236,6 +244,7 @@ def begin(
                 actor=actor,
                 side="enemy",
                 profile=_profile_of(opponent, context),
+                position=MELEE_ENGAGEMENT,
                 spawned=actor in (spawned or ()),
             )
         )
@@ -635,6 +644,48 @@ def _damage_bounds(damage: Damage, context: RuleContext) -> tuple[float, float]:
     )
 
 
+def _distance(attacker: Fighter, defender: Fighter) -> float:
+    """Feet between two combatants, right now.
+
+    Parameters
+    ----------
+    attacker, defender : Fighter
+        Either order — distance is symmetric.
+
+    Returns
+    -------
+    float
+        Never negative.
+    """
+    return abs(attacker.combatant.position - defender.combatant.position)
+
+
+def _range_factor(span: Range | None, distance: float) -> float:
+    """How well a move's reach matches the distance it's used at.
+
+    `None` and `UNARMED_RANGE` both mean "melee, nothing said otherwise" —
+    the same fallback an unauthored attack move and an unarmed defender both
+    resolve to, so a fight where nobody has touched `range` at all behaves
+    exactly as it did before this existed (docs/07-combat.md § Range).
+
+    Parameters
+    ----------
+    span : Range or None
+        The move's or weapon's own reach.
+    distance : float
+        Feet between attacker and defender.
+
+    Returns
+    -------
+    float
+        0 to 1.
+    """
+    band = span or UNARMED_RANGE
+    return resolution.range_factor(
+        distance, band.min, band.max, band.sweet_min, band.sweet_max
+    )
+
+
 def _incoming(
     context: RuleContext,
     attacker: Fighter,
@@ -670,7 +721,8 @@ def _incoming(
     low, high = _damage_bounds(move.damage, context)
     rolled = low + stream.fraction() * (high - low)
     strength = resolution.power(attacker.stat("strength"))
-    return max(0.0, rolled * strength - defender.armor)
+    reach = _range_factor(move.range, _distance(attacker, defender))
+    return max(0.0, rolled * strength * reach - defender.armor)
 
 
 def _opening(
@@ -707,8 +759,10 @@ def _opening(
         extra_low, extra_high = _damage_bounds(chosen[1].damage, context)
         rolled += extra_low + stream.fraction() * (extra_high - extra_low)
 
+    reach = _range_factor(defender.weapon_range, _distance(attacker, defender))
     dealt = (
         rolled
+        * reach
         * OPENING_MULTIPLIER
         * resolution.power(defender.stat("strength"))
         * resolution.skill_damage(defender.skill_with(defender.weapon))

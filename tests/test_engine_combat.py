@@ -45,6 +45,28 @@ def test_the_sweet_spot_sits_late() -> None:
     assert resolution.precision_of(375, window) < resolution.precision_of(700, window)
 
 
+def test_a_move_cannot_connect_outside_its_band() -> None:
+    assert resolution.range_factor(2.0, 3.0, 5.0, 3.5, 4.5) == 0.0
+    assert resolution.range_factor(6.0, 3.0, 5.0, 3.5, 4.5) == 0.0
+
+
+def test_the_sweet_spot_of_a_range_is_flat() -> None:
+    """Inside `[sweetMin, sweetMax]` a move is equally good anywhere in it."""
+    assert resolution.range_factor(3.5, 3.0, 5.0, 3.5, 4.5) == 1.0
+    assert resolution.range_factor(4.0, 3.0, 5.0, 3.5, 4.5) == 1.0
+    assert resolution.range_factor(4.5, 3.0, 5.0, 3.5, 4.5) == 1.0
+
+
+def test_range_effectiveness_ramps_toward_the_edges() -> None:
+    close = resolution.range_factor(3.2, 3.0, 5.0, 3.5, 4.5)
+    closer_to_min = resolution.range_factor(3.05, 3.0, 5.0, 3.5, 4.5)
+    assert 0.0 < closer_to_min < close < 1.0
+
+    far = resolution.range_factor(4.8, 3.0, 5.0, 3.5, 4.5)
+    closer_to_max = resolution.range_factor(4.95, 3.0, 5.0, 3.5, 4.5)
+    assert 0.0 < closer_to_max < far < 1.0
+
+
 def test_no_roll_decides_a_read_or_a_timing() -> None:
     """The guarantee that makes practice worth it, checked as a signature.
 
@@ -918,6 +940,94 @@ def test_an_exhausted_weapon_stops_counting_as_gear(tmp_path: Path) -> None:
     assert fought.weapon is None
     assert fought.weapon_damage == UNARMED
     assert fought.weapon_range == UNARMED_RANGE
+
+
+def test_an_attack_out_of_its_own_range_cannot_land(tmp_path: Path) -> None:
+    """A `swing` authored as a ranged move can't reach at melee engagement.
+
+    Nobody has moved — `MELEE_ENGAGEMENT` is the whole distance there is —
+    so a move whose `range` excludes it is simply unusable, whatever the read
+    was. `dodge` is deliberately the wrong answer here, which would normally
+    mean full, unmitigated damage; range gates it to nothing regardless.
+    """
+    library = brawl_pack(
+        tmp_path,
+        moves=[
+            {"id": "guard", "kind": "defense", "type": "block", "cost": 4},
+            {"id": "duck", "kind": "defense", "type": "dodge", "cost": 3},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "vagueTell": "He moves.",
+                "windupMs": 1000,
+                "counters": ["block"],
+                "damage": {"min": 6, "max": 6},
+                "range": {"min": 10, "max": 20, "sweetMin": 12, "sweetMax": 18},
+                "cost": 5,
+            },
+        ],
+    )
+    result = answer(start(library).state, library, "dodge", share=0.05)
+    payload = resolved(result)
+    assert payload["result"] == "clean"
+    assert payload["damageTaken"] == 0.0
+
+
+def test_a_weapon_out_of_its_own_range_cannot_open_a_counter(tmp_path: Path) -> None:
+    """A club authored with a range excluding melee engagement earns nothing.
+
+    `block` is `swing`'s correct counter, answered well, so this would
+    ordinarily be a clean counter with an opening; the club's `range`
+    excludes `MELEE_ENGAGEMENT`, so the opening deals no damage at all.
+    """
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Pike",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 4, "max": 4},
+                    "range": {"min": 6, "max": 10, "sweetMin": 7, "sweetMax": 9},
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = answer(start(library).state, library, "block")
+    payload = resolved(result)
+    assert payload["result"] == "counter"
+    assert payload["damageDealt"] == 0.0
 
 
 # ── What a fight tells you about the other side ─────────────────────────────
