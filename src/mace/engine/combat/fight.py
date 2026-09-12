@@ -1298,8 +1298,12 @@ def _next_tell(context: RuleContext, events: list[Event]) -> None:
         # at, or whatever swung at an ally, answers from its own stats.
         tell = fight.tell
         assert tell is not None
-        response, elapsed = _auto_answer(context, fight, roster[tell.defender], tell)
-        _resolve(context, roster, tell, response, elapsed, events)
+        defender = roster[tell.defender]
+        response, elapsed, move_by = _auto_answer(
+            context, fight, attacker, defender, tell
+        )
+        applied = _close_distance(defender, attacker, move_by) if move_by else 0.0
+        _resolve(context, roster, tell, response, elapsed, events, move_by=applied)
         if _settled(context, events):
             return
     _end(context, "fled", events)  # pragma: no cover — needs MAX_TURNS of nothing
@@ -1666,16 +1670,24 @@ def _run_auto(context: RuleContext, events: list[Event]) -> None:
         if tell is None:  # pragma: no cover — `_next_tell` always leaves one
             break
         roster = _roster(fight, context)
+        attacker = roster[tell.attacker]
         defender = roster[tell.defender]
-        response, elapsed = _auto_answer(context, fight, defender, tell)
-        _resolve(context, roster, tell, response, elapsed, events)
+        response, elapsed, move_by = _auto_answer(
+            context, fight, attacker, defender, tell
+        )
+        applied = _close_distance(defender, attacker, move_by) if move_by else 0.0
+        _resolve(context, roster, tell, response, elapsed, events, move_by=applied)
         if _settled(context, events):
             return
 
 
 def _auto_answer(
-    context: RuleContext, fight: CombatState, defender: Fighter, tell: PendingTell
-) -> tuple[str, int | None]:
+    context: RuleContext,
+    fight: CombatState,
+    attacker: Fighter,
+    defender: Fighter,
+    tell: PendingTell,
+) -> tuple[str, int | None, float]:
     """Decide what an engine-played fighter does about a telegraphed move.
 
     Parameters
@@ -1684,6 +1696,8 @@ def _auto_answer(
         The playthrough.
     fight : CombatState
         The fight, for its stream.
+    attacker : Fighter
+        Who is throwing the move, for the defender's own movement policy.
     defender : Fighter
         Who is answering.
     tell : PendingTell
@@ -1692,7 +1706,8 @@ def _auto_answer(
     Returns
     -------
     tuple
-        The response, and an elapsed time in milliseconds.
+        The response, an elapsed time in milliseconds, and a `moveBy`
+        request — 0.0 when the defender's own weapon already reaches.
     """
     stream = context.state.rng.stream(f"combat.{fight.id}")
     move = _move(context, tell.move)
@@ -1718,7 +1733,38 @@ def _auto_answer(
     )
     ideal = (3 * tell.window_ms) // 4
     drift = int(round((1.0 - aim) * tell.window_ms * 0.5 * (stream.fraction() * 2 - 1)))
-    return response, max(0, resolution.quantize(ideal + drift))
+
+    move_by = _auto_move(defender, attacker)
+    return response, max(0, resolution.quantize(ideal + drift)), move_by
+
+
+def _auto_move(mover: Fighter, anchor: Fighter) -> float:
+    """How an engine-played fighter adjusts distance for its own weapon.
+
+    Only acts when `mover`'s own `weapon_range` can't reach `anchor` at all
+    — `auto` is a stats-only baseline, not an optimizer chasing the sweet
+    spot every exchange, so it corrects a genuinely stuck position and
+    nothing subtler (docs/07-combat.md § Range).
+
+    Parameters
+    ----------
+    mover : Fighter
+        Who might move — typically the defender, correcting for `strike`.
+    anchor : Fighter
+        Who it's positioned relative to.
+
+    Returns
+    -------
+    float
+        A `moveBy` request, `float("inf")`/`-inf` when it needs to act, or
+        `0.0` when already reachable.
+    """
+    span = mover.weapon_range
+    distance = _distance(anchor, mover)
+    if _reachable(span, distance):
+        return 0.0
+    midpoint = (span.sweet_min + span.sweet_max) / 2.0
+    return float("inf") if distance > midpoint else float("-inf")
 
 
 # ── Bookkeeping ───────────────────────────────────────────────────────────────

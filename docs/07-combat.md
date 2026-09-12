@@ -300,6 +300,12 @@ silent ("The troll closes the distance."). This is the existing
 per-combatant meter ([multi-combatant fights](#multi-combatant-fights)),
 now sometimes producing a movement beat instead of a tell, not a second race.
 
+`auto` mode's own defender — whoever's answering without a keypress, which
+is the player in a fully-`auto` fight and an ally answering on its own in
+any mode — moves the same corrective way: only when its own weapon genuinely
+can't reach, never to chase the sweet spot every exchange. `auto` stays a
+stats-only baseline, not a second player.
+
 ### Reusable, limited, and gone
 
 Not every weapon answers twice. `item.ammo` counts uses: `null` is a sword —

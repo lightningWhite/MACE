@@ -1710,6 +1710,120 @@ def test_a_fight_that_never_ends_is_stopped(tmp_path: Path) -> None:
     assert ended.payload()["outcome"] == "fled"
 
 
+def two_fighters(library: Library) -> tuple[roster.Fighter, roster.Fighter]:
+    """The hero's and thug's `Fighter`, freshly resolved at the start of a brawl.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded pack.
+
+    Returns
+    -------
+    tuple
+        Hero, then thug.
+    """
+    result = start(library)
+    context = context_for(library, result.state)
+    assert context.state.combat is not None
+    combatants = {c.actor: c for c in context.state.combat.combatants}
+    hero = roster.fighter_for(combatants["brawl:hero"], context, cache={})
+    thug = roster.fighter_for(combatants["brawl:thug"], context, cache={})
+    return hero, thug
+
+
+def test_auto_move_stays_put_when_already_in_range(tmp_path: Path) -> None:
+    """`auto` mode is a baseline, not an optimizer — it doesn't chase the sweet
+    spot when it's already somewhere the weapon works."""
+    library = brawl_pack(tmp_path)
+    hero, thug = two_fighters(library)
+    assert combat._auto_move(hero, thug) == 0.0
+
+
+def test_auto_move_closes_when_too_far(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    hero, thug = two_fighters(library)
+    thug.combatant.position = hero.combatant.position + 100.0
+    assert combat._auto_move(hero, thug) == float("inf")
+
+
+def test_auto_move_opens_when_too_close(tmp_path: Path) -> None:
+    """A reach weapon's `min` can make an auto-played defender back off too."""
+    library = two_weapon_pack(tmp_path)
+    result = start(library)
+    # The hero's club has no `range` of its own — swap in the dagger, whose
+    # `min` of 1 ft a distance of 0 sits below.
+    result.state.protagonist.equipment["mainHand"] = "brawl:dagger"
+    context = context_for(library, result.state)
+    assert context.state.combat is not None
+    combatants = {c.actor: c for c in context.state.combat.combatants}
+    armed = roster.fighter_for(combatants["brawl:hero"], context, cache={})
+    thug = roster.fighter_for(combatants["brawl:thug"], context, cache={})
+    thug.combatant.position = armed.combatant.position
+    assert combat._auto_move(armed, thug) == float("-inf")
+
+
+def test_a_full_auto_fight_moves_the_player_back_out_of_melee(tmp_path: Path) -> None:
+    """A bow-wielder's own `auto`-played answers retreat once the thug closes in.
+
+    Same bow-vs-melee-default shape as the enemy-movement tests: the fight
+    opens at 40 ft, so the thug spends several turns closing before `swing`
+    is even in range. Once it is, the hero — armed with a bow whose `min` is
+    10 ft — is now defending at melee distance, which is exactly the
+    scenario `_auto_move` exists for, and this is `auto` mode playing the
+    player's side too, not a hand-picked position.
+    """
+    library = brawl_pack(
+        tmp_path,
+        mode="auto",
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "bow"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "bow",
+                "kind": "item",
+                "name": "Bow",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 4, "max": 9},
+                    "range": {"min": 10, "max": 80, "sweetMin": 20, "sweetMax": 40},
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = start(library)
+    resolves = [e.payload() for e in result.events if e.kind == "combat.resolve"]
+    hero_resolves = [p for p in resolves if p["defender"] == "brawl:hero"]
+    assert hero_resolves
+    assert any(p["moveBy"] != 0.0 for p in hero_resolves)
+
+
 # ── The acceptance test ───────────────────────────────────────────────────────
 
 

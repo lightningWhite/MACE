@@ -215,9 +215,15 @@ costs the exchange, same as switching does now.
 - **Determinism**: `moveBy` is recorded on the action like `elapsedMs` is, so
   a replay resolves against what was written down, not a re-derived value —
   same discipline ADR-0004 already requires for timing.
-- **`auto` mode needs a movement policy** (move toward the sweet spot of the
-  next patterned move) for both sides, so stats-only fights stay a meaningful
-  baseline rather than degenerating into "never in range."
+- **`auto` mode's movement policy is corrective, not optimizing.** The
+  attacker side already had one — `_close_in`, an enemy closes or gives
+  ground when nothing in its pattern can reach at all. `_auto_answer` now
+  does the same for whoever is defending (the player in a full-`auto` fight,
+  an ally answering on its own in any mode): `_auto_move` only acts when its
+  own `weapon_range` genuinely can't reach, not to chase the sweet spot every
+  exchange. A stats-only baseline that never got stuck out of its own
+  weapon's range, but also never micromanaged position, is the useful
+  baseline to balance the real one against.
 - **`equip:<item>` is a new reserved response** alongside `FLEE`/`RECOVER`/
   `FOCUS`/`USE` in `roster.py`, and `responses_for` needs to offer it only
   when the inventory actually holds another weapon-kind item — the same
