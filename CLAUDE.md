@@ -51,7 +51,8 @@ multiplayer server. Breaking them is a design regression, not a shortcut.
 ```
 docs/            Design docs — read these first
 schemas/         JSON Schema for every content type
-packs/           Content: shared libraries + playable games
+packs/           Content: shared libraries + playable games — always validates
+wip/             In-progress games not yet ready to validate (see wip/README.md)
 src/mace/
   model/         Pydantic content models (authoring-time shapes)
   content/       Pack loading, id resolution, inheritance, validation
@@ -117,6 +118,9 @@ change to the contract every front-end is written against.
   second engine implementation (e.g. a TypeScript port) be verified. If a change
   legitimately alters a golden file, say so explicitly in the commit message.
 - Every pack in `packs/` must validate. `mace validate packs/` runs in CI.
+  A game still being built lives in `wip/` until it validates clean — see
+  `wip/README.md` — so half-finished content never blocks CI or the
+  pre-push hook.
 
 ## Working style for this repo
 

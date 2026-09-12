@@ -19,6 +19,10 @@ free — the loader globs and merges by id, so one file per location and one fil
 for all of them are equally correct. Point your editor at
 [`schemas/`](../schemas/) for completion while writing.
 
+Everything in here is expected to validate, always — `mace validate packs/`
+is what CI and the pre-push hook run. A game that's still mid-build and not
+ready for that bar belongs in [`wip/`](../wip/README.md) instead, not here.
+
 See [docs/03](../docs/03-content-model.md) for the content model and
 [docs/11](../docs/11-library-and-community.md) for what makes a library pack
 worth depending on.
