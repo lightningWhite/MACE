@@ -21,17 +21,18 @@ Combat is a sequence of **exchanges**. Each exchange:
 ```
    1. TELL          The enemy telegraphs its next move.
                     "The troll hauls the club up over its head."
-                    ▸ move type: overhead   ▸ window: 1400ms
+                    ▸ move type: overhead   ▸ window: 1400ms   ▸ range: 3-6ft
 
    2. READ          You choose a response. The right response depends on
                     the move type — this is knowledge.
                     [P]arry [D]odge [B]lock [S]trike [R]ecover [F]lee [Br(e)ad]
 
-   3. TIME          When you commit matters. Early is hesitant, late is
-                    too late, and the sweet spot is near the end of the
-                    windup — this is reflex/nerve.
+   3. TIME & CLOSE  When you commit matters, and so does where you're
+                    standing — both ride on the same answer. Early is
+                    hesitant, late is too late; too far out and a `strike`
+                    can't reach at all.
 
-   4. RESOLVE       read correctness × timing precision × stats × gear
+   4. RESOLVE       read correctness × timing precision × range × stats × gear
                     → damage dealt, damage taken, stamina spent, momentum
 ```
 
@@ -156,6 +157,167 @@ exchange, so the move that was coming lands with nobody answering it. That is
 what makes the healing draught a decision about *when* rather than a button —
 you buy the hitpoints with a hit, and taking one at the wrong moment is how a
 fight is lost. It is the same price an order costs, for the same reason.
+
+## Range — closing, holding, and giving ground
+
+Distance is the third thing an exchange resolves against, alongside reading
+and timing. It exists so a bow and a sword are actually different weapons
+instead of the same swing with a different damage band, and so "get in
+close" or "back off" is a decision rather than flavor text ([ADR-0010](decisions/0010-linear-range-in-combat.md)).
+
+Every combatant sits at a `position` in feet along one shared line; the
+distance to any other combatant is just the difference. There is no grid,
+no facing, no second dimension — deliberately: a full tactical grid was
+already weighed and rejected for tempo combat ([ADR-0006](decisions/0006-tempo-combat.md)),
+and a single scalar keeps that promise while still making a bow feel
+nothing like a dagger.
+
+Range is `{min, max, sweetMin, sweetMax}` in feet, and it lives wherever
+`damage` already lives for that move — no new rule, just extending the one
+`fight.py` already has:
+
+- **Attack moves carry it directly**, next to their `damage`. `club-overhead`,
+  `sword-thrust`, and `bite` already have no weapon item behind them in the
+  shipped packs — they *are* the weapon, as content — so a troll's sweep and
+  a wolf's lunge simply get one more field:
+
+  ```yaml
+  - id: club-overhead
+    type: overhead
+    range: {min: 3, max: 6, sweetMin: 3.5, sweetMax: 5}
+    damage: {min: 9, max: 15, type: bludgeon}
+    ...
+  ```
+
+- **`strike`** — the player's only source of damage, since a playable
+  character has defenses and nothing else ([ADR-0008](decisions/0008-the-player-answers.md))
+  — is one generic move every profile shares verbatim, and its damage was
+  never on the move to begin with: it's `Fighter.weapon_damage`, resolved
+  fresh each exchange from whatever's equipped, falling back to a bare-hands
+  constant (`UNARMED`) when nothing is. Range follows the identical wire: a
+  new `Fighter.weapon_range`, sourced from the equipped item's own `range`
+  and falling back to `UNARMED_RANGE` — hands as the default weapon, which
+  the engine already does for damage and now does for range too.
+
+  ```yaml
+  - id: hunting-bow
+    kind: item
+    item:
+      equip_slot: mainHand
+      range: {min: 10, max: 80, sweetMin: 20, sweetMax: 40}
+      damage: {min: 4, max: 9, type: pierce}
+      moves: [strike]
+
+  - id: dagger
+    kind: item
+    item:
+      equip_slot: mainHand
+      range: {min: 1, max: 3, sweetMin: 1.5, sweetMax: 2.5}
+      damage: {min: 2, max: 5, type: pierce}
+      moves: [parry, strike]
+  ```
+
+  A bow's `range` says the weapon itself is ranged — nothing about equipping
+  one can be used at 2 ft, because `strike` has no range of its own to
+  override it with. (Range doesn't stack the way `strike`'s small bonus
+  damage stacks on top of `weapon_damage`: it's one effective band per
+  exchange, sourced from whatever's in hand, not two bands combined.)
+
+Outside `[min, max]` the move cannot be attempted at all. Inside it,
+effectiveness ramps from 0 at the outer edge to 1.0 across `[sweetMin,
+sweetMax]` — the identical clamp shape `precision` already uses for timing:
+
+```
+rangeFactor = 1.0                                              if sweetMin ≤ d ≤ sweetMax
+            = clamp((d - min) / (sweetMin - min), 0, 1)          if d < sweetMin
+            = clamp((max - d) / (max - sweetMax), 0, 1)          if d > sweetMax
+```
+
+`rangeFactor` multiplies into resolution alongside `precision`, so a called
+shot at the very edge of a bow's range behaves the way a late-committed parry
+already does: it can still land, just for less.
+
+Nothing lives on the profile — range is what a move already is (an attack's
+own reach, or whatever's equipped for `strike`), and a profile is
+temperament, not gear. A duelist's thrust (3–5 ft) and kick (0–2 ft) are
+already two different attack moves with their own `damage`; a profile's
+`patterns` already teach the player when an enemy needs to close distance
+before it can throw one — a pattern that sequences a melee move after a
+ranged one now implicitly requires the enemy to close first.
+
+Two things fall out of range riding on `strike` and on attack moves this way:
+
+- **A ranged-only loadout can get stuck, on purpose.** A bow-wielder grappled
+  at 2 ft can't `strike` back at all — nothing the bow grants reaches that
+  close, and unlike the `ammo: 0` case there's no fallback weapon underneath
+  it, because they're still holding the bow. Getting out of that is what
+  [switching weapons mid-fight](#reusable-limited-and-gone) is for: spend the
+  exchange, draw the dagger. A loadout with no close-range answer at all is a
+  real cost of that loadout, not something the engine quietly patches over.
+- **A ranged enemy can kite.** An archer whose sweet spot is 20–40 ft now has
+  a real reason to retreat instead of standing still, which is good texture
+  but needs a leash — arena bounds on `position`, or a per-profile limit on
+  how far it's willing to give ground — so a fight can't turn into endless
+  backpedaling.
+
+### Moving is part of the answer, not a separate turn
+
+`combat.input` carries an optional `moveBy` — signed feet, positive to close
+the distance, negative to open it — alongside the existing `response` and
+`elapsedMs`. It resolves in the *same* exchange as whatever was chosen: you
+step in while you parry, or back off while you strike. There is no separate
+"move" response competing for the turn, because footwork that costs its own
+exchange stopped feeling like fighting and started feeling like a chore —
+folding it into the answer already being given is what keeps a fight feeling
+like one continuous motion.
+
+How far you can move is bounded by speed, with the same shape the timing
+window already uses:
+
+```
+maxStep = BASE_STEP × (1 + (mover.speed - 50) / 200)
+```
+
+Enemies move the same way on their own meter turns: when an enemy's action
+meter fills and nothing in its current pattern step is in range, that turn is
+spent closing or opening distance instead of telegraphing — narrated, not
+silent ("The troll closes the distance."). This is the existing
+per-combatant meter ([multi-combatant fights](#multi-combatant-fights)),
+now sometimes producing a movement beat instead of a tell, not a second race.
+
+### Reusable, limited, and gone
+
+Not every weapon answers twice. `item.ammo` counts uses: `null` is a sword —
+unlimited. A number counts down each time `weapon_damage`/`weapon_range`
+resolves against that item; a thrown rock is `ammo: 1`, and at zero
+`fighter_for`'s gear lookup passes over it, back down to `UNARMED`/
+`UNARMED_RANGE` (or the next item held, if slots allow more than one). A
+thrown rock is otherwise an ordinary weapon in content terms — it grants
+`strike` like a dagger does, it just runs out:
+
+```yaml
+- id: skipping-stone
+  kind: item
+  name: "Fist-sized Rock"
+  item:
+    equip_slot: mainHand
+    ammo: 1
+    range: {min: 5, max: 30, sweetMin: 10, sweetMax: 20}
+    damage: {min: 2, max: 5, type: blunt}
+    moves: [strike]
+```
+
+Picking a spent rock back up mid-fight is a world interaction, not a combat
+one — it's an item on the ground, handled the way picking up anything else
+is, not a new piece of exchange machinery.
+
+**Switching weapons mid-fight is new engine surface, not a reuse of
+something that already exists.** `use:<item>` today only covers items with a
+`use` block — potions, not equipment. This adds a parallel `equip:<item>`
+response, offered only when the inventory holds another weapon-kind item,
+costing the exchange the same way `use:<item>` already does: the move that
+was coming lands unanswered. It's the actual fix for "my ranged weapon got
+closed on" — not a hardcoded fallback, a real decision that costs a beat.
 
 ## Resources — why you can't just spam
 
@@ -316,9 +478,12 @@ enemy:
   combat: {profile: fantasy.core:quick-duelist}
 ```
 
-Everything else — moves, tells, patterns, counters — comes from the library
-profile. An author who wants a signature enemy writes a custom profile; an author
-who wants a bandit gets a good fight for four lines.
+Everything else — moves, tells, patterns, counters, range — comes from the
+library profile. An author who wants a signature enemy writes a custom
+profile; an author who wants a bandit gets a good fight for four lines, and
+never has to think about `range` unless they want a weapon that behaves
+unusually — a move with no `range` given falls back to a close-quarters
+default, so nothing about authoring a normal melee enemy changes.
 
 A stat or a move's damage may also be authored relative to the player's own
 numbers, instead of an absolute figure meaningful only next to whatever scale
