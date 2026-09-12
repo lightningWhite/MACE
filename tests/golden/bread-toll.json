@@ -299,7 +299,7 @@
           "route": "peasants-quest:north-road",
           "at": "peasants-quest:troll-bridge",
           "destination": "peasants-quest:hagans-castle",
-          "remaining": 2.522,
+          "remaining": 2.938,
           "reason": "the way is barred"
         },
         {
@@ -340,11 +340,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 24,
+          "tick": 25,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "12:00",
+          "time": "12:30",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -419,11 +419,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 24,
+          "tick": 25,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "12:00",
+          "time": "12:30",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -505,11 +505,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 24,
+          "tick": 25,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "12:00",
+          "time": "12:30",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -538,12 +538,38 @@
           "text": "Crows argue in the branches overhead."
         },
         {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-northwood",
+          "condition": "fantasy.core:drizzle",
+          "name": "drizzle",
+          "intensity": 0.1163,
+          "tags": [
+            "wet"
+          ],
+          "visibility": 0.8,
+          "temperature": 12.55,
+          "temperatureUnit": "celsius",
+          "text": "A thin rain starts \u2014 not enough to shelter from, enough to soak you."
+        },
+        {
           "kind": "travel.leg",
           "route": "peasants-quest:north-road",
           "leg": 5,
           "of": 6,
           "waypoint": null,
           "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "weather.changed",
+          "region": "peasants-quest:the-northwood",
+          "condition": "fantasy.core:overcast",
+          "name": "overcast",
+          "intensity": 0.0917,
+          "tags": [],
+          "visibility": 0.85,
+          "temperature": 12.55,
+          "temperatureUnit": "celsius",
+          "text": "The sky closes over, flat and grey, with no weather in it yet."
         },
         {
           "kind": "travel.leg",
@@ -555,18 +581,18 @@
         },
         {
           "kind": "world.time",
-          "tick": 27,
+          "tick": 31,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "elapsed": 3
+          "elapsed": 6
         },
         {
           "kind": "moved",
           "from": "peasants-quest:troll-bridge",
           "to": "peasants-quest:hagans-castle",
           "route": "peasants-quest:north-road",
-          "ticks": 3
+          "ticks": 6
         },
         {
           "kind": "narrate",
@@ -620,11 +646,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 27,
+          "tick": 31,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "13:30",
+          "time": "15:30",
           "location": "peasants-quest:hagans-castle",
           "place": "Hagan's Castle",
           "region": "peasants-quest:the-marches",

@@ -904,7 +904,7 @@
           "route": "peasants-quest:north-road",
           "at": "peasants-quest:troll-bridge",
           "destination": "peasants-quest:hagans-castle",
-          "remaining": 2.864,
+          "remaining": 2.567,
           "reason": "the way is barred"
         },
         {
@@ -945,11 +945,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 30,
+          "tick": 32,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "15:00",
+          "time": "16:00",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -1024,11 +1024,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 30,
+          "tick": 32,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "15:00",
+          "time": "16:00",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -1102,11 +1102,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 30,
+          "tick": 32,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "15:00",
+          "time": "16:00",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -1181,11 +1181,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 30,
+          "tick": 32,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "15:00",
+          "time": "16:00",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -1267,11 +1267,11 @@
         },
         {
           "kind": "world.status",
-          "tick": 30,
+          "tick": 32,
           "day": 1,
           "dayPart": "day",
           "season": "autumn",
-          "time": "15:00",
+          "time": "16:00",
           "location": "peasants-quest:troll-bridge",
           "place": "The Old Bridge",
           "region": "peasants-quest:the-northwood",
@@ -1300,14 +1300,6 @@
           "text": "Crows argue in the branches overhead."
         },
         {
-          "kind": "travel.leg",
-          "route": "peasants-quest:north-road",
-          "leg": 5,
-          "of": 6,
-          "waypoint": null,
-          "text": "Crows argue in the branches overhead."
-        },
-        {
           "kind": "weather.changed",
           "region": "peasants-quest:the-northwood",
           "condition": "fantasy.core:overcast",
@@ -1322,6 +1314,29 @@
         {
           "kind": "travel.leg",
           "route": "peasants-quest:north-road",
+          "leg": 5,
+          "of": 6,
+          "waypoint": null,
+          "text": "Crows argue in the branches overhead."
+        },
+        {
+          "kind": "weather.front",
+          "front": "westerly#1",
+          "definition": "fantasy.core:westerly",
+          "phase": "formed",
+          "at": "peasants-quest:the-marches",
+          "ahead": "peasants-quest:the-northwood",
+          "intensity": 0.331
+        },
+        {
+          "kind": "narrate",
+          "text": "The wind has come round to the west, and it has weather on it.",
+          "pause": false,
+          "role": "say"
+        },
+        {
+          "kind": "travel.leg",
+          "route": "peasants-quest:north-road",
           "leg": 6,
           "of": 6,
           "waypoint": null,
@@ -1329,18 +1344,18 @@
         },
         {
           "kind": "world.time",
-          "tick": 34,
+          "tick": 37,
           "day": 1,
-          "dayPart": "day",
+          "dayPart": "dusk",
           "season": "autumn",
-          "elapsed": 4
+          "elapsed": 5
         },
         {
           "kind": "moved",
           "from": "peasants-quest:troll-bridge",
           "to": "peasants-quest:hagans-castle",
           "route": "peasants-quest:north-road",
-          "ticks": 4
+          "ticks": 5
         },
         {
           "kind": "narrate",
@@ -1394,19 +1409,19 @@
         },
         {
           "kind": "world.status",
-          "tick": 34,
+          "tick": 37,
           "day": 1,
-          "dayPart": "day",
+          "dayPart": "dusk",
           "season": "autumn",
-          "time": "17:00",
+          "time": "18:30",
           "location": "peasants-quest:hagans-castle",
           "place": "Hagan's Castle",
           "region": "peasants-quest:the-marches",
           "weather": "fantasy.core:clear",
           "sky": "clear",
-          "temperature": 3.76,
+          "temperature": 1.97,
           "temperatureUnit": "celsius",
-          "light": 1.0,
+          "light": 0.5,
           "indoors": false,
           "exposure": 0.0
         }

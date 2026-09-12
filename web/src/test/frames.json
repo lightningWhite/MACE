@@ -227,7 +227,8 @@
             "choice": null,
             "prices": {},
             "x": 0.0,
-            "y": 120.0
+            "y": 120.0,
+            "elevation": 40.0
           },
           {
             "location": "peasants-quest:hagans-castle",
@@ -240,7 +241,8 @@
             "choice": 3,
             "prices": {},
             "x": 20.0,
-            "y": 0.0
+            "y": 0.0,
+            "elevation": 460.0
           },
           {
             "location": "peasants-quest:traders-post",
@@ -253,7 +255,8 @@
             "choice": 2,
             "prices": {},
             "x": -60.0,
-            "y": 160.0
+            "y": 160.0,
+            "elevation": 40.0
           }
         ],
         "roads": [
@@ -280,6 +283,7 @@
         ],
         "journey": null
       },
+      "submap": null,
       "stall": null
     }
   },
@@ -340,7 +344,7 @@
             "route": "peasants-quest:north-road",
             "at": "peasants-quest:troll-bridge",
             "destination": "peasants-quest:hagans-castle",
-            "remaining": 2.838,
+            "remaining": 2.66,
             "reason": "the way is barred"
           },
           {
@@ -381,11 +385,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -395,7 +399,7 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [
@@ -408,7 +412,7 @@
         ],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -459,7 +463,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -506,7 +510,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -519,7 +524,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -532,7 +538,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -545,7 +552,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -574,11 +582,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
@@ -647,11 +656,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -661,7 +670,7 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [
@@ -673,7 +682,7 @@
         ],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -724,7 +733,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -771,7 +780,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -784,7 +794,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -797,7 +808,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -810,7 +822,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -839,11 +852,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
@@ -888,7 +902,8 @@
                   "value": 50.0,
                   "maximum": 50.0,
                   "role": "vital"
-                }
+                },
+                "reads": []
               },
               {
                 "actor": "peasants-quest:gorm",
@@ -900,7 +915,8 @@
                   "value": 80.0,
                   "maximum": 80.0,
                   "role": "vital"
-                }
+                },
+                "reads": []
               }
             ],
             "canFlee": true,
@@ -941,7 +957,8 @@
             "type": "",
             "text": "The troll shifts its weight onto its back foot.",
             "windowMs": 860,
-            "clear": false
+            "clear": false,
+            "distance": 3.0
           },
           {
             "kind": "combat.responses",
@@ -986,11 +1003,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -1000,13 +1017,13 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -1057,7 +1074,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -1104,7 +1121,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -1117,7 +1135,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -1130,7 +1149,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -1143,7 +1163,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -1172,11 +1193,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
@@ -1239,7 +1261,7 @@
             "route": "peasants-quest:north-road",
             "at": "peasants-quest:troll-bridge",
             "destination": "peasants-quest:hagans-castle",
-            "remaining": 2.838,
+            "remaining": 2.66,
             "reason": "the way is barred"
           },
           {
@@ -1280,11 +1302,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -1294,7 +1316,7 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [
@@ -1307,7 +1329,7 @@
         ],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -1358,7 +1380,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -1405,7 +1427,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -1418,7 +1441,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -1431,7 +1455,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -1444,7 +1469,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -1473,11 +1499,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
@@ -1546,11 +1573,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -1560,7 +1587,7 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [
@@ -1572,7 +1599,7 @@
         ],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -1623,7 +1650,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -1670,7 +1697,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -1683,7 +1711,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -1696,7 +1725,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -1709,7 +1739,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -1738,11 +1769,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
@@ -1787,7 +1819,8 @@
                   "value": 50.0,
                   "maximum": 50.0,
                   "role": "vital"
-                }
+                },
+                "reads": []
               },
               {
                 "actor": "peasants-quest:gorm",
@@ -1799,7 +1832,8 @@
                   "value": 80.0,
                   "maximum": 80.0,
                   "role": "vital"
-                }
+                },
+                "reads": []
               }
             ],
             "canFlee": true,
@@ -1840,7 +1874,8 @@
             "type": "",
             "text": "The troll shifts its weight onto its back foot.",
             "windowMs": 860,
-            "clear": false
+            "clear": false,
+            "distance": 3.0
           },
           {
             "kind": "combat.responses",
@@ -1885,11 +1920,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -1899,13 +1934,13 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -1956,7 +1991,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -2003,7 +2038,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -2016,7 +2052,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -2029,7 +2066,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -2042,7 +2080,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -2071,11 +2110,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
@@ -2122,7 +2162,9 @@
             "critical": false,
             "momentum": 1.15,
             "stamina": 38.0,
-            "feint": false
+            "feint": false,
+            "distance": 3.0,
+            "moveBy": 0.0
           },
           {
             "kind": "combat.tell",
@@ -2133,7 +2175,8 @@
             "type": "overhead",
             "text": "The troll hauls the club up over its head.",
             "windowMs": 1344,
-            "clear": true
+            "clear": true,
+            "distance": 3.0
           },
           {
             "kind": "combat.responses",
@@ -2178,11 +2221,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -2192,13 +2235,13 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -2249,7 +2292,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -2296,7 +2339,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -2309,7 +2353,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -2322,7 +2367,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -2335,7 +2381,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -2364,11 +2411,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
@@ -2415,7 +2463,9 @@
             "critical": false,
             "momentum": 1.0,
             "stamina": 26.5,
-            "feint": false
+            "feint": false,
+            "distance": 3.0,
+            "moveBy": 0.0
           },
           {
             "kind": "combat.tell",
@@ -2426,7 +2476,8 @@
             "type": "",
             "text": "The troll's shoulders bunch.",
             "windowMs": 1344,
-            "clear": false
+            "clear": false,
+            "distance": 3.0
           },
           {
             "kind": "combat.responses",
@@ -2471,11 +2522,11 @@
           },
           {
             "kind": "world.status",
-            "tick": 26,
+            "tick": 29,
             "day": 1,
             "dayPart": "day",
             "season": "autumn",
-            "time": "13:00",
+            "time": "14:30",
             "location": "peasants-quest:troll-bridge",
             "place": "The Old Bridge",
             "region": "peasants-quest:the-northwood",
@@ -2485,13 +2536,13 @@
             "temperatureUnit": "celsius",
             "light": 1.0,
             "indoors": false,
-            "exposure": 0.0857
+            "exposure": 0.1286
           }
         ],
         "choices": [],
         "view": {
           "pack": "peasants-quest",
-          "tick": 26,
+          "tick": 29,
           "outcome": "playing",
           "endedBecause": null,
           "sheet": {
@@ -2542,7 +2593,7 @@
                 "role": "ability"
               }
             ],
-            "exposure": 0.0857232975043195
+            "exposure": 0.12858494625647926
           },
           "carried": [
             {
@@ -2589,7 +2640,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 0.0,
-                "y": 120.0
+                "y": 120.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:hagans-castle",
@@ -2602,7 +2654,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 20.0,
-                "y": 0.0
+                "y": 0.0,
+                "elevation": 460.0
               },
               {
                 "location": "peasants-quest:traders-post",
@@ -2615,7 +2668,8 @@
                 "choice": null,
                 "prices": {},
                 "x": -60.0,
-                "y": 160.0
+                "y": 160.0,
+                "elevation": 40.0
               },
               {
                 "location": "peasants-quest:troll-bridge",
@@ -2628,7 +2682,8 @@
                 "choice": null,
                 "prices": {},
                 "x": 10.0,
-                "y": 60.0
+                "y": 60.0,
+                "elevation": 120.0
               }
             ],
             "roads": [
@@ -2657,11 +2712,12 @@
               "route": "peasants-quest:north-road",
               "from": "peasants-quest:fenmoor",
               "to": "peasants-quest:hagans-castle",
-              "walked": 3.1620553359683794,
+              "walked": 3.3401992985581477,
               "ticks": 6,
               "blockedAt": "peasants-quest:troll-bridge"
             }
           },
+          "submap": null,
           "stall": null
         }
       }
