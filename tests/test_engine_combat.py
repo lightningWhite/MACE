@@ -829,6 +829,66 @@ def test_a_weapons_range_becomes_the_fighters_weapon_range(tmp_path: Path) -> No
     assert fought.weapon_range.max == 5
 
 
+def test_a_fight_opens_at_the_edge_of_the_players_own_weapon(tmp_path: Path) -> None:
+    """A fight's starting distance comes from whatever the player has armed.
+
+    Not the weapon's hard `max` — that's the point at which it's already
+    down to zero effectiveness, and starting a fight there would mean every
+    fighter's first exchange opens with a useless weapon. `sweetMax`, the
+    far edge of where it's still fully effective, is what "at range" means
+    here (docs/07-combat.md § Range).
+    """
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "bow"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "bow",
+                "kind": "item",
+                "name": "Bow",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 4, "max": 9},
+                    "range": {"min": 10, "max": 80, "sweetMin": 20, "sweetMax": 40},
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = start(library)
+    fight = result.state.combat
+    assert fight is not None
+    thug = next(c for c in fight.combatants if c.side == "enemy")
+    hero = next(c for c in fight.combatants if c.side == "player")
+    assert abs(thug.position - hero.position) == 40.0
+
+
 def test_a_weapon_with_no_range_falls_back_to_the_unarmed_default(
     tmp_path: Path,
 ) -> None:
@@ -975,11 +1035,17 @@ def test_an_attack_out_of_its_own_range_cannot_land(tmp_path: Path) -> None:
 
 
 def test_a_weapon_out_of_its_own_range_cannot_open_a_counter(tmp_path: Path) -> None:
-    """A club authored with a range excluding melee engagement earns nothing.
+    """Distance moving past a weapon's reach still zeroes out its opening.
+
+    A fight opens with the player's weapon already at the edge of its own
+    sweet spot — that's what sets the starting distance in the first place —
+    so a fresh fight can never start with your own weapon already out of its
+    own range. To exercise the gate, this stands in for movement that
+    doesn't exist yet (`moveBy`) by pushing the thug out past the pike's
+    `max` by hand between the fight opening and the answer.
 
     `block` is `swing`'s correct counter, answered well, so this would
-    ordinarily be a clean counter with an opening; the club's `range`
-    excludes `MELEE_ENGAGEMENT`, so the opening deals no damage at all.
+    ordinarily be a clean counter with an opening.
     """
     library = brawl_pack(
         tmp_path,
@@ -1024,7 +1090,12 @@ def test_a_weapon_out_of_its_own_range_cannot_open_a_counter(tmp_path: Path) -> 
             {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
         ],
     )
-    result = answer(start(library).state, library, "block")
+    state = start(library).state
+    fight = state.combat
+    assert fight is not None
+    thug = next(c for c in fight.combatants if c.side == "enemy")
+    thug.position += 50.0  # well past the pike's `max` of 10
+    result = answer(state, library, "block")
     payload = resolved(result)
     assert payload["result"] == "counter"
     assert payload["damageDealt"] == 0.0

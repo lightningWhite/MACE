@@ -82,6 +82,21 @@ is fight-only ephemeral state — it lives in `CombatState`/`Combatant`
 (session state), never in content, per the content/state split in
 `CLAUDE.md`.
 
+**A fight opens at the edge of whatever the player has armed** — `begin()`
+resolves the player's `Fighter` before any enemy `Combatant` is constructed
+(`fighter_for` only needs the entity and its gear, not a fight already under
+way), reads `weapon_range.sweetMax`, and places every enemy that far out. Not
+the harder `max` — that's the point a weapon is already down to zero
+effectiveness, and starting every fight there would waste everyone's first
+exchange, armed or not. `sweetMax` is deliberately what "at range" means
+here: the far edge of where a weapon is still fully effective. Because an
+unranged move or weapon's `range` already falls back to `UNARMED_RANGE`
+(`min=0, max=4, sweetMin=1, sweetMax=3`), an unarmed or ordinary-melee fight
+opens at `sweetMax=3` — inside its own sweet band — so the "no-op for
+existing content" property from the read-side wiring holds here too: nothing
+that has never touched `range` sees a different starting distance than it
+implicitly always had.
+
 **Movement rides along with the answer the player was already giving**, not a
 separate action. `combat.input` gains an optional `moveBy` (signed feet),
 resolved in the same exchange as the response, clamped to a max step that

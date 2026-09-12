@@ -172,6 +172,15 @@ already weighed and rejected for tempo combat ([ADR-0006](decisions/0006-tempo-c
 and a single scalar keeps that promise while still making a bow feel
 nothing like a dagger.
 
+A fight opens at the edge of whatever the player has armed: the far side of
+their weapon's own sweet spot (`sweetMax`, not the harder `max` — starting at
+the point a weapon is already down to zero effectiveness would waste
+everyone's first exchange). A bow-wielder opens a fight well clear of a
+troll's reach; a dagger-wielder opens already close. Nothing about an
+unranged weapon changes — its melee default's `sweetMax` sits inside its own
+sweet spot, so a fight where nobody has touched `range` still opens exactly
+where it always has.
+
 Range is `{min, max, sweetMin, sweetMax}` in feet, and it lives wherever
 `damage` already lives for that move — no new rule, just extending the one
 `fight.py` already has:

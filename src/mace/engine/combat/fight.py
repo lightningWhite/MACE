@@ -116,13 +116,6 @@ MAX_TURNS = 200
 #: exchanges should finish a troll that twenty-five bad ones lose to.
 OPENING_MULTIPLIER = 1.9
 
-#: Where an enemy starts, in feet from the player, when a fight opens. Sits
-#: dead center of `UNARMED_RANGE`'s sweet spot — the melee default every
-#: unranged move and weapon falls back to — so a fight where nobody has
-#: authored `range` resolves exactly as it did before range existed. Movement
-#: is what changes it after that (docs/07-combat.md § Range).
-MELEE_ENGAGEMENT = (UNARMED_RANGE.sweet_min + UNARMED_RANGE.sweet_max) / 2
-
 #: How fast an action meter fills, per point of speed. A speed-50 fighter is
 #: ready every other beat; a speed-65 wolf is ready more often than that, and
 #: three of them are three windows overlapping.
@@ -220,13 +213,12 @@ def begin(
         flee_to=flee_to,
     )
 
-    fight.combatants.append(
-        Combatant(
-            actor=state.player,
-            side="player",
-            profile=_profile_of(state.protagonist, context),
-        )
+    player_combatant = Combatant(
+        actor=state.player,
+        side="player",
+        profile=_profile_of(state.protagonist, context),
     )
+    fight.combatants.append(player_combatant)
     for ally in _allies(context):
         fight.combatants.append(
             Combatant(
@@ -235,6 +227,12 @@ def begin(
                 profile=_profile_of(ally, context),
             )
         )
+
+    # Whatever the player has armed sets how the fight opens: a bow starts
+    # this at the far edge of where it's still fully effective, a dagger
+    # starts it close. Read before `state.combat` exists — `fighter_for`
+    # only needs the entity and its gear, not a fight already in progress.
+    engagement = fighter_for(player_combatant, context, cache={}).weapon_range.sweet_max
     for actor in against:
         opponent = state.entities.get(actor)
         if opponent is None:
@@ -244,7 +242,7 @@ def begin(
                 actor=actor,
                 side="enemy",
                 profile=_profile_of(opponent, context),
-                position=MELEE_ENGAGEMENT,
+                position=engagement,
                 spawned=actor in (spawned or ()),
             )
         )
