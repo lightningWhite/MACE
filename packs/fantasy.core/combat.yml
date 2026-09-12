@@ -62,6 +62,7 @@ moves:
     vagueTell: "The troll's shoulders bunch."
     windupMs: 1400
     counters: [dodge]
+    range: {min: 2, max: 7, sweetMin: 3, sweetMax: 6}
     damage: {min: 9, max: 15, type: bludgeon}
     cost: 10
 
@@ -72,6 +73,7 @@ moves:
     vagueTell: "The troll shifts its weight onto its back foot."
     windupMs: 900
     counters: [jump, dodge]
+    range: {min: 1, max: 6, sweetMin: 2, sweetMax: 5}
     damage: {min: 5, max: 9, type: bludgeon}
     cost: 7
 
@@ -82,6 +84,9 @@ moves:
     vagueTell: "It leans in."
     windupMs: 1100
     counters: [strike]
+    # Shorter than a full club swing — it has to close enough to actually
+    # take hold of you, not just reach you with a length of wood.
+    range: {min: 1, max: 5, sweetMin: 2, sweetMax: 4}
     damage: {min: 4, max: 7, type: crush}
     cost: 8
 
@@ -93,6 +98,9 @@ moves:
     vagueTell: "It draws a breath."
     windupMs: 700
     counters: [strike]
+    # A feint still has to look like something real — this one reads as the
+    # windup to a grab, so it shares a grab's range.
+    range: {min: 1, max: 5, sweetMin: 2, sweetMax: 4}
     cost: 3
 
   - id: sword-slash
@@ -102,6 +110,7 @@ moves:
     vagueTell: "The blade moves."
     windupMs: 800
     counters: [block]
+    range: {min: 1, max: 5, sweetMin: 2.5, sweetMax: 4.5}
     damage: {min: 6, max: 11, type: slash}
     cost: 7
 
@@ -112,6 +121,7 @@ moves:
     vagueTell: "The point comes up."
     windupMs: 600
     counters: [parry]
+    range: {min: 1, max: 5, sweetMin: 2.5, sweetMax: 4.5}
     damage: {min: 7, max: 12, type: pierce}
     cost: 8
 
@@ -122,6 +132,9 @@ moves:
     vagueTell: "He steps in."
     windupMs: 750
     counters: [strike]
+    # A bull-rush, not a reach weapon — it wants you a lot closer than a
+    # blade does.
+    range: {min: 0, max: 4, sweetMin: 0.5, sweetMax: 3}
     damage: {min: 3, max: 6, type: crush}
     cost: 6
 
@@ -133,6 +146,8 @@ moves:
     vagueTell: "The blade twitches."
     windupMs: 550
     counters: [strike]
+    # Reads as the slash it's pretending to be.
+    range: {min: 1, max: 5, sweetMin: 2.5, sweetMax: 4.5}
     cost: 4
 
   - id: bite
@@ -142,6 +157,7 @@ moves:
     vagueTell: "It gathers itself."
     windupMs: 650
     counters: [parry, dodge]
+    range: {min: 0, max: 4, sweetMin: 0.5, sweetMax: 2.5}
     damage: {min: 4, max: 8, type: pierce}
     cost: 6
 
@@ -152,6 +168,9 @@ moves:
     vagueTell: "It circles."
     windupMs: 750
     counters: [block]
+    # Longer than the bite that usually follows it in a pack hunter's
+    # pattern — the lunge is what closes the gap the bite needs.
+    range: {min: 1, max: 5, sweetMin: 2, sweetMax: 4}
     damage: {min: 3, max: 6, type: slash}
     cost: 5
 
@@ -162,6 +181,8 @@ moves:
     vagueTell: "He moves."
     windupMs: 1000
     counters: [block, dodge]
+    # No `range` of its own on purpose — a bare-fisted swing is exactly the
+    # melee default every unarmed move already falls back to.
     damage: {min: 2, max: 5, type: bludgeon}
     cost: 5
 

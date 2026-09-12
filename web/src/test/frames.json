@@ -958,7 +958,7 @@
             "text": "The troll shifts its weight onto its back foot.",
             "windowMs": 860,
             "clear": false,
-            "distance": 3.0
+            "distance": 3.5
           },
           {
             "kind": "combat.responses",
@@ -1875,7 +1875,7 @@
             "text": "The troll shifts its weight onto its back foot.",
             "windowMs": 860,
             "clear": false,
-            "distance": 3.0
+            "distance": 3.5
           },
           {
             "kind": "combat.responses",
@@ -2163,7 +2163,7 @@
             "momentum": 1.15,
             "stamina": 38.0,
             "feint": false,
-            "distance": 3.0,
+            "distance": 3.5,
             "moveBy": 0.0
           },
           {
@@ -2176,7 +2176,7 @@
             "text": "The troll hauls the club up over its head.",
             "windowMs": 1344,
             "clear": true,
-            "distance": 3.0
+            "distance": 3.5
           },
           {
             "kind": "combat.responses",
@@ -2464,7 +2464,7 @@
             "momentum": 1.0,
             "stamina": 26.5,
             "feint": false,
-            "distance": 3.0,
+            "distance": 3.5,
             "moveBy": 0.0
           },
           {
@@ -2477,7 +2477,7 @@
             "text": "The troll's shoulders bunch.",
             "windowMs": 1344,
             "clear": false,
-            "distance": 3.0
+            "distance": 3.5
           },
           {
             "kind": "combat.responses",

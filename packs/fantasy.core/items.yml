@@ -40,6 +40,10 @@ entities:
       equipSlot: mainHand
       baseValue: 12
       damage: {min: 2, max: 5, type: pierce}
+      # A short blade — `strike` reads this range, so a dagger-wielder is
+      # exactly the fighter you'd expect close-range weapons to make: fine up
+      # close, useless the moment something keeps its distance.
+      range: {min: 0, max: 4, sweetMin: 1, sweetMax: 3}
       # A weapon is how a fighter gets an answer to hold. Carrying a dagger is
       # what makes `parry` one of your options.
       moves: [parry, strike]

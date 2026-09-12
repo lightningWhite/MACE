@@ -514,7 +514,7 @@
           "text": "The club drops low and comes round at your knees.",
           "windowMs": 860,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -617,7 +617,7 @@
           "momentum": 1.0,
           "stamina": 28.5,
           "feint": false,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -630,7 +630,7 @@
           "text": "The troll hauls the club up over its head.",
           "windowMs": 1337,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -733,7 +733,7 @@
           "momentum": 1.0,
           "stamina": 26.5,
           "feint": false,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -746,7 +746,7 @@
           "text": "The troll hauls the club up over its head.",
           "windowMs": 1344,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -849,7 +849,7 @@
           "momentum": 1.15,
           "stamina": 24.5,
           "feint": false,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -862,7 +862,7 @@
           "text": "It draws a breath that fills the whole hollow of the bridge.",
           "windowMs": 675,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -957,7 +957,7 @@
           "momentum": 1.0,
           "stamina": 13.0,
           "feint": true,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -970,7 +970,7 @@
           "text": "It draws a breath that fills the whole hollow of the bridge.",
           "windowMs": 675,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -1065,7 +1065,7 @@
           "momentum": 1.0,
           "stamina": 4.0,
           "feint": true,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -1078,7 +1078,7 @@
           "text": "It draws a breath that fills the whole hollow of the bridge.",
           "windowMs": 679,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -1173,7 +1173,7 @@
           "momentum": 1.0,
           "stamina": 0.0,
           "feint": true,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -1186,7 +1186,7 @@
           "text": "The troll hauls the club up over its head.",
           "windowMs": 1357,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -1281,7 +1281,7 @@
           "momentum": 1.0,
           "stamina": 0.0,
           "feint": false,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -1294,7 +1294,7 @@
           "text": "The troll shifts its weight onto its back foot.",
           "windowMs": 872,
           "clear": false,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -1389,7 +1389,7 @@
           "momentum": 1.0,
           "stamina": 0.0,
           "feint": false,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {
@@ -1402,7 +1402,7 @@
           "text": "The troll hauls the club up over its head.",
           "windowMs": 1357,
           "clear": true,
-          "distance": 3.0
+          "distance": 3.5
         },
         {
           "kind": "combat.responses",
@@ -1497,7 +1497,7 @@
           "momentum": 1.0,
           "stamina": 0.0,
           "feint": false,
-          "distance": 3.0,
+          "distance": 3.5,
           "moveBy": 0.0
         },
         {

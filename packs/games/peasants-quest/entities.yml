@@ -136,6 +136,9 @@ entities:
       equipSlot: mainHand
       baseValue: 3
       damage: {min: 2, max: 6, type: slash}
+      # A hook on a long handle has real reach for a farm tool, if not a
+      # swordsman's. This sets how far Letholin opens every fight at.
+      range: {min: 1, max: 5, sweetMin: 2, sweetMax: 3.5}
       # A billhook is not a weapon and does not teach you to parry with one.
       moves: [fantasy.core:strike]
 
