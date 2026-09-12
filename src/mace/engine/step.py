@@ -452,6 +452,7 @@ def _start_combat(
     *,
     spawned: set[str] | None = None,
     can_flee: bool = True,
+    surprise: bool = False,
     after: dict[str, str] | None = None,
     flee_to: str | None = None,
 ) -> bool:
@@ -474,6 +475,9 @@ def _start_combat(
         Which of them this fight put there.
     can_flee : bool
         Whether running is allowed.
+    surprise : bool
+        Whether the fight opens at melee distance regardless of what the
+        player has armed.
     after : dict or None
         Outcome name to the qualified scene played once the fight ends.
     flee_to : str or None
@@ -490,6 +494,7 @@ def _start_combat(
         events,
         spawned=spawned,
         can_flee=can_flee,
+        surprise=surprise,
         after=after,
         flee_to=flee_to,
     )
@@ -2078,6 +2083,7 @@ def _settle(outcome: EffectOutcome, context: RuleContext, events: list[Event]) -
             events,
             spawned=spawned,
             can_flee=asked.can_flee,
+            surprise=asked.surprise,
             after={
                 name: context.qualify(scene, "scenes")
                 for name, scene in (

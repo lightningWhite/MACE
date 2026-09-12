@@ -181,6 +181,12 @@ unranged weapon changes — its melee default's `sweetMax` sits inside its own
 sweet spot, so a fight where nobody has touched `range` still opens exactly
 where it always has.
 
+That assumes the player saw it coming. `startCombat: {surprise: true}` skips
+weapon-based positioning and opens at melee distance regardless of what's
+armed — an ambush doesn't wait for a bow to come up. It changes only where
+the fight opens; it is not a free hit or an unanswerable first exchange, both
+of which are their own, larger design question this doesn't take on.
+
 Range is `{min, max, sweetMin, sweetMax}` in feet, and it lives wherever
 `damage` already lives for that move — no new rule, just extending the one
 `fight.py` already has:

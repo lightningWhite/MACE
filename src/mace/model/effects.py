@@ -212,6 +212,11 @@ class StartCombat(EffectPayload):
         Who to fight. Repeat one to get several of it.
     can_flee : bool
         Whether running is allowed at all.
+    surprise : bool
+        Whether the fight opens already at melee distance, whatever the
+        player has armed. An ambush doesn't wait for a bow to come up
+        (docs/07-combat.md § Range) — without it, a fight opens at the edge
+        of the player's own weapon, which assumes they saw it coming.
     on_win, on_lose, on_flee : str or None
         Scenes played after the fight. `onLose` is what a game with
         `deathIsPermanent: false` uses instead of ending; without one, losing
@@ -220,6 +225,7 @@ class StartCombat(EffectPayload):
 
     against: tuple[EntityRef, ...] = Field(min_length=1)
     can_flee: bool = True
+    surprise: bool = False
     on_win: SceneRef | None = None
     on_lose: SceneRef | None = None
     on_flee: SceneRef | None = None

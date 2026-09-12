@@ -178,6 +178,7 @@ def begin(
     *,
     spawned: set[str] | None = None,
     can_flee: bool = True,
+    surprise: bool = False,
     after: dict[str, str] | None = None,
     flee_to: str | None = None,
     mode: str | None = None,
@@ -196,6 +197,9 @@ def begin(
         Which of them this fight put there, so it can tidy them away again.
     can_flee : bool
         Whether running is allowed.
+    surprise : bool
+        Whether the fight opens at melee distance regardless of what the
+        player has armed — an ambush doesn't wait for a bow to come up.
     after : dict or None
         Outcome name to the qualified scene played once the fight ends.
     flee_to : str or None
@@ -232,7 +236,13 @@ def begin(
     # this at the far edge of where it's still fully effective, a dagger
     # starts it close. Read before `state.combat` exists — `fighter_for`
     # only needs the entity and its gear, not a fight already in progress.
-    engagement = fighter_for(player_combatant, context, cache={}).weapon_range.sweet_max
+    # An ambush skips this entirely: there was no time to bring a bow up,
+    # so it opens at the melee default whatever is actually in hand.
+    engagement = (
+        UNARMED_RANGE.sweet_max
+        if surprise
+        else fighter_for(player_combatant, context, cache={}).weapon_range.sweet_max
+    )
     for actor in against:
         opponent = state.entities.get(actor)
         if opponent is None:

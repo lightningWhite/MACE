@@ -889,6 +889,84 @@ def test_a_fight_opens_at_the_edge_of_the_players_own_weapon(tmp_path: Path) -> 
     assert abs(thug.position - hero.position) == 40.0
 
 
+def test_a_surprise_attack_opens_at_melee_regardless_of_the_players_weapon(
+    tmp_path: Path,
+) -> None:
+    """`surprise: true` skips the player's own weapon entirely.
+
+    Same bow-wielding hero as the fight-opens-at-range test, but the scene
+    marks this one an ambush — there was no time to bring the bow up, so it
+    opens at the melee default instead of the bow's own sweet spot.
+    """
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "bow"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "bow",
+                "kind": "item",
+                "name": "Bow",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 4, "max": 9},
+                    "range": {"min": 10, "max": 80, "sweetMin": 20, "sweetMax": 40},
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+        scenes=[
+            {
+                "id": "pick-a-fight",
+                "prompt": "Start something",
+                "effects": [
+                    {
+                        "startCombat": {
+                            "against": "thug",
+                            "surprise": True,
+                            "onWin": "you-won",
+                            "onFlee": "you-ran",
+                        }
+                    }
+                ],
+            },
+            {"id": "you-won", "visible": False, "say": "He stays down."},
+            {"id": "you-ran", "visible": False, "say": "You run."},
+        ],
+    )
+    result = start(library)
+    fight = result.state.combat
+    assert fight is not None
+    thug = next(c for c in fight.combatants if c.side == "enemy")
+    hero = next(c for c in fight.combatants if c.side == "player")
+    assert abs(thug.position - hero.position) == UNARMED_RANGE.sweet_max
+
+
 def test_a_weapon_with_no_range_falls_back_to_the_unarmed_default(
     tmp_path: Path,
 ) -> None:

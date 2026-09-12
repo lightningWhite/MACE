@@ -223,3 +223,14 @@ costs the exchange, same as switching does now.
   when the inventory actually holds another weapon-kind item — the same
   restraint `FOCUS` already gets (offered only when there's someone to
   direct and something to direct them at).
+- **Weapon-based engagement assumes the player saw the fight coming**, which
+  an ambush by definition didn't give them time to do. `StartCombat` gains
+  `surprise: bool`, threaded through `_start_combat`/`begin()`, that skips
+  resolving the player's `Fighter` for positioning and opens at the melee
+  default (`UNARMED_RANGE.sweetMax`) outright. Scoped deliberately narrow —
+  it changes only where the fight opens, not whether the first exchange is
+  answerable at all. A fuller "surprise round" (an unanswered opening blow,
+  say) is a separate mechanic this doesn't attempt. `CombatEncounter` (road
+  ambushes, as opposed to an authored scene's `startCombat`) doesn't get the
+  same field yet — left for a follow-up if it turns out to matter, rather
+  than growing this change to cover every path a fight can start from.
