@@ -210,6 +210,13 @@ class Respond(BaseAction):
     again, and the engine quantizes it so two machines that read 812 ms and
     814 ms resolve the same exchange (ADR-0004).
 
+    `move_by` is the same idea applied to footwork: signed feet, positive to
+    close the distance and negative to open it, resolved in the same
+    exchange as `response` rather than costing one of its own
+    (docs/07-combat.md § Range). It is recorded and clamped the same way
+    `elapsed_ms` is — by how far the defender's speed lets them move — so a
+    replay moves exactly as far as the live session did.
+
     Attributes
     ----------
     response : str
@@ -218,14 +225,22 @@ class Respond(BaseAction):
     elapsed_ms : int or None
         Milliseconds from the tell to the keypress. None in tactical mode,
         where no clock is running and precision is fixed.
+    move_by : float or None
+        Feet to close (positive) or open (negative) this exchange. None is
+        the same as zero — standing your ground is not a separate response.
     """
 
     kind: ClassVar[str] = "combat.input"
     response: str
     elapsed_ms: int | None = None
+    move_by: float | None = None
 
     def payload(self) -> dict[str, Any]:
-        return {"response": self.response, "elapsedMs": self.elapsed_ms}
+        return {
+            "response": self.response,
+            "elapsedMs": self.elapsed_ms,
+            "moveBy": self.move_by,
+        }
 
 
 Action = Choose | Haggle | Interact | Look | Respond | Trade | Travel | Use | Wait
@@ -248,7 +263,7 @@ ACTIONS: dict[str, type[BaseAction]] = {
 
 #: Fields whose recorded name differs from the constructor's, so an action log
 #: stays camelCase like everything else an author or a tool reads.
-RECORD_FIELDS: dict[str, str] = {"elapsedMs": "elapsed_ms"}
+RECORD_FIELDS: dict[str, str] = {"elapsedMs": "elapsed_ms", "moveBy": "move_by"}
 
 
 def decode(record: dict[str, Any], *, offered: Sequence[str] | None = None) -> Action:

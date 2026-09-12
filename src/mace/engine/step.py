@@ -322,7 +322,13 @@ def _perform(action: Action, context: RuleContext, events: list[Event]) -> bool:
     state = context.state
 
     if isinstance(action, Respond):
-        combat.respond(context, action.response, events, elapsed_ms=action.elapsed_ms)
+        combat.respond(
+            context,
+            action.response,
+            events,
+            elapsed_ms=action.elapsed_ms,
+            move_by=action.move_by,
+        )
         return _after_combat(context, events)
 
     if state.combat is not None and state.combat.outcome is None:

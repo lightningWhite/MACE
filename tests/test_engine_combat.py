@@ -37,6 +37,13 @@ def test_speed_widens_the_window_and_nothing_else() -> None:
     assert resolution.window_ms(1400, 30) == 1260
 
 
+def test_speed_widens_the_step_the_same_way_it_widens_the_window() -> None:
+    assert resolution.move_step(3.0, 50) == 3.0
+    assert resolution.move_step(3.0, 70) == 3.3
+    assert resolution.move_step(3.0, 30) == 2.7
+    assert resolution.move_step(3.0, -150) == 0.0
+
+
 def test_the_sweet_spot_sits_late() -> None:
     """The reflex asked for is holding your nerve, not twitching early."""
     window = 1000
@@ -289,7 +296,12 @@ def start(library: Library, seed: str = "brawl") -> StepResult:
 
 
 def answer(
-    state: GameState, library: Library, response: str, *, share: float = 0.75
+    state: GameState,
+    library: Library,
+    response: str,
+    *,
+    share: float = 0.75,
+    move_by: float | None = None,
 ) -> StepResult:
     """Answer whatever is currently telegraphed.
 
@@ -304,6 +316,8 @@ def answer(
     share : float
         Where in the window to commit, as a share of it. 0.75 is the sweet
         spot; anything else is deliberately worse.
+    move_by : float or None
+        Feet to close or open alongside the answer.
 
     Returns
     -------
@@ -312,7 +326,11 @@ def answer(
     """
     tell = state.combat.tell if state.combat else None
     assert tell is not None
-    return step(state, Respond(response, int(tell.window_ms * share)), library)
+    return step(
+        state,
+        Respond(response, int(tell.window_ms * share), move_by),
+        library,
+    )
 
 
 def kinds(result: StepResult) -> list[str]:
@@ -1177,6 +1195,67 @@ def test_a_weapon_out_of_its_own_range_cannot_open_a_counter(tmp_path: Path) -> 
     payload = resolved(result)
     assert payload["result"] == "counter"
     assert payload["damageDealt"] == 0.0
+
+
+# ── Movement ──────────────────────────────────────────────────────────────────
+
+
+def test_closing_shrinks_the_distance(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    state = start(library).state
+    fight = state.combat
+    assert fight is not None
+    before = fight.combatants[0].position - fight.combatants[1].position
+    answer(state, library, "block", move_by=1.0)
+    after = fight.combatants[0].position - fight.combatants[1].position
+    assert abs(after) < abs(before)
+
+
+def test_opening_widens_the_distance(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    state = start(library).state
+    fight = state.combat
+    assert fight is not None
+    before = fight.combatants[0].position - fight.combatants[1].position
+    answer(state, library, "block", move_by=-1.0)
+    after = fight.combatants[0].position - fight.combatants[1].position
+    assert abs(after) > abs(before)
+
+
+def test_movement_is_clamped_by_speed(tmp_path: Path) -> None:
+    """`moveBy` beyond `BASE_MOVE_STEP` at neutral speed goes no further."""
+    library = brawl_pack(tmp_path)
+    state = start(library).state
+    fight = state.combat
+    assert fight is not None
+    before = abs(fight.combatants[0].position - fight.combatants[1].position)
+    answer(state, library, "block", move_by=1000.0)
+    after = abs(fight.combatants[0].position - fight.combatants[1].position)
+    assert before - after == pytest.approx(combat.BASE_MOVE_STEP)
+
+
+def test_closing_cannot_walk_through_the_attacker(tmp_path: Path) -> None:
+    """Distance floors at zero rather than crossing to the other side."""
+    library = brawl_pack(tmp_path)
+    state = start(library).state
+    fight = state.combat
+    assert fight is not None
+    thug = next(c for c in fight.combatants if c.side == "enemy")
+    hero = next(c for c in fight.combatants if c.side == "player")
+    thug.position = hero.position + 1.0  # closer than one full step
+    answer(state, library, "block", move_by=1000.0)
+    assert abs(thug.position - hero.position) == 0.0
+
+
+def test_no_move_by_leaves_the_distance_unchanged(tmp_path: Path) -> None:
+    library = brawl_pack(tmp_path)
+    state = start(library).state
+    fight = state.combat
+    assert fight is not None
+    before = fight.combatants[0].position - fight.combatants[1].position
+    answer(state, library, "block")
+    after = fight.combatants[0].position - fight.combatants[1].position
+    assert after == before
 
 
 # ── What a fight tells you about the other side ─────────────────────────────

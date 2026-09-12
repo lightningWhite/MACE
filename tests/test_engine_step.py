@@ -12,7 +12,7 @@ import pytest
 
 from conftest import game_pack
 from mace.content import Library, load_library
-from mace.engine.actions import Choose, Interact, Look, Travel, Wait, decode
+from mace.engine.actions import Choose, Interact, Look, Respond, Travel, Wait, decode
 from mace.engine.state import Outcome
 from mace.engine.step import StepResult, begin, step
 
@@ -761,7 +761,14 @@ def test_a_different_seed_is_a_different_playthrough(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     "action",
-    [Look(), Wait(3), Choose(2), Interact("greet"), Travel("castle")],
+    [
+        Look(),
+        Wait(3),
+        Choose(2),
+        Interact("greet"),
+        Travel("castle"),
+        Respond("dodge", 800, 2.5),
+    ],
 )
 def test_actions_round_trip_through_their_records(action: Any) -> None:
     assert decode(action.record()) == action

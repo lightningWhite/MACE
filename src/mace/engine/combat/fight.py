@@ -83,6 +83,11 @@ FLEE_BASE = 0.35
 #: How much familiarity with a profile widens its windows, at full knowledge.
 FAMILIARITY_WINDOW = 0.20
 
+#: Feet a neutral-speed fighter can close or open in one exchange. `moveBy`
+#: is clamped to this, scaled by speed the same way the timing window is —
+#: footwork spent alongside the answer, not a second, faster combat.
+BASE_MOVE_STEP = 3.0
+
 #: The hardest a player may set the clock. A floor rather than an assertion:
 #: a session setting that could be zero would divide the window away entirely,
 #: and an unanswerable fight is a crash with better manners.
@@ -426,6 +431,7 @@ def respond(
     events: list[Event],
     *,
     elapsed_ms: int | None = None,
+    move_by: float | None = None,
 ) -> None:
     """Answer the move currently telegraphed, and resolve the exchange.
 
@@ -440,6 +446,10 @@ def respond(
     elapsed_ms : int or None
         When the answer was committed, in milliseconds from the tell. None in
         tactical mode, where no clock is running.
+    move_by : float or None
+        Feet to close (positive) or open (negative) against the attacker,
+        alongside whatever `response` was chosen. Clamped by the defender's
+        own speed; None is the same as zero.
 
     Raises
     ------
@@ -463,6 +473,9 @@ def respond(
             f"`{response}` is not one of your answers; you have "
             f"{', '.join(allowed)}"
         )
+
+    if move_by:
+        _close_distance(defender, roster[tell.attacker], move_by)
 
     if response == FLEE:
         _attempt_flight(context, roster, events)
@@ -666,6 +679,33 @@ def _distance(attacker: Fighter, defender: Fighter) -> float:
         Never negative.
     """
     return abs(attacker.combatant.position - defender.combatant.position)
+
+
+def _close_distance(defender: Fighter, attacker: Fighter, move_by: float) -> None:
+    """Adjust the distance between two combatants, in place.
+
+    Positive `move_by` closes the gap, negative opens it — always relative to
+    the attacker, so the defender never has to think about which side of the
+    line they are on. Closing is floored at zero: footwork cannot walk a
+    defender through the thing it is trying to reach.
+
+    Parameters
+    ----------
+    defender : Fighter
+        Whose position moves. Mutated in place, on its `Combatant`.
+    attacker : Fighter
+        Who it is moving relative to.
+    move_by : float
+        Feet requested, before the defender's own speed clamps it.
+    """
+    step = resolution.move_step(BASE_MOVE_STEP, defender.stat("speed"))
+    requested = max(-step, min(step, move_by))
+    current = _distance(attacker, defender)
+    new_distance = max(0.0, current - requested)
+    towards = (
+        1.0 if attacker.combatant.position >= defender.combatant.position else -1.0
+    )
+    defender.combatant.position = attacker.combatant.position - towards * new_distance
 
 
 def _range_factor(span: Range | None, distance: float) -> float:

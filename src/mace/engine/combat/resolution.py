@@ -35,6 +35,7 @@ __all__ = [
     "damage_taken",
     "growth_step",
     "momentum_after",
+    "move_step",
     "power",
     "precision_of",
     "quantize",
@@ -182,6 +183,28 @@ def window_ms(windup_ms: int, speed: float, ease: float = 1.0) -> int:
     """
     scaled = windup_ms * (1.0 + (speed - NEUTRAL_STAT) / 200.0) * ease
     return max(TIMING_GRANULARITY_MS, int(round(scaled)))
+
+
+def move_step(base_step: float, speed: float) -> float:
+    """How far a fighter can close or open distance in one exchange.
+
+    The identical shape `window_ms` uses for the timing door: speed widens
+    it, and nothing else does — footwork is spent the same way a beat of
+    reflex is (docs/07-combat.md § Range).
+
+    Parameters
+    ----------
+    base_step : float
+        Feet a neutral-speed fighter covers in one exchange.
+    speed : float
+        The mover's effective speed.
+
+    Returns
+    -------
+    float
+        Feet, never negative.
+    """
+    return round(max(0.0, base_step * (1.0 + (speed - NEUTRAL_STAT) / 200.0)), 4)
 
 
 def precision_of(elapsed_ms: int, window: int) -> float:
