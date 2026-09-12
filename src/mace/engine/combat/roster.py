@@ -22,7 +22,7 @@ from mace.engine.combat.resolution import NEUTRAL_STAT
 from mace.engine.context import RuleContext
 from mace.engine.state import Combatant, EntityState
 from mace.engine.stats import effective, pool_bounds
-from mace.model import CombatProfile, Damage, Entity, ItemProps, Move
+from mace.model import CombatProfile, Damage, Entity, ItemProps, Move, Range
 
 __all__ = ["FLEE", "RECOVER", "RESERVED_RESPONSES", "Fighter", "fighter_for"]
 
@@ -55,6 +55,11 @@ _NEUTRAL_DEFAULTS = frozenset({"strength", "speed"})
 #: to be true.
 UNARMED = Damage(min=1.0, max=3.0, type="unarmed")
 
+#: How close or far bare hands work. Grappling range — short, and the sweet
+#: spot sits right in the middle of it, because there is no "ideal" distance
+#: for a fist beyond "close enough" (docs/07-combat.md § Range).
+UNARMED_RANGE = Range(min=0.0, max=4.0, sweet_min=1.0, sweet_max=3.0)
+
 
 @dataclass(frozen=True, slots=True)
 class Fighter:
@@ -82,6 +87,11 @@ class Fighter:
         Qualified id of what it is hitting with, or None for bare hands.
     weapon_damage : Damage
         That weapon's damage range, or `UNARMED`.
+    weapon_range : Range
+        That weapon's range, or `UNARMED_RANGE`. What `strike` — the
+        damage-carrying defense every profile shares — reads its own range
+        from, the same way it already reads `weapon_damage`
+        (docs/07-combat.md § Range).
     armor : float
         What its gear takes off every hit.
     """
@@ -94,6 +104,7 @@ class Fighter:
     defenses: tuple[tuple[str, Move], ...] = ()
     weapon: str | None = None
     weapon_damage: Damage = UNARMED
+    weapon_range: Range = UNARMED_RANGE
     armor: float = 0.0
 
     @property
@@ -304,10 +315,16 @@ def fighter_for(
         seen.add(found[0])
         (defenses if found[1].kind == "defense" else attacks).append(found)
 
-    weapon = next(
-        ((item_id, item.damage) for item_id, item in gear if item.damage is not None),
-        (None, UNARMED),
-    )
+    weapon: str | None = None
+    weapon_damage: Damage = UNARMED
+    weapon_range: Range = UNARMED_RANGE
+    for item_id, item in gear:
+        if item.damage is not None:
+            weapon = item_id
+            weapon_damage = item.damage
+            weapon_range = item.range or UNARMED_RANGE
+            break
+
     return Fighter(
         combatant=combatant,
         state=state,
@@ -315,8 +332,9 @@ def fighter_for(
         profile=profile,
         attacks=tuple(attacks),
         defenses=tuple(defenses),
-        weapon=weapon[0],
-        weapon_damage=weapon[1],
+        weapon=weapon,
+        weapon_damage=weapon_damage,
+        weapon_range=weapon_range,
         armor=sum(float(item.armor or 0.0) for _id, item in gear),
     )
 
@@ -325,6 +343,12 @@ def _gear(
     state: EntityState, library: Library, cache: dict[str, Entity]
 ) -> list[tuple[str, ItemProps]]:
     """What a fighter is holding, in a stable order.
+
+    An item whose `ammo` has run out is left out entirely — it grants no
+    moves, and it cannot be `weapon`/`weapon_damage`/`weapon_range` any more,
+    the same as if it had never been equipped. It stays *equipped* (nothing
+    here unequips it); a fighter with nothing else to hold falls back to bare
+    hands until they spend an exchange on `equip:<item>` to swap it out.
 
     Parameters
     ----------
@@ -349,8 +373,12 @@ def _gear(
             if found is None:
                 continue
             cache[item_id] = item = found
-        if item.item is not None:
-            held.append((item_id, item.item))
+        if item.item is None:
+            continue
+        props = item.item
+        if props.ammo is not None and state.ammo.get(item_id, props.ammo) <= 0:
+            continue
+        held.append((item_id, props))
     return held
 
 

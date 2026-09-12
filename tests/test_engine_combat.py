@@ -20,7 +20,9 @@ from mace.content import Library, load_library
 from mace.engine.actions import Choose, Respond, Travel
 from mace.engine.combat import fight as combat
 from mace.engine.combat import resolution
+from mace.engine.combat import roster
 from mace.engine.combat.resolution import Outcome
+from mace.engine.combat.roster import UNARMED, UNARMED_RANGE
 from mace.engine.conditions import RuleError
 from mace.engine.state import GameState
 from mace.engine.step import StepResult, begin, context_for, spawn, step
@@ -724,6 +726,198 @@ def test_a_correct_read_teaches_the_weapon_and_the_enemy(tmp_path: Path) -> None
     player = result.state.protagonist
     assert player.skills["brawl:club"] > 0.0
     assert player.familiarity["brawl:thug-style"] == 1
+
+
+# ── Gear and range ────────────────────────────────────────────────────────────
+
+
+def fighter(library: Library, tmp_path: Path) -> roster.Fighter:
+    """The player's `Fighter`, freshly resolved at the start of a brawl.
+
+    Parameters
+    ----------
+    library : Library
+        The loaded pack.
+    tmp_path : Path
+        Unused — present so callers read like every other test here.
+
+    Returns
+    -------
+    Fighter
+        The player's fighter, as `fighter_for` would build it for the first
+        exchange.
+    """
+    del tmp_path
+    result = start(library)
+    context = context_for(library, result.state)
+    assert context.state.combat is not None
+    combatant = next(
+        c for c in context.state.combat.combatants if c.actor == context.state.player
+    )
+    return roster.fighter_for(combatant, context, cache={})
+
+
+def test_a_weapons_range_becomes_the_fighters_weapon_range(tmp_path: Path) -> None:
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Club",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 4, "max": 4},
+                    "range": {"min": 3, "max": 5, "sweetMin": 3.5, "sweetMax": 4.5},
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    fought = fighter(library, tmp_path)
+    assert fought.weapon == "brawl:club"
+    assert fought.weapon_range.min == 3
+    assert fought.weapon_range.max == 5
+
+
+def test_a_weapon_with_no_range_falls_back_to_the_unarmed_default(
+    tmp_path: Path,
+) -> None:
+    """A club with no `range` authored is still a weapon — just melee by default."""
+    library = brawl_pack(tmp_path)
+    fought = fighter(library, tmp_path)
+    assert fought.weapon == "brawl:club"
+    assert fought.weapon_range == UNARMED_RANGE
+
+
+def test_bare_hands_fall_back_to_the_unarmed_range(tmp_path: Path) -> None:
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    fought = fighter(library, tmp_path)
+    assert fought.weapon is None
+    assert fought.weapon_damage == UNARMED
+    assert fought.weapon_range == UNARMED_RANGE
+
+
+def test_an_exhausted_weapon_stops_counting_as_gear(tmp_path: Path) -> None:
+    """`ammo: 0` left in state drops a weapon out of `_gear` entirely.
+
+    The player is still holding the spent rock — nothing here unequips it —
+    but it can no longer be `weapon`/`weapon_damage`/`weapon_range`, the same
+    as if the slot were empty.
+    """
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "rock"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "rock",
+                "kind": "item",
+                "name": "Rock",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 2, "max": 5},
+                    "ammo": 1,
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = start(library)
+    context = context_for(library, result.state)
+    result.state.protagonist.ammo["brawl:rock"] = 0
+    combatant = next(
+        c
+        for c in context.state.combat.combatants  # type: ignore[union-attr]
+        if c.actor == context.state.player
+    )
+    fought = roster.fighter_for(combatant, context, cache={})
+    assert fought.weapon is None
+    assert fought.weapon_damage == UNARMED
+    assert fought.weapon_range == UNARMED_RANGE
 
 
 # ── What a fight tells you about the other side ─────────────────────────────

@@ -186,6 +186,12 @@ class EntityState:
         made against it. The character learning trolls, as distinct from the
         *player* learning trolls — both are meant to matter, and only one of
         them can be stored (docs/07-combat.md § Growth).
+    ammo : dict
+        Qualified item id to charges left, for a weapon whose content sets
+        `ammo`. Absent means the item's full count, not yet spent, so a fresh
+        rock needs no entry until it's thrown once — this only ever holds a
+        used-down remainder. Down to zero, `fighter_for` stops counting it as
+        usable gear (docs/07-combat.md § Range).
     ally : bool
         Whether this entity travels with the player and fights on their side.
     transient : bool
@@ -223,6 +229,7 @@ class EntityState:
     exposure: float = 0.0
     skills: dict[str, float] = field(default_factory=dict)
     familiarity: dict[str, int] = field(default_factory=dict)
+    ammo: dict[str, int] = field(default_factory=dict)
     ally: bool = False
     transient: bool = False
     ally_until: Any = None
@@ -633,6 +640,12 @@ class Combatant:
         clean hit taken.
     streak : int
         Consecutive successful reads, for the front-end to celebrate.
+    position : float
+        Feet, along one shared line (docs/07-combat.md § Range). The distance
+        between any two combatants is the difference between their
+        positions — there is no grid, only this one scalar. Set for real when
+        a fight begins; the default here is just "somewhere," never a fight's
+        actual starting distance.
     routed : bool
         Whether this combatant has run.
     defeated : bool
@@ -652,6 +665,7 @@ class Combatant:
     pattern_step: int = 0
     momentum: int = 0
     streak: int = 0
+    position: float = 0.0
     routed: bool = False
     defeated: bool = False
     spawned: bool = False
