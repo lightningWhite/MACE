@@ -681,31 +681,32 @@ def _distance(attacker: Fighter, defender: Fighter) -> float:
     return abs(attacker.combatant.position - defender.combatant.position)
 
 
-def _close_distance(defender: Fighter, attacker: Fighter, move_by: float) -> None:
+def _close_distance(mover: Fighter, anchor: Fighter, move_by: float) -> None:
     """Adjust the distance between two combatants, in place.
 
     Positive `move_by` closes the gap, negative opens it — always relative to
-    the attacker, so the defender never has to think about which side of the
-    line they are on. Closing is floored at zero: footwork cannot walk a
-    defender through the thing it is trying to reach.
+    `anchor`, so the mover never has to think about which side of the line
+    they are on. Closing is floored at zero: footwork cannot walk a mover
+    through the thing it is trying to reach. Used both ways: a defender
+    answering a tell moves relative to their attacker, and an attacker who
+    can't yet reach its target moves relative to it instead of telegraphing.
 
     Parameters
     ----------
-    defender : Fighter
+    mover : Fighter
         Whose position moves. Mutated in place, on its `Combatant`.
-    attacker : Fighter
+    anchor : Fighter
         Who it is moving relative to.
     move_by : float
-        Feet requested, before the defender's own speed clamps it.
+        Feet requested, before the mover's own speed clamps it. `float("inf")`
+        (or `-inf`) asks for as much as speed allows, in that direction.
     """
-    step = resolution.move_step(BASE_MOVE_STEP, defender.stat("speed"))
+    step = resolution.move_step(BASE_MOVE_STEP, mover.stat("speed"))
     requested = max(-step, min(step, move_by))
-    current = _distance(attacker, defender)
+    current = _distance(anchor, mover)
     new_distance = max(0.0, current - requested)
-    towards = (
-        1.0 if attacker.combatant.position >= defender.combatant.position else -1.0
-    )
-    defender.combatant.position = attacker.combatant.position - towards * new_distance
+    towards = 1.0 if anchor.combatant.position >= mover.combatant.position else -1.0
+    mover.combatant.position = anchor.combatant.position - towards * new_distance
 
 
 def _range_factor(span: Range | None, distance: float) -> float:
@@ -732,6 +733,30 @@ def _range_factor(span: Range | None, distance: float) -> float:
     return resolution.range_factor(
         distance, band.min, band.max, band.sweet_min, band.sweet_max
     )
+
+
+def _reachable(span: Range | None, distance: float) -> bool:
+    """Whether a move can be attempted at all from here.
+
+    Distinct from `_range_factor`, which can legitimately be zero right at
+    `min` or `max` and still mean "attemptable, just weak" — this is only
+    false strictly outside the band, which is the question an attacker
+    deciding whether to telegraph at all actually needs answered.
+
+    Parameters
+    ----------
+    span : Range or None
+        The move's own reach.
+    distance : float
+        Feet between attacker and defender.
+
+    Returns
+    -------
+    bool
+        Whether `distance` sits inside `[min, max]`.
+    """
+    band = span or UNARMED_RANGE
+    return band.min <= distance <= band.max
 
 
 def _incoming(
@@ -1147,11 +1172,27 @@ def _next_tell(context: RuleContext, events: list[Event]) -> None:
             _end(context, "lost" if ready.side == "enemy" else "won", events)
             return
 
+        before_pattern = attacker.combatant.pattern
+        before_step = attacker.combatant.pattern_step
         chosen = _choose_move(context, fight, attacker)
         if chosen is None:
             # Nothing to swing with. Rather than stall the fight, the fighter
             # catches its breath and the meters fill again.
             _catch_breath(context, attacker, events)
+            continue
+
+        if not _reachable(chosen[1].range, _distance(attacker, target)):
+            # Whatever it just drew can't reach from here at all. Put the
+            # pattern back exactly where it was — the same move is what's
+            # waiting once distance closes — and spend this meter turn
+            # moving instead of telegraphing something that could never
+            # land. A move sitting right at the zero-effectiveness edge of
+            # its own band is still attemptable — `_reachable` only refuses
+            # a distance strictly outside `[min, max]`, so this doesn't
+            # trigger on a weak hit, only an impossible one.
+            attacker.combatant.pattern = before_pattern
+            attacker.combatant.pattern_step = before_step
+            _close_in(attacker, target, chosen[1], events)
             continue
 
         _telegraph(context, fight, attacker, target, chosen, events)
@@ -1479,6 +1520,34 @@ def _catch_breath(context: RuleContext, fighter: Fighter, events: list[Event]) -
     """
     effort = context.game.rules.effort_pool
     _move_pool(fighter, effort, _share(fighter, effort, RECOVER_REGEN), None, events)
+
+
+def _close_in(
+    attacker: Fighter, target: Fighter, move: Move, events: list[Event]
+) -> None:
+    """Spend a meter turn moving instead of telegraphing something out of reach.
+
+    Closes at full speed when too far to ever land, gives ground at full
+    speed when already too close — a spear-wielder backing off a grappler is
+    the same beat as a troll closing in, just the other sign.
+
+    Parameters
+    ----------
+    attacker : Fighter
+        Who is moving. Mutated in place, via `_close_distance`.
+    target : Fighter
+        Who it is moving relative to.
+    move : Move
+        What it was trying to use, for the band it's moving toward.
+    events : list of Event
+        Accumulator.
+    """
+    span = move.range or UNARMED_RANGE
+    midpoint = (span.sweet_min + span.sweet_max) / 2.0
+    closing = _distance(target, attacker) > midpoint
+    _close_distance(attacker, target, float("inf") if closing else float("-inf"))
+    verb = "closes the distance" if closing else "gives ground"
+    events.append(Narrated(f"{attacker.name} {verb}.", pause=False))
 
 
 # ── Auto mode ─────────────────────────────────────────────────────────────────

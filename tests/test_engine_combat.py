@@ -855,9 +855,28 @@ def test_a_fight_opens_at_the_edge_of_the_players_own_weapon(tmp_path: Path) -> 
     fighter's first exchange opens with a useless weapon. `sweetMax`, the
     far edge of where it's still fully effective, is what "at range" means
     here (docs/07-combat.md § Range).
+
+    `swing` is given a wide range so the thug never has a reason to close
+    in — this test is isolated to the engagement rule, not the separate
+    "an enemy moves toward what it can reach" behavior.
     """
     library = brawl_pack(
         tmp_path,
+        moves=[
+            {"id": "guard", "kind": "defense", "type": "block", "cost": 4},
+            {"id": "duck", "kind": "defense", "type": "dodge", "cost": 3},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "vagueTell": "He moves.",
+                "windupMs": 1000,
+                "counters": ["block"],
+                "damage": {"min": 6, "max": 6},
+                "range": {"min": 0, "max": 100, "sweetMin": 0, "sweetMax": 100},
+                "cost": 5,
+            },
+        ],
         entities=[
             {
                 "id": "hero",
@@ -1098,13 +1117,15 @@ def test_an_exhausted_weapon_stops_counting_as_gear(tmp_path: Path) -> None:
     assert fought.weapon_range == UNARMED_RANGE
 
 
-def test_an_attack_out_of_its_own_range_cannot_land(tmp_path: Path) -> None:
-    """A `swing` authored as a ranged move can't reach at melee engagement.
+def test_retreating_can_pull_an_attack_out_of_its_own_range(tmp_path: Path) -> None:
+    """Range is re-checked at resolution, not just when the move was chosen.
 
-    Nobody has moved — `MELEE_ENGAGEMENT` is the whole distance there is —
-    so a move whose `range` excludes it is simply unusable, whatever the read
-    was. `dodge` is deliberately the wrong answer here, which would normally
-    mean full, unmitigated damage; range gates it to nothing regardless.
+    `swing`'s band covers melee engagement, so it telegraphs normally — the
+    enemy never needs to close in. Retreating far enough while answering
+    pulls the defender back out of that band before the exchange resolves,
+    so even a wrong, badly-timed read takes no damage. This is what a
+    ranged weapon's owner actually does with `moveBy`: open the gap on a
+    dodge instead of trusting the dodge alone.
     """
     library = brawl_pack(
         tmp_path,
@@ -1119,12 +1140,12 @@ def test_an_attack_out_of_its_own_range_cannot_land(tmp_path: Path) -> None:
                 "windupMs": 1000,
                 "counters": ["block"],
                 "damage": {"min": 6, "max": 6},
-                "range": {"min": 10, "max": 20, "sweetMin": 12, "sweetMax": 18},
+                "range": {"min": 0, "max": 5, "sweetMin": 1, "sweetMax": 3},
                 "cost": 5,
             },
         ],
     )
-    result = answer(start(library).state, library, "dodge", share=0.05)
+    result = answer(start(library).state, library, "dodge", share=0.05, move_by=-1000.0)
     payload = resolved(result)
     assert payload["result"] == "clean"
     assert payload["damageTaken"] == 0.0
@@ -1256,6 +1277,102 @@ def test_no_move_by_leaves_the_distance_unchanged(tmp_path: Path) -> None:
     answer(state, library, "block")
     after = fight.combatants[0].position - fight.combatants[1].position
     assert after == before
+
+
+def test_an_enemy_closes_the_distance_before_it_can_telegraph(tmp_path: Path) -> None:
+    """A bow opens a fight well past a melee-only enemy's reach.
+
+    The thug's `swing` has no `range` of its own, so it falls back to the
+    melee default — nowhere near the bow's 40 ft engagement. Rather than
+    telegraph something that could never land, the thug spends its meter
+    turns closing in instead, narrated each time, until it's finally close
+    enough for `swing` to reach.
+    """
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "bow"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "bow",
+                "kind": "item",
+                "name": "Bow",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 4, "max": 9},
+                    "range": {"min": 10, "max": 80, "sweetMin": 20, "sweetMax": 40},
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = start(library)
+    narrated = [e.payload()["text"] for e in result.events if e.kind == "narrate"]
+    assert any("closes the distance" in text for text in narrated)
+    assert "combat.tell" in kinds(result)
+
+    fight = result.state.combat
+    assert fight is not None
+    thug = next(c for c in fight.combatants if c.side == "enemy")
+    hero = next(c for c in fight.combatants if c.side == "player")
+    assert abs(thug.position - hero.position) <= UNARMED_RANGE.max
+
+
+def test_an_enemy_gives_ground_when_already_too_close(tmp_path: Path) -> None:
+    """A move whose `min` sits past melee engagement makes the enemy retreat.
+
+    The default melee engagement (3 ft) is closer than `swing`'s `min` of
+    8 ft here — a reach weapon whose wielder needs room to use it — so the
+    thug backs off instead of closing in, the opposite beat of the
+    bow-vs-melee case.
+    """
+    library = brawl_pack(
+        tmp_path,
+        moves=[
+            {"id": "guard", "kind": "defense", "type": "block", "cost": 4},
+            {"id": "duck", "kind": "defense", "type": "dodge", "cost": 3},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "vagueTell": "He moves.",
+                "windupMs": 1000,
+                "counters": ["block"],
+                "damage": {"min": 6, "max": 6},
+                "range": {"min": 8, "max": 20, "sweetMin": 10, "sweetMax": 15},
+                "cost": 5,
+            },
+        ],
+    )
+    result = start(library)
+    narrated = [e.payload()["text"] for e in result.events if e.kind == "narrate"]
+    assert any("gives ground" in text for text in narrated)
+    assert "combat.tell" in kinds(result)
 
 
 # ── What a fight tells you about the other side ─────────────────────────────
