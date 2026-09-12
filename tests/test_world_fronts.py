@@ -52,9 +52,12 @@ def front_pack(
         "name": "a westerly",
         "speedTicks": 4,
         "lifespanTicks": 40,
-        "hops": [3, 3],
-        "intensityRange": [1.0, 1.0],
-        "biases": {"rain": 50.0, "clear": 0.0},
+        "hops": {"min": 3, "max": 3},
+        "intensityRange": {"min": 1.0, "max": 1.0},
+        "biases": [
+            {"condition": "rain", "weight": 50.0},
+            {"condition": "clear", "weight": 0.0},
+        ],
         "aheadBias": 0.0,
         "omen": ["The wind has shifted."],
     }
@@ -78,16 +81,22 @@ def front_pack(
                     "stepTicks": 1,
                     "fronts": ["westerly"],
                     "frontFrequency": frequency,
-                    "seasons": {
-                        "autumn": {
+                    "seasons": [
+                        {
+                            "id": "autumn",
                             "temperature": {"min": 6, "max": 14},
-                            "weights": {"clear": 90, "rain": 10},
+                            "weights": [
+                                {"condition": "clear", "weight": 90},
+                                {"condition": "rain", "weight": 10},
+                            ],
                         }
-                    },
-                    "transitions": {
-                        "clear": {"clear": 90, "rain": 10},
-                        "rain": {"rain": 50, "clear": 50},
-                    },
+                    ],
+                    "transitions": [
+                        {"source": "clear", "target": "clear", "weight": 90},
+                        {"source": "clear", "target": "rain", "weight": 10},
+                        {"source": "rain", "target": "rain", "weight": 50},
+                        {"source": "rain", "target": "clear", "weight": 50},
+                    ],
                 }
             ],
             "regions": [
@@ -334,7 +343,7 @@ def test_prepare_resolves_every_region_once() -> None:
 def test_a_region_with_no_neighbours_gets_a_one_stop_heading(
     tmp_path: Path,
 ) -> None:
-    library = front_pack(tmp_path, front={"hops": [3, 3]})
+    library = front_pack(tmp_path, front={"hops": {"min": 3, "max": 3}})
     clock = Clock.for_season(30, STANDARD_YEAR, "autumn")
     state = begin(library, "tiny", seed="s").state
 

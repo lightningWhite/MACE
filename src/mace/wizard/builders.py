@@ -319,7 +319,11 @@ CONDITIONS: tuple[Recipe, ...] = (
             Ask(
                 "",
                 "Which conditions count?",
-                MultiSelect(options=Query("weatherConditions"), min_items=1),
+                MultiSelect(
+                    options=Query("weatherConditions"),
+                    allow_create="weatherConditions",
+                    min_items=1,
+                ),
             ),
         ),
     ),
@@ -699,7 +703,9 @@ EFFECTS: tuple[Recipe, ...] = (
         group="Place and time",
         asks=(
             Ask(
-                "front", "Which kind of front?", Select(options=Query("weatherFronts"))
+                "front",
+                "Which kind of front?",
+                Select(options=Query("weatherFronts"), allow_create="weatherFronts"),
             ),
             Ask("at", "Forming over where?", Select(options=Query("regions"))),
         ),

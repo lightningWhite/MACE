@@ -142,7 +142,7 @@ def _maybe_form(
     assert definition is not None
 
     heading = plot(library, stream, region_id, definition, regions)
-    low, high = definition.intensity_range
+    low, high = definition.intensity_range.min, definition.intensity_range.max
 
     state.fronts_spawned += 1
     front = FrontState(
@@ -189,7 +189,7 @@ def plot(
         The regions it crosses, origin first. A region with no neighbours
         gives a one-entry heading, and the front simply sits and dies.
     """
-    fewest, most = definition.hops
+    fewest, most = definition.hops.min, definition.hops.max
     wanted = stream.between(fewest, most)
 
     heading = [origin]
@@ -277,10 +277,12 @@ def biases_for(
             continue
         home = front.kind.split(":", 1)[0]
         strength = share * _strength(front, definition, tick)
-        for condition, bias in definition.biases.items():
-            scaled = 1.0 + (bias - 1.0) * strength
+        for row in definition.biases:
+            scaled = 1.0 + (row.weight - 1.0) * strength
             try:
-                qualified = library.resolve(condition, "weatherConditions", within=home)
+                qualified = library.resolve(
+                    row.condition, "weatherConditions", within=home
+                )
             except ContentError:
                 continue
             combined[qualified] = combined.get(qualified, 1.0) * max(0.0, scaled)

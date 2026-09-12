@@ -24,40 +24,121 @@ climates:
     frontFrequency: 0.04
 
     seasons:
-      spring:
+      - id: spring
         temperature: {min: 4, max: 18}
-        weights: {clear: 30, overcast: 30, drizzle: 20, rain: 14, fog: 5, storm: 1}
-      summer:
+        weights:
+          - {condition: clear, weight: 30}
+          - {condition: overcast, weight: 30}
+          - {condition: drizzle, weight: 20}
+          - {condition: rain, weight: 14}
+          - {condition: fog, weight: 5}
+          - {condition: storm, weight: 1}
+      - id: summer
         temperature: {min: 12, max: 28}
-        weights: {clear: 50, overcast: 22, drizzle: 10, rain: 12, fog: 3, storm: 3}
-      autumn:
+        weights:
+          - {condition: clear, weight: 50}
+          - {condition: overcast, weight: 22}
+          - {condition: drizzle, weight: 10}
+          - {condition: rain, weight: 12}
+          - {condition: fog, weight: 3}
+          - {condition: storm, weight: 3}
+      - id: autumn
         temperature: {min: 2, max: 16}
-        weights: {clear: 25, overcast: 30, drizzle: 20, rain: 15, fog: 8, storm: 2}
-      winter:
+        weights:
+          - {condition: clear, weight: 25}
+          - {condition: overcast, weight: 30}
+          - {condition: drizzle, weight: 20}
+          - {condition: rain, weight: 15}
+          - {condition: fog, weight: 8}
+          - {condition: storm, weight: 2}
+      - id: winter
         temperature: {min: -12, max: 3}
-        weights: {clear: 20, overcast: 32, drizzle: 18, rain: 20, fog: 8, storm: 2}
+        weights:
+          - {condition: clear, weight: 20}
+          - {condition: overcast, weight: 32}
+          - {condition: drizzle, weight: 18}
+          - {condition: rain, weight: 20}
+          - {condition: fog, weight: 8}
+          - {condition: storm, weight: 2}
 
     transitions:
-      clear:      {clear: 88, overcast: 11, fog: 1}
-      fog:        {fog: 80, overcast: 15, clear: 5}
-      overcast:   {overcast: 82, clear: 9, drizzle: 7, rain: 2}
-      drizzle:    {drizzle: 70, rain: 10, overcast: 20}
-      rain:       {rain: 74, storm: 3, drizzle: 13, overcast: 10}
-      storm:      {storm: 60, rain: 32, overcast: 8}
-      sleet:      {drizzle: 70, rain: 10, overcast: 20}
-      light-snow: {rain: 74, storm: 3, drizzle: 13, overcast: 10}
-      blizzard:   {storm: 60, rain: 32, overcast: 8}
+      - {source: clear, target: clear, weight: 88}
+      - {source: clear, target: overcast, weight: 11}
+      - {source: clear, target: fog, weight: 1}
+      - {source: fog, target: fog, weight: 80}
+      - {source: fog, target: overcast, weight: 15}
+      - {source: fog, target: clear, weight: 5}
+      - {source: overcast, target: overcast, weight: 82}
+      - {source: overcast, target: clear, weight: 9}
+      - {source: overcast, target: drizzle, weight: 7}
+      - {source: overcast, target: rain, weight: 2}
+      - {source: drizzle, target: drizzle, weight: 70}
+      - {source: drizzle, target: rain, weight: 10}
+      - {source: drizzle, target: overcast, weight: 20}
+      - {source: rain, target: rain, weight: 74}
+      - {source: rain, target: storm, weight: 3}
+      - {source: rain, target: drizzle, weight: 13}
+      - {source: rain, target: overcast, weight: 10}
+      - {source: storm, target: storm, weight: 60}
+      - {source: storm, target: rain, weight: 32}
+      - {source: storm, target: overcast, weight: 8}
+      - {source: sleet, target: drizzle, weight: 70}
+      - {source: sleet, target: rain, weight: 10}
+      - {source: sleet, target: overcast, weight: 20}
+      - {source: light-snow, target: rain, weight: 74}
+      - {source: light-snow, target: storm, weight: 3}
+      - {source: light-snow, target: drizzle, weight: 13}
+      - {source: light-snow, target: overcast, weight: 10}
+      - {source: blizzard, target: storm, weight: 60}
+      - {source: blizzard, target: rain, weight: 32}
+      - {source: blizzard, target: overcast, weight: 8}
 
   - id: upland
     name: "The High Country"
     # The same weather, a thousand feet up: colder, so far more of it falls as
     # snow, and fog sits in the passes. Nothing here is a new condition — the
     # elevation on the region does the work.
+    #
+    # `seasons` is a list, and inherited lists replace rather than merge (the
+    # same rule every other list field follows) — so unlike the old dict shape,
+    # overriding just autumn and winter here means writing out spring and
+    # summer too, unchanged from `temperate`, rather than leaving them to be
+    # inherited piecemeal.
     extends: temperate
     seasons:
-      autumn:
+      - id: spring
+        temperature: {min: 4, max: 18}
+        weights:
+          - {condition: clear, weight: 30}
+          - {condition: overcast, weight: 30}
+          - {condition: drizzle, weight: 20}
+          - {condition: rain, weight: 14}
+          - {condition: fog, weight: 5}
+          - {condition: storm, weight: 1}
+      - id: summer
+        temperature: {min: 12, max: 28}
+        weights:
+          - {condition: clear, weight: 50}
+          - {condition: overcast, weight: 22}
+          - {condition: drizzle, weight: 10}
+          - {condition: rain, weight: 12}
+          - {condition: fog, weight: 3}
+          - {condition: storm, weight: 3}
+      - id: autumn
         temperature: {min: -2, max: 11}
-        weights: {clear: 20, overcast: 30, drizzle: 18, rain: 18, fog: 12, storm: 2}
-      winter:
+        weights:
+          - {condition: clear, weight: 20}
+          - {condition: overcast, weight: 30}
+          - {condition: drizzle, weight: 18}
+          - {condition: rain, weight: 18}
+          - {condition: fog, weight: 12}
+          - {condition: storm, weight: 2}
+      - id: winter
         temperature: {min: -20, max: -2}
-        weights: {clear: 15, overcast: 30, drizzle: 15, rain: 22, fog: 10, storm: 8}
+        weights:
+          - {condition: clear, weight: 15}
+          - {condition: overcast, weight: 30}
+          - {condition: drizzle, weight: 15}
+          - {condition: rain, weight: 22}
+          - {condition: fog, weight: 10}
+          - {condition: storm, weight: 8}

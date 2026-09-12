@@ -89,8 +89,15 @@ def table_pack(
             "climates": [
                 {
                     "id": "still",
-                    "seasons": {"spring": {"weights": {"clear": 1}}},
-                    "transitions": {"clear": {"clear": 1}},
+                    "seasons": [
+                        {
+                            "id": "spring",
+                            "weights": [{"condition": "clear", "weight": 1}],
+                        }
+                    ],
+                    "transitions": [
+                        {"source": "clear", "target": "clear", "weight": 1}
+                    ],
                 }
             ],
             "weatherConditions": [{"id": "clear", "name": "clear"}],

@@ -239,7 +239,7 @@ def test_creating_something_already_there_is_a_400(client: TestClient) -> None:
 
 
 def test_creating_where_nothing_authors_is_a_404(client: TestClient) -> None:
-    response = client.post("/api/author/objects/climates", json={"name": "Wet"})
+    response = client.post("/api/author/objects/calendars", json={"name": "Wet"})
     assert response.status_code == 404
 
 

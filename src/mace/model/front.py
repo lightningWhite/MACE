@@ -23,11 +23,32 @@ from __future__ import annotations
 
 from pydantic import Field, model_validator
 
-from mace.model.base import ContentModel, FrontRef, Id, WeatherRef
+from mace.model.base import ContentModel, FrontRef, Id
 from mace.model.conditions import Conditions
 from mace.model.text import Description
+from mace.model.weather import IntensityRange, WeatherWeight
 
-__all__ = ["WeatherFront"]
+__all__ = ["HopRange", "WeatherFront"]
+
+
+class HopRange(ContentModel):
+    """The smallest and largest number of regions a front's heading may cross.
+
+    Attributes
+    ----------
+    min, max : int
+        At least one region either way.
+    """
+
+    min: int = Field(default=2, ge=1)
+    max: int = Field(default=4, ge=1)
+
+    @model_validator(mode="after")
+    def _check_order(self) -> HopRange:
+        """Reject a band whose floor is above its ceiling."""
+        if self.min > self.max:
+            raise ValueError(f"min {self.min} is higher than max {self.max}")
+        return self
 
 
 class WeatherFront(ContentModel):
@@ -48,16 +69,16 @@ class WeatherFront(ContentModel):
         has crossed the range.
     seasons : tuple of str
         Seasons this front can form in. Empty means any.
-    intensity_range : tuple of float
+    intensity_range : IntensityRange
         The band a new front's intensity is drawn within. Intensity scales the
         bias and decays as the front ages.
     speed_ticks : int
         Ticks spent in each region before hopping to the next.
     lifespan_ticks : int
         How long the front lives, whatever its heading has left.
-    hops : tuple of int
+    hops : HopRange
         The smallest and largest number of regions a heading may cross.
-    biases : mapping
+    biases : tuple of WeatherWeight
         Multipliers on the transition weights of the region the front is over.
         Above 1 makes a condition likelier, below 1 rarer, and the whole effect
         scales with the front's current intensity.
@@ -77,37 +98,16 @@ class WeatherFront(ContentModel):
     when: Conditions | None = None
     seasons: tuple[Id, ...] = ()
 
-    intensity_range: tuple[float, float] = (0.4, 1.0)
+    intensity_range: IntensityRange = Field(
+        default_factory=lambda: IntensityRange(min=0.4, max=1.0)
+    )
     speed_ticks: int = Field(default=6, gt=0)
     lifespan_ticks: int = Field(default=54, gt=0)
-    hops: tuple[int, int] = (2, 4)
+    hops: HopRange = Field(default_factory=HopRange)
 
-    biases: dict[WeatherRef, float] = Field(default_factory=dict)
+    biases: tuple[WeatherWeight, ...] = ()
     ahead_bias: float = Field(default=0.3, ge=0.0, le=1.0)
     omen: Description | None = None
-
-    @model_validator(mode="after")
-    def _check_bands(self) -> WeatherFront:
-        """Reject bands that are empty or the wrong way round."""
-        low, high = self.intensity_range
-        if not 0.0 <= low <= high <= 1.0:
-            raise ValueError(
-                f"intensityRange must be a rising pair within 0 and 1, "
-                f"got [{low}, {high}]"
-            )
-        fewest, most = self.hops
-        if not 1 <= fewest <= most:
-            raise ValueError(
-                f"hops must be a rising pair of at least one region, "
-                f"got [{fewest}, {most}]"
-            )
-        for condition, bias in self.biases.items():
-            if bias < 0:
-                raise ValueError(
-                    f"biases `{condition}` at {bias}; a bias is a multiplier "
-                    "and is never negative"
-                )
-        return self
 
     @property
     def label(self) -> str:

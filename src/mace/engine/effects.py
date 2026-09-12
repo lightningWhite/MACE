@@ -882,7 +882,7 @@ def _spawn_front(payload: SpawnFront, context: RuleContext) -> None:
         known,
     )
 
-    low, high = definition.intensity_range
+    low, high = definition.intensity_range.min, definition.intensity_range.max
     state.fronts_spawned += 1
     front = FrontState(
         id=f"{kind.split(':', 1)[1]}#{state.fronts_spawned}",

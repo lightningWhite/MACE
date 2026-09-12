@@ -840,7 +840,7 @@
     },
     "Climate": {
       "additionalProperties": false,
-      "description": "How weather behaves in the regions that use it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nseasons : mapping\n    Season id to what that season is like here. A season the calendar has\n    and the climate does not falls back to the transition matrix alone.\ntransitions : mapping\n    Condition to the relative weight of each condition it can become.\n    A condition absent from the matrix holds until something else moves\n    it, which is a reasonable reading of \"the author forgot\".\nstep_ticks : int\n    How many ticks pass between chain steps. One means the sky is\n    reconsidered every tick, which is twitchy at thirty minutes a tick;\n    two is an hour and reads much better.\nsequences : tuple of ClimateSequence\n    Authored progressions that override the chain while they run.\nfronts : tuple of str\n    The kinds of front that can form in regions with this climate.\nfront_frequency : float\n    The chance **per tick** that a front forms somewhere on the map. One\n    roll is made across the whole world rather than one per region, so\n    adding regions does not silently make a game stormier. Two or three\n    fronts alive at once is plenty, so this wants to be small: at a\n    sixty-tick lifespan, 0.02 keeps about one and a bit in the air.\nfreezing_point : float\n    The temperature below which a condition becomes its `freezesTo`.\nlapse_rate : float\n    Degrees lost per hundred units of a region's `elevation`. 0.65 is the\n    real world's; a game whose elevations are in feet, or whose\n    temperatures are in Fahrenheit, sets its own.\ntemperature_unit : \"celsius\" or \"fahrenheit\"\n    The scale every temperature in this climate is written in. A\n    front-end that lets a player choose \u00b0F or \u00b0C needs to know which one\n    it was handed before it can convert; this is the one place that says\n    so. Defaults to Celsius, which is what every temperature elsewhere in\n    this model was already written assuming.",
+      "description": "How weather behaves in the regions that use it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nseasons : tuple of SeasonWeather\n    What each season is like here. A season the calendar has and the\n    climate does not falls back to the transition matrix alone.\ntransitions : tuple of Transition\n    Condition to the relative weight of each condition it can become.\n    A condition with no `source` row holds until something else moves\n    it, which is a reasonable reading of \"the author forgot\".\nstep_ticks : int\n    How many ticks pass between chain steps. One means the sky is\n    reconsidered every tick, which is twitchy at thirty minutes a tick;\n    two is an hour and reads much better.\nsequences : tuple of ClimateSequence\n    Authored progressions that override the chain while they run.\nfronts : tuple of str\n    The kinds of front that can form in regions with this climate.\nfront_frequency : float\n    The chance **per tick** that a front forms somewhere on the map. One\n    roll is made across the whole world rather than one per region, so\n    adding regions does not silently make a game stormier. Two or three\n    fronts alive at once is plenty, so this wants to be small: at a\n    sixty-tick lifespan, 0.02 keeps about one and a bit in the air.\nfreezing_point : float\n    The temperature below which a condition becomes its `freezesTo`.\nlapse_rate : float\n    Degrees lost per hundred units of a region's `elevation`. 0.65 is the\n    real world's; a game whose elevations are in feet, or whose\n    temperatures are in Fahrenheit, sets its own.\ntemperature_unit : \"celsius\" or \"fahrenheit\"\n    The scale every temperature in this climate is written in. A\n    front-end that lets a player choose \u00b0F or \u00b0C needs to know which one\n    it was handed before it can convert; this is the one place that says\n    so. Defaults to Celsius, which is what every temperature elsewhere in\n    this model was already written assuming.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -873,27 +873,34 @@
           "title": "Name"
         },
         "seasons": {
-          "patternProperties": {
-            "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
-              "$ref": "#/$defs/SeasonProfile"
-            }
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SeasonWeather"
+              },
+              {
+                "const": "$append"
+              }
+            ]
           },
           "title": "Seasons",
-          "type": "object"
+          "type": "array"
         },
         "transitions": {
-          "patternProperties": {
-            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
-              "patternProperties": {
-                "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
-                  "type": "number"
-                }
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Transition"
               },
-              "type": "object"
-            }
+              {
+                "const": "$append"
+              }
+            ]
           },
           "title": "Transitions",
-          "type": "object"
+          "type": "array"
         },
         "stepTicks": {
           "default": 1,
@@ -1013,7 +1020,7 @@
     },
     "ClimateSequence": {
       "additionalProperties": false,
-      "description": "A hand-authored progression of conditions, played straight through.\n\nThe v0 `conditionSequences` idea, kept: a three-day storm that breaks on\nthe morning of the fourth is a story beat, and a Markov chain will not\nreliably produce one. Once chosen, a sequence runs to its end without the\nchain interfering.\n\nAttributes\n----------\nid : str\n    Names it, so an effect can call for it directly.\nweight : float\n    How likely the chain is to enter this sequence rather than take an\n    ordinary step. Zero means only an effect can start it.\nwhen : tuple of Condition or None\n    Extra gating \u2014 a sequence that only happens in winter, or once the\n    player has crossed the range.\nsteps : tuple of ClimateStep\n    The conditions, in order, with how long each holds.",
+      "description": "A hand-authored progression of conditions, played straight through.\n\nThe v0 `conditionSequences` idea, kept: a three-day storm that breaks on\nthe morning of the fourth is a story beat, and a Markov chain will not\nreliably produce one. Once chosen, a sequence runs to its end without the\nchain interfering.\n\nAttributes\n----------\nid : str\n    Names it, so an effect can call for it directly.\nweight : float\n    How likely the chain is to enter this sequence rather than take an\n    ordinary step. Zero means only an effect can start it.\nwhen : tuple of Condition or None\n    Extra gating \u2014 a sequence that only happens in winter, or once the\n    player has crossed the range.\nsteps : tuple of ClimateStep\n    The conditions, in order, with how long each holds. May also be\n    written as a plain `\"condition ticks\"` line per step (`\"clear 2\"`,\n    or bare `\"clear\"` for one tick) \u2014 the shape the wizard authors, since\n    it has no nested-repeat control for a list within a list.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -3364,6 +3371,48 @@
         "item"
       ],
       "title": "HasItem",
+      "type": "object"
+    },
+    "HopRange": {
+      "additionalProperties": false,
+      "description": "The smallest and largest number of regions a front's heading may cross.\n\nAttributes\n----------\nmin, max : int\n    At least one region either way.",
+      "properties": {
+        "min": {
+          "default": 2,
+          "minimum": 1,
+          "title": "Min",
+          "type": "integer"
+        },
+        "max": {
+          "default": 4,
+          "minimum": 1,
+          "title": "Max",
+          "type": "integer"
+        }
+      },
+      "title": "HopRange",
+      "type": "object"
+    },
+    "IntensityRange": {
+      "additionalProperties": false,
+      "description": "The band a condition's or a front's intensity is drawn within.\n\nAttributes\n----------\nmin, max : float\n    0 to 1. Intensity scales `modify`, a front's bias, and how the\n    front-end phrases what is happening.",
+      "properties": {
+        "min": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Max",
+          "type": "number"
+        }
+      },
+      "title": "IntensityRange",
       "type": "object"
     },
     "InventoryEntry": {
@@ -5796,10 +5845,15 @@
       "type": "array",
       "description": "The calendar is in one of these seasons."
     },
-    "SeasonProfile": {
+    "SeasonWeather": {
       "additionalProperties": false,
-      "description": "What one season is like in one climate.\n\nAttributes\n----------\ntemperature : TemperatureRange or None\n    The daily band. Without one, nothing ever freezes here.\nweights : mapping\n    Relative preference for each weather condition this season. These\n    multiply the transition matrix, so a condition weighted 0 cannot\n    happen this season however the chain gets there.",
+      "description": "What one season is like in one climate.\n\nAttributes\n----------\nid : str\n    The season, as the calendar names it.\ntemperature : TemperatureRange or None\n    The daily band. Without one, nothing ever freezes here.\nweights : tuple of WeatherWeight\n    Relative preference for each weather condition this season. These\n    multiply the transition matrix, so a condition weighted 0 cannot\n    happen this season however the chain gets there.",
       "properties": {
+        "id": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
         "temperature": {
           "anyOf": [
             {
@@ -5812,16 +5866,18 @@
           "default": null
         },
         "weights": {
-          "patternProperties": {
-            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
-              "type": "number"
-            }
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/WeatherWeight"
           },
           "title": "Weights",
-          "type": "object"
+          "type": "array"
         }
       },
-      "title": "SeasonProfile",
+      "required": [
+        "id"
+      ],
+      "title": "SeasonWeather",
       "type": "object"
     },
     "SetDisposition": {
@@ -6452,6 +6508,28 @@
       "title": "Stock",
       "type": "object"
     },
+    "TagWeight": {
+      "additionalProperties": false,
+      "description": "How badly one weather tag treats a surface.\n\nAttributes\n----------\ntag : str\n    The weather tag this multiplier answers, e.g. `wet` or `cold`.\nmultiplier : float\n    Extra multiplier on top of the weather's own `travelMultiplier`.",
+      "properties": {
+        "tag": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Tag",
+          "type": "string"
+        },
+        "multiplier": {
+          "exclusiveMinimum": 0.0,
+          "title": "Multiplier",
+          "type": "number"
+        }
+      },
+      "required": [
+        "tag",
+        "multiplier"
+      ],
+      "title": "TagWeight",
+      "type": "object"
+    },
     "TellNews": {
       "description": "Pass on something that happened somewhere the player was not.\n\nEvents fire whether or not anyone is watching, and a world where things\nonly happen in your presence is not a world. News waits in a queue and\narrives through ordinary channels \u2014 a traveller on the road, a rider, a\nrefugee, an innkeeper \u2014 which is what this effect is for.\n\nAttributes\n----------\ncount : int\n    How many items to pass on at once.\nmax_days_old : int or None\n    Ignore anything older. A rumour that has been going round for a month\n    is not news any more.",
       "oneOf": [
@@ -6512,7 +6590,7 @@
     },
     "Terrain": {
       "additionalProperties": false,
-      "description": "A road surface, and what conditions do to it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A terrain to inherit from.\ntravel_multiplier : float\n    How slow this surface is in fair weather. A mountain path is slow\n    before anything falls on it.\nin_weather : mapping\n    Weather tag to an extra multiplier, applied on top of the weather's\n    own. Only the largest applies, not the product: a wet, cold, windy\n    night on a forest track should be bad, not impossible.\ntags : tuple of str\n    Free-form labels for encounter tables and content to match on.",
+      "description": "A road surface, and what conditions do to it.\n\nAttributes\n----------\nid, name : str\n    Identity.\nextends : str or None\n    A terrain to inherit from.\ntravel_multiplier : float\n    How slow this surface is in fair weather. A mountain path is slow\n    before anything falls on it.\nin_weather : tuple of TagWeight\n    Weather tag to an extra multiplier, applied on top of the weather's\n    own. Only the largest applies, not the product: a wet, cold, windy\n    night on a forest track should be bad, not impossible.\ntags : tuple of str\n    Free-form labels for encounter tables and content to match on.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -6551,13 +6629,19 @@
           "type": "number"
         },
         "inWeather": {
-          "patternProperties": {
-            "^[a-z0-9]+(?:-[a-z0-9]+)*$": {
-              "type": "number"
-            }
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TagWeight"
+              },
+              {
+                "const": "$append"
+              }
+            ]
           },
           "title": "Inweather",
-          "type": "object"
+          "type": "array"
         },
         "tags": {
           "default": [],
@@ -6609,6 +6693,34 @@
         "to"
       ],
       "title": "TransferContents",
+      "type": "object"
+    },
+    "Transition": {
+      "additionalProperties": false,
+      "description": "One line of a climate's transition matrix.\n\nAttributes\n----------\nsource : str\n    The condition the chain is currently in.\ntarget : str\n    A condition it can become from there.\nweight : float\n    Relative likelihood, among every `target` a `source` has a row for.",
+      "properties": {
+        "source": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Target",
+          "type": "string"
+        },
+        "weight": {
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "source",
+        "target",
+        "weight"
+      ],
+      "title": "Transition",
       "type": "object"
     },
     "Waypoint": {
@@ -6673,7 +6785,7 @@
     },
     "WeatherCondition": {
       "additionalProperties": false,
-      "description": "One state of the sky, and its consequences.\n\nAttributes\n----------\nid, name : str\n    Identity. `name` is what the player reads; it defaults to the id.\ndescription : Description or None\n    Lines narrated when this condition begins. Conditional, so the same\n    rain can read differently at night.\nintensity_range : tuple of float\n    The band this condition's intensity is drawn within, 0 to 1.\n    Intensity scales `modify` and how the front-end phrases it.\nvisibility : float\n    0 to 1, multiplied into the day part's light. Fog at noon is dimmer\n    than clear weather at dusk, and both are one number by the time\n    anything reads it.\ntravel_multiplier : float\n    Route ticks scale by this. A storm turns a three-tick road into a\n    five-tick slog.\nblocks_travel : bool\n    Whether the roads close entirely and the player must shelter.\nmodify : tuple of StatModifier\n    Blanket adjustments to anyone exposed to it.\ntags : tuple of str\n    `wet`, `cold`, `dark`, `windy`, `severe`. What `weatherTag`\n    conditions, `env` responses, and encounter tables match on.\nfreezes_to : str or None\n    The condition this becomes below freezing. The same \"wet\" draw is\n    rain above zero and light snow below, which is how a climate gets\n    winter without a second transition matrix.",
+      "description": "One state of the sky, and its consequences.\n\nAttributes\n----------\nid, name : str\n    Identity. `name` is what the player reads; it defaults to the id.\ndescription : Description or None\n    Lines narrated when this condition begins. Conditional, so the same\n    rain can read differently at night.\nintensity_range : IntensityRange\n    The band this condition's intensity is drawn within, 0 to 1.\n    Intensity scales `modify` and how the front-end phrases it.\nvisibility : float\n    0 to 1, multiplied into the day part's light. Fog at noon is dimmer\n    than clear weather at dusk, and both are one number by the time\n    anything reads it.\ntravel_multiplier : float\n    Route ticks scale by this. A storm turns a three-tick road into a\n    five-tick slog.\nblocks_travel : bool\n    Whether the roads close entirely and the player must shelter.\nmodify : tuple of StatModifier\n    Blanket adjustments to anyone exposed to it.\ntags : tuple of str\n    `wet`, `cold`, `dark`, `windy`, `severe`. What `weatherTag`\n    conditions, `env` responses, and encounter tables match on.\nfreezes_to : str or None\n    The condition this becomes below freezing. The same \"wet\" draw is\n    rain above zero and light snow below, which is how a climate gets\n    winter without a second transition matrix.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -6724,22 +6836,7 @@
           "title": "Description"
         },
         "intensityRange": {
-          "default": [
-            0.0,
-            1.0
-          ],
-          "maxItems": 2,
-          "minItems": 2,
-          "prefixItems": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "title": "Intensityrange",
-          "type": "array"
+          "$ref": "#/$defs/IntensityRange"
         },
         "visibility": {
           "default": 1.0,
@@ -6819,7 +6916,7 @@
     },
     "WeatherFront": {
       "additionalProperties": false,
-      "description": "A kind of weather system that crosses the map.\n\nAttributes\n----------\nid, name : str\n    Identity. `name` is a phrase, not a noun \u2014 \"a storm out of the west\" \u2014\n    because it is read inside a sentence.\nextends : str or None\n    A front to inherit from.\nweight : float\n    How likely this kind is, relative to the other kinds a climate offers,\n    once the climate has decided a front spawns at all.\nwhen : tuple of Condition or None\n    Extra gating \u2014 a front that only forms in winter, or once the player\n    has crossed the range.\nseasons : tuple of str\n    Seasons this front can form in. Empty means any.\nintensity_range : tuple of float\n    The band a new front's intensity is drawn within. Intensity scales the\n    bias and decays as the front ages.\nspeed_ticks : int\n    Ticks spent in each region before hopping to the next.\nlifespan_ticks : int\n    How long the front lives, whatever its heading has left.\nhops : tuple of int\n    The smallest and largest number of regions a heading may cross.\nbiases : mapping\n    Multipliers on the transition weights of the region the front is over.\n    Above 1 makes a condition likelier, below 1 rarer, and the whole effect\n    scales with the front's current intensity.\nahead_bias : float\n    The share of the bias the region *ahead* of the front receives. This\n    is the foreshadowing dial: 0 means a front arrives without warning.\nomen : Description or None\n    What the player sees when the front is in the next region along and\n    coming this way. Ordinary narration, never a system message.",
+      "description": "A kind of weather system that crosses the map.\n\nAttributes\n----------\nid, name : str\n    Identity. `name` is a phrase, not a noun \u2014 \"a storm out of the west\" \u2014\n    because it is read inside a sentence.\nextends : str or None\n    A front to inherit from.\nweight : float\n    How likely this kind is, relative to the other kinds a climate offers,\n    once the climate has decided a front spawns at all.\nwhen : tuple of Condition or None\n    Extra gating \u2014 a front that only forms in winter, or once the player\n    has crossed the range.\nseasons : tuple of str\n    Seasons this front can form in. Empty means any.\nintensity_range : IntensityRange\n    The band a new front's intensity is drawn within. Intensity scales the\n    bias and decays as the front ages.\nspeed_ticks : int\n    Ticks spent in each region before hopping to the next.\nlifespan_ticks : int\n    How long the front lives, whatever its heading has left.\nhops : HopRange\n    The smallest and largest number of regions a heading may cross.\nbiases : tuple of WeatherWeight\n    Multipliers on the transition weights of the region the front is over.\n    Above 1 makes a condition likelier, below 1 rarer, and the whole effect\n    scales with the front's current intensity.\nahead_bias : float\n    The share of the bias the region *ahead* of the front receives. This\n    is the foreshadowing dial: 0 means a front arrives without warning.\nomen : Description or None\n    What the player sees when the front is in the next region along and\n    coming this way. Ordinary narration, never a system message.",
       "properties": {
         "id": {
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -6892,22 +6989,7 @@
           "type": "array"
         },
         "intensityRange": {
-          "default": [
-            0.4,
-            1.0
-          ],
-          "maxItems": 2,
-          "minItems": 2,
-          "prefixItems": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "title": "Intensityrange",
-          "type": "array"
+          "$ref": "#/$defs/IntensityRange"
         },
         "speedTicks": {
           "default": 6,
@@ -6922,31 +7004,22 @@
           "type": "integer"
         },
         "hops": {
-          "default": [
-            2,
-            4
-          ],
-          "maxItems": 2,
-          "minItems": 2,
-          "prefixItems": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "integer"
-            }
-          ],
-          "title": "Hops",
-          "type": "array"
+          "$ref": "#/$defs/HopRange"
         },
         "biases": {
-          "patternProperties": {
-            "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$": {
-              "type": "number"
-            }
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/WeatherWeight"
+              },
+              {
+                "const": "$append"
+              }
+            ]
           },
           "title": "Biases",
-          "type": "object"
+          "type": "array"
         },
         "aheadBias": {
           "default": 0.3,
@@ -7004,6 +7077,28 @@
       "minItems": 1,
       "type": "array",
       "description": "The current weather carries one of these tags \u2014 `wet`, `cold`, `dark`."
+    },
+    "WeatherWeight": {
+      "additionalProperties": false,
+      "description": "A weather condition, and how much of it there should be.\n\nUsed both for a season's preference among conditions and for a front's\nbias on top of the transition matrix \u2014 the same shape either way.\n\nAttributes\n----------\ncondition : str\n    The weather condition.\nweight : float\n    Never negative. A season's `weights` reads this as a relative\n    preference; a front's `biases` reads it as a multiplier.",
+      "properties": {
+        "condition": {
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Condition",
+          "type": "string"
+        },
+        "weight": {
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "condition",
+        "weight"
+      ],
+      "title": "WeatherWeight",
+      "type": "object"
     },
     "WorldSetup": {
       "additionalProperties": false,

@@ -206,7 +206,7 @@ ruins it.
 | `id`, `name` | | |
 | `extends` | Ref? | |
 | `travelMultiplier` | number? | How slow this surface is in fair weather. Default 1. |
-| `inWeather` | {tag: number}? | An extra multiplier per weather tag, on top of the weather's own. |
+| `inWeather` | [{tag, multiplier}]? | An extra multiplier per weather tag, on top of the weather's own. |
 | `tags` | [str]? | Free-form labels for encounter tables and content to match on. |
 
 Only the **largest** matching `inWeather` entry applies, not the product: a
@@ -267,8 +267,9 @@ Files under `climates/`. Two halves multiplied: `seasons` says what a place is
 |---|---|---|
 | `id`, `name` | | |
 | `extends` | Ref? | The high country is the lowlands with colder seasons. |
-| `seasons` | {season: SeasonProfile} | Per-season weather weights and temperature band. |
-| `transitions` | {weather: {weather: weight}} | Markov transition weights between conditions. A condition with no row holds until something else moves it. |
+| `seasons` | [SeasonWeather]? | Per-season weather weights and temperature band. |
+| `seasonWeights` | [{season, condition, weight}]? | Wizard-authoring convenience: adds or overwrites one season's preference for one condition, without needing to write out the whole `seasons` list. Folded into the matching `seasons` entry (and never itself present after loading) — see `Climate._fold_season_weights`. |
+| `transitions` | [{source, target, weight}] | Markov transition weights between conditions. A condition with no row holds until something else moves it. |
 | `stepTicks` | int? | Ticks between chain steps. Default 1; at thirty minutes a tick that twitches, and 2 reads like weather. |
 | `sequences` | [ClimateSequence]? | Hand-authored progressions, for drama a chain will not reliably produce. |
 | `frontFrequency` | number? | Chance per tick that a front spawns in a region with this climate. |
@@ -288,12 +289,13 @@ The frozen conditions usually borrow the transition rows of their unfrozen
 twins — `light-snow` transitions exactly as `rain` does — so one matrix covers
 a whole year and a thaw turns snow back into rain on its own.
 
-#### SeasonProfile
+#### SeasonWeather
 
 | Field | Type | Notes |
 |---|---|---|
+| `id` | str | The season, as the calendar names it. |
 | `temperature` | {min, max}? | The band days are drawn from. Without one, nothing here ever freezes. |
-| `weights` | {weather: number}? | Relative preference this season. |
+| `weights` | [{condition, weight}]? | Relative preference this season. |
 
 Each day, per region, a floor and a ceiling are drawn within the band and
 lowered by elevation; the temperature *now* interpolates between them by the
@@ -324,11 +326,11 @@ how often, with `fronts` and `frontFrequency`.
 | `weight` | number? | Relative likelihood among the kinds a climate offers, once one is forming. Default 1. |
 | `when` | [Condition]? | Extra gating. |
 | `seasons` | [str]? | Seasons this front can form in. Empty means any. |
-| `intensityRange` | [min, max]? | 0–1, default [0.4, 1.0]. Drawn at birth; scales the bias and decays with age. |
+| `intensityRange` | {min, max}? | 0–1, default {min: 0.4, max: 1.0}. Drawn at birth; scales the bias and decays with age. |
 | `speedTicks` | int? | Ticks over each region before hopping to the next. Default 6. |
 | `lifespanTicks` | int? | How long it lives, whatever its heading has left. Default 54. |
-| `hops` | [fewest, most]? | How many regions a heading may cross. Default [2, 4]. |
-| `biases` | {weather: number}? | Multipliers on the transition weights of the region the front is over. Above 1 makes a condition likelier, below 1 rarer. |
+| `hops` | {min, max}? | How many regions a heading may cross. Default {min: 2, max: 4}. |
+| `biases` | [{condition, weight}]? | Multipliers on the transition weights of the region the front is over. Above 1 makes a condition likelier, below 1 rarer. |
 | `aheadBias` | number? | 0–1, default 0.3. The share of the bias the region *ahead* receives — the foreshadowing dial. 0 means a front arrives without warning. |
 | `omen` | str \| [Descr]? | Shown once, as ordinary narration, when the front is one region away and coming this way. |
 
@@ -357,7 +359,7 @@ Files under `weatherConditions/`.
 | `id`, `name` | | e.g. `blizzard`, `ash-fall`, `ion-storm`. `name` is what the player reads and defaults to the id. |
 | `extends` | Ref? | |
 | `description` | str \| [Descr]? | Narrated when it begins — conditional, so the same rain reads differently at night. |
-| `intensityRange` | [min, max]? | 0–1, default the whole range. Drawn when the condition starts; scales all effects. |
+| `intensityRange` | {min, max}? | 0–1, default the whole range. Drawn when the condition starts; scales all effects. |
 | `visibility` | number? | 0–1 multiplier on the day part's light. Feeds stealth, ranged accuracy, encounter detection, and description selection. |
 | `travelMultiplier` | number? | >1 slows travel. |
 | `modify` | [{stat, add?, mult?}]? | Blanket stat effects on everyone exposed. |

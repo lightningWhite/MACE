@@ -883,13 +883,13 @@ REGION = Flow(
             id="region.climate",
             title="Which climate governs it?",
             binds="regions[{id}].climate",
-            field=Select(options=Query("climates"), optional=True),
+            field=Select(
+                options=Query("climates"), allow_create="climates", optional=True
+            ),
             help=(
                 "Without one, this region has no weather — the right answer "
-                "for an undercity or a station interior. Climates are usually "
-                "a library's job: pick one a dependency already brought in, "
-                "or write a new one directly into the pack's YAML for now — "
-                "the wizard doesn't build those yet."
+                "for an undercity or a station interior. Pick one a "
+                "dependency already brought in, or create a new one."
             ),
             optional=True,
         ),
@@ -1418,6 +1418,541 @@ COMBAT_PROFILE = Flow(
 )
 
 
+WEATHER_CONDITION = Flow(
+    id="weatherCondition",
+    noun="weather condition",
+    title="One state of the sky",
+    collection="weatherConditions",
+    identity=("weatherCondition.name",),
+    steps=(
+        Step(
+            id="weatherCondition.name",
+            title="What should we call it?",
+            binds="weatherConditions[{id}].name",
+            field=Text(placeholder="drizzle", optional=True),
+            help="Falls back to its id if you leave this blank.",
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.description",
+            title="What does it look like when it starts?",
+            binds="weatherConditions[{id}].description",
+            field=TextList(placeholder="A thin rain starts."),
+            help="One line is enough. Write more and you can make them "
+            "conditional later — the same rain, but read differently at night.",
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.intensityMin",
+            title="Weakest it ever gets?",
+            binds="weatherConditions[{id}].intensityRange.min",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help="0 to 1. Scales `modify`, and how hard the front-end phrases it.",
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.intensityMax",
+            title="Strongest it ever gets?",
+            binds="weatherConditions[{id}].intensityRange.max",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.visibility",
+            title="How much light does it let through?",
+            binds="weatherConditions[{id}].visibility",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help="0 to 1, multiplied into the day part's own light.",
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.travelMultiplier",
+            title="How much does it slow the road?",
+            binds="weatherConditions[{id}].travelMultiplier",
+            field=Number(minimum=0, integer=False, optional=True),
+            help="1 is no change. A storm might be 1.8 — a three-tick road "
+            "becomes a five-tick slog.",
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.blocksTravel",
+            title="Does it close the roads outright?",
+            binds="weatherConditions[{id}].blocksTravel",
+            field=Bool(optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.modify",
+            title="Does it change anyone caught out in it?",
+            binds="weatherConditions[{id}].modify",
+            field=Repeat(
+                of="adjustment",
+                steps=(
+                    Step(
+                        id="adjustment.stat",
+                        title="Which stat?",
+                        binds="adjustment.stat",
+                        field=Text(placeholder="stealth"),
+                    ),
+                    Step(
+                        id="adjustment.add",
+                        title="Flat adjustment?",
+                        binds="adjustment.add",
+                        field=Number(integer=False, optional=True),
+                        optional=True,
+                    ),
+                    Step(
+                        id="adjustment.mult",
+                        title="Multiplier, applied after the flat adjustment?",
+                        binds="adjustment.mult",
+                        field=Number(integer=False, optional=True),
+                        optional=True,
+                    ),
+                ),
+            ),
+            help="Held for as long as this condition does. Needs at least an "
+            "`add` or a `mult`.",
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.tags",
+            title="How would you group it?",
+            binds="weatherConditions[{id}].tags",
+            field=MultiSelect(
+                options=Distinct("weatherConditions", "tags"), free_text=True
+            ),
+            help="`wet`, `cold`, `dark`, `windy`, `severe` — what entities "
+            "and encounter tables match on.",
+            optional=True,
+        ),
+        Step(
+            id="weatherCondition.freezesTo",
+            title="What does it become below freezing?",
+            binds="weatherConditions[{id}].freezesTo",
+            field=Select(
+                options=Query("weatherConditions"),
+                allow_create="weatherConditions",
+                optional=True,
+            ),
+            help="The same wet draw is rain above zero and this below it.",
+            optional=True,
+        ),
+    ),
+)
+
+
+WEATHER_FRONT = Flow(
+    id="weatherFront",
+    noun="weather front",
+    title="A weather system that crosses the map",
+    collection="weatherFronts",
+    identity=("weatherFront.name",),
+    steps=(
+        Step(
+            id="weatherFront.name",
+            title="What should we call it?",
+            binds="weatherFronts[{id}].name",
+            field=Text(placeholder="a westerly", optional=True),
+            help="A phrase, not a noun — it's read inside a sentence, `a "
+            "storm out of the west`. Falls back to its id.",
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.weight",
+            title="How likely is this kind, relative to the others?",
+            binds="weatherFronts[{id}].weight",
+            field=Number(minimum=0, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.when",
+            title="Only under some condition?",
+            binds="weatherFronts[{id}].when",
+            field=ConditionBuilder(),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.seasons",
+            title="Which seasons can it form in?",
+            binds="weatherFronts[{id}].seasons",
+            field=MultiSelect(free_text=True),
+            help="A season your calendar defines. Leave blank for any.",
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.intensityMin",
+            title="Weakest a new one ever forms?",
+            binds="weatherFronts[{id}].intensityRange.min",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.intensityMax",
+            title="Strongest a new one ever forms?",
+            binds="weatherFronts[{id}].intensityRange.max",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.speedTicks",
+            title="How many ticks in each region before it hops onward?",
+            binds="weatherFronts[{id}].speedTicks",
+            field=Number(minimum=1, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.lifespanTicks",
+            title="How long does it live?",
+            binds="weatherFronts[{id}].lifespanTicks",
+            field=Number(minimum=1, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.hopsMin",
+            title="Fewest regions its heading crosses?",
+            binds="weatherFronts[{id}].hops.min",
+            field=Number(minimum=1, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.hopsMax",
+            title="Most regions its heading crosses?",
+            binds="weatherFronts[{id}].hops.max",
+            field=Number(minimum=1, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.biases",
+            title="Which conditions does it favor?",
+            binds="weatherFronts[{id}].biases",
+            field=Repeat(
+                of="bias",
+                steps=(
+                    Step(
+                        id="bias.condition",
+                        title="Which condition?",
+                        binds="bias.condition",
+                        field=Select(
+                            options=Query("weatherConditions"),
+                            allow_create="weatherConditions",
+                        ),
+                    ),
+                    Step(
+                        id="bias.weight",
+                        title="Multiplier — above 1 makes it likelier, below "
+                        "1 rarer?",
+                        binds="bias.weight",
+                        field=Number(minimum=0, integer=False),
+                    ),
+                ),
+            ),
+            help="On top of the region's own transition weights. Scales "
+            "with the front's own intensity as it ages.",
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.aheadBias",
+            title="How much warning does the region ahead get?",
+            binds="weatherFronts[{id}].aheadBias",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help="0 to 1. 0 means it arrives without warning.",
+            optional=True,
+        ),
+        Step(
+            id="weatherFront.omen",
+            title="What does the player see when it's one region away?",
+            binds="weatherFronts[{id}].omen",
+            field=TextList(placeholder="The wind has come round to the west."),
+            help="Ordinary narration, never a system message.",
+            optional=True,
+        ),
+    ),
+)
+
+
+TERRAIN = Flow(
+    id="terrain",
+    noun="terrain",
+    title="A road surface, and what weather does to it",
+    collection="terrains",
+    identity=("terrain.name",),
+    steps=(
+        Step(
+            id="terrain.name",
+            title="What should we call it?",
+            binds="terrains[{id}].name",
+            field=Text(placeholder="Forest track", optional=True),
+            help="Falls back to its id if you leave this blank.",
+            optional=True,
+        ),
+        Step(
+            id="terrain.travelMultiplier",
+            title="How slow is it in fair weather?",
+            binds="terrains[{id}].travelMultiplier",
+            field=Number(minimum=0, integer=False, optional=True),
+            help="1 is an ordinary road. A mountain path is slow before "
+            "anything falls on it.",
+            optional=True,
+        ),
+        Step(
+            id="terrain.inWeather",
+            title="How much worse does weather make it?",
+            binds="terrains[{id}].inWeather",
+            field=Repeat(
+                of="condition",
+                steps=(
+                    Step(
+                        id="inWeather.tag",
+                        title="Which weather tag?",
+                        binds="inWeather.tag",
+                        field=Text(placeholder="wet"),
+                    ),
+                    Step(
+                        id="inWeather.multiplier",
+                        title="Extra multiplier, on top of the weather's own?",
+                        binds="inWeather.multiplier",
+                        field=Number(minimum=0, integer=False),
+                    ),
+                ),
+            ),
+            help="Only the worst matching tag applies, not the product — a "
+            "wet, cold, windy night should be bad, not impossible.",
+            optional=True,
+        ),
+        Step(
+            id="terrain.tags",
+            title="How would you group it?",
+            binds="terrains[{id}].tags",
+            field=MultiSelect(options=Distinct("terrains", "tags"), free_text=True),
+            optional=True,
+        ),
+    ),
+)
+
+
+TEMPERATURE_UNITS = Fixed.of("celsius", "fahrenheit")
+
+
+CLIMATE = Flow(
+    id="climate",
+    noun="climate",
+    title="How weather behaves somewhere",
+    collection="climates",
+    identity=("climate.name",),
+    steps=(
+        Step(
+            id="climate.name",
+            title="What should we call it?",
+            binds="climates[{id}].name",
+            field=Text(placeholder="Temperate Lowlands", optional=True),
+            help="Falls back to its id if you leave this blank.",
+            optional=True,
+        ),
+        Step(
+            id="climate.stepTicks",
+            title="How many ticks between chain steps?",
+            binds="climates[{id}].stepTicks",
+            field=Number(minimum=1, optional=True),
+            help="One reconsiders the sky every tick, which is twitchy at "
+            "thirty minutes a tick. Two is an hour, and reads much better.",
+            optional=True,
+        ),
+        Step(
+            id="climate.frontFrequency",
+            title="How often does a front form, per tick, across the whole map?",
+            binds="climates[{id}].frontFrequency",
+            field=Number(minimum=0, maximum=1, integer=False, optional=True),
+            help="Small on purpose — 0.02 to 0.04 keeps one or two alive at "
+            "a time, however many regions the map has.",
+            optional=True,
+        ),
+        Step(
+            id="climate.freezingPoint",
+            title="Below what temperature does weather freeze?",
+            binds="climates[{id}].freezingPoint",
+            field=Number(integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="climate.lapseRate",
+            title="How many degrees are lost per hundred units of elevation?",
+            binds="climates[{id}].lapseRate",
+            field=Number(integer=False, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="climate.temperatureUnit",
+            title="What scale are the temperatures written in?",
+            binds="climates[{id}].temperatureUnit",
+            field=Select(options=TEMPERATURE_UNITS, optional=True),
+            optional=True,
+        ),
+        Step(
+            id="climate.fronts",
+            title="What kinds of front can form here?",
+            binds="climates[{id}].fronts",
+            field=MultiSelect(
+                options=Query("weatherFronts"), allow_create="weatherFronts"
+            ),
+            optional=True,
+        ),
+        Step(
+            id="climate.seasons",
+            title="What is each season like?",
+            binds="climates[{id}].seasons",
+            field=Repeat(
+                of="season",
+                steps=(
+                    Step(
+                        id="season.id",
+                        title="Which season?",
+                        binds="season.id",
+                        field=Text(placeholder="autumn"),
+                        help="A season your calendar defines.",
+                    ),
+                    Step(
+                        id="season.temperature.min",
+                        title="Coldest a day gets?",
+                        binds="season.temperature.min",
+                        field=Number(integer=False, optional=True),
+                        optional=True,
+                    ),
+                    Step(
+                        id="season.temperature.max",
+                        title="Warmest a day gets?",
+                        binds="season.temperature.max",
+                        field=Number(integer=False, optional=True),
+                        optional=True,
+                    ),
+                ),
+            ),
+            help="A season the calendar has and the climate does not falls "
+            "back to the transition matrix alone. Set what each season "
+            "favors below, once its seasons are listed here.",
+            optional=True,
+        ),
+        Step(
+            id="climate.seasonWeights",
+            title="Which conditions does each season favor?",
+            binds="climates[{id}].seasonWeights",
+            field=Repeat(
+                of="weight",
+                steps=(
+                    Step(
+                        id="seasonWeight.season",
+                        title="Which season?",
+                        binds="seasonWeight.season",
+                        field=Text(placeholder="autumn"),
+                    ),
+                    Step(
+                        id="seasonWeight.condition",
+                        title="Which condition?",
+                        binds="seasonWeight.condition",
+                        field=Select(
+                            options=Query("weatherConditions"),
+                            allow_create="weatherConditions",
+                        ),
+                    ),
+                    Step(
+                        id="seasonWeight.weight",
+                        title="Relative preference?",
+                        binds="seasonWeight.weight",
+                        field=Number(minimum=0, integer=False),
+                    ),
+                ),
+            ),
+            help="A condition weighted 0 cannot happen that season, however "
+            "the chain gets there. One row here adds or replaces a single "
+            "season's preference for a single condition — existing rows for "
+            "seasons and conditions this does not name are untouched.",
+            optional=True,
+        ),
+        Step(
+            id="climate.transitions",
+            title="How does the sky actually move?",
+            binds="climates[{id}].transitions",
+            field=Repeat(
+                of="transition",
+                steps=(
+                    Step(
+                        id="transition.source",
+                        title="From which condition?",
+                        binds="transition.source",
+                        field=Select(
+                            options=Query("weatherConditions"),
+                            allow_create="weatherConditions",
+                        ),
+                    ),
+                    Step(
+                        id="transition.target",
+                        title="To which condition?",
+                        binds="transition.target",
+                        field=Select(
+                            options=Query("weatherConditions"),
+                            allow_create="weatherConditions",
+                        ),
+                    ),
+                    Step(
+                        id="transition.weight",
+                        title="Relative weight, among this source's other " "targets?",
+                        binds="transition.weight",
+                        field=Number(minimum=0, integer=False),
+                    ),
+                ),
+            ),
+            help="A condition with no row here holds until something else "
+            "moves it. Clear does not become a blizzard — it becomes "
+            "overcast, then drizzle, then rain.",
+            optional=True,
+        ),
+        Step(
+            id="climate.sequences",
+            title="Does anything ever run as a scripted story instead?",
+            binds="climates[{id}].sequences",
+            field=Repeat(
+                of="sequence",
+                steps=(
+                    Step(
+                        id="sequence.id",
+                        title="What should we call it?",
+                        binds="sequence.id",
+                        field=Text(placeholder="the-big-storm"),
+                    ),
+                    Step(
+                        id="sequence.weight",
+                        title="How likely is the chain to enter it, rather "
+                        "than take an ordinary step?",
+                        binds="sequence.weight",
+                        field=Number(minimum=0, integer=False, optional=True),
+                        help="0 means only an effect can start it.",
+                        optional=True,
+                    ),
+                    Step(
+                        id="sequence.when",
+                        title="Only under some condition?",
+                        binds="sequence.when",
+                        field=ConditionBuilder(),
+                        optional=True,
+                    ),
+                    Step(
+                        id="sequence.steps",
+                        title="The conditions, in order, one per line?",
+                        binds="sequence.steps",
+                        field=TextList(placeholder="storm 3"),
+                        help="One line per step — `storm 3` holds a storm "
+                        "for 3 ticks; bare `clear` holds for one.",
+                    ),
+                ),
+            ),
+            help="A three-day storm that breaks on the fourth morning is a "
+            "story beat, and a Markov chain will not reliably produce one. "
+            "Once chosen, a sequence plays out uninterrupted.",
+            optional=True,
+        ),
+    ),
+)
+
+
 ENCOUNTER_TABLE = Flow(
     id="encounterTable",
     noun="encounter table",
@@ -1658,6 +2193,7 @@ BACKGROUND = Flow(
 #: Every flow the wizard knows, by the collection it authors.
 FLOWS: dict[str, Flow] = {
     "backgrounds": BACKGROUND,
+    "climates": CLIMATE,
     "combatProfiles": COMBAT_PROFILE,
     "encounterTables": ENCOUNTER_TABLE,
     "entities": ENTITY,
@@ -1667,6 +2203,9 @@ FLOWS: dict[str, Flow] = {
     "regions": REGION,
     "routes": ROUTE,
     "scenes": SCENE,
+    "terrains": TERRAIN,
+    "weatherConditions": WEATHER_CONDITION,
+    "weatherFronts": WEATHER_FRONT,
 }
 
 
@@ -1686,8 +2225,7 @@ def flow_for(collection: str) -> Flow:
     Raises
     ------
     KeyError
-        If nothing authors that collection yet. Several content types are
-        library-side and hand-written for now — climates, weather fronts,
-        combat profiles — and the wizard says so rather than pretending.
+        If nothing authors that collection yet, and the wizard says so
+        rather than pretending.
     """
     return FLOWS[collection]

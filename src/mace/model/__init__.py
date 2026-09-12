@@ -37,8 +37,9 @@ from mace.model.climate import (
     Climate,
     ClimateSequence,
     ClimateStep,
-    SeasonProfile,
+    SeasonWeather,
     TemperatureRange,
+    Transition,
 )
 from mace.model.combat import CombatProfile, Move, MoveKind, Pattern
 from mace.model.conditions import (
@@ -88,7 +89,7 @@ from mace.model.event import (
     PressureModifier,
     PressureStart,
 )
-from mace.model.front import WeatherFront
+from mace.model.front import HopRange, WeatherFront
 from mace.model.game import (
     CombatMode,
     Game,
@@ -102,9 +103,9 @@ from mace.model.quest import Quest, QuestStage
 from mace.model.region import Region
 from mace.model.route import Route, Waypoint
 from mace.model.scene import Choice, Scene
-from mace.model.terrain import Terrain
+from mace.model.terrain import TagWeight, Terrain
 from mace.model.text import Description, DescriptionLine, Say, SayLine
-from mace.model.weather import WeatherCondition
+from mace.model.weather import IntensityRange, WeatherCondition, WeatherWeight
 
 __all__ = [
     "AuthoredValue",
@@ -151,7 +152,9 @@ __all__ = [
     "Game",
     "GameRules",
     "Good",
+    "HopRange",
     "Id",
+    "IntensityRange",
     "InventoryEntry",
     "ItemProps",
     "ItemUse",
@@ -188,7 +191,7 @@ __all__ = [
     "SayLine",
     "Scene",
     "Season",
-    "SeasonProfile",
+    "SeasonWeather",
     "Size",
     "SlotName",
     "Stat",
@@ -196,13 +199,16 @@ __all__ = [
     "StatModifier",
     "Stock",
     "Tag",
+    "TagWeight",
     "TemperatureRange",
     "Terrain",
+    "Transition",
     "Version",
     "VersionRange",
     "Waypoint",
     "WeatherCondition",
     "WeatherFront",
+    "WeatherWeight",
     "WorldSetup",
     "authored_value",
 ]

@@ -334,7 +334,7 @@ def observe(
                 qualified=library.resolve(
                     override.condition, "weatherConditions", within=pack
                 ),
-                intensity=condition.intensity_range[1],
+                intensity=condition.intensity_range.max,
                 temperature=(
                     None if here is None else _temperature_now(here, clock, state.tick)
                 ),
@@ -545,11 +545,14 @@ def _begin(
     """
     stream = state.rng.stream(f"weather.{region_id}")
     season = clock.season(state.start_tick).id
-    profile = climate.seasons.get(season)
+    profile = climate.season(season)
 
-    weights = dict(profile.weights) if profile is not None else {}
+    weights = (
+        {w.condition: w.weight for w in profile.weights} if profile is not None else {}
+    )
     if not weights:
-        weights = {name: 1.0 for name in sorted(climate.transitions)}
+        sources = sorted({row.source for row in climate.transitions})
+        weights = {name: 1.0 for name in sources}
 
     drawn = _pick(stream, weights)
     here = RegionWeather(
@@ -651,12 +654,14 @@ def _next_condition(
         The chosen condition's local reference, as the climate wrote it.
     """
     _pack, current = here.condition.split(":", 1)
-    row = climate.transitions.get(current)
+    row = climate.transitions_from(current)
     if not row:
         return current
 
-    profile = climate.seasons.get(season)
-    seasonal = profile.weights if profile is not None else {}
+    profile = climate.season(season)
+    seasonal = (
+        {w.condition: w.weight for w in profile.weights} if profile is not None else {}
+    )
 
     weights = {
         candidate: weight
@@ -844,7 +849,7 @@ def _refresh_temperature(
         return
     here.temperature_day = day
 
-    profile = climate.seasons.get(clock.season(here.stepped_to).id)
+    profile = climate.season(clock.season(here.stepped_to).id)
     band = profile.temperature if profile is not None else None
     if band is None:
         here.low = here.high = 0.0
@@ -873,7 +878,11 @@ def _draw_intensity(stream: RandomStream, condition: WeatherCondition | None) ->
     float
         0 to 1.
     """
-    low, high = (0.0, 1.0) if condition is None else condition.intensity_range
+    low, high = (
+        (0.0, 1.0)
+        if condition is None
+        else (condition.intensity_range.min, condition.intensity_range.max)
+    )
     return low + stream.fraction() * (high - low)
 
 

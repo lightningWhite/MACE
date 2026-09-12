@@ -19,7 +19,22 @@ from pydantic import Field
 
 from mace.model.base import ContentModel, Id, Tag, TerrainRef
 
-__all__ = ["Terrain"]
+__all__ = ["TagWeight", "Terrain"]
+
+
+class TagWeight(ContentModel):
+    """How badly one weather tag treats a surface.
+
+    Attributes
+    ----------
+    tag : str
+        The weather tag this multiplier answers, e.g. `wet` or `cold`.
+    multiplier : float
+        Extra multiplier on top of the weather's own `travelMultiplier`.
+    """
+
+    tag: Tag
+    multiplier: float = Field(gt=0.0)
 
 
 class Terrain(ContentModel):
@@ -34,7 +49,7 @@ class Terrain(ContentModel):
     travel_multiplier : float
         How slow this surface is in fair weather. A mountain path is slow
         before anything falls on it.
-    in_weather : mapping
+    in_weather : tuple of TagWeight
         Weather tag to an extra multiplier, applied on top of the weather's
         own. Only the largest applies, not the product: a wet, cold, windy
         night on a forest track should be bad, not impossible.
@@ -47,7 +62,7 @@ class Terrain(ContentModel):
     name: str | None = None
 
     travel_multiplier: float = Field(default=1.0, gt=0.0)
-    in_weather: dict[Tag, float] = Field(default_factory=dict)
+    in_weather: tuple[TagWeight, ...] = ()
     tags: tuple[Tag, ...] = ()
 
     def cost(self, weather_tags: tuple[str, ...]) -> float:
@@ -64,7 +79,7 @@ class Terrain(ContentModel):
             The multiplier, the surface's own included.
         """
         worst = max(
-            (self.in_weather[tag] for tag in weather_tags if tag in self.in_weather),
+            (row.multiplier for row in self.in_weather if row.tag in weather_tags),
             default=1.0,
         )
         return self.travel_multiplier * worst

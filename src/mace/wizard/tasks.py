@@ -157,9 +157,11 @@ SECTIONS: tuple[Section, ...] = (
         id="weather",
         title="Weather & climate",
         collections=("climates", "weatherConditions", "weatherFronts", "terrains"),
+        flow="weatherConditions",
         help=(
-            "Usually a library's job. A game that defines none of these takes "
-            "the ones its dependencies bring."
+            "Often a library's job — a game that defines none of these takes "
+            "the ones its dependencies bring — but every one of them can be "
+            "authored here too."
         ),
     ),
     Section(

@@ -190,7 +190,7 @@ def test_an_object_that_is_not_there_is_a_404(studio: Studio) -> None:
 
 def test_a_collection_with_no_flow_is_a_404(studio: Studio) -> None:
     with pytest.raises(Unknown, match="nothing authors"):
-        studio.object("climates", "temperate")
+        studio.object("calendars", "standard-year")
 
 
 def test_a_collection_binding_without_an_object_is_refused(studio: Studio) -> None:
@@ -674,6 +674,105 @@ def test_flow_registration_covers_moves_and_combat_profiles() -> None:
 
     assert flow_for("moves") is MOVE
     assert flow_for("combatProfiles") is COMBAT_PROFILE
+
+
+# ── Weather & climate authoring ──────────────────────────────────────────────
+
+
+def test_a_weather_condition_can_be_authored_end_to_end(studio: Studio) -> None:
+    studio.create(
+        "weatherConditions",
+        "Drizzle",
+        section="weather",
+        answers={
+            "weatherCondition.intensityMin": 0.1,
+            "weatherCondition.intensityMax": 0.5,
+            "weatherCondition.travelMultiplier": 1.1,
+            "weatherCondition.tags": ["wet"],
+            "weatherCondition.modify": [{"stat": "speed", "add": -2}],
+        },
+    )
+    held = studio.project.get("weatherConditions", "drizzle")
+    assert held is not None
+    assert held["intensityRange"] == {"min": 0.1, "max": 0.5}
+    assert held["tags"] == ["wet"]
+    assert held["modify"] == [{"stat": "speed", "add": -2}]
+
+
+def test_a_weather_front_can_be_authored_end_to_end(studio: Studio) -> None:
+    studio.create("weatherConditions", "Rain", section="weather", answers={})
+    studio.create(
+        "weatherFronts",
+        "A westerly",
+        section="weather",
+        answers={
+            "weatherFront.hopsMin": 2,
+            "weatherFront.hopsMax": 3,
+            "weatherFront.biases": [{"condition": "rain", "weight": 3.0}],
+        },
+    )
+    held = studio.project.get("weatherFronts", "a-westerly")
+    assert held is not None
+    assert held["hops"] == {"min": 2, "max": 3}
+    assert held["biases"] == [{"condition": "rain", "weight": 3.0}]
+
+
+def test_a_terrain_can_be_authored_end_to_end(studio: Studio) -> None:
+    studio.create(
+        "terrains",
+        "Forest track",
+        section="weather",
+        answers={
+            "terrain.travelMultiplier": 1.15,
+            "terrain.inWeather": [{"tag": "wet", "multiplier": 1.5}],
+        },
+    )
+    held = studio.project.get("terrains", "forest-track")
+    assert held is not None
+    assert held["inWeather"] == [{"tag": "wet", "multiplier": 1.5}]
+
+
+def test_a_climate_can_be_authored_end_to_end(studio: Studio) -> None:
+    studio.create("weatherConditions", "Clear", section="weather", answers={})
+    studio.create(
+        "climates",
+        "Temperate",
+        section="weather",
+        answers={
+            "climate.seasons": [{"id": "autumn", "temperature": {"min": 2}}],
+            "climate.seasonWeights": [
+                {"season": "autumn", "condition": "clear", "weight": 50}
+            ],
+            "climate.transitions": [
+                {"source": "clear", "target": "clear", "weight": 90}
+            ],
+        },
+    )
+    held = studio.project.get("climates", "temperate")
+    assert held is not None
+    assert held["transitions"] == [{"source": "clear", "target": "clear", "weight": 90}]
+    # The two flat, wizard-authored lists fold into `seasons` at load time —
+    # see `Climate._fold_season_weights` — so what the project holds right
+    # after saving is still the raw, unfolded shape.
+    assert held["seasons"] == [{"id": "autumn", "temperature": {"min": 2}}]
+    assert held["seasonWeights"] == [
+        {"season": "autumn", "condition": "clear", "weight": 50}
+    ]
+
+
+def test_flow_registration_covers_weather_and_climate() -> None:
+    from mace.wizard.flows import (
+        CLIMATE,
+        TERRAIN,
+        WEATHER_CONDITION,
+        WEATHER_FRONT,
+        flow_for,
+    )
+
+    assert flow_for("weatherConditions") is WEATHER_CONDITION
+    assert flow_for("weatherFronts") is WEATHER_FRONT
+    assert flow_for("terrains") is TERRAIN
+    assert flow_for("climates") is CLIMATE
 
 
 # ── Item authoring on the entity flow ───────────────────────────────────────

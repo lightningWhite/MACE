@@ -109,12 +109,12 @@
         {
           "section": "weather",
           "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
           "state": "empty",
           "summary": "using whatever the libraries bring",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "weatherConditions",
           "collections": [
             "climates",
             "weatherConditions",
@@ -275,12 +275,12 @@
           {
             "section": "weather",
             "title": "Weather & climate",
-            "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+            "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
             "state": "empty",
             "summary": "using whatever the libraries bring",
             "note": "",
             "errors": 0,
-            "flow": null,
+            "flow": "weatherConditions",
             "collections": [
               "climates",
               "weatherConditions",
@@ -507,12 +507,12 @@
           {
             "section": "weather",
             "title": "Weather & climate",
-            "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+            "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
             "state": "empty",
             "summary": "using whatever the libraries bring",
             "note": "",
             "errors": 0,
-            "flow": null,
+            "flow": "weatherConditions",
             "collections": [
               "climates",
               "weatherConditions",
@@ -851,12 +851,12 @@
           {
             "section": "weather",
             "title": "Weather & climate",
-            "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+            "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
             "state": "empty",
             "summary": "using whatever the libraries bring",
             "note": "",
             "errors": 0,
-            "flow": null,
+            "flow": "weatherConditions",
             "collections": [
               "climates",
               "weatherConditions",
@@ -1070,12 +1070,12 @@
         {
           "section": "weather",
           "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
           "state": "empty",
           "summary": "using whatever the libraries bring",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "weatherConditions",
           "collections": [
             "climates",
             "weatherConditions",
@@ -2466,12 +2466,12 @@
         {
           "section": "weather",
           "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
           "state": "empty",
           "summary": "using whatever the libraries bring",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "weatherConditions",
           "collections": [
             "climates",
             "weatherConditions",
@@ -3667,12 +3667,12 @@
         {
           "section": "weather",
           "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
           "state": "empty",
           "summary": "using whatever the libraries bring",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "weatherConditions",
           "collections": [
             "climates",
             "weatherConditions",
@@ -4932,12 +4932,12 @@
         {
           "section": "weather",
           "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
           "state": "empty",
           "summary": "using whatever the libraries bring",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "weatherConditions",
           "collections": [
             "climates",
             "weatherConditions",
@@ -6517,12 +6517,12 @@
         {
           "section": "weather",
           "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
           "state": "empty",
           "summary": "using whatever the libraries bring",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "weatherConditions",
           "collections": [
             "climates",
             "weatherConditions",
@@ -6701,12 +6701,12 @@
         {
           "section": "weather",
           "title": "Weather & climate",
-          "help": "Usually a library's job. A game that defines none of these takes the ones its dependencies bring.",
+          "help": "Often a library's job \u2014 a game that defines none of these takes the ones its dependencies bring \u2014 but every one of them can be authored here too.",
           "state": "empty",
           "summary": "using whatever the libraries bring",
           "note": "",
           "errors": 0,
-          "flow": null,
+          "flow": "weatherConditions",
           "collections": [
             "climates",
             "weatherConditions",

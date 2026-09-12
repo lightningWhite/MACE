@@ -32,7 +32,7 @@ weatherConditions:
 
   - id: drizzle
     name: "drizzle"
-    intensityRange: [0.1, 0.5]
+    intensityRange: {min: 0.1, max: 0.5}
     visibility: 0.8
     travelMultiplier: 1.1
     tags: [wet]
@@ -42,7 +42,7 @@ weatherConditions:
 
   - id: rain
     name: "rain"
-    intensityRange: [0.3, 0.8]
+    intensityRange: {min: 0.3, max: 0.8}
     visibility: 0.65
     travelMultiplier: 1.3
     tags: [wet]
@@ -54,7 +54,7 @@ weatherConditions:
 
   - id: storm
     name: "storm"
-    intensityRange: [0.5, 1.0]
+    intensityRange: {min: 0.5, max: 1.0}
     visibility: 0.4
     travelMultiplier: 1.8
     tags: [wet, windy, dark, severe]
@@ -67,7 +67,7 @@ weatherConditions:
 
   - id: sleet
     name: "sleet"
-    intensityRange: [0.2, 0.7]
+    intensityRange: {min: 0.2, max: 0.7}
     visibility: 0.55
     travelMultiplier: 1.4
     tags: [wet, cold]
@@ -78,7 +78,7 @@ weatherConditions:
 
   - id: light-snow
     name: "light snow"
-    intensityRange: [0.2, 0.7]
+    intensityRange: {min: 0.2, max: 0.7}
     visibility: 0.6
     travelMultiplier: 1.5
     tags: [cold, wet]
@@ -89,7 +89,7 @@ weatherConditions:
 
   - id: blizzard
     name: "blizzard"
-    intensityRange: [0.6, 1.0]
+    intensityRange: {min: 0.6, max: 1.0}
     visibility: 0.15
     travelMultiplier: 2.5
     blocksTravel: true

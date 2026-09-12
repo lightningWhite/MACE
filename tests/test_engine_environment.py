@@ -23,14 +23,14 @@ CONDITIONS: list[dict[str, Any]] = [
     {
         "id": "blizzard",
         "name": "blizzard",
-        "intensityRange": [1.0, 1.0],
+        "intensityRange": {"min": 1.0, "max": 1.0},
         "tags": ["cold", "wet", "severe"],
         "modify": [{"stat": "speed", "add": -10}],
     },
     {
         "id": "gloom",
         "name": "gloom",
-        "intensityRange": [0.5, 0.5],
+        "intensityRange": {"min": 0.5, "max": 0.5},
         "tags": ["dark"],
         "modify": [{"stat": "speed", "add": -10}],
     },
@@ -111,8 +111,15 @@ def weather_pack(
             "climates": [
                 {
                     "id": "still",
-                    "seasons": {"spring": {"weights": {"clear": 1}}},
-                    "transitions": {"clear": {"clear": 1}},
+                    "seasons": [
+                        {
+                            "id": "spring",
+                            "weights": [{"condition": "clear", "weight": 1}],
+                        }
+                    ],
+                    "transitions": [
+                        {"source": "clear", "target": "clear", "weight": 1}
+                    ],
                 }
             ],
             "regions": [{"id": "valley", "climate": "still"}],

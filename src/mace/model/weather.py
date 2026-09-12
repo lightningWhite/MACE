@@ -20,7 +20,47 @@ from mace.model.base import ContentModel, Id, Name, Tag, WeatherRef
 from mace.model.entity import StatModifier
 from mace.model.text import Description
 
-__all__ = ["WeatherCondition"]
+__all__ = ["IntensityRange", "WeatherCondition", "WeatherWeight"]
+
+
+class IntensityRange(ContentModel):
+    """The band a condition's or a front's intensity is drawn within.
+
+    Attributes
+    ----------
+    min, max : float
+        0 to 1. Intensity scales `modify`, a front's bias, and how the
+        front-end phrases what is happening.
+    """
+
+    min: float = Field(default=0.0, ge=0.0, le=1.0)
+    max: float = Field(default=1.0, ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def _check_order(self) -> IntensityRange:
+        """Reject a band whose floor is above its ceiling."""
+        if self.min > self.max:
+            raise ValueError(f"min {self.min} is higher than max {self.max}")
+        return self
+
+
+class WeatherWeight(ContentModel):
+    """A weather condition, and how much of it there should be.
+
+    Used both for a season's preference among conditions and for a front's
+    bias on top of the transition matrix — the same shape either way.
+
+    Attributes
+    ----------
+    condition : str
+        The weather condition.
+    weight : float
+        Never negative. A season's `weights` reads this as a relative
+        preference; a front's `biases` reads it as a multiplier.
+    """
+
+    condition: WeatherRef
+    weight: float = Field(ge=0.0)
 
 
 class WeatherCondition(ContentModel):
@@ -33,7 +73,7 @@ class WeatherCondition(ContentModel):
     description : Description or None
         Lines narrated when this condition begins. Conditional, so the same
         rain can read differently at night.
-    intensity_range : tuple of float
+    intensity_range : IntensityRange
         The band this condition's intensity is drawn within, 0 to 1.
         Intensity scales `modify` and how the front-end phrases it.
     visibility : float
@@ -61,7 +101,7 @@ class WeatherCondition(ContentModel):
     name: str | None = None
     description: Description | None = None
 
-    intensity_range: tuple[float, float] = (0.0, 1.0)
+    intensity_range: IntensityRange = Field(default_factory=IntensityRange)
     visibility: float = Field(default=1.0, ge=0.0, le=1.0)
     travel_multiplier: float = Field(default=1.0, gt=0.0)
     blocks_travel: bool = False
@@ -69,17 +109,6 @@ class WeatherCondition(ContentModel):
     modify: tuple[StatModifier, ...] = ()
     tags: tuple[Tag, ...] = ()
     freezes_to: WeatherRef | None = None
-
-    @model_validator(mode="after")
-    def _check_range(self) -> WeatherCondition:
-        """Reject an intensity band that is empty or outside 0 to 1."""
-        low, high = self.intensity_range
-        if not 0.0 <= low <= high <= 1.0:
-            raise ValueError(
-                f"intensityRange must be a rising pair within 0 and 1, "
-                f"got [{low}, {high}]"
-            )
-        return self
 
     @property
     def label(self) -> str:

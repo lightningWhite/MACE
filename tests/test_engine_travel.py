@@ -111,8 +111,15 @@ def road_pack(
             "climates": [
                 {
                     "id": "still",
-                    "seasons": {"spring": {"weights": {"clear": 1}}},
-                    "transitions": {"clear": {"clear": 1}},
+                    "seasons": [
+                        {
+                            "id": "spring",
+                            "weights": [{"condition": "clear", "weight": 1}],
+                        }
+                    ],
+                    "transitions": [
+                        {"source": "clear", "target": "clear", "weight": 1}
+                    ],
                 }
             ],
             "regions": regions or [{"id": "valley", "climate": "still"}],
@@ -555,12 +562,20 @@ def test_terrain_multiplies_on_top_of_the_weather(tmp_path: Path) -> None:
     good = terrain_pack(
         tmp_path / "good",
         weather="slog",
-        surface={"id": "paved", "travelMultiplier": 1.0, "inWeather": {"wet": 1.0}},
+        surface={
+            "id": "paved",
+            "travelMultiplier": 1.0,
+            "inWeather": [{"tag": "wet", "multiplier": 1.0}],
+        },
     )
     bad = terrain_pack(
         tmp_path / "bad",
         weather="slog",
-        surface={"id": "track", "travelMultiplier": 1.0, "inWeather": {"wet": 2.0}},
+        surface={
+            "id": "track",
+            "travelMultiplier": 1.0,
+            "inWeather": [{"tag": "wet", "multiplier": 2.0}],
+        },
     )
 
     quick = moved(step(begin(good, "tiny").state, Choose(0), good))
@@ -577,7 +592,10 @@ def test_only_the_worst_weather_tag_counts(tmp_path: Path) -> None:
         surface={
             "id": "track",
             "travelMultiplier": 1.0,
-            "inWeather": {"wet": 2.0, "cold": 3.0},
+            "inWeather": [
+                {"tag": "wet", "multiplier": 2.0},
+                {"tag": "cold", "multiplier": 3.0},
+            ],
         },
     )
     surface = library.pack("tiny").terrains["track"]

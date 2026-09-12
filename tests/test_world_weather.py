@@ -73,21 +73,32 @@ def weather_pack(
     base: dict[str, Any] = {
         "id": "temperate",
         "stepTicks": 1,
-        "seasons": {
-            "autumn": {
+        "seasons": [
+            {
+                "id": "autumn",
                 "temperature": {"min": 4, "max": 12},
-                "weights": {"clear": 50, "rain": 50},
+                "weights": [
+                    {"condition": "clear", "weight": 50},
+                    {"condition": "rain", "weight": 50},
+                ],
             },
-            "winter": {
+            {
+                "id": "winter",
                 "temperature": {"min": -10, "max": -2},
-                "weights": {"clear": 50, "rain": 50},
+                "weights": [
+                    {"condition": "clear", "weight": 50},
+                    {"condition": "rain", "weight": 50},
+                ],
             },
-        },
-        "transitions": {
-            "clear": {"clear": 60, "rain": 40},
-            "rain": {"rain": 60, "clear": 40},
-            "snow": {"rain": 60, "clear": 40},
-        },
+        ],
+        "transitions": [
+            {"source": "clear", "target": "clear", "weight": 60},
+            {"source": "clear", "target": "rain", "weight": 40},
+            {"source": "rain", "target": "rain", "weight": 60},
+            {"source": "rain", "target": "clear", "weight": 40},
+            {"source": "snow", "target": "rain", "weight": 60},
+            {"source": "snow", "target": "clear", "weight": 40},
+        ],
     }
     base.update(climate or {})
 
@@ -263,12 +274,16 @@ def test_a_season_that_weights_a_condition_at_zero_rules_it_out(
     library = weather_pack(
         tmp_path,
         climate={
-            "seasons": {
-                "autumn": {
+            "seasons": [
+                {
+                    "id": "autumn",
                     "temperature": {"min": 4, "max": 12},
-                    "weights": {"clear": 100, "rain": 0},
+                    "weights": [
+                        {"condition": "clear", "weight": 100},
+                        {"condition": "rain", "weight": 0},
+                    ],
                 }
-            }
+            ]
         },
     )
     clock = Clock.for_season(30, STANDARD_YEAR, "autumn")
