@@ -38,7 +38,7 @@ from mace.model import (
     Move,
     Scene,
 )
-from mace.model.base import RESERVED_ACTORS, ContentModel, Reference
+from mace.model.base import RESERVED_ACTORS, RESERVED_RESPONSES, ContentModel, Reference
 from mace.model.calendar import STANDARD_YEAR
 from mace.model.conditions import DayPartIs
 from mace.model.effects import FireEvent, SetPressure
@@ -1295,6 +1295,20 @@ def _check_combat(library: Library, pack: LoadedPack) -> Iterator[Problem]:
 
     answers = _defense_types(library, pack)
     for local_id, move in pack.moves.items():
+        if move.kind == "defense" and move.type in RESERVED_RESPONSES:
+            yield Problem(
+                severity=Severity.ERROR,
+                message=(
+                    f"`type: {move.type}` is a response the engine already "
+                    "supplies — `combat.respond` dispatches on it before a "
+                    "fighter's own moves are ever consulted, so this defense "
+                    "could never be reached"
+                ),
+                pack=pack.id,
+                collection="moves",
+                object_id=local_id,
+                field="type",
+            )
         if move.kind != "attack":
             continue
         if not move.counters:

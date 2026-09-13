@@ -1159,7 +1159,7 @@
     },
     "CombatEncounter": {
       "additionalProperties": false,
-      "description": "A straight fight, without an interposing scene.\n\nAttributes\n----------\nagainst : tuple of str\n    The entities to spawn and fight. Repeat one to get several of it.\nflee_to : str or None\n    Where fleeing puts the player. Omitted, they end up back the way they\n    came, which for a journey is wherever they last stopped.",
+      "description": "A straight fight, without an interposing scene.\n\nAttributes\n----------\nagainst : tuple of str\n    The entities to spawn and fight. Repeat one to get several of it.\nflee_to : str or None\n    Where fleeing puts the player. Omitted, they end up back the way they\n    came, which for a journey is wherever they last stopped.\nsurprise : bool\n    Whether the fight opens at melee distance regardless of what the\n    player has armed \u2014 wolves out of the brush don't wait for a bow to\n    come up. False by default: a road encounter, unlike an ambush sprung\n    by a scene, may just as well be bandits you saw coming\n    (docs/07-combat.md \u00a7 Range).",
       "properties": {
         "against": {
           "items": {
@@ -1182,6 +1182,11 @@
           ],
           "default": null,
           "title": "Fleeto"
+        },
+        "surprise": {
+          "default": false,
+          "title": "Surprise",
+          "type": "boolean"
         }
       },
       "required": [

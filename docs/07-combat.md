@@ -187,6 +187,13 @@ armed — an ambush doesn't wait for a bow to come up. It changes only where
 the fight opens; it is not a free hit or an unanswerable first exchange, both
 of which are their own, larger design question this doesn't take on.
 
+A road's own `combat:` encounters get the identical field —
+`combat: {against: [...], surprise: true}` in an encounter table entry —
+wired through to the same place `startCombat` reaches. It defaults to
+`false`: unlike a scene's deliberate `startCombat`, a road encounter might
+just as well be bandits blocking the way that the player saw coming, not
+wolves out of the brush.
+
 Range is `{min, max, sweetMin, sweetMax}` in feet, and it lives wherever
 `damage` already lives for that move — no new rule, just extending the one
 `fight.py` already has:
@@ -269,11 +276,19 @@ Two things fall out of range riding on `strike` and on attack moves this way:
   [switching weapons mid-fight](#reusable-limited-and-gone) is for: spend the
   exchange, draw the dagger. A loadout with no close-range answer at all is a
   real cost of that loadout, not something the engine quietly patches over.
-- **A ranged enemy can kite.** An archer whose sweet spot is 20–40 ft now has
-  a real reason to retreat instead of standing still, which is good texture
-  but needs a leash — arena bounds on `position`, or a per-profile limit on
-  how far it's willing to give ground — so a fight can't turn into endless
-  backpedaling.
+- **A ranged enemy can kite — bounded by the same effort pool everything
+  else spends.** An archer whose sweet spot is 20–40 ft now has a real
+  reason to retreat instead of standing still, and footwork in `_close_in`
+  costs `MOVE_COST` of the mover's own effort pool, charged outright. An
+  attacker's own pool is otherwise untouched all fight (only a *defender's*
+  chosen response ever spends effort), so in a fight where it never gets to
+  answer anything, retreating is a one-way drain: it runs dry, stands, and
+  catches its breath instead — the same fallback as having no attack to
+  draw at all — before it can afford to run again. `RECOVER_REGEN`
+  outstrips `MOVE_COST`, so one rest refills enough for several more
+  retreats: this throttles kiting into a running-and-resting rhythm rather
+  than forbidding it, and it's the standing beats that let a pursuer close
+  the gap for good.
 
 ### Moving is part of the answer, not a separate turn
 
@@ -292,6 +307,12 @@ window already uses:
 ```
 maxStep = BASE_STEP × (1 + (mover.speed - 50) / 200)
 ```
+
+Footwork also isn't free: a defender's own `moveBy` costs `MOVE_COST` of
+their effort pool, prorated to how far they actually went — a one-foot nudge
+barely registers, moving the full step every exchange adds up, the same
+"why you can't just spam" the [resources](#resources-why-you-cant-just-spam)
+section already covers for every other response.
 
 Enemies move the same way on their own meter turns: when an enemy's action
 meter fills and nothing in its current pattern step is in range, that turn is

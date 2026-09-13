@@ -23,12 +23,16 @@ from mace.engine.context import RuleContext
 from mace.engine.state import Combatant, EntityState
 from mace.engine.stats import effective, pool_bounds
 from mace.model import CombatProfile, Damage, Entity, ItemProps, Move, Range
+from mace.model.base import RESERVED_RESPONSES
 
 __all__ = ["FLEE", "RECOVER", "RESERVED_RESPONSES", "Fighter", "fighter_for"]
 
 #: Responses the engine supplies rather than content. `flee` is always
 #: available where fleeing is allowed at all, and `recover` is the exchange
-#: you spend catching your breath — the pacing half of the combat skill.
+#: you spend catching your breath — the pacing half of the combat skill. Kept
+#: in lockstep with `RESERVED_RESPONSES` (`mace.model.base`), which is the
+#: same three names — duplicated there only because content validation can't
+#: import this module without a cycle.
 FLEE = "flee"
 RECOVER = "recover"
 
@@ -48,7 +52,7 @@ USE = "use"
 #: (docs/07-combat.md § Range).
 EQUIP = "equip"
 
-RESERVED_RESPONSES = frozenset({FLEE, RECOVER, FOCUS})
+assert RESERVED_RESPONSES == frozenset({FLEE, RECOVER, FOCUS})
 
 #: The stats combat reads directly, by name, regardless of what a pack calls
 #: everything else. Left undeclared, these fall back to `NEUTRAL_STAT` rather
@@ -98,6 +102,11 @@ class Fighter:
         damage-carrying defense every profile shares — reads its own range
         from, the same way it already reads `weapon_damage`
         (docs/07-combat.md § Range).
+    weapon_ammo : int or None
+        The weapon's own authored `ammo`, or None for unlimited/bare hands.
+        The count actually spent so far lives in `state.ammo`, keyed by
+        `weapon`; this is only the ceiling that count falls back to before
+        anything has been fired (docs/07-combat.md § Range).
     armor : float
         What its gear takes off every hit.
     """
@@ -111,6 +120,7 @@ class Fighter:
     weapon: str | None = None
     weapon_damage: Damage = UNARMED
     weapon_range: Range = UNARMED_RANGE
+    weapon_ammo: int | None = None
     armor: float = 0.0
 
     @property
@@ -324,11 +334,13 @@ def fighter_for(
     weapon: str | None = None
     weapon_damage: Damage = UNARMED
     weapon_range: Range = UNARMED_RANGE
+    weapon_ammo: int | None = None
     for item_id, item in gear:
         if item.damage is not None:
             weapon = item_id
             weapon_damage = item.damage
             weapon_range = item.range or UNARMED_RANGE
+            weapon_ammo = item.ammo
             break
 
     return Fighter(
@@ -341,6 +353,7 @@ def fighter_for(
         weapon=weapon,
         weapon_damage=weapon_damage,
         weapon_range=weapon_range,
+        weapon_ammo=weapon_ammo,
         armor=sum(float(item.armor or 0.0) for _id, item in gear),
     )
 

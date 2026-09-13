@@ -47,6 +47,7 @@ __all__ = [
     "MoveRef",
     "QuestRef",
     "RESERVED_ACTORS",
+    "RESERVED_RESPONSES",
     "Reference",
     "RegionRef",
     "RouteRef",
@@ -147,6 +148,15 @@ WeatherRef = Annotated[Ref, Reference("weatherConditions")]
 #: defined. `player` is whichever entity `game.player.entity` names, so content
 #: can be written once and reused by any protagonist.
 RESERVED_ACTORS = frozenset({"player"})
+
+#: Combat responses the engine supplies rather than content — `flee` and
+#: `recover` are always available where they apply at all, and `focus` is
+#: offered whenever there is somebody to direct. A defense move authored with
+#: one of these as its own `type` would never be reachable: `combat.respond`
+#: dispatches on these names before a fighter's own moves ever get a look
+#: (`mace.engine.combat.roster.RESERVED_RESPONSES` is the same set, kept here
+#: because content validation cannot import the engine).
+RESERVED_RESPONSES = frozenset({"flee", "recover", "focus"})
 
 Version = Annotated[
     str,

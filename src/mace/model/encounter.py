@@ -38,10 +38,17 @@ class CombatEncounter(ContentModel):
     flee_to : str or None
         Where fleeing puts the player. Omitted, they end up back the way they
         came, which for a journey is wherever they last stopped.
+    surprise : bool
+        Whether the fight opens at melee distance regardless of what the
+        player has armed — wolves out of the brush don't wait for a bow to
+        come up. False by default: a road encounter, unlike an ambush sprung
+        by a scene, may just as well be bandits you saw coming
+        (docs/07-combat.md § Range).
     """
 
     against: tuple[EntityRef, ...] = Field(min_length=1)
     flee_to: EntityRef | None = None
+    surprise: bool = False
 
 
 class EncounterEntry(ContentModel):

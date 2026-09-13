@@ -452,6 +452,27 @@ def test_an_attack_with_no_counters_is_a_warning(tmp_path: Path) -> None:
     assert any("pure damage" in p.message for p in report.warnings)
 
 
+def test_a_defense_named_after_an_engine_response_is_an_error(tmp_path: Path) -> None:
+    """`combat.respond` dispatches on `flee`/`recover`/`focus` before content
+    ever gets a look, so a defense authored with one of those as its own
+    `type` would sit dead in the pack."""
+    report = validate_paths(
+        combat_pack(
+            tmp_path,
+            moves=[
+                {"id": "guard", "kind": "defense", "type": "recover"},
+                {
+                    "id": "swing",
+                    "type": "slash",
+                    "tell": "He swings.",
+                    "counters": ["recover"],
+                },
+            ],
+        )
+    )
+    assert any("already supplies" in p.message for p in report.errors)
+
+
 def test_a_profile_that_cannot_defend_is_a_note(tmp_path: Path) -> None:
     report = validate_paths(
         combat_pack(

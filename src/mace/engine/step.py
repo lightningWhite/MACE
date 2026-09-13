@@ -1879,6 +1879,7 @@ def _happens(
         spawned,
         events,
         flee_to=(None if flee_to is None else context.qualify(flee_to, "locations")),
+        surprise=fired.entry.combat.surprise,
     )
 
 

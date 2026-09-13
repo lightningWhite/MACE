@@ -89,6 +89,16 @@ FAMILIARITY_WINDOW = 0.20
 #: footwork spent alongside the answer, not a second, faster combat.
 BASE_MOVE_STEP = 3.0
 
+#: Share of the effort pool's ceiling a full `BASE_MOVE_STEP` of footwork
+#: costs, whichever direction, charged to whoever moved. A defender's own
+#: `moveBy` pays this prorated to how far it actually went — a one-foot
+#: nudge barely registers. An attacker giving ground in `_close_in` pays the
+#: flat cost outright, since that beat is always "as far as speed allows,"
+#: and stands to catch its breath instead when it can't afford to — the
+#: thing that stops a fast, sturdy kiter backpedaling forever for free
+#: (docs/07-combat.md § Range).
+MOVE_COST = 0.06
+
 #: The hardest a player may set the clock. A floor rather than an assertion:
 #: a session setting that could be zero would divide the window away entirely,
 #: and an unanswerable fight is a crash with better manners.
@@ -572,11 +582,18 @@ def _resolve(
         exchange.spent = resolution.stamina_cost(chosen[1].cost, correct=correct)
     if response != CAUGHT:
         exchange.spent -= _share(defender, effort, PASSIVE_REGEN)
+    if move_by:
+        step = resolution.move_step(BASE_MOVE_STEP, defender.stat("speed"))
+        if step > 0:
+            exchange.spent += _share(defender, effort, MOVE_COST) * (
+                abs(move_by) / step
+            )
 
     if outcome is Outcome.COUNTER:
         exchange.dealt, exchange.critical = _opening(
             context, defender, attacker, chosen, stream
         )
+        _consume_ammo(defender)
 
     _apply(context, attacker, defender, exchange, move, events)
     _remember(defender, attacker, exchange)
@@ -873,6 +890,25 @@ def _opening(
     if critical:
         dealt *= resolution.CRITICAL_MULTIPLIER
     return round(max(0.0, dealt - attacker.armor), 1), critical
+
+
+def _consume_ammo(defender: Fighter) -> None:
+    """Spend one charge of whatever weapon just delivered an opening.
+
+    Only a weapon with a finite `ammo` has anything to spend — a sword or
+    bare hands are untouched. `state.ammo` holds only the used-down
+    remainder (docs/07-combat.md § Range), so a weapon fired for the first
+    time falls back to its own authored ceiling before this counts down.
+
+    Parameters
+    ----------
+    defender : Fighter
+        Who just landed an opening with whatever they are holding.
+    """
+    if defender.weapon is None or defender.weapon_ammo is None:
+        return
+    remaining = defender.state.ammo.get(defender.weapon, defender.weapon_ammo)
+    defender.state.ammo[defender.weapon] = max(0, remaining - 1)
 
 
 def _apply(
@@ -1278,7 +1314,7 @@ def _next_tell(context: RuleContext, events: list[Event]) -> None:
             # trigger on a weak hit, only an impossible one.
             attacker.combatant.pattern = before_pattern
             attacker.combatant.pattern_step = before_step
-            _close_in(attacker, target, chosen[1], events)
+            _close_in(context, attacker, target, chosen[1], events)
             continue
 
         _telegraph(context, fight, attacker, target, chosen, events)
@@ -1621,7 +1657,11 @@ def _catch_breath(context: RuleContext, fighter: Fighter, events: list[Event]) -
 
 
 def _close_in(
-    attacker: Fighter, target: Fighter, move: Move, events: list[Event]
+    context: RuleContext,
+    attacker: Fighter,
+    target: Fighter,
+    move: Move,
+    events: list[Event],
 ) -> None:
     """Spend a meter turn moving instead of telegraphing something out of reach.
 
@@ -1629,8 +1669,19 @@ def _close_in(
     speed when already too close — a spear-wielder backing off a grappler is
     the same beat as a troll closing in, just the other sign.
 
+    The footwork costs `MOVE_COST` outright, and an attacker that can't
+    afford it doesn't move at all — it catches its breath instead, the same
+    fallback as having no attack to draw. Nothing else ever spends an
+    attacker's own effort (only a defender's chosen response does), so this
+    is a one-way drain in any fight where it never gets to answer anything:
+    a kiting archer eventually runs dry and has to stand, which is what
+    bounds it rather than backpedaling for the length of the fight
+    (docs/07-combat.md § Range).
+
     Parameters
     ----------
+    context : RuleContext
+        The playthrough.
     attacker : Fighter
         Who is moving. Mutated in place, via `_close_distance`.
     target : Fighter
@@ -1643,7 +1694,15 @@ def _close_in(
     span = move.range or UNARMED_RANGE
     midpoint = (span.sweet_min + span.sweet_max) / 2.0
     closing = _distance(target, attacker) > midpoint
+
+    effort = context.game.rules.effort_pool
+    cost = _share(attacker, effort, MOVE_COST)
+    if attacker.pool(effort) < cost:
+        _catch_breath(context, attacker, events)
+        return
+
     _close_distance(attacker, target, float("inf") if closing else float("-inf"))
+    _move_pool(attacker, effort, -cost, None, events)
     verb = "closes the distance" if closing else "gives ground"
     events.append(Narrated(f"{attacker.name} {verb}.", pause=False))
 

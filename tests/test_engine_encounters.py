@@ -10,9 +10,10 @@ has to mean once.
 from pathlib import Path
 from typing import Any
 
-from conftest import game_pack
+from conftest import game_pack, write_pack
 from mace.content import load_library
 from mace.engine.actions import Choose, Wait
+from mace.engine.combat.roster import UNARMED_RANGE
 from mace.engine.encounter import roll
 from mace.engine.step import begin, step
 
@@ -367,6 +368,161 @@ def test_an_encounter_cuts_a_wait_short(tmp_path: Path) -> None:
     at = state.tick
     result = step(state, Wait(6), library)
     assert result.state.tick == at + 1
+
+
+def surprise_pack(root: Path, *, surprise: bool) -> Any:
+    """A road with one guaranteed combat encounter against a bow-wielder.
+
+    Parameters
+    ----------
+    root : Path
+        Where to write it.
+    surprise : bool
+        `CombatEncounter.surprise`, for the entry the road always rolls.
+
+    Returns
+    -------
+    Library
+        The loaded library.
+    """
+    write_pack(
+        root,
+        "tiny",
+        kind="game",
+        files={
+            "game.yml": {
+                "game": {
+                    "name": "Tiny",
+                    "player": {"entity": "hero", "startLocation": "home"},
+                    "winConditions": [{"atLocation": {"location": "castle"}}],
+                }
+            },
+            "world.yml": {
+                "moves": [
+                    {
+                        "id": "bite",
+                        "type": "bite",
+                        "tell": "It snaps at you.",
+                        "windupMs": 800,
+                        "counters": ["dodge"],
+                        "damage": {"min": 2, "max": 4},
+                        # Wide enough to be reachable at either opening
+                        # distance this test checks — melee (surprise) or
+                        # the bow's 40 ft sweetMax (no surprise) — so the
+                        # fight's first tell fires before anyone has to
+                        # close in, and the recorded position is the
+                        # engagement distance itself, not a moved one.
+                        "range": {"min": 0, "max": 50, "sweetMin": 20, "sweetMax": 45},
+                    },
+                ],
+                "combatProfiles": [
+                    {
+                        "id": "wolf-style",
+                        "moves": ["bite"],
+                        "patterns": [{"sequence": ["bite"]}],
+                    },
+                ],
+                "entities": [
+                    {
+                        "id": "hero",
+                        "kind": "actor",
+                        "name": "Hero",
+                        "playable": True,
+                        "stats": {
+                            "hitpoints": {"base": 40, "max": 40},
+                            "stamina": {"base": 30, "max": 30},
+                            "strength": {"base": 50},
+                            "speed": {"base": 50},
+                        },
+                        "equipment": {"mainHand": "bow"},
+                    },
+                    {
+                        "id": "wolf",
+                        "kind": "actor",
+                        "name": "Wolf",
+                        "stats": {
+                            "hitpoints": {"base": 10, "max": 10},
+                            "strength": {"base": 50},
+                            "speed": {"base": 50},
+                        },
+                        "combat": {"profile": "wolf-style"},
+                    },
+                    {
+                        "id": "bow",
+                        "kind": "item",
+                        "name": "Bow",
+                        "item": {
+                            "equipSlot": "mainHand",
+                            "damage": {"min": 4, "max": 9},
+                            "range": {
+                                "min": 10,
+                                "max": 80,
+                                "sweetMin": 20,
+                                "sweetMax": 40,
+                            },
+                        },
+                    },
+                ],
+                "encounterTables": [
+                    {
+                        "id": "road-table",
+                        "chance": 1.0,
+                        "entries": [
+                            {
+                                "id": "wolves",
+                                "weight": 1,
+                                "combat": {"against": ["wolf"], "surprise": surprise},
+                            }
+                        ],
+                    }
+                ],
+                "routes": [
+                    {
+                        "id": "road",
+                        "from": "home",
+                        "to": "castle",
+                        "ticks": 4,
+                        "encounters": "road-table",
+                    }
+                ],
+                "locations": [
+                    {
+                        "id": "home",
+                        "name": "Home",
+                        "exits": [{"to": "castle", "route": "road"}],
+                    },
+                    {"id": "castle", "name": "The Castle"},
+                ],
+                "scenes": [],
+            },
+        },
+    )
+    return load_library(root / "tiny")
+
+
+def test_a_combat_encounter_can_open_at_range(tmp_path: Path) -> None:
+    """Without `surprise`, a road ambush opens the same way a scene's fight
+    does: at the edge of whatever the player has armed."""
+    library = surprise_pack(tmp_path, surprise=False)
+    result = step(begin(library, "tiny").state, Choose(0), library)
+    fight = result.state.combat
+    assert fight is not None
+    wolf = next(c for c in fight.combatants if c.side == "enemy")
+    hero = next(c for c in fight.combatants if c.side == "player")
+    assert abs(wolf.position - hero.position) == 40.0
+
+
+def test_a_combat_encounter_can_be_marked_surprise(tmp_path: Path) -> None:
+    """`CombatEncounter.surprise` reaches the fight the same way
+    `StartCombat.surprise` already does — wolves out of the brush don't wait
+    for a bow to come up, unlike a scene's deliberate `startCombat`."""
+    library = surprise_pack(tmp_path, surprise=True)
+    result = step(begin(library, "tiny").state, Choose(0), library)
+    fight = result.state.combat
+    assert fight is not None
+    wolf = next(c for c in fight.combatants if c.side == "enemy")
+    hero = next(c for c in fight.combatants if c.side == "player")
+    assert abs(wolf.position - hero.position) == UNARMED_RANGE.sweet_max
 
 
 # ── The shipped game ─────────────────────────────────────────────────────────

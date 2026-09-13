@@ -19,8 +19,7 @@ from conftest import write_pack
 from mace.content import Library, load_library
 from mace.engine.actions import Choose, Respond, Travel
 from mace.engine.combat import fight as combat
-from mace.engine.combat import resolution
-from mace.engine.combat import roster
+from mace.engine.combat import resolution, roster
 from mace.engine.combat.resolution import Outcome
 from mace.engine.combat.roster import UNARMED, UNARMED_RANGE
 from mace.engine.conditions import RuleError
@@ -1117,6 +1116,74 @@ def test_an_exhausted_weapon_stops_counting_as_gear(tmp_path: Path) -> None:
     assert fought.weapon_range == UNARMED_RANGE
 
 
+def test_a_landed_counter_spends_the_weapon_that_dealt_it(tmp_path: Path) -> None:
+    """`ammo` actually counts down when a counter reads `weapon_damage`.
+
+    A rock thrown for a clean counter is the one shot it had — `state.ammo`
+    should show it spent afterward, and the next roster resolution should
+    already have dropped the hero back to bare hands.
+    """
+    library = brawl_pack(
+        tmp_path,
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "rock"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "rock",
+                "kind": "item",
+                "name": "Rock",
+                "item": {
+                    "equipSlot": "mainHand",
+                    "damage": {"min": 2, "max": 5},
+                    "ammo": 1,
+                },
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = start(library)
+    result = answer(result.state, library, "block")
+    payload = resolved(result)
+    assert payload["result"] == "counter"
+    assert result.state.protagonist.ammo["brawl:rock"] == 0
+
+    context = context_for(library, result.state)
+    combatant = next(
+        c
+        for c in context.state.combat.combatants  # type: ignore[union-attr]
+        if c.actor == context.state.player
+    )
+    fought = roster.fighter_for(combatant, context, cache={})
+    assert fought.weapon is None
+    assert fought.weapon_damage == UNARMED
+    assert fought.weapon_range == UNARMED_RANGE
+
+
 def test_retreating_can_pull_an_attack_out_of_its_own_range(tmp_path: Path) -> None:
     """Range is re-checked at resolution, not just when the move was chosen.
 
@@ -1512,6 +1579,92 @@ def test_an_enemy_gives_ground_when_already_too_close(tmp_path: Path) -> None:
     narrated = [e.payload()["text"] for e in result.events if e.kind == "narrate"]
     assert any("gives ground" in text for text in narrated)
     assert "combat.tell" in kinds(result)
+
+
+def test_a_winded_enemy_catches_its_breath_before_it_can_afford_to_retreat(
+    tmp_path: Path,
+) -> None:
+    """Retreating costs effort, and an enemy with none left can't afford it.
+
+    Same setup as the reach-weapon retreat above, except the thug starts
+    almost out of stamina. Rather than retreat on credit — which is what
+    would let a kiting archer backpedal for the length of the fight for
+    free — its first beat is spent standing and catching its breath instead,
+    the same fallback as having no attack to draw at all. `RECOVER_REGEN`
+    outstrips `MOVE_COST`, so that one rest leaves it able to afford real
+    retreats afterward — the mechanism throttles kiting into a rhythm of
+    running and resting, it does not forbid it outright.
+    """
+    library = brawl_pack(
+        tmp_path,
+        moves=[
+            {"id": "guard", "kind": "defense", "type": "block", "cost": 4},
+            {"id": "duck", "kind": "defense", "type": "dodge", "cost": 3},
+            {
+                "id": "swing",
+                "type": "slash",
+                "tell": "He swings.",
+                "vagueTell": "He moves.",
+                "windupMs": 1000,
+                "counters": ["block"],
+                "damage": {"min": 6, "max": 6},
+                "range": {"min": 8, "max": 20, "sweetMin": 10, "sweetMax": 15},
+                "cost": 5,
+            },
+        ],
+        entities=[
+            {
+                "id": "hero",
+                "kind": "actor",
+                "name": "Hero",
+                "playable": True,
+                "stats": {
+                    "hitpoints": {"base": 40, "max": 40},
+                    "stamina": {"base": 30, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "hero-style"},
+                "equipment": {"mainHand": "club"},
+            },
+            {
+                "id": "thug",
+                "kind": "actor",
+                "name": "Thug",
+                "stats": {
+                    "hitpoints": {"base": 30, "max": 30},
+                    "stamina": {"base": 1, "max": 30},
+                    "strength": {"base": 50},
+                    "speed": {"base": 50},
+                },
+                "combat": {"profile": "thug-style"},
+                "inventory": [{"item": "purse", "qty": 3}],
+            },
+            {
+                "id": "club",
+                "kind": "item",
+                "name": "Club",
+                "item": {"equipSlot": "mainHand", "damage": {"min": 4, "max": 4}},
+            },
+            {"id": "purse", "kind": "item", "name": "Purse", "item": {}},
+        ],
+    )
+    result = start(library)
+    thug_id = "brawl:thug"
+    changes = [
+        e.payload()
+        for e in result.events
+        if e.kind == "stat.changed"
+        and e.payload()["actor"] == thug_id
+        and e.payload()["stat"] == "stamina"
+    ]
+    # The very first thing that happens to its stamina is a gain — catching
+    # its breath — not a spend it could never have covered.
+    assert changes
+    assert changes[0]["delta"] > 0
+
+    narrated = [e.payload()["text"] for e in result.events if e.kind == "narrate"]
+    assert any("gives ground" in text for text in narrated)
 
 
 # ── What a fight tells you about the other side ─────────────────────────────
