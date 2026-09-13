@@ -66,6 +66,10 @@ h2 {
   color: var(--ink-dim);
 }
 
+.dim a {
+  color: inherit;
+}
+
 .link-button {
   background: none;
   border: none;
@@ -114,6 +118,10 @@ h2 {
 @media (max-width: 52rem) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
+    /* Four stacked rows now, not two — the split's own row percentage no
+       longer applies (there is nothing left to divide), so every row sizes
+       to its own content instead of inheriting the two-row split's tracks. */
+    grid-template-rows: auto auto auto auto;
     grid-template-areas:
       "narrative"
       "action"
@@ -126,6 +134,18 @@ h2 {
   .col-resizer,
   .row-resizer {
     display: none;
+  }
+
+  /* Each quadrant scrolled its own overflow on the desktop 2x2 grid, where
+     every row and column has a definite size. Stacked into one column the
+     page itself scrolls (`.shell` above is `overflow: visible`), so a
+     quadrant must never clip its own content against a leftover auto-height
+     scrollbox — that would show as content quietly missing rather than
+     merely below the fold. */
+  .action,
+  .map-quadrant,
+  .info {
+    overflow-y: visible;
   }
 }
 
@@ -180,10 +200,11 @@ h2 {
 
 /* Memory is a collapsible log of everything before this tick, not a second
    copy of what is on screen right now — that stays in `.current-tick` below
-   it, open or closed. Open by default so nothing is lost by default;
-   collapsing it is something a player opts into. A plain button rather than
-   `<details>`: this needs a sibling outside it to stay visible regardless of
-   whether it is expanded, which `<details>`'s own content cannot do. */
+   it, open or closed. Closed by default: at the start of a fresh game it is
+   empty, and an empty open panel reads as broken rather than quiet. A plain
+   button rather than `<details>`: this needs a sibling outside it to stay
+   visible regardless of whether it is expanded, which `<details>`'s own
+   content cannot do. */
 .memory {
   display: flex;
   flex-direction: column;
@@ -375,6 +396,15 @@ h2 {
   color: var(--warm);
   text-transform: none;
   letter-spacing: 0;
+}
+
+/* Stands in for the timer and the answers while a fresh fight's first tell
+   waits on the reader — see the note beside `gated` in `Combat.tsx`. */
+.fight-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .combatants {
@@ -601,12 +631,24 @@ h2 {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
 }
 
 @media (max-width: 52rem) {
   .map-quadrant {
     border-inline-start: none;
     border-block-start: 1px solid var(--edge);
+    /* Extra room above and below each map: the svg itself eats every touch
+       drag over it (`touch-action: none` on `.map`, so a finger placed on
+       it always pans rather than scrolling the page), so this padding is
+       the only place left to grab to keep scrolling past it. The border
+       below marks the same boundary visually. */
+    padding-block: 1.75rem;
+  }
+
+  .map {
+    border: 1px solid var(--edge);
+    border-radius: 0.5rem;
   }
 }
 
@@ -712,7 +754,8 @@ h2 {
 
 .stacks li {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0.3em;
 }
 
 .quest {
@@ -767,12 +810,20 @@ h2 {
   margin-block-end: 0.4rem;
 }
 
+/* `pointer-events: none` throughout this block and the two below: these are
+   painted decoration over the map's background, not targets, but a filled
+   shape or a glyph still counts as the pointer's `target` wherever it's
+   drawn — and `useSvgPanZoom`'s drag-to-pan only starts on a hit against the
+   bare `<svg>` itself (see the note beside `background` in `panzoom.ts`).
+   Left painted instead, a region tint alone covers most of the map with a
+   dead zone that silently swallows the drag a reader started to pan it. */
 .region circle {
   fill: var(--cold);
   opacity: 0.07;
   stroke: var(--edge);
   stroke-width: 1;
   stroke-dasharray: 3 4;
+  pointer-events: none;
 }
 
 .region-here circle {
@@ -784,6 +835,7 @@ h2 {
   font-size: 9px;
   font-style: italic;
   text-anchor: middle;
+  pointer-events: none;
 }
 
 .region-elevation {
@@ -791,11 +843,13 @@ h2 {
   font-size: 9px;
   text-anchor: middle;
   font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 .road line {
   stroke: var(--edge);
   stroke-width: 1.5;
+  pointer-events: none;
 }
 
 .road-shut line {
@@ -808,16 +862,19 @@ h2 {
   font-size: 9px;
   text-anchor: middle;
   font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 .journey line {
   stroke: var(--warm);
   stroke-width: 3;
   stroke-linecap: round;
+  pointer-events: none;
 }
 
 .journey circle {
   fill: var(--warm);
+  pointer-events: none;
 }
 
 .node-ring {
@@ -844,10 +901,18 @@ h2 {
 .place-name {
   fill: var(--ink);
   font-size: 10px;
+  pointer-events: none;
 }
 
 .place-known .place-name {
   fill: var(--ink-dim);
+}
+
+/* A place with nothing to click — `onTravel` is only ever wired up for
+   `place-reachable` — is exactly as much background as the map around it,
+   so dragging to pan should start from on top of it too. */
+.place:not(.place-reachable) {
+  pointer-events: none;
 }
 
 .place-reachable {
@@ -889,10 +954,22 @@ h2 {
   gap: 1.75rem;
 }
 
+.opening-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
 .opening h1 {
   margin: 0;
   font-size: 2.5rem;
   letter-spacing: 0.3em;
+}
+
+.opening .tagline {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
 }
 
 .games,

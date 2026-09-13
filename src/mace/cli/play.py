@@ -88,6 +88,12 @@ class Renderer:
     interactive: bool = True
     fighting: bool = False
     units: str = "fahrenheit"
+    #: Set the moment `combat.begin` is shown, cleared the moment `play`'s own
+    #: loop has gated on it once — see the note beside where it is read there.
+    #: Never true for a fight resumed mid-exchange from a save: that one skips
+    #: `combat.begin` entirely, the same as the web client's `Fight.began`
+    #: staying the same object across exchanges in `App.tsx`'s `absorb`.
+    awaiting_start: bool = False
 
     def show(self, events: Iterable[Event]) -> None:
         """Render a step's events in order.
@@ -158,6 +164,7 @@ class Renderer:
 
         if event.kind == "combat.begin":
             self.fighting = True
+            self.awaiting_start = True
             self.line("")
             self.line(RULE)
             against = ", ".join(
@@ -848,7 +855,19 @@ def play(
     while session.playing:
         combat = session.state.combat
         if combat is not None and combat.tell is not None:
-            action = fight(renderer, session, timed and combat.mode == "reflex")
+            reflex = timed and combat.mode == "reflex"
+            # The fight's own header and its first tell are already on the
+            # screen — `renderer.show` above printed them — so nothing here
+            # is unread yet. Only the reflex clock has anything to protect a
+            # reader from starting early; tactical and untimed fights have no
+            # window to spend just standing here.
+            if renderer.awaiting_start:
+                renderer.awaiting_start = False
+                if reflex and renderer.interactive:
+                    renderer.line("")
+                    renderer.line("  Press Enter to begin the fight.")
+                    renderer.wait()
+            action = fight(renderer, session, reflex)
         else:
             action = choose(renderer, session)
         if action is None:

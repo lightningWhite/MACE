@@ -195,7 +195,10 @@ describe("the game", () => {
     await user.click(screen.getByRole("button", { name: /Take the north road/ }));
     await screen.findByText(/The journey stops:/);
 
-    // The opening is still there: a transcript, not a teleprompter.
+    // The opening is still there: a transcript, not a teleprompter. Memory
+    // starts collapsed, so opening it is what makes that transcript visible
+    // again rather than losing it.
+    await user.click(screen.getByRole("button", { name: "Memory" }));
     expect(screen.getByText(/You are a peasant/)).toBeTruthy();
   });
 
@@ -245,6 +248,17 @@ describe("the game", () => {
 // ── Memory, and what stays on show whether it is open or not ─────────────────
 
 describe("memory", () => {
+  it("starts collapsed, since a fresh game's memory is empty", async () => {
+    const user = userEvent.setup();
+    stub(fakeService());
+    render(<App />);
+    await play(user);
+
+    expect(screen.getByRole("button", { name: "Memory" }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+  });
+
   it("keeps the latest tick on show once memory is collapsed", async () => {
     const user = userEvent.setup();
     stub(fakeService());
@@ -256,7 +270,12 @@ describe("memory", () => {
     await user.click(screen.getByRole("button", { name: /Take the north road/ }));
     await screen.findByText(/The journey stops:/);
 
-    await user.click(screen.getByRole("button", { name: "Memory" }));
+    // Memory starts collapsed (an empty one at the very start of a game
+    // would otherwise look broken rather than quiet); open it first so
+    // there is something to collapse back down from.
+    const toggle = screen.getByRole("button", { name: "Memory" });
+    await user.click(toggle);
+    await user.click(toggle);
 
     // The opening was folded into history the moment it stopped being the
     // latest thing that happened, so collapsing memory hides it —
@@ -275,8 +294,9 @@ describe("memory", () => {
     await screen.findByText(/The journey stops:/);
 
     const toggle = screen.getByRole("button", { name: "Memory" });
-    await user.click(toggle);
-    await user.click(toggle);
+    await user.click(toggle); // open
+    await user.click(toggle); // collapse
+    await user.click(toggle); // reopen
 
     expect(screen.getByText(/You are a peasant/)).toBeTruthy();
   });
@@ -456,6 +476,11 @@ describe("combat", () => {
     await user.click(
       await screen.findByRole("button", { name: /Refuse, and put a hand/ }),
     );
+    // A fresh fight's first tell waits on this before its window starts —
+    // see the note beside `gated` in `Combat.tsx`. Not what these tests are
+    // about, so `reach` clears it the same way `Combat.test.tsx`'s own
+    // `show` helper does.
+    await user.click(await screen.findByRole("button", { name: "Begin the fight" }));
   }
 
   it("shows the tell and the answers instead of the menu", async () => {
@@ -466,6 +491,33 @@ describe("combat", () => {
     expect(screen.getByRole("button", { name: /dodge/ })).toBeTruthy();
     // The world's options are gone: this is a fight now.
     expect(screen.queryByRole("button", { name: /Turn back to Fenmoor/ })).toBeNull();
+  });
+
+  it("holds the window until the reader clicks past the fight's first tell", async () => {
+    const user = userEvent.setup();
+    stub(fakeService({ script: fight }));
+    render(<App />);
+    await play(user);
+    await user.click(screen.getByRole("button", { name: /Take the north road/ }));
+    await user.click(await screen.findByRole("button", { name: /Speak to the troll/ }));
+    await user.click(
+      await screen.findByRole("button", { name: /Refuse, and put a hand/ }),
+    );
+
+    expect(await screen.findByText(/The troll shifts its weight/)).toBeTruthy();
+    expect(screen.queryByRole("timer")).toBeNull();
+    // Visible so a reader can find it by hand before the clock starts, but
+    // inert until they do.
+    expect(screen.getByRole("button", { name: /dodge/ })).toHaveProperty(
+      "disabled",
+      true,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Begin the fight" }));
+    expect(screen.getByRole("button", { name: /dodge/ })).toHaveProperty(
+      "disabled",
+      false,
+    );
   });
 
   it("draws the window, because this recording is on the clock", async () => {

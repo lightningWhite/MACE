@@ -50,6 +50,10 @@ export function Opening({
   const [offer, setOffer] = useState<CreationOffer | null>(null);
   const [background, setBackground] = useState<string | null>(null);
   const [spend, setSpend] = useState<Record<string, number>>({});
+  // "As written" (1): fantasy.core's own windupMs values (and the schema
+  // default new content gets) are tuned to read comfortably at this
+  // setting, so there is no separate client-side softening to layer on top
+  // of that any more. "Twice the time" and "Harder" are one click away.
   const [pressure, setPressure] = useState(1);
   const [combatMode, setCombatMode] = useState<string | null>(null);
   const [trouble, setTrouble] = useState<string | null>(null);
@@ -100,7 +104,10 @@ export function Opening({
 
   return (
     <main className="opening">
-      <h1>MACE</h1>
+      <header className="opening-lead">
+        <h1>MACE</h1>
+        <p className="dim tagline">Modular Adventure Creation Engine</p>
+      </header>
 
       {offline && (
         <p className="trouble" role="status">
@@ -296,8 +303,9 @@ export function Opening({
       )}
 
       {/* Nothing to author in a tab running purely offline — there is no
-          server behind it for `/api/author` to be a route on. */}
-      {service !== null && service.where !== "here" && (
+          server behind it for `/api/author` to be a route on. Point at how
+          to get one instead of leaving the wizard undiscoverable here. */}
+      {service !== null && service.where !== "here" ? (
         <p className="dim aside">
           <a
             href="#author"
@@ -310,6 +318,20 @@ export function Opening({
             Author this pack
           </a>
         </p>
+      ) : (
+        service !== null && (
+          <p className="dim aside">
+            To author a game using the MACE Wizard, see{" "}
+            <a
+              href="https://github.com/lightningWhite/MACE/blob/main/readme.md#development"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              running it locally
+            </a>
+            .
+          </p>
+        )
       )}
     </main>
   );

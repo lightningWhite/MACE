@@ -1311,23 +1311,32 @@ class Desk:
     studio : Studio or None
         The open pack, or None before one is chosen.
     root : Path or None
-        Where authorable game packs live — `games()` looks here. None means
-        there is nothing to list or create, which is what a `Desk` wrapping
-        the old one-pack-per-process shape means.
+        Where finished, checked-in game packs live — `packs/games` in this
+        repo's own layout. `games()` lists them; a new one is never written
+        here directly (see `staging`) — `wip/README.md`'s own rule is that a
+        game only joins this set once `mace validate packs/ wip/` passes
+        clean on it.
+    staging : Path or None
+        Where a freshly created game is written, and also listed alongside
+        `root` — `wip/` in this repo's own layout. None falls back to `root`,
+        which is what a `Desk` built before this field existed still means.
     search : Path or None
         Where those packs' dependencies live.
     """
 
     studio: Studio | None
     root: Path | None = None
+    staging: Path | None = None
     search: Path | None = None
 
     def games(self) -> list[dict[str, str]]:
-        """Every authorable game pack under `root`.
+        """Every authorable game pack under `root` and `staging`.
 
         Reads each `pack.yml` raw rather than loading a `Library`, so a pack
         that does not validate yet is still listed and still openable — the
         same tolerance `Project` gives half-written content everywhere else.
+        A game present under both (there should never be one, but nothing
+        stops an author from arranging it) is listed once, favouring `root`.
 
         Returns
         -------
@@ -1337,11 +1346,17 @@ class Desk:
         Raises
         ------
         ContentError
-            If no games directory is configured, or it cannot be read.
+            If no games directory is configured, or one that is cannot be
+            read.
         """
-        if self.root is None:
+        roots = [place for place in (self.root, self.staging) if place is not None]
+        if not roots:
             raise ContentError("no games directory is configured")
-        return self._packs_of_kind(self.root, "game")
+        found: dict[str, dict[str, str]] = {}
+        for place in roots:
+            for entry in self._packs_of_kind(place, "game"):
+                found.setdefault(entry["id"], entry)
+        return sorted(found.values(), key=lambda one: one["id"])
 
     def libraries(self) -> list[dict[str, str]]:
         """Every library pack under `search`, for a new game to depend on.
@@ -1377,10 +1392,18 @@ class Desk:
         Returns
         -------
         list of dict
-            `{id, name, path}` per matching pack, sorted by id.
+            `{id, name, path}` per matching pack, sorted by id. Empty for a
+            directory that does not exist yet, same as one with nothing in
+            it — `games()` calls this once per configured directory, and a
+            `wip/` an author has never used should not be able to sink the
+            whole list.
         """
+        try:
+            pack_roots = find_packs(root)
+        except ContentError:
+            return []
         found: list[dict[str, str]] = []
-        for pack_root in find_packs(root):
+        for pack_root in pack_roots:
             try:
                 manifest = read_yaml(pack_root / MANIFEST_NAME)
             except (ContentError, OSError):
@@ -1461,14 +1484,15 @@ class Desk:
             unsaved edits and `discard` was not asked for, or a pack already
             exists at the derived path.
         """
-        if self.root is None:
+        new_games = self.staging if self.staging is not None else self.root
+        if new_games is None:
             raise ContentError("no games directory is configured")
         if not discard:
             self._refuse_if_dirty()
         local_id = slug(name)
         search = () if self.search is None else (self.search,)
         project = Project.create(
-            self.root / local_id,
+            new_games / local_id,
             *search,
             pack_id=local_id,
             name=name,

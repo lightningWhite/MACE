@@ -387,15 +387,24 @@ function Desk({
 }) {
   return (
     <>
-      {/* A pointer, not a link: this page is served from a build with no
-          docs in it, and a hyperlink that only sometimes resolves is worse
-          than none. Whoever ran `mace author` has the repo beside them. */}
+      {/* A link to the repo, not a relative path: this page is served from a
+          build with no docs in it, so a link into its own origin would only
+          sometimes resolve — worse than none, for whoever is running the
+          hosted build rather than `mace author` beside a checkout. GitHub
+          itself always resolves regardless of which one that is. */}
       <p className="dim">
-        New to this? <code>docs/14-how-tos.md</code> walks through building a
-        conversation, having someone show up when the player makes noise,
-        gating a choice on the weather, and closing a road when a world event
-        fires — the parts the docs describe that aren't obvious from the task
-        list alone.
+        New to this?{" "}
+        <a
+          href="https://github.com/lightningWhite/MACE/blob/main/docs/14-how-tos.md"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          docs/14-how-tos.md
+        </a>{" "}
+        walks through building a conversation, having someone show up when
+        the player makes noise, gating a choice on the weather, and closing a
+        road when a world event fires — the parts the docs describe that
+        aren't obvious from the task list alone.
       </p>
       <ul className="task-list">
         {tasks.map((task) => (

@@ -81,7 +81,7 @@ const EMPTY_THREAD: Thread = { history: [], latest: [] };
 export function App({ playtest }: { playtest?: string } = {}) {
   const [frame, setFrame] = useState<Frame | null>(null);
   const [thread, setThread] = useState<Thread>(EMPTY_THREAD);
-  const [memoryOpen, setMemoryOpen] = useState(true);
+  const [memoryOpen, setMemoryOpen] = useState(false);
   const [status, setStatus] = useState<WorldStatus | null>(null);
   const [menu, setMenu] = useState<Option[]>([]);
   const [transport, setTransport] = useState<Transport>("connecting");
@@ -314,7 +314,7 @@ export function App({ playtest }: { playtest?: string } = {}) {
     connection.current = null;
     setFrame(null);
     setThread(EMPTY_THREAD);
-    setMemoryOpen(true);
+    setMemoryOpen(false);
     setStatus(null);
     setMenu([]);
     setFight(null);

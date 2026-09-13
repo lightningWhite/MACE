@@ -142,6 +142,31 @@ export function Combat({
   const [wheels, setWheels] = useState(true);
   const timed = fight.began.mode === "reflex";
 
+  // A timed fight opens with the clock already draining the instant its tell
+  // reaches this component — plenty of warning in a slow-paced exchange, none
+  // at all for the very first tell of a fight a reader hasn't seen yet. Gate
+  // just that one moment behind a click: `fight.began` is the same object
+  // reference for every exchange of one fight (see `App.tsx`'s `absorb`) and
+  // a fresh one for the next fight, so comparing against it needs no reset.
+  // Untimed (`tactical`) fights have no clock to protect the reader from, so
+  // this never applies to them.
+  const [startedFight, setStartedFight] = useState<CombatBegan | null>(null);
+  const gated = timed && fight.began !== startedFight;
+
+  // The window opens when the player clicks past the gate above, not when
+  // the tell arrived — otherwise the time spent reading it before that click
+  // would silently count against the very window it was meant to protect.
+  // `null` once the gate has already been passed lets `openedAt` below fall
+  // straight back to `fight.openedAt`, the same clock every later exchange
+  // in this fight already uses.
+  const [openedOverride, setOpenedOverride] = useState<number | null>(null);
+  const openedAt = openedOverride ?? fight.openedAt;
+
+  const beginFight = useCallback(() => {
+    setStartedFight(fight.began);
+    setOpenedOverride(performance.now());
+  }, [fight.began]);
+
   // Feet closed (positive) or opened (negative) this exchange so far. Reset
   // whenever a new tell arrives — footwork doesn't carry over between
   // exchanges any more than a keypress does. Real time keeps passing while
@@ -150,27 +175,28 @@ export function Combat({
   const [moveBy, setMoveBy] = useState(0);
   useEffect(() => {
     setMoveBy(0);
+    setOpenedOverride(null);
   }, [fight.tell.combat, fight.openedAt]);
 
   const nudge = useCallback(
     (by: number) => {
-      if (busy) return;
+      if (busy || gated) return;
       setMoveBy((current) => current + by);
     },
-    [busy],
+    [busy, gated],
   );
 
   const answer = useCallback(
     (response: string) => {
-      if (busy) return;
+      if (busy || gated) return;
       onAnswer({
         kind: "combat.input",
         response,
-        ...(timed ? { elapsedMs: Math.round(performance.now() - fight.openedAt) } : {}),
+        ...(timed ? { elapsedMs: Math.round(performance.now() - openedAt) } : {}),
         ...(moveBy ? { moveBy } : {}),
       });
     },
-    [busy, onAnswer, timed, fight.openedAt, moveBy],
+    [busy, gated, onAnswer, timed, openedAt, moveBy],
   );
 
   // The window ran out. `recover` is the answer that takes the blow on
@@ -192,7 +218,7 @@ export function Combat({
   const bound = keysFor(fight.responses.options);
 
   useEffect(() => {
-    if (busy) return undefined;
+    if (busy || gated) return undefined;
     const keys = new Map(bound.map((one) => [one.key, one.response]));
     const pressed = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -214,7 +240,7 @@ export function Combat({
     };
     window.addEventListener("keydown", pressed);
     return () => window.removeEventListener("keydown", pressed);
-  }, [bound, answer, busy, nudge]);
+  }, [bound, answer, busy, gated, nudge]);
 
   const foes = fight.began.combatants.filter((one) => one.side === "enemy");
   const enemies = foes.map((one) => one.name).join(", ");
@@ -244,15 +270,33 @@ export function Combat({
       </p>
       {fight.tell.type !== "" && <p className="tell-type">({fight.tell.type})</p>}
 
-      {timed && (
+      {gated && (
+        <div className="fight-gate">
+          <p className="dim">
+            Read the tell, then begin — the window opens on your mark. The
+            answers below are already laid out so you can find them first.
+          </p>
+          <button type="button" className="primary" onClick={beginFight} autoFocus>
+            Begin the fight
+          </button>
+        </div>
+      )}
+
+      {!gated && timed && (
         <TimingBar
           key={`${fight.tell.combat}-${fight.openedAt}`}
           windowMs={fight.tell.windowMs}
-          startedAt={fight.openedAt}
+          startedAt={openedAt}
           onExpire={expire}
         />
       )}
 
+      {/* Shown even while gated — disabled, not hidden — so a reader can
+          find the keys and the layout with their hands before the window
+          they'd be spending to do that starts (see the note beside `gated`
+          above). `nudge` and `answer` already no-op while gated regardless;
+          `disabled` here is what tells a reader that, rather than leaving a
+          button that looks live but silently isn't. */}
       <RangeBar
         range={fight.responses.weaponRange}
         distance={Math.max(0, fight.tell.distance - moveBy)}
@@ -261,7 +305,7 @@ export function Combat({
         <button
           type="button"
           className="answer-key range-step"
-          disabled={busy}
+          disabled={busy || gated}
           onClick={() => nudge(-MOVE_STEP)}
           aria-label="open the distance"
         >
@@ -274,7 +318,7 @@ export function Combat({
         <button
           type="button"
           className="answer-key range-step"
-          disabled={busy}
+          disabled={busy || gated}
           onClick={() => nudge(MOVE_STEP)}
           aria-label="close the distance"
         >
@@ -288,7 +332,7 @@ export function Combat({
             <button
               type="button"
               className="answer"
-              disabled={busy}
+              disabled={busy || gated}
               onClick={() => answer(one.response)}
             >
               <span className="answer-key" aria-hidden="true">

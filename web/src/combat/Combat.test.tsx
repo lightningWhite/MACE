@@ -8,7 +8,7 @@
  * never get wrong.
  */
 
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -51,11 +51,20 @@ function recorded(): Fight {
   return { began, tell, responses, vitals, openedAt: 0 };
 }
 
+/** Past the fresh-reflex-fight gate, for a test that isn't about the gate
+ * itself — a reflex fight otherwise renders no timer, range, or answers to
+ * find. No-ops for a tactical fight, which never gates in the first place. */
+function pressBegin() {
+  const begin = screen.queryByRole("button", { name: "Begin the fight" });
+  if (begin !== null) fireEvent.click(begin);
+}
+
 function show(fight: Fight, busy = false) {
   const onAnswer = vi.fn<(action: Action) => void>();
   render(
     <Combat fight={fight} onAnswer={onAnswer} busy={busy} staminaOf={40} />,
   );
+  pressBegin();
   return onAnswer;
 }
 
@@ -147,6 +156,7 @@ describe("the window", () => {
     const { container } = render(
       <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     const ideal = container.querySelector<HTMLElement>(".timing-ideal");
     expect(ideal?.style.insetInlineStart).toBe("75%");
     const sweet = container.querySelector<HTMLElement>(".timing-sweet");
@@ -159,11 +169,15 @@ describe("the window", () => {
     const { container } = render(
       <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     const drain = () => container.querySelector<HTMLElement>(".timing-drain");
     expect(drain()?.style.inlineSize).toBe("100%");
 
     act(() => vi.advanceTimersByTime(Math.round(f.tell.windowMs / 2)));
-    expect(drain()?.style.inlineSize).toBe("50%");
+    // Close to half rather than exactly: the fake clock's own frame stepping
+    // doesn't necessarily land the last tick on precisely half of whatever
+    // windowMs a real recording happens to carry.
+    expect(parseFloat(drain()?.style.inlineSize ?? "")).toBeCloseTo(50, 0);
   });
 
   it("draws the drain under the sweet band and the ideal mark, not over them", () => {
@@ -173,6 +187,7 @@ describe("the window", () => {
     const { container } = render(
       <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     const order = [...container.querySelectorAll(".timing > *")].map(
       (node) => node.className,
     );
@@ -200,8 +215,85 @@ describe("the window", () => {
     const { container } = render(
       <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     expect(container.querySelector(".timing")).toBeNull();
     expect(screen.getByRole("timer").textContent).toMatch(/^\d+\.\ds$/);
+  });
+});
+
+// ── Getting oriented before the clock starts ────────────────────────────────────
+
+describe("a fresh fight's first tell", () => {
+  it("waits on a click before starting the timer, but shows the answers to find them by hand first", () => {
+    render(
+      <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    expect(screen.getByRole("button", { name: "Begin the fight" })).toBeTruthy();
+    expect(screen.queryByRole("timer")).toBeNull();
+    // Visible and findable, but inert: `nudge`/`answer` already no-op while
+    // gated, and disabling the button says so instead of leaving what looks
+    // like a live control that silently does nothing.
+    const dodge = screen.getByRole("button", { name: /dodge/ });
+    expect(dodge).toBeTruthy();
+    expect(dodge).toHaveProperty("disabled", true);
+    // The tell itself is exactly why the gate exists — it's readable while
+    // the clock waits.
+    expect(screen.getByText(recorded().tell.text)).toBeTruthy();
+  });
+
+  it("does not answer for a click on a disabled answer while gated", async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn<(action: Action) => void>();
+    render(
+      <Combat fight={recorded()} onAnswer={onAnswer} busy={false} staminaOf={40} />,
+    );
+    await user.click(screen.getByRole("button", { name: /dodge/ }));
+    expect(onAnswer).not.toHaveBeenCalled();
+  });
+
+  it("starts the window on the click, not on however long reading it took", () => {
+    vi.useFakeTimers();
+    // A stand-in for time already spent orienting before the click: if the
+    // window measured from here, it would already show as half drained (or
+    // worse, already expired) the moment it appeared.
+    const f = { ...recorded(), openedAt: performance.now() - recorded().tell.windowMs };
+    const { container } = render(
+      <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    act(() => vi.advanceTimersByTime(5000));
+    fireEvent.click(screen.getByRole("button", { name: "Begin the fight" }));
+    expect(container.querySelector<HTMLElement>(".timing-drain")?.style.inlineSize).toBe(
+      "100%",
+    );
+  });
+
+  it("never gates a tactical fight, which has no clock to protect", () => {
+    render(
+      <Combat fight={tactical(recorded())} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    expect(screen.queryByRole("button", { name: "Begin the fight" })).toBeNull();
+    expect(screen.getByRole("button", { name: /dodge/ })).toBeTruthy();
+  });
+
+  it("does not gate the next tell of the same fight", async () => {
+    const user = userEvent.setup();
+    const f = recorded();
+    const { rerender } = render(
+      <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
+    );
+    pressBegin();
+    await user.click(screen.getByRole("button", { name: /dodge/ }));
+
+    rerender(
+      <Combat
+        fight={{ ...f, openedAt: f.openedAt + 1 }}
+        onAnswer={() => {}}
+        busy={false}
+        staminaOf={40}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Begin the fight" })).toBeNull();
+    expect(screen.getByRole("timer")).toBeTruthy();
   });
 });
 
@@ -213,6 +305,7 @@ describe("range", () => {
     const { container } = render(
       <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     const scale = Math.max(f.responses.weaponRange.max, f.tell.distance, 1) * 1.15;
     const pct = (v: number) => (v / scale) * 100;
 
@@ -232,6 +325,7 @@ describe("range", () => {
     const { container } = render(
       <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     expect(container.querySelector(".range-marker")?.className).not.toMatch(
       /range-marker-out/,
     );
@@ -242,6 +336,7 @@ describe("range", () => {
     const { container } = render(
       <Combat fight={recorded()} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     await user.keyboard("---");
     expect(container.querySelector(".range-marker")?.className).toMatch(
       /range-marker-out/,
@@ -295,6 +390,7 @@ describe("range", () => {
     const { rerender } = render(
       <Combat fight={f} onAnswer={() => {}} busy={false} staminaOf={40} />,
     );
+    pressBegin();
     await user.keyboard("++"); // closes the distance, so it goes down
     expect(
       screen.getByText(new RegExp(`distance ${f.tell.distance - 2}ft`)),

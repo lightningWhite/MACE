@@ -16,8 +16,15 @@ libraries it depends on:
 ```bash
 mace validate packs/ wip/                          # check it, deliberately
 mace play packs/ wip/ --pack the-lost-heir          # play it
-mace dev --packs packs/ --games wip/                # author it in the browser
 ```
+
+`mace dev` already knows about this directory — a new game the wizard
+creates is written here, not straight into `packs/games/`, and the
+in-browser "your games" list shows what's here alongside what's already
+checked in. Nothing to pass: `--games` still means the finished, checked-in
+set (`packs/games/` by default), and `--wip` means this directory (default
+`wip/`, beside wherever `--packs` points); override either one if your
+layout differs from the default.
 
 Move a game to `packs/games/` once `mace validate packs/ wip/` passes
 clean — that's the signal it's done enough to join the checked-in, always-

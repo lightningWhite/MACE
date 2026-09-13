@@ -1403,3 +1403,60 @@ def test_creating_a_game_that_already_exists_fails(tmp_path: Path) -> None:
     held = Desk(studio=None, root=two_games(tmp_path))
     with pytest.raises(ContentError, match="already a pack"):
         held.create("Castle Quest")
+
+
+# ── Staging: new games go to wip/, not straight into the checked-in set ──────
+
+
+def test_a_new_game_is_written_to_staging_rather_than_root(tmp_path: Path) -> None:
+    """wip/README.md's own rule: a game joins `packs/games/` once it's done."""
+    root = two_games(tmp_path)
+    staging = tmp_path / "wip"
+    held = Desk(studio=None, root=root, staging=staging, search=root)
+    held.create("A Brand New Quest")
+
+    assert (staging / "a-brand-new-quest" / "pack.yml").is_file()
+    assert not (root / "a-brand-new-quest").exists()
+
+
+def test_games_lists_both_root_and_staging_together(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    staging = tmp_path / "wip"
+    write_pack(staging, "half-built", kind="game")
+    held = Desk(studio=None, root=root, staging=staging)
+
+    assert [one["id"] for one in held.games()] == [
+        "castle-quest",
+        "half-built",
+        "moor-quest",
+    ]
+
+
+def test_a_staged_game_can_be_opened_by_id(tmp_path: Path) -> None:
+    root = two_games(tmp_path)
+    staging = tmp_path / "wip"
+    write_pack(staging, "half-built", kind="game")
+    held = Desk(studio=None, root=root, staging=staging)
+
+    held.open("half-built")
+    assert held.studio is not None
+    assert held.studio.project.manifest.id == "half-built"
+
+
+def test_a_staging_directory_that_does_not_exist_yet_lists_as_empty(
+    tmp_path: Path,
+) -> None:
+    """`create()` makes the directory on first use — until then, no crash."""
+    root = two_games(tmp_path)
+    held = Desk(studio=None, root=root, staging=tmp_path / "wip")
+    assert [one["id"] for one in held.games()] == ["castle-quest", "moor-quest"]
+
+
+def test_with_no_staging_configured_a_new_game_falls_back_to_root(
+    tmp_path: Path,
+) -> None:
+    """A `Desk` built before `staging` existed keeps working exactly as it did."""
+    root = two_games(tmp_path)
+    held = Desk(studio=None, root=root)
+    held.create("A Brand New Quest")
+    assert (root / "a-brand-new-quest" / "pack.yml").is_file()

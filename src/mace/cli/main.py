@@ -220,8 +220,19 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help=(
-            "where authorable game packs live (default: --packs/games if "
-            "that exists, otherwise --packs itself)"
+            "where finished game packs live, browsable and editable in the "
+            "wizard (default: --packs/games if that exists, otherwise "
+            "--packs itself)"
+        ),
+    )
+    developer.add_argument(
+        "--wip",
+        type=Path,
+        default=None,
+        help=(
+            "where the wizard creates a new game, and also browses "
+            "alongside --games — see wip/README.md (default: wip/ beside "
+            "--packs)"
         ),
     )
     developer.add_argument(
@@ -705,6 +716,7 @@ def run_dev(options: argparse.Namespace) -> int:
     if games is None:
         under_packs = options.packs / "games"
         games = under_packs if under_packs.is_dir() else options.packs
+    wip = options.wip if options.wip is not None else options.packs.parent / "wip"
 
     try:
         loaded = load_best_effort(options.packs)
@@ -722,7 +734,7 @@ def run_dev(options: argparse.Namespace) -> int:
         library=loaded.library,
         origins=list(DEV_ORIGINS),
         client=options.web / "dist",
-        authoring=Desk(studio=None, root=games, search=options.packs),
+        authoring=Desk(studio=None, root=games, staging=wip, search=options.packs),
     )
 
     print(
