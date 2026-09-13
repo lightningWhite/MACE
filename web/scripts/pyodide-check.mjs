@@ -11,15 +11,29 @@
  * playthrough in a browser tab is the same playthrough as in a terminal. It
  * takes about half a minute, so it is `npm run check:pyodide` rather than
  * part of `npm test`.
+ *
+ * It has to boot against `public/pyodide/` specifically — the directory
+ * `pyodide.mjs` wrote and the one a deployment actually ships — not against
+ * whatever `loadPyodide()` defaults to. Pyodide's own loader will quietly
+ * fetch a wheel it can't find from jsdelivr and cache it into node_modules
+ * "for future use," which is exactly the bug that shipped a site missing
+ * pydantic and pyyaml while this very check kept passing: it never looked at
+ * the directory that got deployed, so a hole in it went unnoticed. Asserting
+ * every wanted file is on disk *before* booting closes that gap even on a
+ * runner with network access, where the fallback would otherwise succeed
+ * quietly again.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { loadPyodide } from "pyodide";
 
+import { packageFiles } from "./pyodide-packages.mjs";
+
 const here = dirname(fileURLToPath(import.meta.url));
+const runtime = join(here, "..", "public", "pyodide");
 const bundle = join(here, "..", "public", "mace-bundle.zip");
 const recorded = JSON.parse(
   readFileSync(join(here, "..", "src", "test", "frames.json"), "utf8"),
@@ -35,8 +49,22 @@ function assert(ok, what) {
   return true;
 }
 
+const lock = JSON.parse(readFileSync(join(runtime, "pyodide-lock.json"), "utf8"));
+const missing = packageFiles(lock)
+  .map((info) => info.file_name)
+  .filter((name) => !existsSync(join(runtime, name)));
+if (
+  !assert(
+    missing.length === 0,
+    "public/pyodide/ has every wheel loadPackage needs, without fetching one",
+  )
+) {
+  console.error(`  missing: ${missing.join(", ")}`);
+  process.exit(1);
+}
+
 const started = Date.now();
-const py = await loadPyodide();
+const py = await loadPyodide({ indexURL: `${runtime}/` });
 await py.loadPackage(["pydantic", "pyyaml"]);
 const booted = Date.now() - started;
 
