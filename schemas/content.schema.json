@@ -4344,7 +4344,7 @@
           "title": "Vaguetell"
         },
         "windupMs": {
-          "default": 1000,
+          "default": 5000,
           "exclusiveMinimum": 0,
           "title": "Windupms",
           "type": "integer"

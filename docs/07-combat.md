@@ -21,7 +21,7 @@ Combat is a sequence of **exchanges**. Each exchange:
 ```
    1. TELL          The enemy telegraphs its next move.
                     "The troll hauls the club up over its head."
-                    ▸ move type: overhead   ▸ window: 1400ms   ▸ range: 3-6ft
+                    ▸ move type: overhead   ▸ window: 7000ms   ▸ range: 3-6ft
 
    2. READ          You choose a response. The right response depends on
                     the move type — this is knowledge.
@@ -106,7 +106,7 @@ ideal    = 0.75 × window          # the sweet spot sits late — you must hold 
 precision = clamp(1 - |t_input - ideal| / (0.5 × window), 0, 1)
 ```
 
-A speed-70 defender facing a 1400 ms overhead gets 1540 ms. Stats widen the door;
+A speed-70 defender facing a 7000 ms overhead gets 7700 ms. Stats widen the door;
 the player still has to walk through it. This is the specific mechanism by which
 **character growth and player growth both matter without either making the other
 irrelevant** — and it's why stats can never be enough on their own.

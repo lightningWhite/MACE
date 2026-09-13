@@ -956,7 +956,7 @@
             "move": "fantasy.core:club-sweep",
             "type": "",
             "text": "The troll shifts its weight onto its back foot.",
-            "windowMs": 860,
+            "windowMs": 4298,
             "clear": false,
             "distance": 3.5
           },
@@ -1879,7 +1879,7 @@
             "move": "fantasy.core:club-sweep",
             "type": "",
             "text": "The troll shifts its weight onto its back foot.",
-            "windowMs": 860,
+            "windowMs": 4298,
             "clear": false,
             "distance": 3.5
           },
@@ -2136,7 +2136,7 @@
       "action": {
         "kind": "combat.input",
         "response": "dodge",
-        "elapsedMs": 640
+        "elapsedMs": 3200
       },
       "frame": {
         "session": "fixture",
@@ -2168,7 +2168,7 @@
             "response": "dodge",
             "read": "correct",
             "result": "counter",
-            "precision": 0.989,
+            "precision": 0.9899,
             "damageTaken": 0.0,
             "damageDealt": 3.7,
             "critical": false,
@@ -2186,7 +2186,7 @@
             "move": "fantasy.core:club-overhead",
             "type": "overhead",
             "text": "The troll hauls the club up over its head.",
-            "windowMs": 1344,
+            "windowMs": 6718,
             "clear": true,
             "distance": 3.5
           },
@@ -2443,7 +2443,7 @@
       "action": {
         "kind": "combat.input",
         "response": "block",
-        "elapsedMs": 300
+        "elapsedMs": 1500
       },
       "frame": {
         "session": "fixture",
@@ -2493,7 +2493,7 @@
             "move": "fantasy.core:club-overhead",
             "type": "",
             "text": "The troll's shoulders bunch.",
-            "windowMs": 1344,
+            "windowMs": 6718,
             "clear": false,
             "distance": 3.5
           },

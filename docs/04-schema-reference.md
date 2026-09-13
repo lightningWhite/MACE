@@ -864,7 +864,7 @@ Collection: `moves`.
 | `type` | str | `thrust`, `slash`, `overhead`, `sweep`, `grapple` for attacks; `parry`, `dodge`, `block` for defenses. Author-defined — an attack's `counters` names defense `type`s, which is the whole counter matrix. |
 | `tell` | Description | Attacks only, required: "The troll winds up, club over its head." |
 | `vagueTell` | Description? | What a low `tellClarity` shows instead. Without one, an unclear tell is withheld. |
-| `windupMs` | int | How long the defender has, before their speed widens it. Default 1000. |
+| `windupMs` | int | How long the defender has, before their speed widens it. Default 5000. |
 | `counters` | [str] | Defense types that beat this attack. |
 | `damage` | {min, max, type?}? | What it does when it lands. A *defense* may carry damage too — that is what `strike` is. `min`/`max` may each be a plain number or `RelativeValue` (see [Stat](#stat)). |
 | `cost` | number | Effort-pool cost. |

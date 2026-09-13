@@ -98,7 +98,7 @@ class Move(ContentModel):
 
     tell: Description | None = None
     vague_tell: Description | None = None
-    windup_ms: int = Field(default=1000, gt=0)
+    windup_ms: int = Field(default=5000, gt=0)
     counters: tuple[Id, ...] = ()
     range: Range | None = None
 

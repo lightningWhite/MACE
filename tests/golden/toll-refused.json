@@ -512,7 +512,7 @@
           "move": "fantasy.core:club-sweep",
           "type": "sweep",
           "text": "The club drops low and comes round at your knees.",
-          "windowMs": 860,
+          "windowMs": 4298,
           "clear": true,
           "distance": 3.5
         },
@@ -594,8 +594,8 @@
           "kind": "stat.changed",
           "actor": "peasants-quest:letholin",
           "stat": "hitpoints",
-          "delta": -5.6,
-          "value": 44.4,
+          "delta": -10.0,
+          "value": 40.0,
           "reason": "Low sweep"
         },
         {
@@ -615,9 +615,9 @@
           "move": "fantasy.core:club-sweep",
           "response": "block",
           "read": "wrong",
-          "result": "glancing",
-          "precision": 0.989,
-          "damageTaken": 5.6,
+          "result": "clean",
+          "precision": 0.0525,
+          "damageTaken": 10.0,
           "damageDealt": 0.0,
           "critical": false,
           "momentum": 1.0,
@@ -634,7 +634,7 @@
           "move": "fantasy.core:club-overhead",
           "type": "overhead",
           "text": "The troll hauls the club up over its head.",
-          "windowMs": 1337,
+          "windowMs": 6685,
           "clear": true,
           "distance": 3.5
         },
@@ -717,7 +717,7 @@
           "actor": "peasants-quest:letholin",
           "stat": "hitpoints",
           "delta": -8.4,
-          "value": 36.0,
+          "value": 31.6,
           "reason": "Overhead smash"
         },
         {
@@ -756,7 +756,7 @@
           "move": "fantasy.core:club-overhead",
           "type": "overhead",
           "text": "The troll hauls the club up over its head.",
-          "windowMs": 1344,
+          "windowMs": 6718,
           "clear": true,
           "distance": 3.5
         },
@@ -836,11 +836,11 @@
       "events": [
         {
           "kind": "stat.changed",
-          "actor": "peasants-quest:gorm",
+          "actor": "peasants-quest:letholin",
           "stat": "hitpoints",
-          "delta": -7.1,
-          "value": 72.9,
-          "reason": "your opening"
+          "delta": -9.9,
+          "value": 21.7,
+          "reason": "Overhead smash"
         },
         {
           "kind": "stat.changed",
@@ -859,12 +859,12 @@
           "move": "fantasy.core:club-overhead",
           "response": "dodge",
           "read": "correct",
-          "result": "counter",
-          "precision": 0.9972,
-          "damageTaken": 0.0,
-          "damageDealt": 7.1,
+          "result": "absorbed",
+          "precision": 0.057,
+          "damageTaken": 9.9,
+          "damageDealt": 0.0,
           "critical": false,
-          "momentum": 1.15,
+          "momentum": 1.0,
           "stamina": 24.5,
           "feint": false,
           "distance": 3.5,
@@ -875,10 +875,10 @@
           "combat": "combat#1",
           "attacker": "peasants-quest:gorm",
           "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:troll-roar",
-          "type": "feint",
-          "text": "It draws a breath that fills the whole hollow of the bridge.",
-          "windowMs": 675,
+          "move": "fantasy.core:club-overhead",
+          "type": "overhead",
+          "text": "The troll hauls the club up over its head.",
+          "windowMs": 6752,
           "clear": true,
           "distance": 3.5
         },
@@ -920,7 +920,7 @@
             }
           ],
           "stamina": 24.5,
-          "momentum": 1.15,
+          "momentum": 1.0,
           "streak": 2,
           "weaponRange": {
             "min": 1.0,
@@ -959,6 +959,14 @@
         {
           "kind": "stat.changed",
           "actor": "peasants-quest:letholin",
+          "stat": "hitpoints",
+          "delta": -17.9,
+          "value": 3.8,
+          "reason": "Overhead smash"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
           "stat": "stamina",
           "delta": -11.5,
           "value": 13.0,
@@ -970,17 +978,17 @@
           "exchange": 4,
           "attacker": "peasants-quest:gorm",
           "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:troll-roar",
+          "move": "fantasy.core:club-overhead",
           "response": "block",
           "read": "wrong",
-          "result": "glancing",
-          "precision": 0.9888,
-          "damageTaken": 0.0,
+          "result": "clean",
+          "precision": 0.0614,
+          "damageTaken": 17.9,
           "damageDealt": 0.0,
           "critical": false,
           "momentum": 1.0,
           "stamina": 13.0,
-          "feint": true,
+          "feint": false,
           "distance": 3.5,
           "moveBy": 0.0
         },
@@ -989,10 +997,10 @@
           "combat": "combat#1",
           "attacker": "peasants-quest:gorm",
           "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:troll-roar",
-          "type": "feint",
-          "text": "It draws a breath that fills the whole hollow of the bridge.",
-          "windowMs": 675,
+          "move": "fantasy.core:club-sweep",
+          "type": "sweep",
+          "text": "The club drops low and comes round at your knees.",
+          "windowMs": 4340,
           "clear": true,
           "distance": 3.5
         },
@@ -1073,9 +1081,17 @@
         {
           "kind": "stat.changed",
           "actor": "peasants-quest:letholin",
+          "stat": "hitpoints",
+          "delta": -3.8,
+          "value": 0.0,
+          "reason": "Low sweep"
+        },
+        {
+          "kind": "stat.changed",
+          "actor": "peasants-quest:letholin",
           "stat": "stamina",
-          "delta": -9.0,
-          "value": 4.0,
+          "delta": -13.0,
+          "value": 0.0,
           "reason": null
         },
         {
@@ -1084,468 +1100,12 @@
           "exchange": 5,
           "attacker": "peasants-quest:gorm",
           "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:troll-roar",
-          "response": "strike",
-          "read": "correct",
-          "result": "absorbed",
-          "precision": 0.1489,
-          "damageTaken": 0.0,
-          "damageDealt": 0.0,
-          "critical": false,
-          "momentum": 1.0,
-          "stamina": 4.0,
-          "feint": true,
-          "distance": 3.5,
-          "moveBy": 0.0
-        },
-        {
-          "kind": "combat.tell",
-          "combat": "combat#1",
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:troll-roar",
-          "type": "feint",
-          "text": "It draws a breath that fills the whole hollow of the bridge.",
-          "windowMs": 679,
-          "clear": true,
-          "distance": 3.5
-        },
-        {
-          "kind": "combat.responses",
-          "combat": "combat#1",
-          "options": [
-            {
-              "response": "dodge",
-              "label": "dodge"
-            },
-            {
-              "response": "block",
-              "label": "block"
-            },
-            {
-              "response": "parry",
-              "label": "parry"
-            },
-            {
-              "response": "jump",
-              "label": "jump"
-            },
-            {
-              "response": "strike",
-              "label": "strike"
-            },
-            {
-              "response": "recover",
-              "label": "recover"
-            },
-            {
-              "response": "flee",
-              "label": "flee"
-            },
-            {
-              "response": "use:fantasy.core:bread",
-              "label": "Bread"
-            }
-          ],
-          "stamina": 4.0,
-          "momentum": 1.0,
-          "streak": 1,
-          "weaponRange": {
-            "min": 1.0,
-            "max": 5.0,
-            "sweetMin": 2.0,
-            "sweetMax": 3.5
-          }
-        },
-        {
-          "kind": "world.status",
-          "tick": 30,
-          "day": 1,
-          "dayPart": "day",
-          "season": "autumn",
-          "time": "15:00",
-          "location": "peasants-quest:troll-bridge",
-          "place": "The Old Bridge",
-          "region": "peasants-quest:the-northwood",
-          "weather": "fantasy.core:overcast",
-          "sky": "overcast",
-          "temperature": 14.58,
-          "temperatureUnit": "celsius",
-          "light": 0.85,
-          "indoors": false,
-          "exposure": 0.3517
-        }
-      ]
-    },
-    {
-      "action": {
-        "kind": "combat.input",
-        "response": "strike",
-        "elapsedMs": 509
-      },
-      "events": [
-        {
-          "kind": "stat.changed",
-          "actor": "peasants-quest:letholin",
-          "stat": "stamina",
-          "delta": -4.0,
-          "value": 0.0,
-          "reason": null
-        },
-        {
-          "kind": "combat.resolve",
-          "combat": "combat#1",
-          "exchange": 6,
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:troll-roar",
+          "move": "fantasy.core:club-sweep",
           "response": "strike",
           "read": "wrong",
           "result": "clean",
-          "precision": 0.0,
-          "damageTaken": 0.0,
-          "damageDealt": 0.0,
-          "critical": false,
-          "momentum": 1.0,
-          "stamina": 0.0,
-          "feint": true,
-          "distance": 3.5,
-          "moveBy": 0.0
-        },
-        {
-          "kind": "combat.tell",
-          "combat": "combat#1",
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:club-overhead",
-          "type": "overhead",
-          "text": "The troll hauls the club up over its head.",
-          "windowMs": 1357,
-          "clear": true,
-          "distance": 3.5
-        },
-        {
-          "kind": "combat.responses",
-          "combat": "combat#1",
-          "options": [
-            {
-              "response": "dodge",
-              "label": "dodge"
-            },
-            {
-              "response": "block",
-              "label": "block"
-            },
-            {
-              "response": "parry",
-              "label": "parry"
-            },
-            {
-              "response": "jump",
-              "label": "jump"
-            },
-            {
-              "response": "strike",
-              "label": "strike"
-            },
-            {
-              "response": "recover",
-              "label": "recover"
-            },
-            {
-              "response": "flee",
-              "label": "flee"
-            },
-            {
-              "response": "use:fantasy.core:bread",
-              "label": "Bread"
-            }
-          ],
-          "stamina": 0.0,
-          "momentum": 1.0,
-          "streak": 0,
-          "weaponRange": {
-            "min": 1.0,
-            "max": 5.0,
-            "sweetMin": 2.0,
-            "sweetMax": 3.5
-          }
-        },
-        {
-          "kind": "world.status",
-          "tick": 30,
-          "day": 1,
-          "dayPart": "day",
-          "season": "autumn",
-          "time": "15:00",
-          "location": "peasants-quest:troll-bridge",
-          "place": "The Old Bridge",
-          "region": "peasants-quest:the-northwood",
-          "weather": "fantasy.core:overcast",
-          "sky": "overcast",
-          "temperature": 14.58,
-          "temperatureUnit": "celsius",
-          "light": 0.85,
-          "indoors": false,
-          "exposure": 0.3517
-        }
-      ]
-    },
-    {
-      "action": {
-        "kind": "combat.input",
-        "response": "block",
-        "elapsedMs": 1017
-      },
-      "events": [
-        {
-          "kind": "stat.changed",
-          "actor": "peasants-quest:letholin",
-          "stat": "hitpoints",
-          "delta": -14.6,
-          "value": 21.4,
-          "reason": "Overhead smash"
-        },
-        {
-          "kind": "combat.resolve",
-          "combat": "combat#1",
-          "exchange": 7,
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:club-overhead",
-          "response": "block",
-          "read": "wrong",
-          "result": "clean",
-          "precision": 0.0,
-          "damageTaken": 14.6,
-          "damageDealt": 0.0,
-          "critical": false,
-          "momentum": 1.0,
-          "stamina": 0.0,
-          "feint": false,
-          "distance": 3.5,
-          "moveBy": 0.0
-        },
-        {
-          "kind": "combat.tell",
-          "combat": "combat#1",
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:club-sweep",
-          "type": "",
-          "text": "The troll shifts its weight onto its back foot.",
-          "windowMs": 872,
-          "clear": false,
-          "distance": 3.5
-        },
-        {
-          "kind": "combat.responses",
-          "combat": "combat#1",
-          "options": [
-            {
-              "response": "dodge",
-              "label": "dodge"
-            },
-            {
-              "response": "block",
-              "label": "block"
-            },
-            {
-              "response": "parry",
-              "label": "parry"
-            },
-            {
-              "response": "jump",
-              "label": "jump"
-            },
-            {
-              "response": "strike",
-              "label": "strike"
-            },
-            {
-              "response": "recover",
-              "label": "recover"
-            },
-            {
-              "response": "flee",
-              "label": "flee"
-            },
-            {
-              "response": "use:fantasy.core:bread",
-              "label": "Bread"
-            }
-          ],
-          "stamina": 0.0,
-          "momentum": 1.0,
-          "streak": 0,
-          "weaponRange": {
-            "min": 1.0,
-            "max": 5.0,
-            "sweetMin": 2.0,
-            "sweetMax": 3.5
-          }
-        },
-        {
-          "kind": "world.status",
-          "tick": 30,
-          "day": 1,
-          "dayPart": "day",
-          "season": "autumn",
-          "time": "15:00",
-          "location": "peasants-quest:troll-bridge",
-          "place": "The Old Bridge",
-          "region": "peasants-quest:the-northwood",
-          "weather": "fantasy.core:overcast",
-          "sky": "overcast",
-          "temperature": 14.58,
-          "temperatureUnit": "celsius",
-          "light": 0.85,
-          "indoors": false,
-          "exposure": 0.3517
-        }
-      ]
-    },
-    {
-      "action": {
-        "kind": "combat.input",
-        "response": "jump",
-        "elapsedMs": 654
-      },
-      "events": [
-        {
-          "kind": "stat.changed",
-          "actor": "peasants-quest:letholin",
-          "stat": "hitpoints",
-          "delta": -8.2,
-          "value": 13.2,
-          "reason": "Low sweep"
-        },
-        {
-          "kind": "combat.resolve",
-          "combat": "combat#1",
-          "exchange": 8,
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:club-sweep",
-          "response": "jump",
-          "read": "wrong",
-          "result": "clean",
-          "precision": 0.0,
-          "damageTaken": 8.2,
-          "damageDealt": 0.0,
-          "critical": false,
-          "momentum": 1.0,
-          "stamina": 0.0,
-          "feint": false,
-          "distance": 3.5,
-          "moveBy": 0.0
-        },
-        {
-          "kind": "combat.tell",
-          "combat": "combat#1",
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:club-overhead",
-          "type": "overhead",
-          "text": "The troll hauls the club up over its head.",
-          "windowMs": 1357,
-          "clear": true,
-          "distance": 3.5
-        },
-        {
-          "kind": "combat.responses",
-          "combat": "combat#1",
-          "options": [
-            {
-              "response": "dodge",
-              "label": "dodge"
-            },
-            {
-              "response": "block",
-              "label": "block"
-            },
-            {
-              "response": "parry",
-              "label": "parry"
-            },
-            {
-              "response": "jump",
-              "label": "jump"
-            },
-            {
-              "response": "strike",
-              "label": "strike"
-            },
-            {
-              "response": "recover",
-              "label": "recover"
-            },
-            {
-              "response": "flee",
-              "label": "flee"
-            },
-            {
-              "response": "use:fantasy.core:bread",
-              "label": "Bread"
-            }
-          ],
-          "stamina": 0.0,
-          "momentum": 1.0,
-          "streak": 0,
-          "weaponRange": {
-            "min": 1.0,
-            "max": 5.0,
-            "sweetMin": 2.0,
-            "sweetMax": 3.5
-          }
-        },
-        {
-          "kind": "world.status",
-          "tick": 30,
-          "day": 1,
-          "dayPart": "day",
-          "season": "autumn",
-          "time": "15:00",
-          "location": "peasants-quest:troll-bridge",
-          "place": "The Old Bridge",
-          "region": "peasants-quest:the-northwood",
-          "weather": "fantasy.core:overcast",
-          "sky": "overcast",
-          "temperature": 14.58,
-          "temperatureUnit": "celsius",
-          "light": 0.85,
-          "indoors": false,
-          "exposure": 0.3517
-        }
-      ]
-    },
-    {
-      "action": {
-        "kind": "combat.input",
-        "response": "dodge",
-        "elapsedMs": 1017
-      },
-      "events": [
-        {
-          "kind": "stat.changed",
-          "actor": "peasants-quest:letholin",
-          "stat": "hitpoints",
-          "delta": -13.2,
-          "value": 0.0,
-          "reason": "Overhead smash"
-        },
-        {
-          "kind": "combat.resolve",
-          "combat": "combat#1",
-          "exchange": 9,
-          "attacker": "peasants-quest:gorm",
-          "defender": "peasants-quest:letholin",
-          "move": "fantasy.core:club-overhead",
-          "response": "dodge",
-          "read": "wrong",
-          "result": "clean",
-          "precision": 0.0,
-          "damageTaken": 13.5,
+          "precision": 0.0614,
+          "damageTaken": 6.9,
           "damageDealt": 0.0,
           "critical": false,
           "momentum": 1.0,
@@ -1558,7 +1118,7 @@
           "kind": "combat.end",
           "combat": "combat#1",
           "outcome": "lost",
-          "exchanges": 9,
+          "exchanges": 5,
           "spoils": []
         },
         {
@@ -1650,6 +1210,62 @@
           "light": 0.65,
           "indoors": false,
           "exposure": 0.3517
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "strike",
+        "elapsedMs": 509
+      },
+      "events": [
+        {
+          "kind": "engine.rule-failed",
+          "message": "there is no fight to answer",
+          "where": null
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "block",
+        "elapsedMs": 1017
+      },
+      "events": [
+        {
+          "kind": "engine.rule-failed",
+          "message": "there is no fight to answer",
+          "where": null
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "jump",
+        "elapsedMs": 654
+      },
+      "events": [
+        {
+          "kind": "engine.rule-failed",
+          "message": "there is no fight to answer",
+          "where": null
+        }
+      ]
+    },
+    {
+      "action": {
+        "kind": "combat.input",
+        "response": "dodge",
+        "elapsedMs": 1017
+      },
+      "events": [
+        {
+          "kind": "engine.rule-failed",
+          "message": "there is no fight to answer",
+          "where": null
         }
       ]
     },

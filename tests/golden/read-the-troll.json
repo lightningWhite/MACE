@@ -479,7 +479,7 @@
           "move": "fantasy.core:club-overhead",
           "type": "overhead",
           "text": "The troll hauls the club up over its head.",
-          "windowMs": 1328,
+          "windowMs": 6638,
           "clear": true,
           "distance": 3.5
         },
@@ -600,7 +600,7 @@
           "move": "fantasy.core:club-overhead",
           "type": "overhead",
           "text": "The troll hauls the club up over its head.",
-          "windowMs": 1334,
+          "windowMs": 6672,
           "clear": true,
           "distance": 3.5
         },
@@ -721,7 +721,7 @@
           "move": "fantasy.core:club-sweep",
           "type": "sweep",
           "text": "The club drops low and comes round at your knees.",
-          "windowMs": 862,
+          "windowMs": 4310,
           "clear": true,
           "distance": 3.5
         },
@@ -842,7 +842,7 @@
           "move": "fantasy.core:club-overhead",
           "type": "",
           "text": "The troll's shoulders bunch.",
-          "windowMs": 1348,
+          "windowMs": 6738,
           "clear": false,
           "distance": 3.5
         },
@@ -963,7 +963,7 @@
           "move": "fantasy.core:club-overhead",
           "type": "overhead",
           "text": "The troll hauls the club up over its head.",
-          "windowMs": 1354,
+          "windowMs": 6771,
           "clear": true,
           "distance": 3.5
         },
@@ -1084,7 +1084,7 @@
           "move": "fantasy.core:club-sweep",
           "type": "sweep",
           "text": "The club drops low and comes round at your knees.",
-          "windowMs": 875,
+          "windowMs": 4374,
           "clear": true,
           "distance": 3.5
         },
@@ -1205,7 +1205,7 @@
           "move": "fantasy.core:club-sweep",
           "type": "sweep",
           "text": "The club drops low and comes round at your knees.",
-          "windowMs": 879,
+          "windowMs": 4396,
           "clear": true,
           "distance": 3.5
         },
@@ -1326,7 +1326,7 @@
           "move": "fantasy.core:club-overhead",
           "type": "",
           "text": "The troll's shoulders bunch.",
-          "windowMs": 1374,
+          "windowMs": 6871,
           "clear": false,
           "distance": 3.5
         },

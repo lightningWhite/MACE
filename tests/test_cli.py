@@ -411,7 +411,7 @@ def test_a_timed_window_records_what_it_measured(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The one place a wall clock reaches the engine, as a recorded number."""
-    presses = [Keypress("d", 900), Keypress("d", 900), Keypress(None, 1000)]
+    presses = [Keypress("d", 4500), Keypress("d", 4500), Keypress(None, 1000)]
 
     def press(_window: int, **_kwargs: object) -> Keypress:
         return presses.pop(0) if presses else Keypress("q", 10)

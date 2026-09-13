@@ -45,8 +45,8 @@ SCRIPT: tuple[dict[str, Any], ...] = (
 #: asking for the untimed precision and would never exercise the bar.
 FIGHT: tuple[dict[str, Any], ...] = (
     *SCRIPT,
-    {"kind": "combat.input", "response": "dodge", "elapsedMs": 640},
-    {"kind": "combat.input", "response": "block", "elapsedMs": 300},
+    {"kind": "combat.input", "response": "dodge", "elapsedMs": 3200},
+    {"kind": "combat.input", "response": "block", "elapsedMs": 1500},
 )
 
 
